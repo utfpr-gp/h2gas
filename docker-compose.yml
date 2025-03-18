@@ -18,7 +18,7 @@ services:
     ports:
       - '3307:3306'
   backend:
-    image: ronifabio/h2gas-backend:latest
+#    image: ronifabio/h2gas-backend:latest
     container_name: h2gas-backend
     build: ./backend
     ports:
@@ -32,20 +32,21 @@ services:
       TWILIO_VERIFY_SERVICE_SID: ${TWILIO_VERIFY_SERVICE_SID}
       #acessa o banco de dados via rede interna (bridge network) criado
       SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/h2gas_db?useSSL=false&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+#      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER_B}
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
     depends_on:
       - db
 
-  frontend:
-    image: ronifabio/h2gas-frontend:latest
-    container_name: h2gas-frontend
-    build: ./frontend
-    environment:
-      #ativa o modo de ambiente de produção para node, melhor desempenho
-      NODE_ENV: production
-    ports:
-      - '80:80'
-    restart: always
-    depends_on:
-      - backend
+#  frontend:
+#    image: ronifabio/h2gas-frontend:latest
+#    container_name: h2gas-frontend
+#    build: ./frontend
+#    environment:
+#      #ativa o modo de ambiente de produção para node, melhor desempenho
+#      NODE_ENV: production
+#    ports:
+#      - '80:80'
+#    restart: always
+#    depends_on:
+#      - backend
