@@ -37,7 +37,6 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
     depends_on:
       - db
-
 #  frontend:
 #    image: ronifabio/h2gas-frontend:latest
 #    container_name: h2gas-frontend
