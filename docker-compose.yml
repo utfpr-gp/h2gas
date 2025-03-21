@@ -18,9 +18,9 @@ services:
     ports:
       - '3307:3306'
   backend:
-#    image: ronifabio/h2gas-backend:latest
+    image: pabloc5/h2gas-backend:1.0-latest
     container_name: h2gas-backend
-    build: ./backend
+#    build: ./backend
     ports:
       - '8080:8080'
     env_file:
@@ -37,15 +37,15 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
     depends_on:
       - db
-#  frontend:
-#    image: ronifabio/h2gas-frontend:latest
-#    container_name: h2gas-frontend
+  frontend:
+    image: pabloc5/h2gas-backend:1.0-ubuntu
+    container_name: h2gas-frontend
 #    build: ./frontend
-#    environment:
-#      #ativa o modo de ambiente de produção para node, melhor desempenho
-#      NODE_ENV: production
-#    ports:
-#      - '80:80'
-#    restart: always
-#    depends_on:
-#      - backend
+    environment:
+      #ativa o modo de ambiente de produção para node, melhor desempenho
+      NODE_ENV: production
+    ports:
+      - '80:80'
+    restart: always
+    depends_on:
+      - backend
