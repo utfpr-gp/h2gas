@@ -17,35 +17,35 @@ services:
       - ./data:/var/lib/mysql
     ports:
       - '3307:3306'
-  backend:
-    image: pabloc5/h2gas-backend:1.0-latest
-    container_name: h2gas-backend
+#  backend:
+#    image: pabloc5/h2gas-backend:1.0-latest
+#    container_name: h2gas-backend
 #    build: ./backend
-    ports:
-      - '8080:8080'
-    env_file:
-      - .env
-    restart: always
-    environment:
-      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
-      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
-      TWILIO_VERIFY_SERVICE_SID: ${TWILIO_VERIFY_SERVICE_SID}
-      #acessa o banco de dados via rede interna (bridge network) criado
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/h2gas_db?useSSL=false&serverTimezone=UTC
+#    ports:
+#      - '8080:8080'
+#    env_file:
+#      - .env
+#    restart: always
+#    environment:
+#      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
+#      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+#      TWILIO_VERIFY_SERVICE_SID: ${TWILIO_VERIFY_SERVICE_SID}
+#      #acessa o banco de dados via rede interna (bridge network) criado
+#      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/h2gas_db?useSSL=false&serverTimezone=UTC
 #      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
-      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER_B}
-      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
-    depends_on:
-      - db
-  frontend:
-    image: pabloc5/h2gas-backend:1.0-ubuntu
-    container_name: h2gas-frontend
+#      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER_B}
+#      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+#    depends_on:
+#      - db
+#  frontend:
+#    image: pabloc5/h2gas-backend:1.0-ubuntu
+#    container_name: h2gas-frontend
 #    build: ./frontend
-    environment:
-      #ativa o modo de ambiente de produção para node, melhor desempenho
-      NODE_ENV: production
-    ports:
-      - '80:80'
-    restart: always
-    depends_on:
-      - backend
+#    environment:
+#      #ativa o modo de ambiente de produção para node, melhor desempenho
+#      NODE_ENV: production
+#    ports:
+#      - '80:80'
+#    restart: always
+#    depends_on:
+#      - backend
