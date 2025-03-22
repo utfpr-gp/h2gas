@@ -38,7 +38,7 @@ services:
     depends_on:
       - db
   frontend:
-    image: pabloc5/h2gas-backend:1.0-ubuntu
+    image: pabloc5/h2gas-frontend:1.0-ubuntu
     container_name: h2gas-frontend
 #    build: ./frontend
     environment:
