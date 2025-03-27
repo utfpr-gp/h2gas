@@ -8,6 +8,7 @@ public class UserController {
 
     @GetMapping
     public String test() {
+        System.out.println("testando");
         return "API funcionando!";
     }
 }
