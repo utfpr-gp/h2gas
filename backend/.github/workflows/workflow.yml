@@ -1,8 +1,5 @@
 name: Continuous Integration
-on:
-  pull_request:
-    branches:
-      ['develop', 'testes-action-neww']
+on: pull_request
 
 jobs:
   tests:
