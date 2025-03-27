@@ -15,5 +15,4 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: ${{ matrix.java }}
-        run: mvn clean test
-        working-directory: ./backend
+      - run: mvn -f backend/pom.xml clean test
