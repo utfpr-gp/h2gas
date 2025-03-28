@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     @GetMapping
-    public String test() {
+    public String getUsers() {
         return "API funcionando!";
     }
 }
