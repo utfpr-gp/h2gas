@@ -37,6 +37,19 @@ public class UserEntity implements UserDetails {
 
     private UserTypeEnum userType;
 
+    public UserEntity(String name, String email, String phoneNumber,
+                      String cpf, String cnpj, String password,
+                      UserTypeEnum userType) {
+        this.name = name;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.cpf = cpf;
+        this.cnpj = cnpj;
+        this.password = password;
+        this.userType = userType;
+    }
+
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         if (this.userType == UserTypeEnum.ADMIN) {
