@@ -40,7 +40,7 @@ public class TokenService {
                     .withIssuer("h2gas")
                     .build()
                     .verify(token)
-                    .getToken();
+                    .getSubject();
         } catch (JWTVerificationException e) {
             return "";
         }

@@ -1,5 +1,6 @@
 package com.h2gas.entity;
 
+import com.h2gas.dto.UserDto;
 import com.h2gas.enums.UserTypeEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -84,6 +85,10 @@ public class UserEntity implements UserDetails {
     @Override
     public boolean isEnabled() {
         return UserDetails.super.isEnabled();
+    }
+
+    public UserDto toDto() {
+        return new UserDto(this.id, this.name, this.email, this.phoneNumber, this.cpf, this.cnpj, this.userType);
     }
 
 //    TODO criar relacionamento com addres mais tarde addresId
