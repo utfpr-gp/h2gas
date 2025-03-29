@@ -10,6 +10,7 @@ public class ConfigEnv {
 		System.setProperty("MYSQL_HOST", dotenv.get("MYSQL_HOST"));
 		System.setProperty("MYSQL_PORT", dotenv.get("MYSQL_PORT"));
 		System.setProperty("MYSQL_DATABASE", dotenv.get("MYSQL_DATABASE"));
+		System.setProperty("JWT_SECRET", dotenv.get("JWT_SECRET"));
     }
 
 }

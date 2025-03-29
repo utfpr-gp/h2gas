@@ -1,6 +1,8 @@
 package com.h2gas.controller;
 
+import com.h2gas.configuration.security.TokenService;
 import com.h2gas.dto.AuthenticationDTO;
+import com.h2gas.dto.LoginDTO;
 import com.h2gas.dto.RegisterDTO;
 import com.h2gas.entity.UserEntity;
 import com.h2gas.enums.UserTypeEnum;
@@ -30,13 +32,17 @@ public class AuthenticationController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private TokenService tokenService;
+
     @PostMapping("/login")
-    public ResponseEntity<AuthenticationDTO> login(@RequestBody @Validated AuthenticationDTO data) {
+    public ResponseEntity<LoginDTO> login(@RequestBody @Validated AuthenticationDTO data) {
 //        UsernamePasswordAuthenticationToken
         var userNamePassword = new UsernamePasswordAuthenticationToken(data.email(), data.password());
         var auth = this.authenticationManager.authenticate(userNamePassword);
 
-        return ResponseEntity.ok().build();
+        var token = tokenService.generateToken((UserEntity) auth.getPrincipal());
+        return ResponseEntity.ok(new LoginDTO(token));
     }
 
     @PostMapping("/register")
