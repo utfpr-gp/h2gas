@@ -1,5 +1,6 @@
 package com.h2gas.mapper;
 
+import com.h2gas.dto.RegisterDTO;
 import com.h2gas.dto.UserDto;
 import com.h2gas.entity.UserEntity;
 
@@ -16,14 +17,27 @@ public class UserMapper {
         );
     }
 
-    public static UserEntity toEntity(UserDto data) {
+//    public static UserEntity toEntity(UserDto data) {
+//        return new UserEntity(
+//                data.id(),
+//                data.name(),
+//                data.email(),
+//                data.phoneNumber(),
+//                data.cpf(),
+//                data.cnpj(),
+//                data.userType()
+//        );
+//    }
+
+    public static UserEntity toEntity(RegisterDTO data) {
         return new UserEntity(
-                data.id(),
+                null,
                 data.name(),
                 data.email(),
                 data.phoneNumber(),
                 data.cpf(),
                 data.cnpj(),
+                data.password(),
                 data.userType()
         );
     }
