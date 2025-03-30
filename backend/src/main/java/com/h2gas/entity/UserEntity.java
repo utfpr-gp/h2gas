@@ -87,10 +87,6 @@ public class UserEntity implements UserDetails {
         return UserDetails.super.isEnabled();
     }
 
-    public UserDto toDto() {
-        return new UserDto(this.id, this.name, this.email, this.phoneNumber, this.cpf, this.cnpj, this.userType);
-    }
-
 //    TODO criar relacionamento com addres mais tarde addresId
 
 

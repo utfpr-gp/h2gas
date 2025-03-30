@@ -2,6 +2,7 @@ package com.h2gas.services.impl;
 
 import com.h2gas.dto.UserDto;
 import com.h2gas.entity.UserEntity;
+import com.h2gas.mapper.UserMapper;
 import com.h2gas.repository.UserRepository;
 import com.h2gas.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,14 +23,14 @@ public class UserServiceImpl implements UserService {
     public List<UserDto> findAllUsers() {
         return userRepository.findAll()
                 .stream()
-                .map(UserEntity::toDto)
+                .map(UserMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public UserDto findByIdUSer(String id) {
         Optional<UserEntity> userEntityOptional = userRepository.findById(id);
-        return userEntityOptional.map(UserEntity::toDto).orElseThrow(()
+        return userEntityOptional.map(UserMapper::toDto).orElseThrow(()
                 -> new RuntimeException("User not found with id: " + id));
     }
 }
