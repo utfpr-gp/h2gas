@@ -1,1 +1,165 @@
-<p>initial-screen works!</p>
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>H2Gás - Energia limpa e sustentável</title>
+    <meta name="description" content="H2Gás - A solução em energia limpa e sustentável para o futuro. Combustão eficiente, pureza garantida." />
+    <meta name="author" content="H2Gás" />
+
+    <meta property="og:title" content="H2Gás - Energia limpa e sustentável" />
+    <meta property="og:description" content="H2Gás - A solução em energia limpa e sustentável para o futuro. Combustão eficiente, pureza garantida." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@h2gas" />
+    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'h2gas-blue': {
+                light: '#4A8EFF',
+                DEFAULT: '#1E40AF',
+                dark: '#0E2068'
+              },
+              'h2gas-gold': '#FFD700',
+              'h2gas-cyan': '#67E8F9'
+            },
+            backgroundImage: {
+              'blue-gradient': 'linear-gradient(45deg, #0E2068 0%, #1E40AF 100%)',
+              'hero-gradient': 'linear-gradient(135deg, #0E2068 0%, #3B82F6 100%)',
+            },
+            keyframes: {
+              'pulse-slow': {
+                '0%, 100%': { opacity: 1 },
+                '50%': { opacity: 0.8 }
+              },
+              'float': {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-10px)' }
+              }
+            },
+            animation: {
+              'pulse-slow': 'pulse-slow 3s infinite ease-in-out',
+              'float': 'float 6s infinite ease-in-out'
+            }
+          }
+        }
+      }
+    </script>
+    <style type="text/css">
+      @keyframes pulse-slow {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.8; }
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+      .animate-pulse-slow {
+        animation: pulse-slow 3s infinite ease-in-out;
+      }
+      .animate-float {
+        animation: float 6s infinite ease-in-out;
+      } 
+    </style>
+  </head>
+
+  <body class="w-full min-h-screen overflow-x-hidden">
+    <!-- Hero Section -->
+
+    <section class="bg-[#0E2068] bg-gradient-to-r from-[#0E2068] to-[#3B82F6] min-h-screen flex flex-col items-center justify-center px-4 py-16">
+      <div class="max-w-6xl mx-auto w-full flex flex-col items-center">
+        <div class="animate-float relative w-48 h-48">
+          <!-- Logo -->
+          <div class="absolute top-0 left-1/4 w-1/2 h-1/2 text-[#67E8F9]">
+            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 23C16.9706 23 21 18.9706 21 14C21 9.02944 16.9706 5 12 5C7.02944 5 3 9.02944 3 14C3 18.9706 7.02944 23 12 23Z" fill-opacity="0.5" />
+              <path d="M12.0001 18.26C10.0801 18.26 8.58014 16.92 8.58014 15C8.58014 14.54 8.80014 13.56 9.40014 12.03C9.53014 11.77 9.84014 11.65 10.1001 11.78C10.3701 11.9 10.4801 12.21 10.3601 12.47C9.85014 13.76 9.70014 14.57 9.70014 15C9.70014 16.32 10.6801 17.14 12.0001 17.14C13.3201 17.14 14.3001 16.32 14.3001 15C14.3001 13.5 13.4701 12.36 12.7501 11.24C12.6101 11.02 12.4601 10.79 12.3101 10.54C11.8401 9.8 11.4601 9.11 11.4601 8.28C11.4601 6.85 12.3001 5.74 13.5801 5.74C14.8601 5.74 15.7001 6.85 15.7001 8.28C15.7001 8.88 15.5001 9.54 15.2601 10.16C15.1601 10.39 14.8901 10.51 14.6601 10.41C14.4301 10.31 14.3101 10.04 14.4101 9.81C14.6101 9.3 14.7801 8.76 14.7801 8.28C14.7801 7.35 14.2101 6.86 13.5801 6.86C12.9501 6.86 12.3801 7.35 12.3801 8.28C12.3801 8.86 12.6601 9.36 13.0901 10.04C13.2501 10.31 13.4201 10.56 13.5801 10.79C14.3301 12 15.3301 13.39 15.3301 15C15.3301 16.92 13.8301 18.26 12.0001 18.26Z" fill="currentColor" />
+            </svg>
+          </div>
+
+          <!-- Water Drop Icon -->
+          <div class="absolute bottom-0 right-1/4 w-1/2 h-1/2 text-[#4A8EFF]">
+            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 21.5C15.5899 21.5 18.5 18.5899 18.5 15C18.5 11.4101 12 2.5 12 2.5C12 2.5 5.5 11.4101 5.5 15C5.5 18.5899 8.41015 21.5 12 21.5Z" fill-opacity="0.6" />
+            </svg>
+          </div>
+
+          <!-- Sun/Circle Element -->
+          <div class="absolute top-0 right-1/4 w-1/3 h-1/3 text-[#FFD700]">
+            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="12" fill-opacity="0.7" />
+            </svg>
+          </div>
+        </div>
+        
+        <h1 class="text-6xl md:text-8xl font-bold text-white text-center mb-6 animate-pulse-slow">
+          H2Gás
+        </h1>
+        
+        <p class="text-lg md:text-xl text-white/90 text-center max-w-xl mb-12">
+          Energia limpa e sustentável para o futuro
+        </p>
+        
+        <a href="#contact" class="px-6 py-3 rounded-full font-medium text-sm transition-all duration-300 flex items-center justify-center bg-[#67E8F9] text-[#0E2068] hover:bg-white min-w-[240px]">
+          Comprar agora
+          <svg xmlns="http://www.w3.org/2000/svg" class="ml-2 h-4 w-4" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+        </a>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="bg-[#0E2068] py-20 px-4">
+      <div class="max-w-6xl mx-auto">
+        <h2 class="text-3xl md:text-4xl font-bold text-white text-center mb-16">
+          Por que escolher H2Gás?
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <!-- Feature 1 -->
+          <div class="bg-gradient-to-br from-[#1E40AF] to-[#0E2068] p-6 rounded-xl border border-[#4A8EFF]/20 hover:shadow-lg hover:shadow-[#67E8F9]/10 transition-all duration-300">
+            <div class="mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-[#67E8F9]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.8 14.3c.7 2.7 2.7 4.7 5.2 5.2"></path><path d="M14.3 17.9c-.7-2.7-2.7-4.7-5.2-5.2"></path><path d="M8.6 9.6c2.7.7 4.7 2.7 5.2 5.2"></path><path d="M12 2v2"></path><path d="m4.9 4.9 1.4 1.4"></path><path d="M2 12h2"></path><path d="m19.1 4.9-1.4 1.4"></path><path d="M22 12h-2"></path><path d="M19.1 19.1 16 16"></path><path d="m16 16-2-2"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Combustão Eficiente</h3>
+            <p class="text-white/80">Nosso gás garante maior eficiência térmica com menor consumo.</p>
+          </div>
+
+          <!-- Feature 2 -->
+          <div class="bg-gradient-to-br from-[#1E40AF] to-[#0E2068] p-6 rounded-xl border border-[#4A8EFF]/20 hover:shadow-lg hover:shadow-[#67E8F9]/10 transition-all duration-300">
+            <div class="mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-[#67E8F9]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Pureza Garantida</h3>
+            <p class="text-white/80">Processamento avançado para garantir a máxima pureza do produto.</p>
+          </div>
+
+          <!-- Feature 3 -->
+          <div class="bg-gradient-to-br from-[#1E40AF] to-[#0E2068] p-6 rounded-xl border border-[#4A8EFF]/20 hover:shadow-lg hover:shadow-[#67E8F9]/10 transition-all duration-300">
+            <div class="mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-[#67E8F9]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Energia Renovável</h3>
+            <p class="text-white/80">Produzido com tecnologias sustentáveis e de baixo impacto ambiental.</p>
+          </div>
+
+          <!-- Feature 4 -->
+          <div class="bg-gradient-to-br from-[#1E40AF] to-[#0E2068] p-6 rounded-xl border border-[#4A8EFF]/20 hover:shadow-lg hover:shadow-[#67E8F9]/10 transition-all duration-300">
+            <div class="mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-[#67E8F9]" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 1v4"></path><path d="M9 5V1"></path><path d="M5 9V5"></path><path d="M1 5h4"></path><path d="M5 5 9 1H1l4 4z"></path><path d="M10.942 12a5.218 5.218 0 0 0 5.227 5.071 5.21 5.21 0 0 0 1.65-.267m-.602-9.298A5.21 5.21 0 0 0 16.169 7a5.216 5.216 0 0 0-5.252 5.071"></path><path d="M6.238 7s0 2.1 3.764 2.1"></path><path d="M22 6l-2-1-2-3-1 4-2 1 2 .5L18 9l1.5-3 1.5 1 1-.5Z"></path><path d="M15 17a4.2 4.2 0 0 0 4-4"></path><path d="M15 21a8.2 8.2 0 0 0 8-8"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Eco-friendly</h3>
+            <p class="text-white/80">Redução significativa de emissões de carbono para um planeta mais limpo.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>
