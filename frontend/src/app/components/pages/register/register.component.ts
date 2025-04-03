@@ -1,14 +1,14 @@
 import { Component, OnInit } from '@angular/core';
 import { UserService } from '../../../services/user.service';
 import {FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
-// import { ToastrService, ToastrModule } from 'ngx-toastr';
+import { ToastrService, ToastrModule } from 'ngx-toastr';
 import { User } from '../../../models/user';
 
 @Component({
   selector: 'app-register',
   imports: [
     ReactiveFormsModule,
-    // ToastrModule,
+    ToastrModule,
     FormsModule
   ],
   templateUrl: './register.component.html',
@@ -24,7 +24,7 @@ export class RegisterComponent implements OnInit {
   constructor(
     private fb: FormBuilder, 
     private userService: UserService,
-    // private toastr: ToastrService,
+    private toastr: ToastrService,
   ) {
     this.registerForm = this.fb.group({
       email: ['', [Validators.required, Validators.pattern('[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,4}')]],
