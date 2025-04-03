@@ -15,58 +15,55 @@
             <div class="flex items-center justify-center min-h-screen">
                 <div class="card w-[600px] bg-white shadow-xl p-8 rounded-xl">
                     <h2 class="text-2xl font-semibold text-center mb-4">Criar Conta</h2>
-            
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">Nome</span></label>
-                            <input type="text" placeholder="Digite seu nome" class="input input-bordered w-full">
+                    <!-- <form [formGroup]="registerForm">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="form-control">
+                                <label class="label"><span class="label-text">Nome</span></label>
+                                <input type="text" placeholder="Digite seu nome" formControlName="name" class="input input-bordered w-full">
+                            </div>
+                
+                            <div class="form-control">
+                                <label class="label"><span class="label-text">Email</span></label>
+                                <input type="email" placeholder="email@exemplo.com" formControlName="email" class="input input-bordered w-full">
+                            </div>
+                
+                            <div class="form-control">
+                                <label class="label"><span class="label-text">Telefone</span></label>
+                                <input type="tel" placeholder="+55 (99) 99999-9999" formControlName="phoneNumber" class="input input-bordered w-full">
+                            </div>
+                
+                            <div class="form-control">
+                                <label class="label"><span class="label-text">CPF</span></label>
+                                <input type="text" placeholder="000.000.000-00" formControlName="cpf" class="input input-bordered w-full">
+                            </div>
+                
+                            <div class="form-control">
+                                <label class="label"><span class="label-text">CNPJ</span></label>
+                                <input type="text" placeholder="00.000.000/0000-00" formControlName="cnpj" class="input input-bordered w-full">
+                            </div>
+                
+                            <div class="form-control">
+                                <label class="label"><span class="label-text">Senha</span></label>
+                                <input type="password" placeholder="Digite uma senha" formControlName="password" class="input input-bordered w-full">
+                            </div>
+                
+                            <div class="form-control">
+                                <label class="label"><span class="label-text">Confirme a senha</span></label>
+                                <input type="password" placeholder="Repita a senha" [(ngModel)]="confirmPassword"  class="input input-bordered w-full">
+                            </div>
+                
+                            <div class="form-control ">
+                                <label class="label"><span class="label-text">Tipo de Usuário</span></label>
+                                <select class="select select-bordered w-full" formControlName="userType">
+                                    <option value="CUSTOMER">Cliente</option>
+                                    <option value="SUPPLIER">Fornecedor</option>
+                                </select>
+                            </div>
                         </div>
+                    </form> -->
+                    
             
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">Sobrenome</span></label>
-                            <input type="text" placeholder="Digite seu sobrenome" class="input input-bordered w-full">
-                        </div>
-            
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">Email</span></label>
-                            <input type="email" placeholder="email@exemplo.com" class="input input-bordered w-full">
-                        </div>
-            
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">Telefone</span></label>
-                            <input type="tel" placeholder="+55 (99) 99999-9999" class="input input-bordered w-full">
-                        </div>
-            
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">CPF</span></label>
-                            <input type="text" placeholder="000.000.000-00" class="input input-bordered w-full">
-                        </div>
-            
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">CNPJ</span></label>
-                            <input type="text" placeholder="00.000.000/0000-00" class="input input-bordered w-full">
-                        </div>
-            
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">Senha</span></label>
-                            <input type="password" placeholder="Digite uma senha" class="input input-bordered w-full">
-                        </div>
-            
-                        <div class="form-control">
-                            <label class="label"><span class="label-text">Confirme a senha</span></label>
-                            <input type="password" placeholder="Repita a senha" class="input input-bordered w-full">
-                        </div>
-            
-                        <div class="form-control ">
-                            <label class="label"><span class="label-text">Tipo de Usuário</span></label>
-                            <select class="select select-bordered w-full">
-                                <option value="CUSTOMER">Cliente</option>
-                                <option value="SUPPLIER">Fornecedor</option>
-                            </select>
-                        </div>
-                    </div>
-            
-                    <button class="btn btn-primary w-full mt-6">CADASTRAR</button>
+                    <button (click)="register()" class="btn btn-primary w-full mt-6">CADASTRAR</button>
             
                     <div class="text-center mt-4 text-sm text-gray-500">
                         Já tem uma conta? <a href="#" class="text-blue-500 hover:underline">Faça login</a>
