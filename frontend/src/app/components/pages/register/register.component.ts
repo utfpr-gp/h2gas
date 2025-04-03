@@ -8,7 +8,7 @@ import { User } from '../../../models/user';
   selector: 'app-register',
   imports: [
     ReactiveFormsModule,
-    ToastrModule,
+    // ToastrModule.forRoot(),
     FormsModule
   ],
   templateUrl: './register.component.html',
@@ -16,7 +16,7 @@ import { User } from '../../../models/user';
 })
 export class RegisterComponent implements OnInit {
 
-  registerForm?: FormGroup;
+  registerForm!: FormGroup;
   user?: User;
 
   confirmPassword: string =''; 
@@ -42,17 +42,20 @@ export class RegisterComponent implements OnInit {
   }
 
   register() {
-    this.user = this.registerForm?.value
-    this.userService.create(this.user!!).subscribe({
-      next: (response) => {
-        console.log('Usuário criado com sucesso!', response);
-        // this.toastr.success('Usuário criado com sucesso!');
-      }, 
-      error: (error) => {
-        console.error('Erro ao criar usuário:', error);
-        // this.toastr.error(`Erro ao criar usuário: ${error}`)
-      }
-    })
+    if (this.registerForm.get('password')?.value == this.confirmPassword) {
+      this.user = this.registerForm?.value
+      this.userService.create(this.user!!).subscribe({
+        next: (response) => {
+          console.log('Usuário criado com sucesso!', response);
+          // this.toastr.success('Usuário criado com sucesso!');
+        }, 
+        error: (error) => {
+          console.error('Erro ao criar usuário:', error);
+          // this.toastr.error(`Erro ao criar usuário: ${error}`)
+        }
+      })
+    }
+    
   }
 
 }
