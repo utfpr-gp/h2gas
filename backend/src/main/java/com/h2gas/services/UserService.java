@@ -1,6 +1,6 @@
 package com.h2gas.services;
 
-import com.h2gas.dto.UserDto;
+import com.h2gas.model.dto.UserDto;
 
 import java.util.List;
 

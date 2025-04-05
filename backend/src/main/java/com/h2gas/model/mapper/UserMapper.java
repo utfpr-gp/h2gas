@@ -1,8 +1,8 @@
-package com.h2gas.mapper;
+package com.h2gas.model.mapper;
 
-import com.h2gas.dto.RegisterDTO;
-import com.h2gas.dto.UserDto;
-import com.h2gas.entity.User;
+import com.h2gas.model.dto.RegisterDTO;
+import com.h2gas.model.dto.UserDto;
+import com.h2gas.model.entity.User;
 
 public class UserMapper {
 //    TODO alterar para usar o modelMapper

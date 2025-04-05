@@ -1,11 +1,11 @@
 package com.h2gas.controller;
 
 import com.h2gas.configuration.security.TokenService;
-import com.h2gas.dto.AuthenticationDTO;
-import com.h2gas.dto.LoginDTO;
-import com.h2gas.dto.RegisterDTO;
-import com.h2gas.entity.User;
-import com.h2gas.repository.UserRepository;
+import com.h2gas.model.dto.AuthenticationDTO;
+import com.h2gas.model.dto.LoginDTO;
+import com.h2gas.model.dto.RegisterDTO;
+import com.h2gas.model.entity.User;
+import com.h2gas.model.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

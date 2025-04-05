@@ -1,4 +1,4 @@
-package com.h2gas.entity;
+package com.h2gas.model.entity;
 
 import com.h2gas.enums.UserTypeEnum;
 import jakarta.persistence.*;
@@ -23,7 +23,6 @@ public class User implements UserDetails {
     private String id;
 
     private String name;
-//  TODO alterar nome da classe para User
 //  TODO alterar todas as pastas que envolvam dados para a pasta model
     private String email;
 

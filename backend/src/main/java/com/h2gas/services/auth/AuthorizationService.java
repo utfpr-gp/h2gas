@@ -1,6 +1,6 @@
 package com.h2gas.services.auth;
 
-import com.h2gas.repository.UserRepository;
+import com.h2gas.model.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

@@ -1,6 +1,6 @@
 package com.h2gas.controller;
 
-import com.h2gas.dto.UserDto;
+import com.h2gas.model.dto.UserDto;
 import com.h2gas.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

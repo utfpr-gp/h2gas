@@ -1,6 +1,6 @@
-package com.h2gas.repository;
+package com.h2gas.model.repository;
 
-import com.h2gas.entity.User;
+import com.h2gas.model.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 

@@ -1,9 +1,9 @@
 package com.h2gas.services.impl;
 
-import com.h2gas.dto.UserDto;
-import com.h2gas.entity.User;
+import com.h2gas.model.dto.UserDto;
+import com.h2gas.model.entity.User;
 import com.h2gas.enums.UserTypeEnum;
-import com.h2gas.repository.UserRepository;
+import com.h2gas.model.repository.UserRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Assertions;

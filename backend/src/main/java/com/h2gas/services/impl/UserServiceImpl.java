@@ -1,9 +1,9 @@
 package com.h2gas.services.impl;
 
-import com.h2gas.dto.UserDto;
-import com.h2gas.entity.User;
-import com.h2gas.mapper.UserMapper;
-import com.h2gas.repository.UserRepository;
+import com.h2gas.model.dto.UserDto;
+import com.h2gas.model.entity.User;
+import com.h2gas.model.mapper.UserMapper;
+import com.h2gas.model.repository.UserRepository;
 import com.h2gas.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

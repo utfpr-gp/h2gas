@@ -1,4 +1,4 @@
-package com.h2gas.dto;
+package com.h2gas.model.dto;
 
 import com.h2gas.enums.UserTypeEnum;
 
