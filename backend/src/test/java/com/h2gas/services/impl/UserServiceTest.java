@@ -4,6 +4,7 @@ import com.h2gas.model.dto.UserDto;
 import com.h2gas.model.entity.User;
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.repository.UserRepository;
+import com.h2gas.services.UserService;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.Assertions;
@@ -24,14 +25,14 @@ import static org.mockito.Mockito.when;
 
 @DataJpaTest
 @ActiveProfiles("test")
-class UserServiceImplTest {
+class UserServiceTest {
 
     @Autowired
     EntityManager entityManager;
 
 //    @Autowired
     @InjectMocks
-    private UserServiceImpl userService;
+    private UserService userService;
 
     @Mock
     private UserRepository userRepository;
