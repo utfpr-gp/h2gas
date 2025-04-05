@@ -32,10 +32,9 @@ export class RegisterComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       name: ['', [Validators.required, Validators.minLength(3)]],
       phoneNumber: ['', [Validators.required]],
-      cpf: ['', [Validators.required]],
-      cnpj: ['', [Validators.required]],
+      cpf: [''],
       password: ['', [Validators.required, Validators.minLength(6)]],
-      userType: ['', [Validators.required]],
+      userType: ['CUSTOMER', [Validators.required]],
     })
   }
   // , Validators.pattern(/^\+55\s\(\d{2}\)\s\d{5}-\d{4}$/)
@@ -46,25 +45,27 @@ export class RegisterComponent implements OnInit {
   register() {
     debugger
 
-    // if (this.registerForm.invalid) {
-    //   this.registerForm.markAllAsTouched();
-    //   return; 
-    // }
-
-
-    if (this.registerForm.get('password')?.value == this.confirmPassword) {
-      this.user = this.registerForm?.value
-      this.userService.create(this.user!!).subscribe({
-        next: (response) => {
-          console.log('Usuário criado com sucesso!', response);
-          this.toastr.success('Usuário criado com sucesso!');
-        }, 
-        error: (error) => {
-          console.error('Erro ao criar usuário:', error);
-          this.toastr.error(`Erro ao criar usuário: ${error}`)
-        }
-      })
+    if (this.registerForm.invalid) {
+      this.registerForm.markAllAsTouched();
+      this.toastr.success('Usuário criado com sucesso!');
+      return; 
     }
+
+    console.log("deu boaaaa");
+    
+    // if (this.registerForm.get('password')?.value == this.confirmPassword) {
+    //   this.user = this.registerForm?.value
+    //   this.userService.create(this.user!!).subscribe({
+    //     next: (response) => {
+    //       console.log('Usuário criado com sucesso!', response);
+    //       this.toastr.success('Usuário criado com sucesso!');
+    //     }, 
+    //     error: (error) => {
+    //       console.error('Erro ao criar usuário:', error);
+    //       this.toastr.error(`Erro ao criar usuário: ${error}`)
+    //     }
+    //   })
+    // }
 
     
   }
@@ -85,5 +86,7 @@ export class RegisterComponent implements OnInit {
 
     return '';
   }
+
+
 
 }
