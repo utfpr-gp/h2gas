@@ -25,7 +25,8 @@ public class UserEntity implements UserDetails {
     private String id;
 
     private String name;
-
+//  TODO alterar nome da classe para User
+//  TODO alterar todas as pastas que envolvam dados para a pasta model
     private String email;
 
     private String phoneNumber;
@@ -59,7 +60,6 @@ public class UserEntity implements UserDetails {
         } else {
             return List.of(new SimpleGrantedAuthority("ROLE_USER"));
         }
-//        return List.of();
     }
 
     @Override

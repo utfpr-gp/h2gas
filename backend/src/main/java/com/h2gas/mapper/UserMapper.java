@@ -5,6 +5,7 @@ import com.h2gas.dto.UserDto;
 import com.h2gas.entity.UserEntity;
 
 public class UserMapper {
+//    TODO alterar para usar o modelMapper
     public static UserDto toDto(UserEntity data) {
         return new UserDto(
                 data.getId(),
@@ -16,18 +17,6 @@ public class UserMapper {
                 data.getUserType()
         );
     }
-
-//    public static UserEntity toEntity(UserDto data) {
-//        return new UserEntity(
-//                data.id(),
-//                data.name(),
-//                data.email(),
-//                data.phoneNumber(),
-//                data.cpf(),
-//                data.cnpj(),
-//                data.userType()
-//        );
-//    }
 
     public static UserEntity toEntity(RegisterDTO data) {
         return new UserEntity(
