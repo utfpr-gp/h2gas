@@ -59,7 +59,7 @@ export class RegisterComponent implements OnInit {
         next: (response) => {
           console.log('Usuário criado com sucesso!', response);
           this.toastr.success('Usuário criado com sucesso!');
-          this.router.navigate(['/login'])
+          this.navigateRoute('/login')
         }, 
         error: (error) => {
           console.error('Erro ao criar usuário:', error);
@@ -88,6 +88,8 @@ export class RegisterComponent implements OnInit {
     return '';
   }
 
-
+  navigateRoute(route: string) {
+    this.router.navigate([route])
+  }
 
 }
