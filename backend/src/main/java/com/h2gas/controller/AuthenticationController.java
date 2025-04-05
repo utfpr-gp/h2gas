@@ -4,23 +4,19 @@ import com.h2gas.configuration.security.TokenService;
 import com.h2gas.dto.AuthenticationDTO;
 import com.h2gas.dto.LoginDTO;
 import com.h2gas.dto.RegisterDTO;
-import com.h2gas.entity.UserEntity;
-import com.h2gas.enums.UserTypeEnum;
+import com.h2gas.entity.User;
 import com.h2gas.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.UUID;
 
 @RestController
 @RequestMapping("api/auth")
@@ -41,7 +37,7 @@ public class AuthenticationController {
         var userNamePassword = new UsernamePasswordAuthenticationToken(data.email(), data.password());
         var auth = this.authenticationManager.authenticate(userNamePassword);
 
-        var token = tokenService.generateToken((UserEntity) auth.getPrincipal());
+        var token = tokenService.generateToken((User) auth.getPrincipal());
         return ResponseEntity.ok(new LoginDTO(token));
     }
 
@@ -53,10 +49,10 @@ public class AuthenticationController {
 
         String encryptedPassword = new BCryptPasswordEncoder().encode(data.password());
 
-        UserEntity userEntity = new UserEntity(data.name(), data.email(), data.phoneNumber(),
+        User user = new User(data.name(), data.email(), data.phoneNumber(),
                 data.cpf(), data.cnpj(), encryptedPassword, data.userType());
 
-        this.userRepository.save(userEntity);
+        this.userRepository.save(user);
 
         return ResponseEntity.ok().build();
     }

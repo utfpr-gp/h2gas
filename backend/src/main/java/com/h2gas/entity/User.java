@@ -1,6 +1,5 @@
 package com.h2gas.entity;
 
-import com.h2gas.dto.UserDto;
 import com.h2gas.enums.UserTypeEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -12,14 +11,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.UUID;
 
 @Entity
 @Table(name = "users")
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserEntity implements UserDetails {
+public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy=GenerationType.UUID)
     private String id;
@@ -39,9 +37,9 @@ public class UserEntity implements UserDetails {
 
     private UserTypeEnum userType;
 
-    public UserEntity(String name, String email, String phoneNumber,
-                      String cpf, String cnpj, String password,
-                      UserTypeEnum userType) {
+    public User(String name, String email, String phoneNumber,
+                String cpf, String cnpj, String password,
+                UserTypeEnum userType) {
         this.name = name;
         this.email = email;
         this.phoneNumber = phoneNumber;

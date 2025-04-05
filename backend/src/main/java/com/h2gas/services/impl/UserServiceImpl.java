@@ -1,13 +1,12 @@
 package com.h2gas.services.impl;
 
 import com.h2gas.dto.UserDto;
-import com.h2gas.entity.UserEntity;
+import com.h2gas.entity.User;
 import com.h2gas.mapper.UserMapper;
 import com.h2gas.repository.UserRepository;
 import com.h2gas.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,7 +28,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto findByIdUSer(String id) {
-        Optional<UserEntity> userEntityOptional = userRepository.findById(id);
+        Optional<User> userEntityOptional = userRepository.findById(id);
         return userEntityOptional.map(UserMapper::toDto).orElseThrow(()
                 -> new RuntimeException("User not found with id: " + id));
     }

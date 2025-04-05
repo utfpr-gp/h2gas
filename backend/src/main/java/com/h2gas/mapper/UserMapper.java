@@ -2,11 +2,11 @@ package com.h2gas.mapper;
 
 import com.h2gas.dto.RegisterDTO;
 import com.h2gas.dto.UserDto;
-import com.h2gas.entity.UserEntity;
+import com.h2gas.entity.User;
 
 public class UserMapper {
 //    TODO alterar para usar o modelMapper
-    public static UserDto toDto(UserEntity data) {
+    public static UserDto toDto(User data) {
         return new UserDto(
                 data.getId(),
                 data.getName(),
@@ -18,8 +18,8 @@ public class UserMapper {
         );
     }
 
-    public static UserEntity toEntity(RegisterDTO data) {
-        return new UserEntity(
+    public static User toEntity(RegisterDTO data) {
+        return new User(
                 null,
                 data.name(),
                 data.email(),
