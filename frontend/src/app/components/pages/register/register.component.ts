@@ -4,14 +4,14 @@ import {FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, V
 import { ToastrService, ToastrModule } from 'ngx-toastr';
 import { User } from '../../../models/user';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-register',
   imports: [
     ReactiveFormsModule,
-    // ToastrModule.forRoot(),
     CommonModule,
-    FormsModule
+    FormsModule,
   ],
   templateUrl: './register.component.html',
   styleUrl: './register.component.css'
@@ -27,6 +27,7 @@ export class RegisterComponent implements OnInit {
     private fb: FormBuilder, 
     private userService: UserService,
     private toastr: ToastrService,
+    private router: Router
   ) {
     this.registerForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -47,25 +48,25 @@ export class RegisterComponent implements OnInit {
 
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
-      this.toastr.success('Usuário criado com sucesso!');
+      this.toastr.warning('Conferir informações!!')
       return; 
     }
 
-    console.log("deu boaaaa");
-    
-    // if (this.registerForm.get('password')?.value == this.confirmPassword) {
-    //   this.user = this.registerForm?.value
-    //   this.userService.create(this.user!!).subscribe({
-    //     next: (response) => {
-    //       console.log('Usuário criado com sucesso!', response);
-    //       this.toastr.success('Usuário criado com sucesso!');
-    //     }, 
-    //     error: (error) => {
-    //       console.error('Erro ao criar usuário:', error);
-    //       this.toastr.error(`Erro ao criar usuário: ${error}`)
-    //     }
-    //   })
-    // }
+
+    if (this.registerForm.get('password')?.value == this.confirmPassword) {
+      this.user = this.registerForm?.value
+      this.userService.create(this.user!!).subscribe({
+        next: (response) => {
+          console.log('Usuário criado com sucesso!', response);
+          this.toastr.success('Usuário criado com sucesso!');
+          this.router.navigate(['/login'])
+        }, 
+        error: (error) => {
+          console.error('Erro ao criar usuário:', error);
+          this.toastr.error(`Erro ao criar usuário: ${error}`)
+        }
+      })
+    }
 
     
   }
