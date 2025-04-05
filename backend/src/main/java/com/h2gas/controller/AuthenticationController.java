@@ -1,6 +1,7 @@
 package com.h2gas.controller;
 
 import com.h2gas.configuration.security.TokenService;
+import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.dto.AuthenticationDTO;
 import com.h2gas.model.dto.LoginDTO;
 import com.h2gas.model.dto.RegisterDTO;
@@ -43,7 +44,7 @@ public class AuthenticationController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthenticationDTO> register(@RequestBody @Validated RegisterDTO data) {
-        if (this.userRepository.findByEmail(data.email()) != null ) {
+        if (this.userRepository.findByEmail(data.email()) != null && data.userType() != UserTypeEnum.ADMIN) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
