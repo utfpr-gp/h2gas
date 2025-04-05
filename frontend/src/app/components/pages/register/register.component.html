@@ -18,56 +18,71 @@
                     <form [formGroup]="registerForm">
                         <div class="grid grid-cols-2 gap-4">
                             <div class="form-control">
-                                <label class="label"><span class="label-text">Nome</span></label>
-                                <input type="text" placeholder="Digite seu nome" formControlName="name" class="input input-bordered w-full">
+                              <label class="label"><span class="label-text">Nome</span></label>
+                              <input type="text" placeholder="Digite seu nome" formControlName="name" 
+                                class="input input-bordered w-full"
+                                [ngClass]="{ 'border-red-500': isInvalid('name') }">
+                              <span *ngIf="isInvalid('name')" class="text-red-500 text-sm mt-1">{{ getErrorMessage('name') }}</span>
                             </div>
-                
+                        
                             <div class="form-control">
-                                <label class="label"><span class="label-text">Email</span></label>
-                                <input type="email" placeholder="email@exemplo.com" formControlName="email" class="input input-bordered w-full">
+                              <label class="label"><span class="label-text">Email</span></label>
+                              <input type="email" placeholder="email@exemplo.com" formControlName="email" 
+                                class="input input-bordered w-full"
+                                [ngClass]="{ 'border-red-500': isInvalid('email') }">
+                              <span *ngIf="isInvalid('email')" class="text-red-500 text-sm mt-1">{{ getErrorMessage('email') }}</span>
                             </div>
-                
+                        
                             <div class="form-control">
-                                <label class="label"><span class="label-text">Telefone</span></label>
-                                <input type="tel" placeholder="+55 (99) 99999-9999" formControlName="phoneNumber" class="input input-bordered w-full">
+                              <label class="label"><span class="label-text">Telefone</span></label>
+                              <input type="tel" placeholder="+55 (99) 99999-9999" formControlName="phoneNumber" 
+                                class="input input-bordered w-full"
+                                [ngClass]="{ 'border-red-500': isInvalid('phoneNumber') }">
+                              <span *ngIf="isInvalid('phoneNumber')" class="text-red-500 text-sm mt-1">{{ getErrorMessage('phoneNumber') }}</span>
                             </div>
-
-                            <div class="form-control ">
-                                <label class="label"><span class="label-text">Tipo de Usuário</span></label>
-                                <select class="select select-bordered w-full" formControlName="userType">
-                                    <option value="CUSTOMER">Cliente</option>
-                                    <option value="SUPPLIER">Fornecedor</option>
-                                </select>
+                        
+                            <div class="form-control">
+                              <label class="label"><span class="label-text">Tipo de Usuário</span></label>
+                              <select class="select select-bordered w-full" formControlName="userType">
+                                <option value="CUSTOMER">Cliente</option>
+                                <option value="SUPPLIER">Fornecedor</option>
+                              </select>
                             </div>
-                            
-                            @if (registerForm.get('userType')?.value == 'CUSTOMER') {
-                                <div class="form-control" >
-                                    <label class="label"><span class="label-text">CPF</span></label>
-                                    <input type="text" placeholder="000.000.000-00" formControlName="cpf" class="input input-bordered w-full">
-                                </div>
-                            }
-                            
+                        
                             @if (registerForm.get('userType')?.value == 'SUPPLIER') {
                                 <div class="form-control">
                                     <label class="label"><span class="label-text">CNPJ</span></label>
                                     <input type="text" placeholder="00.000.000/0000-00" formControlName="cnpj" class="input input-bordered w-full">
                                 </div>
                             }
-                
+
+                            @if (registerForm.get('userType')?.value == 'CUSTOMER') {
+                                <div class="form-control">
+                                    <label class="label"><span class="label-text">CPF</span></label>
+                                    <input type="text" placeholder="000.000.000-00" formControlName="cpf" class="input input-bordered w-full">
+                                </div>
+                            }
+                           
+                        
                             <div class="form-control">
-                                <label class="label"><span class="label-text">Senha</span></label>
-                                <input type="password" placeholder="Digite uma senha" formControlName="password" class="input input-bordered w-full">
+                              <label class="label"><span class="label-text">Senha</span></label>
+                              <input type="password" placeholder="Digite uma senha" formControlName="password" 
+                                class="input input-bordered w-full"
+                                [ngClass]="{ 'border-red-500': isInvalid('password') }">
+                              <span *ngIf="isInvalid('password')" class="text-red-500 text-sm mt-1">{{ getErrorMessage('password') }}</span>
                             </div>
-                
+                        
                             <div class="form-control">
-                                <label class="label"><span class="label-text">Confirme a senha</span></label>
-                                <input type="password" placeholder="Repita a senha" [ngModelOptions]="{standalone: true}" [(ngModel)]="confirmPassword"  class="input input-bordered w-full">
+                              <label class="label"><span class="label-text">Confirme a senha</span></label>
+                              <input type="password" placeholder="Repita a senha" required [ngModelOptions]="{standalone: true}" [(ngModel)]="confirmPassword" 
+                                class="input input-bordered w-full">
                             </div>
-                        </div>
+                          </div>
                     </form>
-                    
-            
-                    <button (click)="register()" class="btn btn-primary w-full mt-6">CADASTRAR</button>
+
+                    <button (click)="register()" type="submit" class="btn btn-primary w-full mt-6">
+                        CADASTRAR
+                    </button>
             
                     <div class="text-center mt-4 text-sm text-gray-500">
                         Já tem uma conta? <a href="#" class="text-blue-500 hover:underline">Faça login</a>

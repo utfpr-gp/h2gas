@@ -7,7 +7,7 @@ import { User } from '../models/user';
   providedIn: 'root'
 })
 export class UserService extends AbstractService<User> {
-  override baseUrl: string = ''
+  override baseUrl: string = 'http://localhost:8080/h2gas/api/auth/register'
 
   constructor(protected override http: HttpClient) {
     super(http);
