@@ -18,18 +18,21 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private UserMapper userMapper;
+
     @Override
     public List<UserDto> findAllUsers() {
         return userRepository.findAll()
                 .stream()
-                .map(UserMapper::toDto)
+                .map(userMapper::toDto)
                 .collect(Collectors.toList());
     }
 
     @Override
     public UserDto findByIdUSer(String id) {
         Optional<User> userEntityOptional = userRepository.findById(id);
-        return userEntityOptional.map(UserMapper::toDto).orElseThrow(()
+        return userEntityOptional.map(userMapper::toDto).orElseThrow(()
                 -> new RuntimeException("User not found with id: " + id));
     }
 }

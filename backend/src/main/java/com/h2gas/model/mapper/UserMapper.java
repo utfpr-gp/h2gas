@@ -3,10 +3,17 @@ package com.h2gas.model.mapper;
 import com.h2gas.model.dto.RegisterDTO;
 import com.h2gas.model.dto.UserDto;
 import com.h2gas.model.entity.User;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+@Component
 public class UserMapper {
-//    TODO alterar para usar o modelMapper
-    public static UserDto toDto(User data) {
+//    @Autowired
+//    private ModelMapper modelMapper;
+//TODO perguntar qual manteremos
+    public UserDto toDto(User data) {
+//        return modelMapper.map(data, UserDto.class);
         return new UserDto(
                 data.getId(),
                 data.getName(),
@@ -18,7 +25,8 @@ public class UserMapper {
         );
     }
 
-    public static User toEntity(RegisterDTO data) {
+    public User toEntity(RegisterDTO data) {
+//        return modelMapper.map(data, User.class);
         return new User(
                 null,
                 data.name(),

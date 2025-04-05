@@ -23,7 +23,7 @@ public class User implements UserDetails {
     private String id;
 
     private String name;
-//  TODO alterar todas as pastas que envolvam dados para a pasta model
+
     private String email;
 
     private String phoneNumber;
