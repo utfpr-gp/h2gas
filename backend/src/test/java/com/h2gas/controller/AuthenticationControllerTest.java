@@ -53,7 +53,7 @@ class AuthenticationControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @MockitoBean
+    @MockitoBean //trocar para Autowired quando for testar utilizando o h2db
     private UserRepository userRepository;
 
     @Autowired
@@ -72,7 +72,7 @@ class AuthenticationControllerTest {
     void setup() {
         User user = new User();
         user.setEmail("teste@exemplo.com");
-        user.setId("94c4c7ca-6dca-4bc5-80ee-5f564918ca07");
+        user.setId("94c4c7ca-6dca-4bc5-80ee-5f564918ca07"); //quando eu for fazer teste com banco h2 comentar essa linha
         user.setPassword(passwordEncoder.encode("123456"));
         userRepository.save(user);
         var authToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
@@ -99,7 +99,7 @@ class AuthenticationControllerTest {
     void deveRegistrarUsuarioComSucesso() throws Exception {
         RegisterDTO registerDTO = new RegisterDTO(
                 "teste",
-                "teste@gmail.com",
+                "teste@teste.com",
                 "12323423423",
                 "12345678901",
                 "12345678000199",
