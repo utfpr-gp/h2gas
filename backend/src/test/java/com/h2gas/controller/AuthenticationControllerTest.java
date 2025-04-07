@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.h2gas.configuration.security.SecurityConfigurations;
 import com.h2gas.configuration.security.SecurityFilter;
 import com.h2gas.configuration.security.TokenService;
+import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.dto.AuthenticationDTO;
+import com.h2gas.model.dto.RegisterDTO;
 import com.h2gas.model.entity.User;
 import com.h2gas.model.repository.UserRepository;
 import com.h2gas.services.UserService;
@@ -72,7 +74,7 @@ class AuthenticationControllerTest {
         User user = new User();
         user.setEmail("teste@exemplo.com");
         user.setId("94c4c7ca-6dca-4bc5-80ee-5f564918ca07");
-        user.setPassword(passwordEncoder.encode("123456")); // senha criptografada
+        user.setPassword(passwordEncoder.encode("123456"));
         userRepository.save(user);
         var authToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
@@ -95,6 +97,20 @@ class AuthenticationControllerTest {
     }
 
     @Test
-    void register() {
+    void deveRegistrarUsuarioComSucesso() throws Exception {
+        RegisterDTO registerDTO = new RegisterDTO(
+                "teste",
+                "teste@gmail.com",
+                "12323423423",
+                "12345678901",
+                "12345678000199",
+                "123456",
+                UserTypeEnum.CUSTOMER
+        );
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(registerDTO)))
+                .andExpect(status().isOk());
     }
 }
