@@ -15,27 +15,33 @@
             
             <div class="card w-96 bg-white shadow-xl p-8">
                 <h2 class="text-2xl font-semibold text-center mb-4">Faça seu login aqui!</h2>
-        
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text">Email</span>
-                    </label>
-                    <input type="email" placeholder="email@exemplo.com" class="input input-bordered w-full">
-                </div>
-        
-                <div class="form-control mt-4">
-                    <label class="label">
-                        <span class="label-text">Senha</span>
-                    </label>
-                    <input type="password" placeholder="Digite sua senha" class="input input-bordered w-full">
-                </div>
-        
-                <div class="form-control mt-4">
-                    <label class="cursor-pointer flex items-center">
-                        <input type="checkbox" class="checkbox checkbox-primary mr-2">
-                        <span class="label-text">Lembre-se de mim</span>
-                    </label>
-                </div>
+                
+                <form [formGroup]="loginform">
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text">Email</span>
+                        </label>
+                        <input type="email" placeholder="email@exemplo.com" class="input input-bordered w-full" 
+                        formControlName="email"
+                        >
+                    </div>
+            
+                    <div class="form-control mt-4">
+                        <label class="label">
+                            <span class="label-text">Senha</span>
+                        </label>
+                        <input type="password" placeholder="Digite sua senha" class="input input-bordered w-full"
+                        formControlName="password"
+                        >
+                    </div>
+            
+                    <div class="form-control mt-4">
+                        <label class="cursor-pointer flex items-center">
+                            <input type="checkbox" class="checkbox checkbox-primary mr-2">
+                            <span class="label-text">Lembre-se de mim</span>
+                        </label>
+                    </div>
+                </form>
         
                 <button class="btn btn-primary w-full mt-6 rounded-lg">Login</button>
         
