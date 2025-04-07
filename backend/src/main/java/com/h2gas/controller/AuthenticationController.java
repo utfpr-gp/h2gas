@@ -43,7 +43,8 @@ public class AuthenticationController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthenticationDTO> register(@RequestBody @Validated RegisterDTO data) {
-        if (this.userRepository.findByEmail(data.email()) != null && data.userType() != UserTypeEnum.ADMIN) {
+        System.out.println(this.userRepository.findByEmail(data.email()));
+        if (this.userRepository.findByEmail(data.email()) != null || data.userType() != UserTypeEnum.ADMIN) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 

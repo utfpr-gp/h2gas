@@ -59,7 +59,6 @@ class AuthenticationControllerTest {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-
     @MockitoBean
     private SecurityFilter securityFilter;
 
@@ -112,5 +111,25 @@ class AuthenticationControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registerDTO)))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void naoDeveRegistrarUsuarioSeEmailJaExiste() throws Exception {
+        RegisterDTO registerDTO = new RegisterDTO(
+                "João da Silva",
+                "teste@email.com",
+                "41999999999",
+                "12345678901",
+                "12345678000199",
+                "123456",
+                UserTypeEnum.CUSTOMER
+        );
+
+        when(userRepository.findByEmail("teste@email.com")).thenReturn(new User());
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(registerDTO)))
+                .andExpect(status().isBadRequest());
     }
 }
