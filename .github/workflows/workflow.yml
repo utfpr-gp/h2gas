@@ -16,3 +16,9 @@ jobs:
           distribution: 'temurin'
           java-version: ${{ matrix.java }}
       - run: mvn -f backend/pom.xml clean test
+    name: Show test error logs
+      if: failure()
+      run: |
+        echo ">>> Test Error Logs:"
+        find backend/target/surefire-reports -name "*.txt" -exec cat {} \; || true
+
