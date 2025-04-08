@@ -1,5 +1,5 @@
 # Definir a imagem base que será usada
-FROM node:18.20.6-alpine AS builder
+FROM node:20.19.0-alpine AS builder
 
 # Definir o diretório de trabalho para a aplicação
 WORKDIR /app

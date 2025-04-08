@@ -41,8 +41,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import org.springframework.test.context.TestPropertySource;
 
 
-//@WebMvcTest
-//@SpringBootTest
 @SpringBootTest
 @Import(SecurityConfigurations.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -72,7 +70,7 @@ class AuthenticationControllerTest {
     void setup() {
         User user = new User();
         user.setEmail("teste@exemplo.com");
-        user.setId("94c4c7ca-6dca-4bc5-80ee-5f564918ca07"); //quando eu for fazer teste com banco h2 comentar essa linha
+        user.setId("94c4c7ca-6dca-4bc5-80ee-5f564918ca07");
         user.setPassword(passwordEncoder.encode("123456"));
         userRepository.save(user);
         var authToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());

@@ -33,11 +33,6 @@ import static org.mockito.Mockito.when;
 //@SpringBootTest
 @ActiveProfiles("test")
 class UserServiceTest {
-
-//    @Autowired
-//    EntityManager entityManager;
-
-//    @Autowired
     @InjectMocks
     private UserService userService;
 
@@ -50,7 +45,6 @@ class UserServiceTest {
     private UserMapper userMapper = new UserMapper();
 
 
-
     @Test
     @Transactional
     @DisplayName("Procura users pelo id do Banco de dados")
@@ -59,11 +53,8 @@ class UserServiceTest {
 
         User dataMock = new User(idTest,"Pablo Teste", "pablo@gmail.com",
                 "1234545", "123435345", "234234234", "4534534", UserTypeEnum.CUSTOMER);
-//        UserDto expectedDto = new UserDto(dataMock.getId(), dataMock.getName(),
-//                dataMock.getEmail(), dataMock.getPhoneNumber(), dataMock.getCpf(), dataMock.getCnpj(), dataMock.getUserType());
 
         when(userRepository.findById(idTest)).thenReturn(Optional.of(dataMock));
-//        when(userMapper.toDto(dataMock)).thenReturn(expectedDto);
         UserDto userCreatTest = this.userService.findByIdUSer(idTest);
 
         assertEquals(dataMock.getEmail(), userCreatTest.email());
