@@ -5,7 +5,7 @@ import { Injectable } from '@angular/core';
   providedIn: 'root'
 })
 export class AuthService {
-  baseUrl: string = 'http://localhost:8080/h2gas/api/auth/login'
+  baseUrl: string = 'http://localhost:8080/h2gas/api/auth'
 
 
   constructor(
@@ -27,10 +27,6 @@ export class AuthService {
   }
 
   loginUser(data: any) {
-    return this.http.post(this.baseUrl, data)
-  }
-
-  getMe() {
-    return this.http.get(this.baseUrl)
+    return this.http.post(`${this.baseUrl}/login`, data)
   }
 }

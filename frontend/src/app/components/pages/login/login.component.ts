@@ -42,11 +42,25 @@ export class LoginComponent {
         console.log('Usuario logado com sucesso!', response);
         this.toastr.success('Usuario logado com sucesso!');
         localStorage.setItem('access_token', response.token)
-        // this.navigateRoute('/login')
+        this.getAndSaveMe();
       }, 
       error: (error) => {
         console.error('Erro ao logar:', error);
         this.toastr.error(`Erro ao efetuar o login: ${error}`)
+      }
+    })
+  }
+
+  getAndSaveMe() {
+    this.userService.getMe().subscribe({
+      next: (response: any) => {
+        console.log('Usuario buscado sucesso!', response);
+        localStorage.setItem('user', JSON.stringify(response))
+        this.navigate('/register-city')
+      }, 
+      error: (error) => {
+        console.error('Erro ao buscar o usuario logado:', error);
+        this.toastr.error(`Erro ao buscar o usuario: ${error}`)
       }
     })
   }

@@ -7,10 +7,18 @@ import { User } from '../models/user';
   providedIn: 'root'
 })
 export class UserService extends AbstractService<User> {
-  override baseUrl: string = 'http://localhost:8080/h2gas/api/auth/register'
+  override baseUrl: string = 'http://localhost:8080/h2gas/api/users'
 
   constructor(protected override http: HttpClient) {
     super(http);
+  }
+
+  getMe() {
+    return this.http.get(`${this.baseUrl}/me`)
+  }
+
+  getUserLocalStorage() {
+    return JSON.parse(localStorage.getItem('user')!!);    
   }
 
 }
