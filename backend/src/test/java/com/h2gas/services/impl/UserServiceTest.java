@@ -1,5 +1,6 @@
 package com.h2gas.services.impl;
 
+import com.h2gas.configuration.security.TokenService;
 import com.h2gas.model.dto.UserDto;
 import com.h2gas.model.entity.User;
 import com.h2gas.enums.UserTypeEnum;
@@ -20,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,7 +41,10 @@ class UserServiceTest {
     @Mock
     private UserRepository userRepository;
 
-//    @Mock
+    @MockitoBean
+    private TokenService tokenService;
+
+    //    @Mock
 //    private UserMapper userMapper;
     @Spy
     private UserMapper userMapper = new UserMapper();

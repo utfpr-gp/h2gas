@@ -61,6 +61,9 @@ class AuthenticationControllerTest {
     private SecurityFilter securityFilter;
 
     @MockitoBean
+    private TokenService tokenService;
+
+    @MockitoBean
     private UserService userService;
 
     @MockitoBean
