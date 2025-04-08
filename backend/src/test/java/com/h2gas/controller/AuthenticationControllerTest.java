@@ -89,6 +89,7 @@ class AuthenticationControllerTest {
     void retornaTokenAoEfetuarLogin() throws Exception {
 
         AuthenticationDTO authDTO = new AuthenticationDTO("teste@exemplo.com", "123456");
+        when(tokenService.generateToken(any(User.class))).thenReturn("fake-token-123");
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(authDTO)))
