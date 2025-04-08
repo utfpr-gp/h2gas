@@ -3,10 +3,12 @@ import { LoginComponent } from './components/pages/login/login.component';
 import { InitialScreenComponent } from './components/pages/initial-screen/initial-screen.component';
 import { RegisterComponent } from './components/pages/register/register.component';
 import { RegisterSupplierComponent } from './components/pages/register-supplier/register-supplier.component';
+import { CityRegisterComponent } from './components/pages/city-register/city-register.component';
 
 export const routes: Routes = [
     {path: '', component: InitialScreenComponent},
     {path: 'login', component: LoginComponent},
     {path: 'register', component: RegisterComponent},
     {path: 'register-supplier', component: RegisterSupplierComponent},
+    {path: 'register-city', component: CityRegisterComponent},
 ];

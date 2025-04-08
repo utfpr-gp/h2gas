@@ -12,9 +12,25 @@ export class AuthService {
     private http: HttpClient
   ) { }
 
-  isLogged() {}
+  isLogged() {
+    let token = this.getToken();
+
+    if (!token) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  getToken() {
+    return localStorage.getItem('access_token');
+  }
 
   loginUser(data: any) {
     return this.http.post(this.baseUrl, data)
+  }
+
+  getMe() {
+    return this.http.get(this.baseUrl)
   }
 }
