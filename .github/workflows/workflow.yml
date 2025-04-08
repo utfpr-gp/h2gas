@@ -27,6 +27,8 @@ jobs:
 
       - name: Run tests
 #        run: mvn -f backend/pom.xml clean test
+        env:
+            SPRING_PROFILES_ACTIVE: test
         run: mvn -f backend/pom.xml clean test -e -X
 
 
