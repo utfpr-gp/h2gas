@@ -14,9 +14,11 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.test.context.ActiveProfiles;
 
 @WebMvcTest
 @Import(SecurityConfigurations.class)
+@ActiveProfiles("test")
 @AutoConfigureMockMvc(addFilters = false)
 class TestControllerTest {
     @Autowired
