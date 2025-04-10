@@ -1,0 +1,50 @@
+package com.h2gas.services;
+
+import com.h2gas.model.dto.CityDTO;
+import com.h2gas.model.dto.UserDto;
+import com.h2gas.model.entity.City;
+import com.h2gas.model.entity.User;
+import com.h2gas.model.mapper.CityMapper;
+import com.h2gas.model.repository.CityRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestBody;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+@Component
+public class CityService {
+    @Autowired
+    private CityRepository cityRepository;
+
+    @Autowired
+    private CityMapper cityMapper;
+
+    public List<CityDTO> findAllCities() {
+        return cityRepository.findAll()
+                .stream()
+                .map(cityMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    public CityDTO findByIdCity(String id) {
+        Optional<City> cityEntityOptional = cityRepository.findById(id);
+        return cityEntityOptional.map(cityMapper::toDto).orElseThrow(()
+                -> new RuntimeException("User not found with id: " + id));
+    }
+
+    public CityDTO createCity(CityDTO cityDTO) {
+        City city = cityMapper.toEntity(cityDTO);
+        cityRepository.save(city);
+        return cityMapper.toDto(city);
+    }
+
+    public void deleteCity(CityDTO cityDTO) {
+        Optional<City> cityEntityOptional = cityRepository.findById(cityDTO.getId());
+        if (cityEntityOptional.isPresent()) {
+            cityRepository.deleteById(cityDTO.getId());
+        }
+    }
+}
