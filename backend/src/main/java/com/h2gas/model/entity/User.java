@@ -38,6 +38,10 @@ public class User implements UserDetails {
 
     private UserTypeEnum userType;
 
+    @OneToOne
+    @JoinColumn(name = "address_id")
+    private Address address;
+
     public User(String name, String email, String phoneNumber,
                 String cpf, String cnpj, String password,
                 UserTypeEnum userType) {
@@ -85,8 +89,5 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return UserDetails.super.isEnabled();
     }
-
-//    TODO criar relacionamento com addres mais tarde addresId
-
 
 }
