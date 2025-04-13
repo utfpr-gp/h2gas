@@ -1,1 +1,257 @@
-<p>city-register works!</p>
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Azul Cidades - Cadastro</title>
+    <!-- <link rel="stylesheet" href="styles.css" /> -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  </head>
+  <body>
+    <!-- Navbar -->
+    <header class="sticky top-0 z-40 w-full shadow-md">
+      <div class="bg-[#0017bf]">
+        <div class="container mx-auto flex h-16 items-center justify-between px-4">
+          <!-- Logo & Mobile menu -->
+          <div class="flex items-center gap-2">
+            <!-- Mobile menu button -->
+            <button id="mobile-menu-button" class="lg:hidden text-white hover:bg-[#0017bf]/80 p-2 rounded-md">
+              <i class="fas fa-bars h-6 w-6"></i>
+            </button>
+            
+            <!-- Logo -->
+            <div class="flex items-center">
+              <div class="h-9 w-9 rounded-full  flex items-center justify-center mr-2">
+                <img src="../assets/logo-sem-titulo.png" alt="">
+              </div>
+              <span class="text-white text-xl font-bold tracking-tight hidden sm:inline-block">
+                H2Gas
+              </span>
+            </div>
+          </div>
+
+          <!-- Desktop Navigation -->
+          <div class="flex items-center gap-3">
+            <nav class="hidden lg:flex items-center">
+              <a href="/" class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
+                <i class="fas fa-home h-5 w-5"></i>
+                <span class="ml-2">Início</span>
+              </a>
+              <a href="/" class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
+                <i class="fas fa-map h-5 w-5"></i>
+                <span class="ml-2">Cidades</span>
+                <i class="fas fa-chevron-down ml-1 h-4 w-4"></i>
+              </a>
+              <a href="#" class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
+                <i class="fas fa-cog h-5 w-5"></i>
+                <span class="ml-2">Configurações</span>
+              </a>
+            </nav>
+            
+            <!-- Notifications -->
+            <button class="text-white hover:bg-white/10 relative p-2 rounded-md">
+              <i class="fas fa-bell h-5 w-5"></i>
+              <span class="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-red-500"></span>
+            </button>
+            
+            <!-- User -->
+            <div class="flex items-center">
+              <button class="text-white hover:bg-white/10 p-2 rounded-md">
+                <i class="fas fa-user h-5 w-5"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Mobile Menu (hidden by default) -->
+    <!-- <div id="mobile-menu" class="fixed inset-y-0 left-0 transform -translate-x-full transition duration-300 ease-in-out z-50 w-[240px] sm:w-[300px] bg-white shadow-xl">
+      <div class="flex items-center justify-between p-4 border-b">
+        <div class="flex items-center">
+          <div class="h-10 w-10 rounded-full bg-[#0017bf] flex items-center justify-center">
+            <span class="text-white font-bold text-xl">AC</span>
+          </div>
+          <div class="ml-3 text-lg font-bold">Azul Cidades</div>
+        </div>
+        <button id="close-menu-button" class="p-2 rounded-md text-gray-500 hover:bg-gray-100">
+          <i class="fas fa-times h-6 w-6"></i>
+        </button>
+      </div>
+      <nav class="flex flex-col gap-1 mt-6">
+        <a href="/" class="flex items-center px-3 py-2.5 text-base font-medium rounded-md hover:bg-gray-100">
+          <span class="p-1.5 rounded-md bg-[#0017bf]/10 text-[#0017bf] mr-3">
+            <i class="fas fa-home h-5 w-5"></i>
+          </span>
+          Início
+        </a>
+        <a href="/" class="flex items-center px-3 py-2.5 text-base font-medium rounded-md hover:bg-gray-100">
+          <span class="p-1.5 rounded-md bg-[#0017bf]/10 text-[#0017bf] mr-3">
+            <i class="fas fa-map h-5 w-5"></i>
+          </span>
+          Cidades
+          <i class="fas fa-chevron-down ml-auto h-4 w-4"></i>
+        </a>
+        <a href="#" class="flex items-center px-3 py-2.5 text-base font-medium rounded-md hover:bg-gray-100">
+          <span class="p-1.5 rounded-md bg-[#0017bf]/10 text-[#0017bf] mr-3">
+            <i class="fas fa-cog h-5 w-5"></i>
+          </span>
+          Configurações
+        </a>
+      </nav>
+    </div> -->
+
+    <!-- Main Content -->
+    <main class="flex-1 container mx-auto px-4 py-8">
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Cadastro de Cidades</h1>
+        <p class="text-gray-600 mt-1">
+          Gerencie o cadastro de cidades com facilidade
+        </p>
+      </div>
+      
+      <!-- City List -->
+      <div class="w-full space-y-4">
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div class="relative w-full sm:w-64">
+            <i class="fas fa-search absolute left-2.5 top-2.5 h-4 w-4 text-gray-500"></i>
+            <input
+              type="search"
+              placeholder="Buscar cidades..."
+              class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50 focus:border-transparent"
+            />
+          </div>
+          <button 
+            class="w-full sm:w-auto bg-[#0017bf] hover:bg-[#0017bf]/80 text-white px-4 py-2 rounded-md transition-colors"
+            id="add-city-button"
+          >
+            <i class="fas fa-plus h-4 w-4 mr-2"></i>
+            Nova Cidade
+          </button>
+        </div>
+
+        <div class="overflow-x-auto rounded-lg shadow-md">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+              <thead class="bg-gray-100">
+                <tr>
+                  <th class="px-4 py-2 text-left font-medium text-gray-700 uppercase">Cidade</th>
+                  <th class="px-4 py-2 text-left font-medium text-gray-700 uppercase">Estado</th>
+                  <th class="px-4 py-2 text-center font-medium text-gray-700 uppercase">Ações</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100 bg-white">
+                <tr class="hover:bg-gray-50 transition">
+                  <td class="px-4 py-2 text-gray-900">São Paulo</td>
+                  <td class="px-4 py-2 text-gray-500">SP</td>
+                  <td class="px-4 py-2 text-center">
+                    <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 rounded mr-1 transition">
+                      Editar
+                    </button>
+                    <button class="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 rounded transition">
+                      Excluir
+                    </button>
+                  </td>
+                </tr>
+                <tr class="hover:bg-gray-50 transition">
+                  <td class="px-4 py-2 text-gray-900">Curitiba</td>
+                  <td class="px-4 py-2 text-gray-500">PR</td>
+                  <td class="px-4 py-2 text-center">
+                    <button class="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 rounded mr-1 transition">
+                      Editar
+                    </button>
+                    <button class="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 rounded transition">
+                      Excluir
+                    </button>
+                  </td>
+                </tr>
+                <!-- Mais linhas -->
+              </tbody>
+            </table>
+          </div>
+          
+      </div>
+    </main>
+
+    <!-- City Form Modal -->
+    <div id="city-modal" class="fixed inset-0 bg-black bg-opacity-25 backdrop-blur-sm flex justify-center items-center z-50 hidden">
+      <div class="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-md mx-4">
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold" id="modal-title">Nova Cidade</h2>
+            <button id="close-modal-button" class="text-gray-500 hover:text-gray-700">
+              <i class="fas fa-times h-5 w-5"></i>
+            </button>
+          </div>
+          
+          <form id="city-form" class="space-y-4">
+            <input type="hidden" id="city-id">
+            <div class="space-y-2">
+              <label for="city-name" class="block text-sm font-medium text-gray-700">Nome da Cidade</label>
+              <input
+                id="city-name"
+                type="text"
+                placeholder="Digite o nome da cidade"
+                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50 focus:border-transparent"
+                required
+              />
+              <p class="text-sm text-red-500 hidden" id="name-error">Nome deve ter pelo menos 2 caracteres</p>
+            </div>
+            
+            <div class="space-y-2">
+              <label for="city-state" class="block text-sm font-medium text-gray-700">Estado</label>
+              <input
+                id="city-state"
+                type="text"
+                placeholder="Digite o estado"
+                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50 focus:border-transparent"
+                required
+              />
+              <p class="text-sm text-red-500 hidden" id="state-error">Estado deve ter pelo menos 2 caracteres</p>
+            </div>
+            
+            <div class="space-y-2">
+              <label for="city-country" class="block text-sm font-medium text-gray-700">País</label>
+              <input
+                id="city-country"
+                type="text"
+                placeholder="Digite o país"
+                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50 focus:border-transparent"
+                required
+              />
+              <p class="text-sm text-red-500 hidden" id="country-error">País deve ter pelo menos 2 caracteres</p>
+            </div>
+            
+            <div class="space-y-2">
+              <label for="city-population" class="block text-sm font-medium text-gray-700">População</label>
+              <input
+                id="city-population"
+                type="text"
+                placeholder="Digite a população"
+                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50 focus:border-transparent"
+                required
+              />
+              <p class="text-sm text-red-500 hidden" id="population-error">População deve ser um número positivo</p>
+            </div>
+            
+            <div class="flex justify-end gap-2 pt-4">
+              <button
+                type="button"
+                id="cancel-button"
+                class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button 
+                type="submit"
+                class="px-4 py-2 bg-[#0017bf] hover:bg-[#0017bf]/80 text-white rounded-md"
+              >
+                Salvar
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+  </body>
+</html>
