@@ -3,6 +3,7 @@ package com.h2gas.model.mapper;
 import com.h2gas.model.dto.AddressDTO;
 import com.h2gas.model.entity.Address;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.PropertyMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +14,12 @@ public class AddressMapper {
     private ModelMapper modelMapper;
 
     public AddressDTO toDto(Address data) {
-        return modelMapper.map(data, AddressDTO.class);
+        AddressDTO addressDTO = modelMapper.map(data, AddressDTO.class);
+        if (data.getCity() != null) {
+            addressDTO.setCityName(data.getCity().getName());
+        }
+
+        return addressDTO;
     }
 
     public Address toEntity(AddressDTO data) {

@@ -29,7 +29,7 @@ public class CityService {
                 .collect(Collectors.toList());
     }
 
-    public CityDTO findByIdCity(String id) {
+    public CityDTO findByIdCity(Long id) {
         Optional<City> cityEntityOptional = cityRepository.findById(id);
         return cityEntityOptional.map(cityMapper::toDto).orElseThrow(()
                 -> new RuntimeException("User not found with id: " + id));
@@ -46,5 +46,11 @@ public class CityService {
         if (cityEntityOptional.isPresent()) {
             cityRepository.deleteById(cityDTO.getId());
         }
+    }
+
+    public CityDTO findByName(String name) {
+        Optional<City> cityEntityOptional = cityRepository.findByName(name);
+        return cityEntityOptional.map(cityMapper::toDto).orElseThrow(()
+                -> new RuntimeException("Cidade não encontrada com esse nome: " + name));
     }
 }

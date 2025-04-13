@@ -54,6 +54,9 @@ public class User implements UserDetails {
         this.userType = userType;
     }
 
+//    public User(String idTest, String pabloTeste, String mail, String number, String number1, String number2, String number3, UserTypeEnum userTypeEnum) {
+//    }
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
