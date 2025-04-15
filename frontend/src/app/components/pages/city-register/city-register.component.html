@@ -174,142 +174,55 @@
     </main>
 
     <!-- City Form Modal -->
-    <!-- <div id="city_modal" class="fixed inset-0 bg-black bg-opacity-25 backdrop-blur-sm flex justify-center items-center z-50 hidden">
+    <div *ngIf="modalAberta" class="fixed inset-0 bg-black bg-opacity-25 backdrop-blur-sm flex justify-center items-center z-50">
       <div class="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-md mx-4">
         <div class="p-6">
           <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold" id="modal-title">Nova Cidade</h2>
-            <button id="close-modal-button" class="text-gray-500 hover:text-gray-700">
+            <h2 class="text-xl font-bold">Nova Cidade</h2>
+            <button class="text-gray-500 hover:text-gray-700" (click)="modalAberta = false">
               <i class="fas fa-times h-5 w-5"></i>
             </button>
           </div>
-          
-          <form id="city-form" class="space-y-4">
-            <input type="hidden" id="city-id">
+
+          <form class="space-y-4" [formGroup]="cityForm">
             <div class="space-y-2">
-              <label for="city-name" class="block text-sm font-medium text-gray-700">Nome da Cidade</label>
+              <label class="block text-sm font-medium text-gray-700">Nome da Cidade</label>
               <input
-                id="city-name"
                 type="text"
                 placeholder="Digite o nome da cidade"
-                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50 focus:border-transparent"
+                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
                 required
+                formControlName="name"
               />
-              <p class="text-sm text-red-500 hidden" id="name-error">Nome deve ter pelo menos 2 caracteres</p>
             </div>
-            
+
             <div class="space-y-2">
-              <label for="city-state" class="block text-sm font-medium text-gray-700">Estado</label>
+              <label class="block text-sm font-medium text-gray-700">Estado</label>
               <input
-                id="city-state"
                 type="text"
                 placeholder="Digite o estado"
-                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50 focus:border-transparent"
+                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
                 required
+                formControlName="state"
               />
-              <p class="text-sm text-red-500 hidden" id="state-error">Estado deve ter pelo menos 2 caracteres</p>
             </div>
-            
-            <div class="space-y-2">
-              <label for="city-country" class="block text-sm font-medium text-gray-700">País</label>
-              <input
-                id="city-country"
-                type="text"
-                placeholder="Digite o país"
-                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50 focus:border-transparent"
-                required
-              />
-              <p class="text-sm text-red-500 hidden" id="country-error">País deve ter pelo menos 2 caracteres</p>
-            </div>
-            
-            <div class="space-y-2">
-              <label for="city-population" class="block text-sm font-medium text-gray-700">População</label>
-              <input
-                id="city-population"
-                type="text"
-                placeholder="Digite a população"
-                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50 focus:border-transparent"
-                required
-              />
-              <p class="text-sm text-red-500 hidden" id="population-error">População deve ser um número positivo</p>
-            </div>
-            
+
             <div class="flex justify-end gap-2 pt-4">
               <button
                 type="button"
-                id="cancel-button"
                 class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                (click)="modalAberta = false"
               >
-                Cancelar
+                Cancelars
               </button>
-              <button 
-                type="submit"
-                class="px-4 py-2 bg-[#0017bf] hover:bg-[#0017bf]/80 text-white rounded-md"
-              >
+              <button type="submit" class="px-4 py-2 bg-[#0017bf] hover:bg-[#0017bf]/80 text-white rounded-md">
                 Salvar
               </button>
             </div>
           </form>
         </div>
       </div>
-    </div> -->
-  <div *ngIf="modalAberta" class="fixed inset-0 bg-black bg-opacity-25 backdrop-blur-sm flex justify-center items-center z-50">
-    <div class="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-md mx-4">
-      <div class="p-6">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-bold">Nova Cidade</h2>
-          <button class="text-gray-500 hover:text-gray-700" (click)="modalAberta = false">
-            <i class="fas fa-times h-5 w-5"></i>
-          </button>
-        </div>
-
-        <form class="space-y-4">
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700">Nome da Cidade</label>
-            <input
-              type="text"
-              placeholder="Digite o nome da cidade"
-              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
-              required
-            />
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700">Estado</label>
-            <input
-              type="text"
-              placeholder="Digite o estado"
-              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
-              required
-            />
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700">País</label>
-            <input
-              type="text"
-              placeholder="Digite o país"
-              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
-              required
-            />
-          </div>
-
-          <div class="flex justify-end gap-2 pt-4">
-            <button
-              type="button"
-              class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
-              (click)="modalAberta = false"
-            >
-              Cancelars
-            </button>
-            <button type="submit" class="px-4 py-2 bg-[#0017bf] hover:bg-[#0017bf]/80 text-white rounded-md">
-              Salvar
-            </button>
-          </div>
-        </form>
-      </div>
     </div>
-  </div>
 
 
 

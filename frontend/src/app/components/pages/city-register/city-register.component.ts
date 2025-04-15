@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { UserService } from '../../../services/user.service';
 import { ToastrService } from 'ngx-toastr';
@@ -26,7 +26,10 @@ export class CityRegisterComponent {
     private userService: UserService,
     private toastr: ToastrService,
   ) {
-
+    this.cityForm = this.fb.group({
+      name: ['', [Validators.required]],
+      state: ['', [Validators.required]],
+    })
   }
 
   toggleMenu() {
