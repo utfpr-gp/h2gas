@@ -66,7 +66,7 @@
     </header>
 
     <!-- Mobile Menu (hidden by default) -->
-    <!-- <div id="mobile-menu" class="fixed inset-y-0 left-0 transform -translate-x-full transition duration-300 ease-in-out z-50 w-[240px] sm:w-[300px] bg-white shadow-xl">
+    <div id="mobile-menu" class="fixed inset-y-0 left-0 transform -translate-x-full transition duration-300 ease-in-out z-50 w-[240px] sm:w-[300px] bg-white shadow-xl">
       <div class="flex items-center justify-between p-4 border-b">
         <div class="flex items-center">
           <div class="h-10 w-10 rounded-full bg-[#0017bf] flex items-center justify-center">
@@ -99,7 +99,7 @@
           Configurações
         </a>
       </nav>
-    </div> -->
+    </div>
 
     <!-- Main Content -->
     <main class="flex-1 container mx-auto px-4 py-8">
@@ -124,6 +124,7 @@
           <button 
             class="w-full sm:w-auto bg-[#0017bf] hover:bg-[#0017bf]/80 text-white px-4 py-2 rounded-md transition-colors"
             id="add-city-button"
+            (click)="openModal()"
           >
             <i class="fas fa-plus h-4 w-4 mr-2"></i>
             Nova Cidade
@@ -173,7 +174,7 @@
     </main>
 
     <!-- City Form Modal -->
-    <div id="city-modal" class="fixed inset-0 bg-black bg-opacity-25 backdrop-blur-sm flex justify-center items-center z-50 hidden">
+    <!-- <div id="city_modal" class="fixed inset-0 bg-black bg-opacity-25 backdrop-blur-sm flex justify-center items-center z-50 hidden">
       <div class="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-md mx-4">
         <div class="p-6">
           <div class="flex justify-between items-center mb-4">
@@ -251,7 +252,66 @@
           </form>
         </div>
       </div>
+    </div> -->
+  <div *ngIf="modalAberta" class="fixed inset-0 bg-black bg-opacity-25 backdrop-blur-sm flex justify-center items-center z-50">
+    <div class="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-md mx-4">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-bold">Nova Cidade</h2>
+          <button class="text-gray-500 hover:text-gray-700" (click)="modalAberta = false">
+            <i class="fas fa-times h-5 w-5"></i>
+          </button>
+        </div>
+
+        <form class="space-y-4">
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Nome da Cidade</label>
+            <input
+              type="text"
+              placeholder="Digite o nome da cidade"
+              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
+              required
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Estado</label>
+            <input
+              type="text"
+              placeholder="Digite o estado"
+              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
+              required
+            />
+          </div>
+
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">País</label>
+            <input
+              type="text"
+              placeholder="Digite o país"
+              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
+              required
+            />
+          </div>
+
+          <div class="flex justify-end gap-2 pt-4">
+            <button
+              type="button"
+              class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              (click)="modalAberta = false"
+            >
+              Cancelars
+            </button>
+            <button type="submit" class="px-4 py-2 bg-[#0017bf] hover:bg-[#0017bf]/80 text-white rounded-md">
+              Salvar
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
+
+
 
   </body>
 </html>

@@ -37,6 +37,8 @@ export class LoginComponent {
 
   login() {
     debugger
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user');
     this.authService.loginUser(this.loginform.value).subscribe({
       next: (response: any) => {
         console.log('Usuario logado com sucesso!', response);
