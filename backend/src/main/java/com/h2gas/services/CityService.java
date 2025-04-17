@@ -41,10 +41,10 @@ public class CityService {
         return cityMapper.toDto(city);
     }
 
-    public void deleteCity(CityDTO cityDTO) {
-        Optional<City> cityEntityOptional = cityRepository.findById(cityDTO.getId());
+    public void deleteCity(Long id) {
+        Optional<City> cityEntityOptional = cityRepository.findById(id);
         if (cityEntityOptional.isPresent()) {
-            cityRepository.deleteById(cityDTO.getId());
+            cityRepository.deleteById(id);
         }
     }
 

@@ -34,10 +34,10 @@ public class CityController {
         return ResponseEntity.ok(cityDTO);
     }
 
-    @DeleteMapping
+    @DeleteMapping("/{id}")
     @ResponseBody
-    public ResponseEntity<CityDTO> deleteCity(@RequestBody CityDTO cityDTO) {
-        cityService.deleteCity(cityDTO);
-        return ResponseEntity.ok(cityDTO);
+    public ResponseEntity<Long> deleteCity(@PathVariable("id") Long id) {
+        cityService.deleteCity(id);
+        return ResponseEntity.ok(id);
     }
 }
