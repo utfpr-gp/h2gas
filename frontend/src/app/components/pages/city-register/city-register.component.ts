@@ -89,4 +89,16 @@ export class CityRegisterComponent implements OnInit {
     })
   }
 
+  openModalDelete(city: City) {
+    console.log("naqueles pique");
+    
+    console.log(city);
+    
+    
+  }
+
+  deleteCity() {
+    
+  }
+
 }
