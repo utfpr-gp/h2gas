@@ -6,6 +6,7 @@ import { UserService } from '../../../services/user.service';
 import { ToastrService } from 'ngx-toastr';
 import { CityService } from '../../../services/city.service';
 import { City } from '../../../models/city';
+import { DeleteConfirmationModalComponent } from '../../delete-confirmation-modal/delete-confirmation-modal.component';
 
 @Component({
   selector: 'app-city-register',
@@ -13,6 +14,7 @@ import { City } from '../../../models/city';
     ReactiveFormsModule,
     CommonModule,
     FormsModule,
+    DeleteConfirmationModalComponent
   ],
   templateUrl: './city-register.component.html',
   styleUrl: './city-register.component.css'
@@ -24,6 +26,8 @@ export class CityRegisterComponent implements OnInit {
   city?: City;
 
   cityTabble?: City[];
+  idSelectCity?: number;
+  cityDeleteName: string = "";
 
   constructor(
     private router: Router,
@@ -90,15 +94,28 @@ export class CityRegisterComponent implements OnInit {
   }
 
   openModalDelete(city: City) {
-    console.log("naqueles pique");
-    
-    console.log(city);
-    
-    
+    this.idSelectCity = city.id;
+    this.cityDeleteName = city.name!;
+    setTimeout(() => {
+      const checkbox: any = document.getElementById('delete-modal');
+      if (checkbox) checkbox.checked = true;
+    });
   }
-
-  deleteCity() {
-    
+  
+  deleteConfirmed() {
+    if (this.idSelectCity) {
+      this.cityService.delete(this.idSelectCity).subscribe({
+        next: (response) => {
+          console.log('Cidade excluída com sucesso.', response);
+          this.toastr.success('Cidade excluída com sucesso!');
+          this.getCities();
+        },
+        error: (error) => {
+          console.error('Erro ao excluir cidade: ', error);
+          this.toastr.error(`Erro ao excluir cidade: ${error}`)
+        },
+      })
+    }
   }
 
 }

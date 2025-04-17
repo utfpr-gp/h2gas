@@ -209,7 +209,10 @@
               >
                 Cancelar
               </button>
-              <button type="submit" (click)="createCity()" class="px-4 py-2 bg-[#0017bf] hover:bg-[#0017bf]/80 text-white rounded-md">
+              <button 
+                type="submit" 
+                (click)="createCity()" 
+                class="px-4 py-2 bg-[#0017bf] hover:bg-[#0017bf]/80 text-white rounded-md cursor-pointer">
                 Salvar
               </button>
             </div>
@@ -219,7 +222,14 @@
     </div>
 
     <!-- modal delete -->
-    
+    <app-delete-confirmation-modal
+      [itemName]="cityDeleteName"
+      (confirm)="deleteConfirmed()"
+      (cancel)="idSelectCity = undefined">
+    </app-delete-confirmation-modal>
+
+    <!-- Toggle checkbox que ativa o modal -->
+    <input type="checkbox" id="delete-modal" class="modal-toggle" [checked]="idSelectCity" hidden />
 
   </body>
 </html>
