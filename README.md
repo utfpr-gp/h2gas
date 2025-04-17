@@ -4,7 +4,7 @@ O **H2Gás** é uma aplicação web desenvolvida para facilitar a gestão de ped
 
 ## 📃 Equipe
 
-Desenvolvido por: [Pablo de Paula Correia](https://github.com/pablo)\
+Desenvolvido por: [Pablo de Paula Correia](https://github.com/PabloC5)\
 Orientador: [Dr. Roni Fabio Banaszewski](https://ronifabio.github.io/)
 
 ## 🔧 Tecnologias utilizadas

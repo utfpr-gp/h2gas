@@ -1,0 +1,41 @@
+package com.h2gas.model.mapper;
+
+import com.h2gas.model.dto.RegisterDTO;
+import com.h2gas.model.dto.UserDto;
+import com.h2gas.model.entity.User;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+@Component
+public class UserMapper {
+//    @Autowired
+//    private ModelMapper modelMapper;
+//TODO perguntar qual manteremos
+    public UserDto toDto(User data) {
+//        return modelMapper.map(data, UserDto.class);
+        return new UserDto(
+                data.getId(),
+                data.getName(),
+                data.getEmail(),
+                data.getPhoneNumber(),
+                data.getCpf(),
+                data.getCnpj(),
+                data.getUserType()
+        );
+    }
+
+    public User toEntity(RegisterDTO data) {
+//        return modelMapper.map(data, User.class);
+        return new User(
+                null,
+                data.name(),
+                data.email(),
+                data.phoneNumber(),
+                data.cpf(),
+                data.cnpj(),
+                data.password(),
+                data.userType()
+        );
+    }
+}

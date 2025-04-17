@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Login</title>
+    </head>
+    <body>
+        <section class="bg-[#0E2068] bg-gradient-to-r from-[#0E2068] to-[#3B82F6] min-h-screen flex flex-col items-center justify-center px-4 py-16">
+            <div class="flex items-center justify-center min-h-screen">
+            <div class="mr-9">
+                <img src="../assets/logo-h2.png" alt="logo">
+            </div>
+            <div class="flex items-center justify-center min-h-screen">
+                <div class="card w-[600px] bg-white shadow-xl p-8 rounded-xl">
+                <h2 class="text-2xl font-semibold text-center mb-4">{{tittleRegister}}</h2>
+                <form [formGroup]="registerForm">
+                    <div class="grid grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">Nome</span></label>
+                        <input type="text" placeholder="Digite seu nome" formControlName="name" 
+                        class="input input-bordered w-full"
+                        [ngClass]="{ 'border-red-500': isInvalid('name') }">
+                        <span *ngIf="isInvalid('name')" class="text-red-500 text-sm mt-1">{{ getErrorMessage('name') }}</span>
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">Email</span></label>
+                        <input type="email" placeholder="email@exemplo.com" formControlName="email" 
+                        class="input input-bordered w-full"
+                        [ngClass]="{ 'border-red-500': isInvalid('email') }">
+                        <span *ngIf="isInvalid('email')" class="text-red-500 text-sm mt-1">{{ getErrorMessage('email') }}</span>
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">Telefone</span></label>
+                        <input type="tel" placeholder="+55 (99) 99999-9999" formControlName="phoneNumber" 
+                        class="input input-bordered w-full"
+                        [ngClass]="{ 'border-red-500': isInvalid('phoneNumber') }">
+                        <span *ngIf="isInvalid('phoneNumber')" class="text-red-500 text-sm mt-1">{{ getErrorMessage('phoneNumber') }}</span>
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">CPF</span></label>
+                        <input type="text" placeholder="000.000.000-00" formControlName="cpf" class="input input-bordered w-full">
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">Senha</span></label>
+                        <input type="password" placeholder="Digite uma senha" formControlName="password" 
+                        class="input input-bordered w-full"
+                        [ngClass]="{ 'border-red-500': isInvalid('password') }">
+                        <span *ngIf="isInvalid('password')" class="text-red-500 text-sm mt-1">{{ getErrorMessage('password') }}</span>
+                    </div>
+
+                    <div class="form-control">
+                        <label class="label"><span class="label-text">Confirme a senha</span></label>
+                        <input type="password" placeholder="Repita a senha" required [ngModelOptions]="{standalone: true}" [(ngModel)]="confirmPassword" 
+                        class="input input-bordered w-full">
+                    </div>
+                    </div>
+                </form>
+
+                <button (click)="register()" type="submit" class="btn btn-primary w-full mt-6">
+                    CADASTRAR
+                </button>
+
+                <div class="text-center mt-4 text-sm text-gray-500">
+                    Já tem uma conta? <a href="#" class="text-blue-500 hover:underline">Faça login</a>
+                </div>
+
+                <div class="text-center mt-2 text-sm text-gray-500">
+                    Quer vender pelo nosso app?
+                    <button (click)="navigateRoute('/register-supplier')" class="text-blue-500 hover:underline">Cadastre-se como fornecedor</button>
+                </div>
+                </div>
+            </div>
+            </div>
+        </section>
+    </body>
+</html>
