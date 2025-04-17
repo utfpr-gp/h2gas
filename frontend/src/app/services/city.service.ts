@@ -7,7 +7,7 @@ import { AbstractService } from './abstract.service';
   providedIn: 'root'
 })
 export class CityService extends AbstractService<City>{
-  override baseUrl: string = 'http://localhost:8080/h2gas/api/addresses'
+  override baseUrl: string = 'http://localhost:8080/h2gas/api/cities'
 
   constructor(protected override http: HttpClient) {
     super(http);
