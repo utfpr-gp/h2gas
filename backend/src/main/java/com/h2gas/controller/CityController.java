@@ -24,7 +24,7 @@ public class CityController {
 
     @GetMapping
     @ResponseBody
-    @RolesAllowed("ROLE_ADMIN")
+    @RolesAllowed("ADMIN")
     public ResponseEntity<List<CityDTO>> getAllCities() {
         List<CityDTO> cityDTO = cityService.findAllCities();
         return ResponseEntity.ok(cityDTO);
@@ -32,7 +32,7 @@ public class CityController {
 
     @PostMapping
     @ResponseBody
-    @RolesAllowed("ROLE_ADMIN")
+    @RolesAllowed("ADMIN")
     public ResponseEntity<CityDTO> createCity(@RequestBody CityDTO cityDTO) {
         cityService.createCity(cityDTO);
         return ResponseEntity.ok(cityDTO);
@@ -40,7 +40,7 @@ public class CityController {
 
     @DeleteMapping("/{id}")
     @ResponseBody
-    @RolesAllowed("ROLE_ADMIN")
+    @RolesAllowed("ADMIN")
     public ResponseEntity<Long> deleteCity(@PathVariable("id") Long id) {
         cityService.deleteCity(id);
         return ResponseEntity.ok(id);
