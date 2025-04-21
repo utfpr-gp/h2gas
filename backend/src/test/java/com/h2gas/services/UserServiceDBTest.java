@@ -1,4 +1,4 @@
-package com.h2gas.services.impl;
+package com.h2gas.services;
 
 import com.h2gas.model.dto.UserDto;
 import com.h2gas.model.entity.User;
@@ -11,10 +11,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@TestPropertySource(properties = "jwt.secret=segredoFake123")
 public class UserServiceDBTest {
     @Autowired
     private UserService userService;
@@ -53,6 +56,6 @@ public class UserServiceDBTest {
             userService.findByIdUSer(invalidId);
         });
 
-        assertEquals("User not found with id: " + invalidId, exception.getMessage());
+        assertEquals("Cidade não encontra com esse id: " + invalidId, exception.getMessage());
     }
 }

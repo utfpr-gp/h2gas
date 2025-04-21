@@ -32,7 +32,7 @@ public class CityService {
     public CityDTO findByIdCity(Long id) {
         Optional<City> cityEntityOptional = cityRepository.findById(id);
         return cityEntityOptional.map(cityMapper::toDto).orElseThrow(()
-                -> new RuntimeException("User not found with id: " + id));
+                -> new RuntimeException("Cidade não encontra com esse id: " + id));
     }
 
     public CityDTO createCity(CityDTO cityDTO) {

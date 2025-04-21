@@ -1,4 +1,4 @@
-package com.h2gas.services.impl;
+package com.h2gas.services;
 
 import com.h2gas.configuration.security.TokenService;
 import com.h2gas.model.dto.UserDto;
@@ -23,6 +23,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,6 +38,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 //@SpringBootTest
 @ActiveProfiles("test")
+@TestPropertySource(properties = "jwt.secret=segredoFake123")
 class UserServiceTest {
     @InjectMocks
     private UserService userService;
