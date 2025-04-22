@@ -32,7 +32,15 @@ public class UserServiceDBTest {
 
     @BeforeEach
     public void setUp() {
-        User user = new User(null,"Pablo Teste", "pablo@gmail.com", "1234545", "123435345", "234234234", "4534534", UserTypeEnum.CUSTOMER, null);
+        User user = new User(null,
+                "Pablo Teste",
+                "pablo@gmail.com",
+                "1234545",
+                "123435345",
+                "234234234",
+                "4534534",
+                UserTypeEnum.CUSTOMER,
+                null);
 
         userRepository.save(user);
 
