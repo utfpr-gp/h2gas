@@ -45,7 +45,8 @@ public class AuthenticationController {
     public ResponseEntity<AuthenticationDTO> register(@RequestBody @Validated RegisterDTO data) {
         System.out.println(this.userRepository.findByEmail(data.getEmail()));
 //        || data.getUserType() == UserTypeEnum.ADMIN
-        if (this.userRepository.findByEmail(data.getEmail()) != null ) {
+        if (this.userRepository.findByEmail(data.getEmail()) != null ||
+                data.getUserType() == UserTypeEnum.ADMIN) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 

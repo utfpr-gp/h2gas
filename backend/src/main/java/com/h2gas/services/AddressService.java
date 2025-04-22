@@ -1,5 +1,6 @@
 package com.h2gas.services;
 
+import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.AddressDTO;
 import com.h2gas.model.dto.CityDTO;
 import com.h2gas.model.entity.Address;
@@ -40,7 +41,7 @@ public class AddressService {
     public AddressDTO findByIdAddress(Long id) {
         Optional<Address> adrresEntityOptional = addressRepository.findById(id);
         return adrresEntityOptional.map(addressMapper::toDto).orElseThrow(()
-                -> new RuntimeException("User not found with id: " + id));
+                -> new ResourceNotFoundException("User not found with id: " + id));
     }
 
     public AddressDTO createAddress(AddressDTO addressDTO) {
@@ -53,7 +54,7 @@ public class AddressService {
 
     public AddressDTO updateAddress(AddressDTO addressDTO) {
         Address addressExisting = addressRepository.findById(addressDTO.getId())
-                .orElseThrow(() -> new RuntimeException("Endereço não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Endereço não encontrado"));
 
         City city = cityMapper.toEntity(cityService.findByName(addressDTO.getCityName()));
         addressExisting.setStreetName(addressDTO.getStreetName());

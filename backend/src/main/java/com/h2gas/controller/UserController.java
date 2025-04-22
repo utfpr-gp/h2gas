@@ -31,7 +31,7 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<UserDto> getUsuarioLogado(Authentication authentication) {
-        User user = (User) authentication.getPrincipal(); // ou ((User) authentication.getPrincipal()).getEmail()
+        User user = (User) authentication.getPrincipal();
         UserDto userDto = userMapper.toDto(user);
         return ResponseEntity.ok(userDto);
     }
