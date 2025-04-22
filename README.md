@@ -23,6 +23,7 @@ Orientador: [Dr. Roni Fabio Banaszewski](https://ronifabio.github.io/)
 ### **Frontend**
 
 - **[Angular](https://angular.io)**
+- **[Figma](https://www.figma.com/design/pCcfhdubJ69xdHNtVqj32B/tcc2?node-id=0-1&p=f&t=WCkkDzVxo48i4ABP-0)** - prototipação das telas
 - **[RxJS](https://rxjs.dev/)** – Manipulação reativa de dados e requisições HTTP
 - **[Tailwind CSS](https://tailwindcss.com/) + [DaisyUI](https://daisyui.com/)** – Estilização moderna e responsiva
 - **[Leaflet.js](https://leafletjs.com/)** – Integração com mapas
