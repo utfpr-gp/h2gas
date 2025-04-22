@@ -6,8 +6,10 @@ import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.mapper.UserMapper;
 import com.h2gas.model.repository.UserRepository;
 import com.h2gas.services.UserService;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -17,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestPropertySource(properties = "jwt.secret=segredoFake123")
 public class UserServiceDBTest {
     @Autowired
@@ -30,7 +33,7 @@ public class UserServiceDBTest {
 
     private String validUserId;
 
-    @BeforeEach
+    @BeforeAll
     public void setUp() {
         User user = new User(null,
                 "Pablo Teste",
@@ -64,6 +67,6 @@ public class UserServiceDBTest {
             userService.findByIdUSer(invalidId);
         });
 
-        assertEquals("Cidade não encontra com esse id: " + invalidId, exception.getMessage());
+        assertEquals("User not found with id: " + invalidId, exception.getMessage());
     }
 }
