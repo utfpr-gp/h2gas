@@ -32,4 +32,8 @@ public class Address {
     @JoinColumn(name = "city_id")
     private City city;
 
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
 }

@@ -70,8 +70,7 @@ class UserServiceTest {
                 "123435345",
                 "234234234",
                 "4534534",
-                UserTypeEnum.CUSTOMER,
-                null);
+                UserTypeEnum.CUSTOMER);
 
         UserDto userDtoMock = new UserDto();
         userDtoMock.setEmail("pablo@gmail.com");

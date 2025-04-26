@@ -52,6 +52,12 @@ public class AddressService {
         return addressMapper.toDto(address);
     }
 
+    public AddressDTO findByStreetName(String streetName) {
+        Optional<Address> addressOptional = addressRepository.findByStreetName(streetName);
+        return addressOptional.map(addressMapper::toDto).orElseThrow(()
+                -> new ResourceNotFoundException("Endereço não encontrada com esse nome de rua: " + streetName));
+    }
+
     public AddressDTO updateAddress(AddressDTO addressDTO) {
         Address addressExisting = addressRepository.findById(addressDTO.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Endereço não encontrado"));
