@@ -16,7 +16,7 @@ export class UserService extends AbstractService<User> {
   }
 
   getMe() {
-    return this.http.get(`${this.baseUrl}/me`)
+    return this.http.get(`${environment.apiUrl}/users/me`)
   }
 
   getUserLocalStorage() {

@@ -19,12 +19,13 @@ public class SupplierDTO {
     private boolean active;
     private String cityName;
     private UserDto user;
+    // ID do usuário para criação
+    private String userId;
 
-//    address relacionamento
+    //    address relacionamento
     private String addressNeighborhood;
     private String addressComplement;
     private String addressStreetName;
     private String addressNumber;
-
-
+    private Long addressId;
 }

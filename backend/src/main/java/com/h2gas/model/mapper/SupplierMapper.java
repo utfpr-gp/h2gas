@@ -40,11 +40,13 @@ public class SupplierMapper {
             supplierDTO.setAddressComplement(supplier.getAddress().getComplement());
             supplierDTO.setAddressStreetName(supplier.getAddress().getStreetName());
             supplierDTO.setAddressNumber(supplier.getAddress().getNumber());
+            supplierDTO.setAddressId(supplier.getAddress().getId());
         }
 
         if (supplier.getUser() != null) {
             UserDto userDto = userMapper.toDto(supplier.getUser());
             supplierDTO.setUser(userDto);
+            supplierDTO.setUserId(userDto.getId());
         }
 
         return supplierDTO;

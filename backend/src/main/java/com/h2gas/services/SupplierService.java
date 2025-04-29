@@ -12,6 +12,7 @@ import com.h2gas.model.mapper.CityMapper;
 import com.h2gas.model.mapper.SupplierMapper;
 import com.h2gas.model.mapper.UserMapper;
 import com.h2gas.model.repository.SupplierRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -61,18 +62,37 @@ public class SupplierService {
     }
 
     public SupplierDTO createSupplier(SupplierDTO supplierDTO) {
+        Supplier supplier = supplierMapper.toEntity(supplierDTO);
+
         City city = cityMapper.toEntity(cityService.findByName(supplierDTO.getCityName()));
-        Address address = addressMapper.toEntity(addressService.findByStreetName(
-                supplierDTO.getAddressStreetName())
+        if (city == null) {
+            throw new ResourceNotFoundException("City not found");
+        }
+        Address address = addressMapper.toEntity(addressService.findByIdAddress(
+                supplierDTO.getAddressId())
         );
 
-        User user = userMapper.toEntityUser(userService.findByName(supplierDTO.getUser().getName()));
-        Supplier supplier = supplierMapper.toEntity(supplierDTO);
+        if (address == null) {
+            throw new ResourceNotFoundException("Address not found");
+        }
+
+        User user = userMapper.toEntityUser(userService.findByIdUSer(supplierDTO.getUserId()));
+
+        if (user == null) {
+            throw new ResourceNotFoundException("User not found");
+        }
         supplier.setCity(city);
         supplier.setAddress(address);
         supplier.setUser(user);
         supplierRepository.save(supplier);
 
         return supplierMapper.toDto(supplier);
+    }
+
+    public void deleteSupplier(Long id) {
+        Supplier supplier = supplierRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Fornecedor com " + id + " não encontrado"));
+
+        supplierRepository.delete(supplier);
     }
 }
