@@ -5,6 +5,7 @@ import { RegisterComponent } from './components/pages/register/register.componen
 import { RegisterSupplierComponent } from './components/pages/register-supplier/register-supplier.component';
 import { CityRegisterComponent } from './components/pages/city-register/city-register.component';
 import { authGuard } from './guards/auth.guard';
+import { SupplierApprovalComponent } from './components/pages/supplier-approval/supplier-approval.component';
 
 export const routes: Routes = [
     {path: '', component: InitialScreenComponent},
@@ -14,6 +15,12 @@ export const routes: Routes = [
     {
         path: 'register-city', 
         component: CityRegisterComponent,
+        canActivate: [authGuard],
+        data: {roles: ['ADMIN']}
+    },
+    {
+        path: 'supplier-approval', 
+        component: SupplierApprovalComponent,
         canActivate: [authGuard],
         data: {roles: ['ADMIN']}
     },
