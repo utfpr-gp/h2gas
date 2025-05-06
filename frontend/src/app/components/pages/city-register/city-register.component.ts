@@ -7,6 +7,7 @@ import { ToastrService } from 'ngx-toastr';
 import { CityService } from '../../../services/city.service';
 import { City } from '../../../models/city';
 import { DeleteConfirmationModalComponent } from '../../delete-confirmation-modal/delete-confirmation-modal.component';
+import { DynamicTableComponent } from '../../dynamic-table/dynamic-table.component';
 
 @Component({
   selector: 'app-city-register',
@@ -14,7 +15,8 @@ import { DeleteConfirmationModalComponent } from '../../delete-confirmation-moda
     ReactiveFormsModule,
     CommonModule,
     FormsModule,
-    DeleteConfirmationModalComponent
+    DeleteConfirmationModalComponent,
+    DynamicTableComponent
   ],
   templateUrl: './city-register.component.html',
   styleUrl: './city-register.component.css'
@@ -28,6 +30,20 @@ export class CityRegisterComponent implements OnInit {
   cityTabble?: City[];
   idSelectCity?: number;
   cityDeleteName: string = "";
+
+  colunsCityTabble? = [
+    { key: 'name', label: 'Cidade' },
+    { key: 'state', label: 'Estado' }
+  ]
+
+  actions = [
+    {
+      label: 'Excluir',
+      icon: 'fas fa-trash',
+      class: 'bg-red-500 hover:bg-red-600',
+      onClick: (row: City) => this.openModalDelete(row)
+    }
+  ];
 
   constructor(
     private router: Router,
@@ -71,8 +87,9 @@ export class CityRegisterComponent implements OnInit {
         this.toastr.success('Busca de cidades completas!');
       },
       error: (error) => {
-        console.error('Erro ao buscar:', error);
-        this.toastr.error(`Erro ao buscar cidades: ${error}`)
+        debugger
+        console.error('Erro ao buscar:', error.error.message);
+        this.toastr.error(`Erro ao buscar cidades: ${error.error.message}`)
       },
     })
   }
@@ -87,15 +104,17 @@ export class CityRegisterComponent implements OnInit {
         this.closeModal();
       },
       error: (error) => {
-        console.error('Erro ao criar cidade:', error);
-        this.toastr.error(`Erro ao criar cidade: ${error}`)
+        console.error('Erro ao criar cidade:', error.error.message);
+        this.toastr.error(`Erro ao criar cidade: ${error.error.message}`)
       },
     })
   }
 
   openModalDelete(city: City) {
+    debugger
     this.idSelectCity = city.id;
     this.cityDeleteName = city.name!;
+    
     setTimeout(() => {
       const checkbox: any = document.getElementById('delete-modal');
       if (checkbox) checkbox.checked = true;
@@ -103,6 +122,7 @@ export class CityRegisterComponent implements OnInit {
   }
   
   deleteConfirmed() {
+    debugger
     if (this.idSelectCity) {
       this.cityService.delete(this.idSelectCity).subscribe({
         next: (response) => {

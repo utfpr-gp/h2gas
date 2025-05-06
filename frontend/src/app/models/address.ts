@@ -4,7 +4,7 @@ import { User } from "./user";
 export class Address {
     id?: number;
     streetName?: string;
-    numberHouse?: string;
+    number?: string;
     complement?: string;
     neighborhood?: string;
     zipCode?: string;
@@ -17,7 +17,7 @@ export class Address {
     ) {
         this.id = id
         this.streetName = streetName
-        this.numberHouse = numberHouse
+        this.number = numberHouse
         this.complement = complement
         this.neighborhood = neighborhood 
         this.zipCode = zipCode

@@ -2,7 +2,7 @@ import { Address } from "./address";
 import { City } from "./city";
 import { User } from "./user";
 
-export class supplier {
+export class Supplier {
     id?: number;
     name?: string;
     phone?: string;

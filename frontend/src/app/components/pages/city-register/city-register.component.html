@@ -25,7 +25,7 @@
                 <img src="../assets/logo-sem-titulo.png" alt="">
               </div>
               <span class="text-white text-xl font-bold tracking-tight hidden sm:inline-block">
-                H2Gas
+                H2Gás
               </span>
             </div>
           </div>
@@ -132,7 +132,14 @@
         </div>
 
         <div class="overflow-x-auto rounded-lg shadow-md">
-          <table class="min-w-full divide-y divide-gray-200 text-sm">
+          <app-dynamic-table [data]="cityTabble!!"
+            [columns]="colunsCityTabble!!"
+            [actions]="actions"
+          >
+            
+          </app-dynamic-table>
+          
+          <!-- <table class="min-w-full divide-y divide-gray-200 text-sm">
             <thead class="bg-gray-100">
               <tr>
                 <th class="px-4 py-2 text-left font-medium text-gray-700 uppercase">Cidade</th>
@@ -148,11 +155,6 @@
                 <td class="px-4 py-2 text-gray-900">{{ cidade.name }}</td>
                 <td class="px-4 py-2 text-gray-500">{{ cidade.state }}</td>
                 <td class="px-4 py-2 text-center">
-                  <!-- <button
-                    class="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 rounded mr-1 transition"
-                  >
-                    Editar
-                  </button> -->
                   <button
                     class="btn btn-sm bg-blue-500 hover:bg-blue-600 text-white p-2 rounded transition-all duration-200"
                    
@@ -182,7 +184,7 @@
                 </td>
               </tr>
             </tbody>
-          </table>
+          </table> -->
         </div>
       </div>
     </main>
