@@ -41,10 +41,20 @@
                         <span *ngIf="isInvalid('phoneNumber')" class="text-red-500 text-sm mt-1">{{ getErrorMessage('phoneNumber') }}</span>
                     </div>
 
-                    <div class="form-control">
-                        <label class="label"><span class="label-text">CPF</span></label>
-                        <input type="text" placeholder="000.000.000-00" formControlName="cpf" class="input input-bordered w-full">
-                    </div>
+                    @if (userType == 'CUSTOMER') {
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">CPF</span></label>
+                            <input type="text" placeholder="000.000.000-00" formControlName="cpf" class="input input-bordered w-full">
+                        </div>
+                    } 
+
+                    @if (userType == 'SUPPLIER') {
+                        <div class="form-control">
+                            <label class="label"><span class="label-text">CNPJ</span></label>
+                            <input type="text" placeholder="99.999.999/9999-99" formControlName="cnpj" class="input input-bordered w-full">
+                        </div>
+                    }
+                    
 
                     <div class="form-control">
                         <label class="label"><span class="label-text">Senha</span></label>
@@ -67,7 +77,10 @@
                 </button>
 
                 <div class="text-center mt-4 text-sm text-gray-500">
-                    Já tem uma conta? <a href="#" class="text-blue-500 hover:underline">Faça login</a>
+                    Já tem uma conta?
+                    <button (click)="navigateRoute('/login')" class="text-blue-500 hover:underline">
+                        Faça login
+                    </button>
                 </div>
 
                 <div class="text-center mt-2 text-sm text-gray-500">

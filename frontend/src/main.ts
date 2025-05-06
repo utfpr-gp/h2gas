@@ -4,6 +4,8 @@ import { AppComponent } from './app/app.component';
 import { importProvidersFrom } from '@angular/core';
 import { ToastrModule } from 'ngx-toastr';
 import { provideAnimations } from '@angular/platform-browser/animations';
+import { authInterceptor } from './app/interceptors/auth.interceptor';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
 
 // bootstrapApplication(AppComponent, appConfig)
@@ -14,7 +16,12 @@ bootstrapApplication(AppComponent, {
   providers: [
     ...(appConfig.providers || []),
     importProvidersFrom(ToastrModule.forRoot()),
-    provideAnimations()
+    provideAnimations(),
+    provideHttpClient(
+      withInterceptors([
+        authInterceptor
+      ])
+    )
   ]
 
 }).catch((err) => console.error(err));

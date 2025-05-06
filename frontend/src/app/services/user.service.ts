@@ -15,4 +15,12 @@ export class UserService extends AbstractService<User> {
     super(http);
   }
 
+  getMe() {
+    return this.http.get(`${this.baseUrl}/me`)
+  }
+
+  getUserLocalStorage() {
+    return JSON.parse(localStorage.getItem('user')!!);    
+  }
+
 }

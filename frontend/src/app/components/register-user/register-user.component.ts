@@ -45,6 +45,7 @@ export class RegisterUserComponent implements OnInit {
       name: ['', [Validators.required, Validators.minLength(3)]],
       phoneNumber: ['', [Validators.required]],
       cpf: [''],
+      cnpj: [''],
       password: ['', [Validators.required, Validators.minLength(6)]],
       userType: [this.userType, [Validators.required]],
     })

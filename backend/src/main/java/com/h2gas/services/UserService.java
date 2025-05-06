@@ -1,5 +1,6 @@
 package com.h2gas.services;
 
+import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.UserDto;
 import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.UserMapper;
@@ -30,6 +31,6 @@ public class UserService {
     public UserDto findByIdUSer(String id) {
         Optional<User> userEntityOptional = userRepository.findById(id);
         return userEntityOptional.map(userMapper::toDto).orElseThrow(()
-                -> new RuntimeException("User not found with id: " + id));
+                -> new ResourceNotFoundException("User not found with id: " + id));
     }
 }

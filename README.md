@@ -125,7 +125,7 @@ Acesse a aplicação nos seguintes endereços:
 
 ## 🌄 Layout
 
-Os protótipos da aplicação estão disponíveis no [Figma](link).
+Os protótipos da aplicação estão disponíveis no [Figma](https://www.figma.com/design/pCcfhdubJ69xdHNtVqj32B/tcc2?node-id=0-1&p=f&t=WCkkDzVxo48i4ABP-0).
 
 ## 📒 Monografia
 

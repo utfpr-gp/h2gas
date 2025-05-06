@@ -43,15 +43,17 @@ public class AuthenticationController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthenticationDTO> register(@RequestBody @Validated RegisterDTO data) {
-        System.out.println(this.userRepository.findByEmail(data.email()));
-        if (this.userRepository.findByEmail(data.email()) != null || data.userType() == UserTypeEnum.ADMIN) {
+        System.out.println(this.userRepository.findByEmail(data.getEmail()));
+//        || data.getUserType() == UserTypeEnum.ADMIN
+        if (this.userRepository.findByEmail(data.getEmail()) != null ||
+                data.getUserType() == UserTypeEnum.ADMIN) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
 
-        String encryptedPassword = new BCryptPasswordEncoder().encode(data.password());
+        String encryptedPassword = new BCryptPasswordEncoder().encode(data.getPassword());
 
-        User user = new User(data.name(), data.email(), data.phoneNumber(),
-                data.cpf(), data.cnpj(), encryptedPassword, data.userType());
+        User user = new User(data.getName(), data.getEmail(), data.getPhoneNumber(),
+                data.getCpf(), data.getCnpj(), encryptedPassword, data.getUserType());
 
         this.userRepository.save(user);
 

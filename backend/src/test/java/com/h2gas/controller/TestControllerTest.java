@@ -3,7 +3,12 @@ package com.h2gas.controller;
 import com.h2gas.configuration.security.SecurityConfigurations;
 import com.h2gas.configuration.security.SecurityFilter;
 import com.h2gas.configuration.security.TokenService;
+import com.h2gas.model.mapper.AddressMapper;
+import com.h2gas.model.mapper.CityMapper;
+import com.h2gas.model.mapper.UserMapper;
 import com.h2gas.model.repository.UserRepository;
+import com.h2gas.services.AddressService;
+import com.h2gas.services.CityService;
 import com.h2gas.services.UserService;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +21,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.context.ActiveProfiles;
 
-@WebMvcTest
+//@WebMvcTest
+@WebMvcTest(TestController.class)
 @Import(SecurityConfigurations.class)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc(addFilters = false)
@@ -35,7 +41,6 @@ class TestControllerTest {
 
     @MockitoBean
     private UserService userService;
-
 
     @Test
     public void test1() throws Exception{
