@@ -95,4 +95,12 @@ public class SupplierService {
 
         supplierRepository.delete(supplier);
     }
+
+    public void updateStatusSupplier(Long id, boolean active) {
+        Supplier supplier = supplierRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Fornecedor com " + id + " não encontrado"));
+
+        supplier.setActive(active);
+        supplierRepository.save(supplier);
+    }
 }

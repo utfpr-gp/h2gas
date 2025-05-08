@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -40,6 +41,15 @@ public class SupplierController {
     public ResponseEntity<Long> deleteSupplier(@PathVariable("id") Long id) {
         supplierService.deleteSupplier(id);
         return ResponseEntity.ok(id);
+    }
+
+    @PatchMapping("/{id}/update-active")
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> updateSupplierStatus(@PathVariable Long id,
+                                                     @RequestBody Map<String, Boolean> status) {
+        boolean novoStatus = status.get("active");
+        supplierService.updateStatusSupplier(id, novoStatus);
+        return ResponseEntity.ok(Map.of("message", "Status atualizado com sucesso"));
     }
 
 }
