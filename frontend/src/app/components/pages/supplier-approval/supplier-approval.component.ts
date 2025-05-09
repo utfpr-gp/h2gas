@@ -33,16 +33,7 @@ export class SupplierApprovalComponent implements OnInit {
     {key: 'user.email', label: 'Email'},
     {key: 'user.phoneNumber', label: 'Telefone Proprietário'},
   ]
-
-//   actions = [
-//   {
-//     label: 'Toggle Ativo',
-//     icon: 'fa fa-toggle-on',
-//     class: 'bg-blue-500',
-//     onClick: (row: any) => this.toggleFornecedor(row)
-//   },
-//   // outras ações, se houver
-// ];
+  
   constructor(
     private supplierService: SupplierService,
     private toastr: ToastrService,
@@ -53,13 +44,7 @@ export class SupplierApprovalComponent implements OnInit {
   ngOnInit(): void {
   }
 
-  toggleFornecedor(row: any) {
-    console.log(row);
-    
-  }
-
   getSuppliers() {
-    debugger
     this.supplierService.findAll().subscribe({
       next: (response) => {
         console.log('Buscado com sucesso', response);
@@ -77,25 +62,18 @@ export class SupplierApprovalComponent implements OnInit {
   }
 
   handleSwitchChange(event: { row: any; key: string; value: boolean }) {
-    debugger
-    console.log('Switch alterado no pai:', event);
-  
     event.row[event.key] = event.value;
 
     this.supplierChangeActive = event.row;
-
-    console.log("aqui o novo supplier");
-    
-    console.log(this.supplierChangeActive);
 
     this.activeSupplier(this.supplierChangeActive!!);
   }
 
   activeSupplier(supplier: Supplier) {
-    debugger
     let data = {
       "active": this.supplierChangeActive?.active
     }
+
     this.supplierService.activeSuppliers(data, supplier.id!!).subscribe({
       next: (response: any) => {
         console.log('Atualizado com sucesso', response);
