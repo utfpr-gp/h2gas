@@ -12,4 +12,8 @@ export class SupplierService extends AbstractService<Supplier> {
   constructor(protected override http: HttpClient) { 
     super(http);
   }
+
+  activeSuppliers(data: any, id: number) {
+    return this.http.patch(`${this.baseUrl}/${id}/update-active`, data);
+  }
 }

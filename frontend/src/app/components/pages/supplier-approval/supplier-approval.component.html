@@ -130,8 +130,7 @@
           <app-dynamic-table 
           [data]="suppliers!!"
           [columns]="columns!!"
-          [actions]="actions"
-
+          (switchChanged)="handleSwitchChange($event)"
           >
             
           </app-dynamic-table>

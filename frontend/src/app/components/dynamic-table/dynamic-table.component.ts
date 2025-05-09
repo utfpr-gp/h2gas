@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 @Component({
@@ -13,10 +13,14 @@ import { FormsModule } from '@angular/forms';
 })
 export class DynamicTableComponent {
   @Input() data: any[] = [];
+
+  @Output() switchChanged = new EventEmitter<{ row: any; key: string; value: boolean }>();
+
   
   @Input() columns: { 
     key: string, 
-    label: string 
+    label: string,
+    type?: string
   }[] = [];
   
   
@@ -30,4 +34,22 @@ export class DynamicTableComponent {
   getNestedValue(obj: any, path: string): any {
     return path.split('.').reduce((acc, key) => acc?.[key], obj);
   }
+
+  onSwitchToggle(row: any, key: string, value: any): void {
+    // Atualiza o valor na linha
+    debugger
+    const checked = value.target.checked;
+    this.switchChanged.emit({ row, key, value: checked });
+    // const keys = key.split('.');
+    // let target = row;
+    // for (let i = 0; i < keys.length - 1; i++) {
+    //   target = target[keys[i]];
+    // }
+    // target[keys[keys.length - 1]] = value.target.checked;
+  
+    // // // Opcional: emita um evento, salve no backend, etc.
+    // console.log('Switch changed:', key, value.target.checked);
+  }
+
+  
 }
