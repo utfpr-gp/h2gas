@@ -49,7 +49,7 @@ public class AddressService {
     public AddressDTO findByIdAddress(Long id) {
         Optional<Address> adrresEntityOptional = addressRepository.findById(id);
         return adrresEntityOptional.map(addressMapper::toDto).orElseThrow(()
-                -> new ResourceNotFoundException("User not found with id: " + id));
+                -> new ResourceNotFoundException("Endereço não encontrado com esse id: " + id));
     }
 
     public AddressDTO createAddress(AddressDTO addressDTO) {

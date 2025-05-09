@@ -80,13 +80,26 @@ class CityServiceTest {
         assertEquals("Cidade não encontra com esse id: " + idInvalid, exception.getMessage());
     }
 
-//    @Test
-//    void createCity() {
-//    }
-//
-//    @Test
-//    void deleteCity() {
-//    }
+    @Test
+    @DisplayName("Deve deletar cidade")
+    void deleteCity() {
+        assertTrue(cityRepository.findById(validCityId).isPresent());
+        cityService.deleteCity(validCityId);
+        assertFalse(cityRepository.findById(validCityId).isPresent());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao tentar deletar cidade inexistente")
+    void deleteCityNotFound() {
+        Long invalidId = 999L;
+
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            cityService.deleteCity(invalidId);
+        });
+
+        assertEquals("Cidade com id " + invalidId + " não encontrada", exception.getMessage());
+    }
+
 
     @Test
     @DisplayName("Deve encontra a cidade pelo nome")
@@ -94,5 +107,22 @@ class CityServiceTest {
         CityDTO result = cityService.findByName("Curitiba");
         assertNotNull(result);
         assertEquals("Curitiba", result.getName());
+    }
+
+    @Test
+    @DisplayName("Deve criar uma nova cidade com sucesso")
+    void createCitySuccess() {
+        CityDTO novaCidade = new CityDTO(null, "Londrina", "PR");
+
+        CityDTO cidadeCriada = cityService.createCity(novaCidade);
+
+        assertNotNull(cidadeCriada);
+        assertNotNull(cidadeCriada.getId());
+        assertEquals("Londrina", cidadeCriada.getName());
+        assertEquals("PR", cidadeCriada.getState());
+
+        City entidade = cityRepository.findById(cidadeCriada.getId()).orElse(null);
+        assertNotNull(entidade);
+        assertEquals("Londrina", entidade.getName());
     }
 }
