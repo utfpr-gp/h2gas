@@ -35,7 +35,7 @@
 
                     <div class="form-control">
                         <label class="label"><span class="label-text">Telefone</span></label>
-                        <input type="tel" placeholder="+55 (99) 99999-9999" formControlName="phoneNumber" 
+                        <input type="tel" mask="(00) 00000-0000" placeholder="+55 (99) 99999-9999" formControlName="phoneNumber" 
                         class="input input-bordered w-full"
                         [ngClass]="{ 'border-red-500': isInvalid('phoneNumber') }">
                         <span *ngIf="isInvalid('phoneNumber')" class="text-red-500 text-sm mt-1">{{ getErrorMessage('phoneNumber') }}</span>
@@ -44,7 +44,7 @@
                     @if (userType == 'CUSTOMER') {
                         <div class="form-control">
                             <label class="label"><span class="label-text">CPF</span></label>
-                            <input type="text" placeholder="000.000.000-00" formControlName="cpf" class="input input-bordered w-full">
+                            <input type="text" mask="000.000.000-00" placeholder="000.000.000-00" formControlName="cpf" class="input input-bordered w-full">
                         </div>
                     } 
 

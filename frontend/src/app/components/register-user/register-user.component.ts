@@ -7,6 +7,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { User } from '../../models/user';
 import { UserService } from '../../services/user.service';
+import { NgxMaskDirective } from 'ngx-mask';
 
 @Component({
   selector: 'app-register-user',
@@ -14,6 +15,7 @@ import { UserService } from '../../services/user.service';
     ReactiveFormsModule,
     CommonModule,
     FormsModule,
+    NgxMaskDirective
   ],
   templateUrl: './register-user.component.html',
   styleUrl: './register-user.component.css'
@@ -30,8 +32,6 @@ export class RegisterUserComponent implements OnInit {
 
   @Input()
   tittleRegister?: string;
-
-
 
 
   constructor(
