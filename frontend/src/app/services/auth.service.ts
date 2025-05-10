@@ -1,11 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  baseUrl: string = 'http://localhost:8080/h2gas/api/auth'
+  baseUrl: string = `${environment.apiUrl}/auth`
 
 
   constructor(
