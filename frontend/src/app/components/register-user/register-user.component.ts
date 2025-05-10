@@ -47,7 +47,7 @@ export class RegisterUserComponent implements OnInit {
       cpf: [''],
       cnpj: [''],
       password: ['', [Validators.required, Validators.minLength(6)]],
-      userType: [this.userType, [Validators.required]],
+      userType: [''],
     })
   }
   // , Validators.pattern(/^\+55\s\(\d{2}\)\s\d{5}-\d{4}$/)
@@ -57,15 +57,16 @@ export class RegisterUserComponent implements OnInit {
 
   register() {
     debugger
-
+    
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
       this.toastr.warning('Conferir informações!!')
       return; 
     }
 
-
     if (this.registerForm.get('password')?.value == this.confirmPassword) {
+      this.registerForm.get('userType')?.setValue(this.userType);
+
       this.user = this.registerForm?.value
       this.userService.create(this.user!!).subscribe({
         next: (response) => {
