@@ -1,7 +1,5 @@
 package com.h2gas;
 
-import com.h2gas.util.ConfigEnv;
-import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
