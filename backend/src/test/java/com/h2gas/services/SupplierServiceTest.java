@@ -11,14 +11,12 @@ import com.h2gas.model.repository.AddressRepository;
 import com.h2gas.model.repository.CityRepository;
 import com.h2gas.model.repository.SupplierRepository;
 import com.h2gas.model.repository.UserRepository;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -28,6 +26,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestPropertySource(properties = "jwt.secret=segredoFake123")
+@Transactional
 class SupplierServiceTest {
 
     @Autowired
@@ -51,9 +50,8 @@ class SupplierServiceTest {
     private Long validId;
 
 
-    @BeforeAll
+    @BeforeEach
     public void setUp() {
-
         User user = new User(null,
                 "Pablo Teste",
                 "pablo@gmail.com",
@@ -85,7 +83,7 @@ class SupplierServiceTest {
 
         Address address = new Address(
                 null,
-                "rua teste 2",
+                "rua teste fornecedor",
                 "123412343",
                 "perto do lugar teste 3",
                 "bairro do testado",
@@ -97,7 +95,7 @@ class SupplierServiceTest {
 
         Address address2 = new Address(
                 null,
-                "rua teste 3",
+                "rua teste fornecedor testando",
                 "1234123433333",
                 "perto do lugar teste 33",
                 "bairro do testado2",
@@ -160,7 +158,7 @@ class SupplierServiceTest {
     @Test
     @DisplayName("Retorna erro ao informa id invalido")
     void findByIdError() {
-        Long idInvalid = 4L;
+        Long idInvalid = 400L;
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             supplierService.findById(idInvalid);
         });

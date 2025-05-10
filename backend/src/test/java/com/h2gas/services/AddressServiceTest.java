@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -23,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @TestPropertySource(properties = "jwt.secret=segredoFake123")
+@Transactional
 class AddressServiceTest {
 
     @Autowired
@@ -99,7 +101,7 @@ class AddressServiceTest {
     @Test
     @DisplayName("Retorna erro ao passar o id incorreto do endereço")
     void findByIdAddressError() {
-        Long idInvalid = 4L;
+        Long idInvalid = 50L;
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             addressService.findByIdAddress(idInvalid);
         });
