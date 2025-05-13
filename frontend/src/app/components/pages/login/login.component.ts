@@ -54,18 +54,13 @@ export class LoginComponent {
   }
 
   getAndSaveMe() {
-    console.log("Vamos testar essa parada!!!!!");
-    debugger
-    
     this.userService.getMe().subscribe({
       next: (response: any) => {
-        debugger
         console.log('Usuario buscado sucesso!', response);
         localStorage.setItem('user', JSON.stringify(response))
         this.navigate('/register-city')
       }, 
       error: (error) => {
-        debugger
         console.error('Erro ao buscar o usuario logado:', error);
         this.toastr.error(`Erro ao buscar o usuario: ${error}`)
       }
