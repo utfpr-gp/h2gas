@@ -4,11 +4,13 @@ import { DynamicTableComponent } from '../../dynamic-table/dynamic-table.compone
 import { Supplier } from '../../../models/supplier';
 import { SupplierService } from '../../../services/supplier.service';
 import { ToastrService } from 'ngx-toastr';
+import { MenuComponent } from '../../menu/menu.component';
 
 @Component({
   selector: 'app-supplier-approval',
   imports: [
-    DynamicTableComponent
+    DynamicTableComponent,
+    MenuComponent
   ],
   templateUrl: './supplier-approval.component.html',
   styleUrl: './supplier-approval.component.css'

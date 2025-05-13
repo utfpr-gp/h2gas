@@ -8,6 +8,7 @@ import { CityService } from '../../../services/city.service';
 import { City } from '../../../models/city';
 import { DeleteConfirmationModalComponent } from '../../delete-confirmation-modal/delete-confirmation-modal.component';
 import { DynamicTableComponent } from '../../dynamic-table/dynamic-table.component';
+import { MenuComponent } from '../../menu/menu.component';
 
 @Component({
   selector: 'app-city-register',
@@ -16,7 +17,8 @@ import { DynamicTableComponent } from '../../dynamic-table/dynamic-table.compone
     CommonModule,
     FormsModule,
     DeleteConfirmationModalComponent,
-    DynamicTableComponent
+    DynamicTableComponent,
+    MenuComponent
   ],
   templateUrl: './city-register.component.html',
   styleUrl: './city-register.component.css'
