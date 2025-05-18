@@ -46,9 +46,9 @@ export class LoginComponent {
         localStorage.setItem('access_token', response.token)
         this.getAndSaveMe();
       }, 
-      error: (error) => {
-        console.error('Erro ao logar:', error);
-        this.toastr.error(`Erro ao efetuar o login: ${error}`)
+      error: (err) => {
+        console.error('Erro ao logar:', err);
+        this.toastr.error(`Erro ao efetuar o login: ${err.error.message}`)
       }
     })
   }
@@ -60,9 +60,9 @@ export class LoginComponent {
         localStorage.setItem('user', JSON.stringify(response))
         this.navigate('/register-city')
       }, 
-      error: (error) => {
-        console.error('Erro ao buscar o usuario logado:', error);
-        this.toastr.error(`Erro ao buscar o usuario: ${error}`)
+      error: (err) => {
+        console.error('Erro ao buscar o usuario logado:', err);
+        this.toastr.error(`Erro ao buscar o usuario: ${err.error.message}`)
       }
     })
   }

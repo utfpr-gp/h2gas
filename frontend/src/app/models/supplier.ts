@@ -6,26 +6,41 @@ export class Supplier {
     id?: number;
     name?: string;
     phone?: string;
-    workingHours?: string;
+    openingTime?: string;
+    closingTime?: string;
     averageDeliveryTime?: string;
     active?: boolean;
-    address?: Address;
-    city?: City;
+    addressId?: number;
+    cityId?: number;
+    cityName?: string;
     user?: User;
+    userId?: string;
 
     constructor(
-        id?: number,name?: string,
-        phone?: string, workingHours?: string, averageDeliveryTime?: string,
-        active?: boolean, address?: Address, city?: City, user?: User
+        id?: number,
+        name?: string,
+        phone?: string,
+        openingTime?: string,
+        closingTime?: string,
+        averageDeliveryTime?: string,
+        active?: boolean,
+        addressId?: number,
+        cityName?: string,
+        cityId?: number,
+        user?: User,
+        userId?: string
     ) {
-        this.id = id
-        this.name = name
-        this.phone = phone
-        this.workingHours = workingHours
-        this.averageDeliveryTime = averageDeliveryTime
-        this.active = active
-        this.address = address
-        this.city = city
-        this.user = user
+        this.id = id;
+        this.name = name;
+        this.phone = phone;
+        this.openingTime = openingTime;
+        this.closingTime = closingTime;
+        this.averageDeliveryTime = averageDeliveryTime;
+        this.active = active;
+        this.addressId = addressId;
+        this.cityName = cityName;
+        this.user = user;
+        this.cityId = cityId;
+        this.userId = userId;
     }
 }

@@ -1,0 +1,224 @@
+<header class="sticky top-0 z-40 w-full shadow-md mb-5">
+    <app-menu></app-menu>
+  </header>
+  
+  <div class="max-w-4xl mx-auto p-4 mb-6">
+    <div class="bg-white rounded-xl border border-blue-300 shadow-2xl">
+      <div class="bg-blue-700 text-white rounded-t-xl p-4 shadow-md">
+        <h2 class="text-xl font-semibold">Cadastro de Distribuidora</h2>
+        <p class="text-sm text-blue-100">Preencha as informações da sua distribuidora</p>
+      </div>
+  
+      <div class="p-6">
+        <form [formGroup]="registerFormSupplier" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Nome distribuidora</label>
+              <input formControlName="name" type="text"
+                class="mt-1 block w-full rounded-lg border-2 border-blue-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Nome Distribuidora" />
+            </div>
+  
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Telefone</label>
+              <input formControlName="phone" type="text" mask="(00) 00000-0000"
+                class="mt-1 block w-full rounded-lg border-2 border-blue-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="(00) 00000-0000" />
+            </div>
+
+            <!-- tempo -->
+            <div class="md:col-span-2">
+              <label class="block text-sm font-medium text-gray-700">Horário de Funcionamento</label>
+              <div class="grid grid-cols-2 gap-2 mt-1">
+                <div>
+                  <input formControlName="openingTime" type="time"
+                    class="input input-bordered w-full rounded-lg border-2 border-blue-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500" 
+                    placeholder="Abertura" />
+                </div>
+                <div>
+                  <input formControlName="closingTime" type="time"
+                    class="input input-bordered w-full rounded-lg border-2 border-blue-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500" 
+                    placeholder="Fechamento" />
+                </div>
+              </div>
+            </div>
+            
+            <!-- Tempo médio e Cidade -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Tempo médio de entrega (minutos)</label>
+                <input formControlName="averageDeliveryTime" type="number" min="0"
+                  class="input input-bordered w-full rounded-lg border-2 border-blue-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: 30" />
+              </div>
+            
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Cidade</label>
+                <select formControlName="cityId"
+                  class="mt-1 block w-full rounded-lg border-2 borPder-blue-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
+                  <!-- <option value="">Selecione a cidade de atuação</option> -->
+                  <option *ngFor="let city of cities" 
+                    [value]="city.id">
+                    {{ city.name }}
+                  </option>
+                </select>
+              </div>
+            </div>
+            <!-- tempo -->
+  
+            <!-- <div>
+              <label class="block text-sm font-medium text-gray-700">Cidade</label>
+              <select
+                class="mt-1 block w-full rounded-lg border-2 border-blue-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
+                <option>Selecione a cidade de atuação</option>
+                <option *ngFor="let city of cities" [value]="city.id">{{ city.name }}</option>
+              </select>
+            </div> -->
+
+            <div class="md:col-span-2">
+              <label class="block text-sm font-medium text-gray-700">Endereço</label>
+          
+              <div class="flex items-center gap-2 mt-1">
+                <button *ngIf="!address" type="button"
+                  class="flex items-center gap-1 px-3 py-1.5 text-blue-600 border border-blue-500 rounded-lg hover:bg-blue-50"
+                  (click)="openModal()">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Adicionar
+                </button>
+          
+                <p *ngIf="address" class="text-sm text-gray-800 font-medium">
+                  <!-- {{ selectedAddress.street }}, {{ selectedAddress.city }} - {{ selectedAddress.state }}, {{ selectedAddress.cep }} -->
+                  {{ address.streetName }}, {{address.cityName}}
+                </p>
+          
+                <p *ngIf="!address" class="text-sm text-gray-500 italic">
+                  Clique em 'Adicionar' para inserir um endereço
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="modalAberta" class="fixed inset-0 bg-black bg-opacity-25 backdrop-blur-sm flex justify-center items-center z-50">
+            <div class="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-md mx-4">
+              <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                  <h2 class="text-xl font-bold">Endereço Distribuidora</h2>
+                  <button class="text-gray-500 hover:text-gray-700" (click)="modalAberta = false">
+                    <i class="fas fa-times h-5 w-5"></i>
+                  </button>
+                </div>
+
+                
+      
+                <form class="space-y-4" [formGroup]="registerFormAddress">
+
+                  <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">CEP</label>
+                    <div class="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="Digite o seu CEP"
+                        class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
+                        required
+                        formControlName="zipCode"
+                      />
+                      <button
+                        type="button"
+                        (click)="buscarCep()"
+                        class="px-2 py-1 text-sm bg-[#0017bf] hover:bg-[#0017bf]/80 text-white rounded-md"
+                      >
+                        Buscar
+                      </button>
+                    </div>
+                  </div>
+  
+                  <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Cidade</label>
+                    <input
+                      type="text"
+                      placeholder="Digite o nome de sua Cidade"
+                      class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
+                      required
+                      formControlName="cityName"
+                    />
+                  </div>
+
+                  <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Rua</label>
+                    <input
+                      type="text"
+                      placeholder="Digite o nome da sua Rua"
+                      class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
+                      required
+                      formControlName="streetName"
+                    />
+                  </div>
+
+                  <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Complemento</label>
+                    <input
+                      type="text"
+                      placeholder="Digite um Complemento"
+                      class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
+                      required
+                      formControlName="complement"
+                    />
+                  </div>
+
+
+                  <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Bairro</label>
+                    <input
+                      type="text"
+                      placeholder="Digite o bairro"
+                      class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
+                      required
+                      formControlName="neighborhood"
+                    />
+                  </div>
+      
+                  <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Numero</label>
+                    <input
+                      type="number"
+                      placeholder="Digite o Numero"
+                      class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
+                      required
+                      formControlName="number"
+                    />
+                  </div>
+      
+                  <div class="flex justify-end gap-2 pt-4">
+                    <button
+                      type="button"
+                      class="cursor-pointer px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                      (click)="modalAberta = false"
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      type="submit" 
+                      (click)="salvarAddress()"
+                      class="px-4 py-2 bg-[#0017bf] hover:bg-[#0017bf]/80 text-white rounded-md cursor-pointer">
+                      Salvar
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+  
+          <div class="mt-6">
+            <button type="submit"
+              (click)="register()"
+              class="w-full cursor-pointer bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 rounded-lg shadow-md">
+              Cadastrar Distribuidor
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  

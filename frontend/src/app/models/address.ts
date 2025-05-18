@@ -8,12 +8,13 @@ export class Address {
     complement?: string;
     neighborhood?: string;
     zipCode?: string;
-    city?: City;
+    // city?: City;
+    cityName?: string;
     user?: User;
 
     constructor(
         id?: number, streetName?: string, numberHouse?: string,
-        complement?: string,neighborhood?: string, zipCode?: string, city?: City, user?: User
+        complement?: string,neighborhood?: string, zipCode?: string, cityName?: string, user?: User
     ) {
         this.id = id
         this.streetName = streetName
@@ -21,7 +22,7 @@ export class Address {
         this.complement = complement
         this.neighborhood = neighborhood 
         this.zipCode = zipCode
-        this.city = city
+        this.cityName = cityName
         this.user = user
     }
 }
