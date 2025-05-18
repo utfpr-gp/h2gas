@@ -57,7 +57,7 @@
                   class="mt-1 block w-full rounded-lg border-2 borPder-blue-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
                   <!-- <option value="">Selecione a cidade de atuação</option> -->
                   <option *ngFor="let city of cities" 
-                    [value]="city.id">
+                    [ngValue]="city.id">
                     {{ city.name }}
                   </option>
                 </select>

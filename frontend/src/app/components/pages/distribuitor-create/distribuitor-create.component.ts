@@ -54,7 +54,7 @@ export class DistribuitorCreateComponent implements OnInit {
       name: ['', [Validators.required, Validators.minLength(3)]],
       phone: ['', [Validators.required]],
       active: [false],
-      cityId: ['', [Validators.required]],
+      cityId: [null, [Validators.required]],
       addressId: [null],
       openingTime: ['', Validators.required],
       closingTime: ['', Validators.required],
