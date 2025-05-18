@@ -40,4 +40,11 @@ public class AddressController {
         return ResponseEntity.ok(addressDTO);
     }
 
+    @GetMapping("/by-user/{userId}")
+    @ResponseBody
+    public ResponseEntity<AddressDTO> getAddressByUserId(@PathVariable String userId) {
+        AddressDTO addressDTO = addressService.findByUserIdAddress(userId);
+        return ResponseEntity.ok(addressDTO);
+    }
+
 }

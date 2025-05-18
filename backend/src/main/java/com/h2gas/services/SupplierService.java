@@ -64,7 +64,7 @@ public class SupplierService {
     public SupplierDTO createSupplier(SupplierDTO supplierDTO) {
         Supplier supplier = supplierMapper.toEntity(supplierDTO);
 
-        City city = cityMapper.toEntity(cityService.findByName(supplierDTO.getCityName()));
+        City city = cityMapper.toEntity(cityService.findByIdCity(supplierDTO.getCityId()));
         if (city == null) {
             throw new ResourceNotFoundException("City not found");
         }
@@ -81,6 +81,7 @@ public class SupplierService {
         if (user == null) {
             throw new ResourceNotFoundException("User not found");
         }
+
         supplier.setCity(city);
         supplier.setAddress(address);
         supplier.setUser(user);

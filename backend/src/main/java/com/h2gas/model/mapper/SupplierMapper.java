@@ -11,6 +11,9 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+import java.time.LocalTime;
+
 @Component
 public class SupplierMapper {
     @Autowired
@@ -26,13 +29,24 @@ public class SupplierMapper {
         );
     }
 
-    public Supplier toEntity(SupplierDTO data) {
-        return modelMapper.map(data, Supplier.class);
+    public Supplier toEntity(SupplierDTO dto) {
+        Supplier supplier = modelMapper.map(dto, Supplier.class);
+
+        if (dto.getOpeningTime() != null) {
+            supplier.setOpeningTime(LocalTime.parse(dto.getOpeningTime()));
+        }
+
+        if (dto.getClosingTime() != null) {
+            supplier.setClosingTime(LocalTime.parse(dto.getClosingTime()));
+        }
+
+        return supplier;
     }
 
     public SupplierDTO assemblerRelationships(SupplierDTO supplierDTO, Supplier supplier) {
         if (supplier.getCity() != null) {
             supplierDTO.setCityName(supplier.getCity().getName());
+            supplierDTO.setCityId(supplier.getCity().getId());
         }
 
         if (supplier.getAddress() != null) {
@@ -49,7 +63,30 @@ public class SupplierMapper {
             supplierDTO.setUserId(userDto.getId());
         }
 
+        if (supplier.getOpeningTime() != null) {
+            supplierDTO.setOpeningTime(supplier.getOpeningTime().toString());
+        }
+
+        if (supplier.getClosingTime() != null) {
+            supplierDTO.setClosingTime(supplier.getClosingTime().toString());
+        }
+
+        if (supplier.getAverageDeliveryTime() != null) {
+            supplierDTO.setAverageDeliveryTime(formatDuration(supplier.getAverageDeliveryTime()));
+        }
+
         return supplierDTO;
+    }
+
+    private String formatDuration(Duration duration) {
+        long hours = duration.toHours();
+        long minutes = duration.toMinutesPart();
+
+        if (hours > 0) {
+            return String.format("%dh %02dmin", hours, minutes);
+        } else {
+            return String.format("%dmin", minutes);
+        }
     }
 
 }

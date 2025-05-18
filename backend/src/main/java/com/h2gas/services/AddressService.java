@@ -85,4 +85,10 @@ public class AddressService {
         return addressMapper.toDto(updatedAddress);
     }
 
+    public AddressDTO findByUserIdAddress(String userId) {
+        Optional<Address> addressOptional = addressRepository.findByUserId(userId);
+        return addressOptional.map(addressMapper::toDto).orElseThrow(()
+                -> new ResourceNotFoundException("Endereço não encontrada para esse usuario com esse id: " + userId));
+
+    }
 }

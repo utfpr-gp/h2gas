@@ -7,6 +7,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Duration;
+import java.time.LocalTime;
+
 @Entity
 @Table(name = "suppliers")
 @Getter
@@ -22,9 +25,12 @@ public class Supplier {
 
     private String phone;
 
-    private String workingHours;
+//    private String workingHours;
+    private LocalTime openingTime;
+    private LocalTime closingTime;
 
-    private String averageDeliveryTime;
+//    private String averageDeliveryTime;
+    private Duration averageDeliveryTime;
 
     private boolean active;
 

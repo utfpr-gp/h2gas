@@ -18,6 +18,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -110,8 +112,9 @@ class SupplierServiceTest {
                 null,
                 "Fornecedor Teste",
                 "1234567890",
-                "08:00 - 18:00",
-                "30 minutos",
+                LocalTime.of(8, 0),
+                LocalTime.of(18, 0),
+                Duration.ofMinutes(30),
                 false,
                 address,
                 cityFirst,
@@ -124,8 +127,9 @@ class SupplierServiceTest {
                 null,
                 "Fornecedor Teste 2",
                 "1234567890433",
-                "08:00 - 18:00",
-                "34 minutos",
+                LocalTime.of(8, 0),
+                LocalTime.of(18, 0),
+                Duration.ofMinutes(30),
                 false,
                 address2,
                 cityFirst,
