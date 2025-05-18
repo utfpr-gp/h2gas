@@ -1,9 +1,6 @@
 package com.h2gas.model.mapper;
 
-import com.h2gas.model.dto.AddressDTO;
-import com.h2gas.model.dto.CityDTO;
-import com.h2gas.model.dto.SupplierDTO;
-import com.h2gas.model.dto.UserDto;
+import com.h2gas.model.dto.*;
 import com.h2gas.model.entity.City;
 import com.h2gas.model.entity.Supplier;
 import com.h2gas.services.SupplierService;
@@ -30,18 +27,67 @@ public class SupplierMapper {
     }
 
     public Supplier toEntity(SupplierDTO dto) {
+        return mapCommonFields(dto);
+//        Supplier supplier = modelMapper.map(dto, Supplier.class);
+//
+//        if (dto.getOpeningTime() != null) {
+//            supplier.setOpeningTime(LocalTime.parse(dto.getOpeningTime()));
+//        }
+//
+//        if (dto.getClosingTime() != null) {
+//            supplier.setClosingTime(LocalTime.parse(dto.getClosingTime()));
+//        }
+//
+//        return supplier;
+    }
+
+    public Supplier toEntitySupplierCreate(SupplierCreateDTO dto) {
+        return mapCommonFields(dto);
+//        Supplier supplier = modelMapper.map(dto, Supplier.class);
+//
+//        if (dto.getOpeningTime() != null) {
+//            supplier.setOpeningTime(LocalTime.parse(dto.getOpeningTime()));
+//        }
+//
+//        if (dto.getClosingTime() != null) {
+//            supplier.setClosingTime(LocalTime.parse(dto.getClosingTime()));
+//        }
+//        return supplier;
+    }
+
+    private Supplier mapCommonFields(Object dto) {
         Supplier supplier = modelMapper.map(dto, Supplier.class);
 
-        if (dto.getOpeningTime() != null) {
-            supplier.setOpeningTime(LocalTime.parse(dto.getOpeningTime()));
+        String openingTime = null;
+        String closingTime = null;
+        Long averageDeliveryTime = null;
+
+        if (dto instanceof SupplierDTO d) {
+            openingTime = d.getOpeningTime();
+            closingTime = d.getClosingTime();
+            averageDeliveryTime = d.getAverageDeliveryTime();
+        } else if (dto instanceof SupplierCreateDTO d) {
+            openingTime = d.getOpeningTime();
+            closingTime = d.getClosingTime();
+            averageDeliveryTime = d.getAverageDeliveryTime();
         }
 
-        if (dto.getClosingTime() != null) {
-            supplier.setClosingTime(LocalTime.parse(dto.getClosingTime()));
+        if (openingTime != null) {
+            supplier.setOpeningTime(LocalTime.parse(openingTime));
+        }
+
+        if (closingTime != null) {
+            supplier.setClosingTime(LocalTime.parse(closingTime));
+        }
+
+        if (averageDeliveryTime != null) {
+            supplier.setAverageDeliveryTime(Duration.ofMinutes(averageDeliveryTime));
         }
 
         return supplier;
     }
+
+
 
     public SupplierDTO assemblerRelationships(SupplierDTO supplierDTO, Supplier supplier) {
         if (supplier.getCity() != null) {
@@ -60,7 +106,6 @@ public class SupplierMapper {
         if (supplier.getUser() != null) {
             UserDto userDto = userMapper.toDto(supplier.getUser());
             supplierDTO.setUser(userDto);
-            supplierDTO.setUserId(userDto.getId());
         }
 
         if (supplier.getOpeningTime() != null) {
@@ -72,8 +117,12 @@ public class SupplierMapper {
         }
 
         if (supplier.getAverageDeliveryTime() != null) {
-            supplierDTO.setAverageDeliveryTime(formatDuration(supplier.getAverageDeliveryTime()));
+            supplierDTO.setAverageDeliveryTime(supplier.getAverageDeliveryTime().toMinutes());
         }
+
+//        if (supplier.getAverageDeliveryTime() != null) {
+//            supplierDTO.setAverageDeliveryTime(formatDuration(supplier.getAverageDeliveryTime()));
+//        }
 
         return supplierDTO;
     }

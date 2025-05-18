@@ -1,6 +1,7 @@
 package com.h2gas.controller;
 
 import com.h2gas.model.dto.CityDTO;
+import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
 import com.h2gas.model.mapper.SupplierMapper;
 import com.h2gas.services.SupplierService;
@@ -31,7 +32,7 @@ public class SupplierController {
 
     @PostMapping
     @ResponseBody
-    public ResponseEntity<SupplierDTO> createSupplier(@RequestBody SupplierDTO supplierDTO) {
+    public ResponseEntity<SupplierDTO> createSupplier(@RequestBody SupplierCreateDTO supplierDTO) {
         SupplierDTO supplierCreate = supplierService.createSupplier(supplierDTO);
         return ResponseEntity.ok(supplierCreate);
     }

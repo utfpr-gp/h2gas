@@ -18,13 +18,11 @@ public class SupplierDTO {
     private String openingTime;  // ex: "08:00"
     private String closingTime;  // ex: "18:00"
 
-    private String averageDeliveryTime;
+    private Long averageDeliveryTime;
     private boolean active;
     private String cityName;
     private Long cityId;
     private UserDto user;
-    // ID do usuário para criação
-    private String userId;
 
     //    address relacionamento
     private String addressNeighborhood;

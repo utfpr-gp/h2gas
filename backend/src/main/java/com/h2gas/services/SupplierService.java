@@ -1,6 +1,7 @@
 package com.h2gas.services;
 
 import com.h2gas.exceptions.ResourceNotFoundException;
+import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
 import com.h2gas.model.dto.UserDto;
 import com.h2gas.model.entity.Address;
@@ -61,8 +62,8 @@ public class SupplierService {
                 -> new ResourceNotFoundException("Não encontrado nenhum Fornecedor com esse id: " + id));
     }
 
-    public SupplierDTO createSupplier(SupplierDTO supplierDTO) {
-        Supplier supplier = supplierMapper.toEntity(supplierDTO);
+    public SupplierDTO createSupplier(SupplierCreateDTO supplierDTO) {
+        Supplier supplier = supplierMapper.toEntitySupplierCreate(supplierDTO);
 
         City city = cityMapper.toEntity(cityService.findByIdCity(supplierDTO.getCityId()));
         if (city == null) {
