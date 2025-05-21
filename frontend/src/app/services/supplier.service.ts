@@ -17,4 +17,8 @@ export class SupplierService extends AbstractService<Supplier> {
   activeSuppliers(data: any, id: number) {
     return this.http.patch(`${this.baseUrl}/${id}/update-active`, data);
   }
+
+  findByUserId(userId: string) {
+    return this.http.get(`${this.baseUrl}/by-user/${userId}`);
+  }
 }

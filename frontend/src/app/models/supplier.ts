@@ -15,6 +15,8 @@ export class Supplier {
     cityName?: string;
     user?: User;
     userId?: string;
+    addressStreetName?: string;
+    addressNumber?: string;
 
     constructor(
         id?: number,
@@ -28,7 +30,9 @@ export class Supplier {
         cityName?: string,
         cityId?: number,
         user?: User,
-        userId?: string
+        userId?: string,
+        addressStreetName?: string,
+        addressNumber?: string
     ) {
         this.id = id;
         this.name = name;
@@ -42,5 +46,7 @@ export class Supplier {
         this.user = user;
         this.cityId = cityId;
         this.userId = userId;
+        this.addressStreetName = addressStreetName;
+        this.addressNumber = addressNumber;
     }
 }

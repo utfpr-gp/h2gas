@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, HostListener } from '@angular/core';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-menu',
@@ -12,12 +13,22 @@ import { Component, HostListener } from '@angular/core';
 export class MenuComponent {
   userMenuOpen = false;
 
+  constructor(
+    private router: Router,
+  ) {
+
+  }
+
   toggleUserMenu() {
     this.userMenuOpen = !this.userMenuOpen;
   }
 
   closeUserMenu() {
     this.userMenuOpen = false;
+  }
+
+  navigate(route: string) {    
+    this.router.navigate([route])
   }
 
   @HostListener('document:click', ['$event'])
@@ -27,4 +38,6 @@ export class MenuComponent {
       this.userMenuOpen = false;
     }
   }
+
+
 }

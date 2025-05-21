@@ -52,14 +52,22 @@
 
         <!-- User Dropdown -->
         <div class="relative" (clickOutside)="closeUserMenu()">
-            <button (click)="toggleUserMenu()" class="text-white hover:bg-white/10 p-2 rounded-md flex items-center focus:outline-none">
+            <button (click)="toggleUserMenu()" 
+            class="text-white hover:bg-white/10 p-2 cursor-pointer 
+                    rounded-md flex items-center focus:outline-none">
             <i class="fas fa-user h-5 w-5"></i>
             </button>
             <div *ngIf="userMenuOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-50">
-            <a routerLink="/minha-distribuidora" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Minha Distribuidora</a>
-            <a routerLink="/meus-dados" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Meus Dados</a>
+            <button (click)="navigate('/management-distributor')" class="block px-4 cursor-pointer py-2 min-w-full text-sm text-gray-700 hover:bg-gray-100">
+                Minha Distribuidora
+            </button>
+            <button (click)="navigate('/management-distributor')" class="block cursor-pointer px-4 py-2 min-w-full text-sm text-gray-700 hover:bg-gray-100">
+                Meus Dados
+            </button>
             <div class="border-t my-1"></div>
-            <a routerLink="/logout" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sair</a>
+            <button (click)="navigate('/management-distributor')" class="block px-4 py-2 cursor-pointer text-sm text-gray-700 min-w-full hover:bg-gray-100">
+                Sair
+            </button>
             </div>
         </div>
         </div>
