@@ -1,5 +1,6 @@
 package com.h2gas.controller;
 
+import com.h2gas.model.dto.AddressDTO;
 import com.h2gas.model.dto.CityDTO;
 import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
@@ -51,6 +52,13 @@ public class SupplierController {
         boolean novoStatus = status.get("active");
         supplierService.updateStatusSupplier(id, novoStatus);
         return ResponseEntity.ok(Map.of("message", "Status atualizado com sucesso"));
+    }
+
+    @GetMapping("/by-user/{userId}")
+    @ResponseBody
+    public ResponseEntity<SupplierDTO> getAddressByUserId(@PathVariable String userId) {
+        SupplierDTO supplierDTO = supplierService.findByUserIdSupplier(userId);
+        return ResponseEntity.ok(supplierDTO);
     }
 
 }

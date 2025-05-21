@@ -105,4 +105,10 @@ public class SupplierService {
         supplier.setActive(active);
         supplierRepository.save(supplier);
     }
+
+    public SupplierDTO findByUserIdSupplier(String userId) {
+        Optional<Supplier> supplierOptional = supplierRepository.findByUserId(userId);
+        return supplierOptional.map(supplierMapper::toDto).orElseThrow(()
+                -> new ResourceNotFoundException("Não encontrado nenhum Fornecedor com esse id de usuario: " + userId));
+    }
 }
