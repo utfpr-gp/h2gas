@@ -1,13 +1,11 @@
 package com.h2gas.controller;
 
-import com.h2gas.model.dto.AuthenticationDTO;
 import com.h2gas.model.dto.UserDto;
 import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.UserMapper;
 import com.h2gas.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 
@@ -25,7 +23,7 @@ public class UserController {
     @GetMapping
     @ResponseBody
     public ResponseEntity<UserDto> getUsersId(@RequestParam String id) {
-        UserDto userDto = userService.findByIdUSer(id);
+        UserDto userDto = userService.findByIdUser(id);
         return ResponseEntity.ok(userDto);
     }
 

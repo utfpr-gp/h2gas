@@ -3,7 +3,6 @@ package com.h2gas.services;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
-import com.h2gas.model.dto.UserDto;
 import com.h2gas.model.entity.Address;
 import com.h2gas.model.entity.City;
 import com.h2gas.model.entity.Supplier;
@@ -13,7 +12,6 @@ import com.h2gas.model.mapper.CityMapper;
 import com.h2gas.model.mapper.SupplierMapper;
 import com.h2gas.model.mapper.UserMapper;
 import com.h2gas.model.repository.SupplierRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -77,7 +75,7 @@ public class SupplierService {
             throw new ResourceNotFoundException("Address not found");
         }
 
-        User user = userMapper.toEntityUser(userService.findByIdUSer(supplierDTO.getUserId()));
+        User user = userMapper.toEntityUser(userService.findByIdUser(supplierDTO.getUserId()));
 
         if (user == null) {
             throw new ResourceNotFoundException("User not found");
@@ -86,9 +84,9 @@ public class SupplierService {
         supplier.setCity(city);
         supplier.setAddress(address);
         supplier.setUser(user);
-        supplierRepository.save(supplier);
+        Supplier savedSupplier = supplierRepository.save(supplier);
 
-        return supplierMapper.toDto(supplier);
+        return supplierMapper.toDto(savedSupplier);
     }
 
     public void deleteSupplier(Long id) {

@@ -1,0 +1,32 @@
+package com.h2gas.model.mapper;
+
+import com.h2gas.model.dto.CityDTO;
+import com.h2gas.model.dto.ProductItemDTO;
+import com.h2gas.model.entity.City;
+import com.h2gas.model.entity.ProductItem;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+@Component
+public class ProductItemMapper {
+    @Autowired
+    private ModelMapper modelMapper;
+
+    public ProductItemDTO toDto(ProductItem data) {
+        ProductItemDTO productItemDTO = modelMapper.map(data, ProductItemDTO.class);
+        if (data.getCategoryProduct().getName() != null) {
+            productItemDTO.setCategory(data.getCategoryProduct().getName());
+        }
+
+        if (data.getCategoryProduct().getProductType().getName() != null) {
+            productItemDTO.setType(data.getCategoryProduct().getProductType().getName());
+        }
+
+        return productItemDTO;
+    }
+
+    public ProductItem toEntity(ProductItemDTO dto) {
+        return modelMapper.map(dto, ProductItem.class);
+    }
+}

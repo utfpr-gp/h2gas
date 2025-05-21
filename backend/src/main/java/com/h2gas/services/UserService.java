@@ -28,7 +28,7 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-    public UserDto findByIdUSer(String id) {
+    public UserDto findByIdUser(String id) {
         Optional<User> userEntityOptional = userRepository.findById(id);
         return userEntityOptional.map(userMapper::toDto).orElseThrow(()
                 -> new ResourceNotFoundException("User not found with id: " + id));

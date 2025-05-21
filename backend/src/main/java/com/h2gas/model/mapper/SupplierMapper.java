@@ -28,31 +28,10 @@ public class SupplierMapper {
 
     public Supplier toEntity(SupplierDTO dto) {
         return mapCommonFields(dto);
-//        Supplier supplier = modelMapper.map(dto, Supplier.class);
-//
-//        if (dto.getOpeningTime() != null) {
-//            supplier.setOpeningTime(LocalTime.parse(dto.getOpeningTime()));
-//        }
-//
-//        if (dto.getClosingTime() != null) {
-//            supplier.setClosingTime(LocalTime.parse(dto.getClosingTime()));
-//        }
-//
-//        return supplier;
     }
 
     public Supplier toEntitySupplierCreate(SupplierCreateDTO dto) {
         return mapCommonFields(dto);
-//        Supplier supplier = modelMapper.map(dto, Supplier.class);
-//
-//        if (dto.getOpeningTime() != null) {
-//            supplier.setOpeningTime(LocalTime.parse(dto.getOpeningTime()));
-//        }
-//
-//        if (dto.getClosingTime() != null) {
-//            supplier.setClosingTime(LocalTime.parse(dto.getClosingTime()));
-//        }
-//        return supplier;
     }
 
     private Supplier mapCommonFields(Object dto) {
