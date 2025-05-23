@@ -9,6 +9,7 @@ import lombok.Setter;
 
 import java.time.Duration;
 import java.time.LocalTime;
+import java.util.List;
 
 @Entity
 @Table(name = "suppliers")
@@ -46,4 +47,7 @@ public class Supplier {
     @OneToOne
     @JoinColumn(name = "user_id")
     private User user;
+
+    @OneToMany(mappedBy = "supplier")
+    private List<ProductItem> productItems;
 }

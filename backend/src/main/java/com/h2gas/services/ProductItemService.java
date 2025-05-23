@@ -5,10 +5,8 @@ import com.h2gas.model.dto.AddressDTO;
 import com.h2gas.model.dto.CityDTO;
 import com.h2gas.model.dto.CreateProductItemDTO;
 import com.h2gas.model.dto.ProductItemDTO;
-import com.h2gas.model.entity.Address;
-import com.h2gas.model.entity.City;
-import com.h2gas.model.entity.ProductItem;
-import com.h2gas.model.entity.User;
+import com.h2gas.model.entity.*;
+import com.h2gas.model.mapper.CategoryProductMapper;
 import com.h2gas.model.mapper.CreateProductItemMapper;
 import com.h2gas.model.mapper.ProductItemMapper;
 import com.h2gas.model.repository.ProductItemRepository;
@@ -30,6 +28,12 @@ public class ProductItemService {
     @Autowired
     private ProductItemMapper productItemMapper;
 
+    @Autowired
+    private CategoryProductService categoryProductService;
+
+    @Autowired
+    private CategoryProductMapper categoryProductMapper;
+
     public List<ProductItemDTO> findAllProductItems() {
         return productItemRepository.findAll()
                 .stream()
@@ -45,10 +49,13 @@ public class ProductItemService {
 
     public ProductItemDTO createProductItem(CreateProductItemDTO productItemDto) {
         ProductItem productItem = createProductItemMapper.toEntity(productItemDto);
-//        if (productItemDto.getCategoryProductId() != null) {
-//
-//        }
-        return null;
+        CategoryProduct categoryProduct = categoryProductService.findEntityById(
+                productItemDto.getCategoryProductId()
+        );
+
+        productItem.setCategoryProduct(categoryProduct);
+
+        return productItemMapper.toDto(productItemRepository.save(productItem));
     }
 
 

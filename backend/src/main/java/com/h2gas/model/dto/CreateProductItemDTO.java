@@ -11,4 +11,5 @@ public class CreateProductItemDTO {
     private String brand;
     private Double price;
     private Long categoryProductId;
+    private Long distributorId;
 }
