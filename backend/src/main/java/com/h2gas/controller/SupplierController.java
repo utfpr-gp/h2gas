@@ -47,6 +47,7 @@ public class SupplierController {
 
     @PatchMapping("/{id}/update-active")
     @ResponseBody
+    @RolesAllowed("ADMIN")
     public ResponseEntity<Map<String, String>> updateSupplierStatus(@PathVariable Long id,
                                                      @RequestBody Map<String, Boolean> status) {
         boolean novoStatus = status.get("active");
