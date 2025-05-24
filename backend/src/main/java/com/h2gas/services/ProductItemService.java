@@ -34,6 +34,9 @@ public class ProductItemService {
     @Autowired
     private CategoryProductMapper categoryProductMapper;
 
+    @Autowired
+    private SupplierService supplierService;
+
     public List<ProductItemDTO> findAllProductItems() {
         return productItemRepository.findAll()
                 .stream()
@@ -49,11 +52,13 @@ public class ProductItemService {
 
     public ProductItemDTO createProductItem(CreateProductItemDTO productItemDto) {
         ProductItem productItem = createProductItemMapper.toEntity(productItemDto);
+        Supplier supplier = supplierService.findEntityById(productItemDto.getDistributorId());
         CategoryProduct categoryProduct = categoryProductService.findEntityById(
                 productItemDto.getCategoryProductId()
         );
 
         productItem.setCategoryProduct(categoryProduct);
+        productItem.setSupplier(supplier);
 
         return productItemMapper.toDto(productItemRepository.save(productItem));
     }

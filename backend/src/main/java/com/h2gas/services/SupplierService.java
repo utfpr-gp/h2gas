@@ -3,10 +3,7 @@ package com.h2gas.services;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
-import com.h2gas.model.entity.Address;
-import com.h2gas.model.entity.City;
-import com.h2gas.model.entity.Supplier;
-import com.h2gas.model.entity.User;
+import com.h2gas.model.entity.*;
 import com.h2gas.model.mapper.AddressMapper;
 import com.h2gas.model.mapper.CityMapper;
 import com.h2gas.model.mapper.SupplierMapper;
@@ -57,6 +54,11 @@ public class SupplierService {
     public SupplierDTO findById(Long id) {
         Optional<Supplier> supplierOptional = supplierRepository.findById(id);
         return supplierOptional.map(supplierMapper::toDto).orElseThrow(()
+                -> new ResourceNotFoundException("Não encontrado nenhum Fornecedor com esse id: " + id));
+    }
+
+    public Supplier findEntityById(Long id) {
+        return supplierRepository.findById(id).orElseThrow(()
                 -> new ResourceNotFoundException("Não encontrado nenhum Fornecedor com esse id: " + id));
     }
 

@@ -2,6 +2,8 @@ package com.h2gas.model.mapper;
 
 import com.h2gas.model.dto.CityDTO;
 import com.h2gas.model.dto.ProductItemDTO;
+import com.h2gas.model.dto.SupplierDTO;
+import com.h2gas.model.dto.UserDto;
 import com.h2gas.model.entity.City;
 import com.h2gas.model.entity.ProductItem;
 import org.modelmapper.ModelMapper;
@@ -13,6 +15,9 @@ public class ProductItemMapper {
     @Autowired
     private ModelMapper modelMapper;
 
+    @Autowired
+    private SupplierMapper supplierMapper;
+
     public ProductItemDTO toDto(ProductItem data) {
         ProductItemDTO productItemDTO = modelMapper.map(data, ProductItemDTO.class);
         if (data.getCategoryProduct().getName() != null) {
@@ -21,6 +26,11 @@ public class ProductItemMapper {
 
         if (data.getCategoryProduct().getProductType().getName() != null) {
             productItemDTO.setType(data.getCategoryProduct().getProductType().getName());
+        }
+
+        if (data.getSupplier() != null) {
+            SupplierDTO supplierDTO = supplierMapper.toDto(data.getSupplier());
+            productItemDTO.setSupplier(supplierDTO);
         }
 
         return productItemDTO;

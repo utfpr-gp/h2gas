@@ -20,17 +20,16 @@ public class ProductTypeController {
     @Autowired
     private ProductTypeMapper productTypeMapper;
 
-
     @GetMapping
     @ResponseBody
-    public ResponseEntity<List<ProductTypeDTO>> getAllSuppliers() {
+    public ResponseEntity<List<ProductTypeDTO>> getAllTypesProducts() {
         List<ProductTypeDTO> productTypeDTO = productTypeService.findAllProductTypes();
         return ResponseEntity.ok(productTypeDTO);
     }
 
     @PostMapping
     @ResponseBody
-    public ResponseEntity<ProductTypeDTO> createSupplier(@RequestBody ProductTypeDTO productTypeDTO) {
+    public ResponseEntity<ProductTypeDTO> createTypesProducts(@RequestBody ProductTypeDTO productTypeDTO) {
         ProductTypeDTO productTypeCreate = productTypeService.createProductType(productTypeDTO);
         return ResponseEntity.ok(productTypeCreate);
     }
