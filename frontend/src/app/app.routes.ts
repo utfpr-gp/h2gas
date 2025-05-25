@@ -7,7 +7,7 @@ import { CityRegisterComponent } from './components/pages/city-register/city-reg
 import { authGuard } from './guards/auth.guard';
 import { SupplierApprovalComponent } from './components/pages/supplier-approval/supplier-approval.component';
 import { DistributorManagementComponent } from './components/pages/distributor-management/distributor-management.component';
-import { DistribuitorCreateComponent } from './components/pages/distribuitor-create/distribuitor-create.component';
+import { DistribuitorFormComponent } from './components/pages/distribuitor-form/distribuitor-form.component';
 import { CategoryProductsComponent } from './components/pages/category-products/category-products.component';
 
 export const routes: Routes = [
@@ -16,7 +16,8 @@ export const routes: Routes = [
     {path: 'register', component: RegisterComponent},
     {path: 'register-supplier', component: RegisterSupplierComponent},
     {path: 'management-distributor', component: DistributorManagementComponent},
-    {path: 'distributor/new', component: DistribuitorCreateComponent},
+    {path: 'distributor/new', component: DistribuitorFormComponent},
+    {path: 'distributor/edit/:id', component: DistribuitorFormComponent},
     {path: 'category-products', component: CategoryProductsComponent},
     {
         path: 'register-city', 

@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { NgxMaskDirective } from 'ngx-mask';
 import { CommonModule } from '@angular/common';
 import { ToastrService } from 'ngx-toastr';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { SupplierService } from '../../../services/supplier.service';
 import { Supplier } from '../../../models/supplier';
 import { CityService } from '../../../services/city.service';
@@ -23,10 +23,10 @@ import { User } from '../../../models/user';
     FormsModule,
     NgxMaskDirective
   ],
-  templateUrl: './distribuitor-create.component.html',
-  styleUrl: './distribuitor-create.component.css'
+  templateUrl: './distribuitor-form.component.html',
+  styleUrl: './distribuitor-form.component.css'
 })
-export class DistribuitorCreateComponent implements OnInit {
+export class DistribuitorFormComponent implements OnInit {
   registerFormSupplier!: FormGroup;
 
   registerFormAddress!: FormGroup;
@@ -40,6 +40,8 @@ export class DistribuitorCreateComponent implements OnInit {
 
   userLogado?: User;
 
+  isEdit: boolean = false;
+  idEdit: number = 0;
 
   constructor(
     private fb: FormBuilder, 
@@ -48,7 +50,8 @@ export class DistribuitorCreateComponent implements OnInit {
     private supplierService: SupplierService,
     private cityService: CityService,
     private addressSevice: AddressService,
-    private userService: UserService
+    private userService: UserService,
+    private routeActive: ActivatedRoute
   ) {
     this.registerFormSupplier = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
@@ -79,6 +82,12 @@ export class DistribuitorCreateComponent implements OnInit {
   showAddressModal = false;
 
   ngOnInit(): void {
+    this.idEdit = parseInt(this.routeActive.snapshot.paramMap.get('id') || '', 10);
+
+    if (this.idEdit) {
+      this.isEdit = true;
+      this.getSupplierId(this.idEdit);
+    } 
     this.getCities();
     this.userLogado = this.userService.getUserLocalStorage();
     console.log(this.userLogado);
@@ -173,6 +182,23 @@ export class DistribuitorCreateComponent implements OnInit {
     }
   }
 
+  getSupplierId(id: number) {
+    debugger
+    
+    this.supplierService.findById(id).subscribe({
+      next: (response) => {
+        debugger
+        console.log('Distribuidor buscado com sucesso!', response);
+        this.registerFormSupplier.patchValue(response);
+        this.toastr.success('Distribuidor buscado com sucesso!');
+      },
+      error: (err) => {
+        console.error('Erro ao buscar:', err.error.message);
+        this.toastr.error(`Erro ao buscar: ${err.error.message}`)
+      }
+    })
+  }
+
 
   register() {
     debugger
@@ -200,6 +226,33 @@ export class DistribuitorCreateComponent implements OnInit {
         this.toastr.error(`Erro ao buscar cidades: ${err.error.message}`)
       }
     })
+  }
+
+  update() {
+    debugger
+    if (this.registerFormSupplier.invalid) {
+      this.registerFormSupplier.markAllAsTouched();
+      this.toastr.warning('Conferir informações!!')
+      return; 
+    }
+
+    this.supplier = this.registerFormSupplier?.value;
+    this.supplier!!.addressId = this.address?.id
+    debugger
+
+    this.supplierService.update(this.idEdit, this.supplier!!).subscribe({
+      next: (response) => {
+        debugger
+        console.log('Dsitriuidora editada com sucesso!', response);
+        this.toastr.success('Distriuidora editada com sucesso!!');
+        this.navigateRoute('/management-distributor')
+      },
+      error: (err) => {
+        console.error('Erro ao buscar:', err.error.message);
+        this.toastr.error(`Erro ao buscar cidades: ${err.error.message}`)
+      }
+    })
+
   }
 
   getCities() {
