@@ -8,6 +8,7 @@ import { authGuard } from './guards/auth.guard';
 import { SupplierApprovalComponent } from './components/pages/supplier-approval/supplier-approval.component';
 import { DistributorManagementComponent } from './components/pages/distributor-management/distributor-management.component';
 import { DistribuitorCreateComponent } from './components/pages/distribuitor-create/distribuitor-create.component';
+import { CategoryProductsComponent } from './components/pages/category-products/category-products.component';
 
 export const routes: Routes = [
     {path: '', component: InitialScreenComponent},
@@ -16,6 +17,7 @@ export const routes: Routes = [
     {path: 'register-supplier', component: RegisterSupplierComponent},
     {path: 'management-distributor', component: DistributorManagementComponent},
     {path: 'distributor/new', component: DistribuitorCreateComponent},
+    {path: 'category-products', component: CategoryProductsComponent},
     {
         path: 'register-city', 
         component: CityRegisterComponent,
