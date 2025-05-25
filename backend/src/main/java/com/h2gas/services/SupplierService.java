@@ -12,6 +12,8 @@ import com.h2gas.model.repository.SupplierRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -89,6 +91,25 @@ public class SupplierService {
         Supplier savedSupplier = supplierRepository.save(supplier);
 
         return supplierMapper.toDto(savedSupplier);
+    }
+
+    public SupplierDTO update(Long id, SupplierCreateDTO supplierDTO) {
+        Supplier supplier = supplierRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Fornecedor com id " + id + " não encontrado"));
+
+        City newCity = cityMapper.toEntity(cityService.findByIdCity(supplierDTO.getCityId()));
+        if (!supplier.getCity().getId().equals(supplierDTO.getCityId())) {
+            supplier.setCity(newCity);
+        }
+
+        supplier.setName(supplierDTO.getName());
+        supplier.setPhone(supplierDTO.getPhone());
+        supplier.setOpeningTime(LocalTime.parse(supplierDTO.getOpeningTime()));
+        supplier.setClosingTime(LocalTime.parse(supplierDTO.getClosingTime()));
+        supplier.setAverageDeliveryTime(Duration.ofMinutes(supplierDTO.getAverageDeliveryTime()));
+
+        supplierRepository.save(supplier);
+        return supplierMapper.toDto(supplier);
     }
 
     public void deleteSupplier(Long id) {

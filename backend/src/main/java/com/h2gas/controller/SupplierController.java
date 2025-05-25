@@ -62,4 +62,17 @@ public class SupplierController {
         return ResponseEntity.ok(supplierDTO);
     }
 
+    @GetMapping("/{id}")
+    @ResponseBody
+    public ResponseEntity<SupplierDTO> getAddressById(@PathVariable Long id) {
+        SupplierDTO supplierDTO = supplierService.findById(id);
+        return ResponseEntity.ok(supplierDTO);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<SupplierDTO> update(@PathVariable Long id, @RequestBody SupplierCreateDTO dto) {
+        SupplierDTO updated = supplierService.update(id, dto);
+        return ResponseEntity.ok(updated);
+    }
+
 }
