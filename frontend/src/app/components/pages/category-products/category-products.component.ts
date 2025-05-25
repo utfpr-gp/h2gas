@@ -28,6 +28,8 @@ export class CategoryProductsComponent implements OnInit {
 
   productTypes?: ProductType[];
 
+  categoryCreate?: CategoryProduct; 
+
   categories?: CategoryProduct[];
 
   constructor(
@@ -77,5 +79,31 @@ export class CategoryProductsComponent implements OnInit {
       },
     })
   }
+
+  salvarCategoria() {
+    debugger
+
+    if (this.formCategory.invalid) {
+      this.formCategory.markAllAsTouched();
+      return;
+    }
+
+    this.categoryCreate = this.formCategory.value; 
+
+    this.categoryService.create(this.categoryCreate!!).subscribe({
+      next: (value) => {
+        debugger
+        this.toastr.success("Categoria salva com sucesso")        
+        this.getAllCategories();
+        this.toggleFormulario();
+      },
+      error: (err) => {
+        debugger
+        this.toastr.error(`Erro ao salvar categoria: ${err.error.message}`)        
+      },
+    })
+  
+  }
+  
 
 }

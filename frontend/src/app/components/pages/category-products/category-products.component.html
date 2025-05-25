@@ -80,24 +80,35 @@
                       <input
                         type="text"
                         placeholder="Digite o nome da Categoria"
-                        class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
-                        required
+                        class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 
+                               focus:ring-[#0017bf]/50 border-gray-300"
                         formControlName="name"
                       />
+                      <div *ngIf="formCategory.get('name')?.invalid && formCategory.get('name')?.touched"
+                           class="text-red-600 text-sm">
+                        Este campo é obrigatório.
+                      </div>
                     </div>
-        
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700">Tipo de Produto</label>
-                      <select formControlName="productTypeId"
-                        class="mt-1 block w-full rounded-lg border border-gray-300 borPder-blue-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
-                        <!-- <option value="">Selecione a cidade de atuação</option> -->
-                        <option *ngFor="let type of productTypes" 
-                          [ngValue]="type.id">
+                  
+                    <div class="space-y-2">
+                      <label class="block text-sm font-medium text-gray-700">Tipo de Produto *</label>
+                      <select
+                        formControlName="productTypeId"
+                        
+                        class="mt-1 block w-full rounded-lg border border-gray-300 
+                               px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="null">Selecione o tipo de produto</option>
+                        <option *ngFor="let type of productTypes" [value]="type.id">
                           {{ type.name }}
                         </option>
                       </select>
+                      <div *ngIf="formCategory.get('productTypeId')?.invalid && formCategory.get('productTypeId')?.touched"
+                           class="text-red-600 text-sm">
+                        Este campo é obrigatório.
+                      </div>
                     </div>
-        
+                  
                     <div class="flex justify-end gap-2 pt-4">
                       <button
                         type="button"
@@ -107,12 +118,15 @@
                         Cancelar
                       </button>
                       <button 
-                        type="submit" 
-                        class="px-4 py-2 bg-[#0017bf] hover:bg-[#0017bf]/80 text-white rounded-md cursor-pointer">
+                        type="button"
+                        class="px-4 py-2 bg-[#0017bf] hover:bg-[#0017bf]/80 text-white rounded-md cursor-pointer"
+                        (click)="salvarCategoria()"
+                      >
                         Salvar
                       </button>
                     </div>
                   </form>
+                  
                 </div>
               </div>
             </div>
