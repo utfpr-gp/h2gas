@@ -59,4 +59,28 @@ public class CategoryProductService {
         CategoryProduct savedCategoryProduct = categoryProductRepository.save(categoryProduct);
         return categoryProductMapper.toDto(savedCategoryProduct);
     }
+
+    public void deleteCategory(Long id) {
+        CategoryProduct category = categoryProductRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada com ID: " + id));
+
+        categoryProductRepository.delete(category);
+    }
+
+    public CategoryProductDTO update(Long id, CategoryProductDTO categoryDto) {
+        CategoryProduct categoryEdit = categoryProductRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada com ID: " + id));
+
+        ProductType productType = productTypeService.findEntityById(categoryDto.getProductTypeId());
+
+        if (!categoryEdit.getProductType().getId().equals(productType.getId())) {
+            categoryEdit.setProductType(productType);
+        }
+
+        categoryEdit.setName(categoryDto.getName());
+
+        categoryProductRepository.save(categoryEdit);
+
+        return categoryProductMapper.toDto(categoryEdit);
+    }
 }

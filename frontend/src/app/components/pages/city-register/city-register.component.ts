@@ -115,7 +115,7 @@ export class CityRegisterComponent implements OnInit {
   openModalDelete(city: City) {
     debugger
     this.idSelectCity = city.id;
-    this.cityDeleteName = city.name!;
+    this.cityDeleteName = `Cidade ${city.name!}`;
     
     setTimeout(() => {
       const checkbox: any = document.getElementById('delete-modal');

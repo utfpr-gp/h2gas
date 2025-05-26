@@ -7,6 +7,7 @@ import { ProductType } from '../../../models/product-type';
 import { ToastrService } from 'ngx-toastr';
 import { CategoryProductService } from '../../../services/category-product.service';
 import { CategoryProduct } from '../../../models/category-product';
+import { DeleteConfirmationModalComponent } from '../../delete-confirmation-modal/delete-confirmation-modal.component';
 
 @Component({
   selector: 'app-category-products',
@@ -15,6 +16,7 @@ import { CategoryProduct } from '../../../models/category-product';
     ReactiveFormsModule,
     CommonModule,
     FormsModule,
+    DeleteConfirmationModalComponent
   ],
   templateUrl: './category-products.component.html',
   styleUrl: './category-products.component.css'
@@ -28,9 +30,14 @@ export class CategoryProductsComponent implements OnInit {
 
   productTypes?: ProductType[];
 
-  categoryCreate?: CategoryProduct; 
+  category?: CategoryProduct; 
 
   categories?: CategoryProduct[];
+
+  deleteNameCategory?: string;
+  idCategoryRow?: number;
+
+  isEdit: boolean = false;
 
   constructor(
     private productTypeService: ProductTypeService,
@@ -54,6 +61,15 @@ export class CategoryProductsComponent implements OnInit {
 
   toggleFormulario() {
     this.modalAberta = !this.modalAberta;
+    this.isEdit = false;
+  }
+
+  openModalEdit(editFormValue: CategoryProduct, isEditForm: boolean) {
+    this.isEdit = isEditForm;
+    this.modalAberta = !this.modalAberta;
+    this.category = editFormValue;
+    this.idCategoryRow = editFormValue.id
+    this.formCategory.patchValue(editFormValue);
   }
 
   getProuctTypes() {
@@ -66,6 +82,17 @@ export class CategoryProductsComponent implements OnInit {
         this.toastr.error(`Erro ao encontrar os tipos de produtos: ${err.error.message}`)        
       },
     })
+  }
+
+  openModalDelete(category: CategoryProduct) {
+    debugger
+    this.deleteNameCategory = `${category.type} de ${category.name}`
+    this.idCategoryRow = category.id
+    
+    setTimeout(() => {
+      const checkbox: any = document.getElementById('delete-modal');
+      if (checkbox) checkbox.checked = true;
+    });
   }
 
   getAllCategories() {
@@ -81,18 +108,15 @@ export class CategoryProductsComponent implements OnInit {
   }
 
   salvarCategoria() {
-    debugger
-
     if (this.formCategory.invalid) {
       this.formCategory.markAllAsTouched();
       return;
     }
 
-    this.categoryCreate = this.formCategory.value; 
+    this.category = this.formCategory.value; 
 
-    this.categoryService.create(this.categoryCreate!!).subscribe({
+    this.categoryService.create(this.category!!).subscribe({
       next: (value) => {
-        debugger
         this.toastr.success("Categoria salva com sucesso")        
         this.getAllCategories();
         this.toggleFormulario();
@@ -100,9 +124,49 @@ export class CategoryProductsComponent implements OnInit {
       error: (err) => {
         debugger
         this.toastr.error(`Erro ao salvar categoria: ${err.error.message}`)        
-      },
+      }
     })
-  
+  }
+
+  deleteConfirmed() {
+    debugger
+    this.categoryService.delete(this.idCategoryRow!!).subscribe({
+      next: (value) => {
+        debugger
+        this.toastr.success("Categoria deletada com sucesso")        
+        this.getAllCategories();
+      },
+      error: (err) => {
+        debugger
+        this.toastr.error(`Erro ao deletar categoria: ${err.error.message}`)        
+      }
+    })
+  }
+
+  update() {
+    debugger
+    if (this.formCategory.invalid) {
+      this.formCategory.markAllAsTouched();
+      return;
+    } else if (this.category == this.formCategory.value) {
+      this.toastr.warning("Dados sem alteração!!")        
+      return;
+    }
+
+    this.category = this.formCategory.value; 
+
+    this.categoryService.update(this.idCategoryRow!!, this.category!!).subscribe({
+      next: (value) => {
+        debugger
+        this.toastr.success("Categoria atualizada com sucesso")        
+        this.getAllCategories();
+        this.toggleFormulario();
+      },
+      error: (err) => {
+        debugger
+        this.toastr.error(`Erro ao atualizar categoria: ${err.error.message}`)        
+      }
+    })
   }
   
 
