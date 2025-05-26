@@ -61,12 +61,14 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        if (this.userType == UserTypeEnum.ADMIN) {
-            return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"),
-                            new SimpleGrantedAuthority("ROLE_USER"));
-        } else {
-            return List.of(new SimpleGrantedAuthority("ROLE_USER"));
-        }
+        String role = "ROLE_" + this.userType.name();
+        return List.of(new SimpleGrantedAuthority(role));
+//        if (this.userType == UserTypeEnum.ADMIN) {
+//            return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"),
+//                            new SimpleGrantedAuthority("ROLE_USER"));
+//        } else {
+//            return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+//        }
     }
 
     @Override

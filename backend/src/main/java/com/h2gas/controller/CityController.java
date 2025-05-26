@@ -24,7 +24,7 @@ public class CityController {
 
     @GetMapping
     @ResponseBody
-    @RolesAllowed("ADMIN")
+    @RolesAllowed({"ADMIN", "SUPPLIER"})
     public ResponseEntity<List<CityDTO>> getAllCities() {
         List<CityDTO> cityDTO = cityService.findAllCities();
         return ResponseEntity.ok(cityDTO);

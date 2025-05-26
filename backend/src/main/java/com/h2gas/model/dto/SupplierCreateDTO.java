@@ -15,7 +15,7 @@ public class SupplierCreateDTO {
     private String openingTime;
     private String closingTime;
     private Long averageDeliveryTime;
-    private boolean active;
+//    private boolean active;
     private Long cityId;
     private String userId;
     private Long addressId;

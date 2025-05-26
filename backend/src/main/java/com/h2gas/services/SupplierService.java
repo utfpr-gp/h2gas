@@ -87,6 +87,7 @@ public class SupplierService {
 
         supplier.setCity(city);
         supplier.setAddress(address);
+        supplier.setActive(false);
         supplier.setUser(user);
         Supplier savedSupplier = supplierRepository.save(supplier);
 
@@ -97,6 +98,7 @@ public class SupplierService {
         Supplier supplier = supplierRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fornecedor com id " + id + " não encontrado"));
 
+        boolean currentStatus = supplier.isActive();
         City newCity = cityMapper.toEntity(cityService.findByIdCity(supplierDTO.getCityId()));
         if (!supplier.getCity().getId().equals(supplierDTO.getCityId())) {
             supplier.setCity(newCity);
@@ -104,6 +106,7 @@ public class SupplierService {
 
         supplier.setName(supplierDTO.getName());
         supplier.setPhone(supplierDTO.getPhone());
+        supplier.setActive(currentStatus);
         supplier.setOpeningTime(LocalTime.parse(supplierDTO.getOpeningTime()));
         supplier.setClosingTime(LocalTime.parse(supplierDTO.getClosingTime()));
         supplier.setAverageDeliveryTime(Duration.ofMinutes(supplierDTO.getAverageDeliveryTime()));

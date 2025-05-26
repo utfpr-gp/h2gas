@@ -33,6 +33,7 @@ public class SupplierController {
 
     @PostMapping
     @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER"})
     public ResponseEntity<SupplierDTO> createSupplier(@RequestBody SupplierCreateDTO supplierDTO) {
         SupplierDTO supplierCreate = supplierService.createSupplier(supplierDTO);
         return ResponseEntity.ok(supplierCreate);
@@ -40,6 +41,7 @@ public class SupplierController {
 
     @DeleteMapping("/{id}")
     @ResponseBody
+    @RolesAllowed("ADMIN")
     public ResponseEntity<Long> deleteSupplier(@PathVariable("id") Long id) {
         supplierService.deleteSupplier(id);
         return ResponseEntity.ok(id);
@@ -70,6 +72,8 @@ public class SupplierController {
     }
 
     @PutMapping("/{id}")
+    @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER"})
     public ResponseEntity<SupplierDTO> update(@PathVariable Long id, @RequestBody SupplierCreateDTO dto) {
         SupplierDTO updated = supplierService.update(id, dto);
         return ResponseEntity.ok(updated);
