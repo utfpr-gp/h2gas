@@ -9,6 +9,7 @@ import { SupplierApprovalComponent } from './components/pages/supplier-approval/
 import { DistributorManagementComponent } from './components/pages/distributor-management/distributor-management.component';
 import { DistribuitorFormComponent } from './components/pages/distribuitor-form/distribuitor-form.component';
 import { CategoryProductsComponent } from './components/pages/category-products/category-products.component';
+import { ProductItemComponent } from './components/pages/product-item/product-item.component';
 
 export const routes: Routes = [
     {path: '', component: InitialScreenComponent},
@@ -19,6 +20,7 @@ export const routes: Routes = [
     {path: 'distributor/new', component: DistribuitorFormComponent},
     {path: 'distributor/edit/:id', component: DistribuitorFormComponent},
     {path: 'category-products', component: CategoryProductsComponent},
+    {path: 'product-items', component: ProductItemComponent},
     {
         path: 'register-city', 
         component: CityRegisterComponent,
