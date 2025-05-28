@@ -15,7 +15,9 @@ public class ProductItemDTO {
     private Double price;
     private String category;
     private String type;
-    private SupplierDTO supplier;
+    private String supllierName;
+    private Long supplierId;
+//    private SupplierDTO supplier;
     private String imageUrl;
     private Integer stockQuantity;
     private LocalDateTime createdAt;

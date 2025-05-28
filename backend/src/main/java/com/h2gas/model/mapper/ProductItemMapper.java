@@ -15,8 +15,8 @@ public class ProductItemMapper {
     @Autowired
     private ModelMapper modelMapper;
 
-    @Autowired
-    private SupplierMapper supplierMapper;
+//    @Autowired
+//    private SupplierMapper supplierMapper;
 
     public ProductItemDTO toDto(ProductItem data) {
         ProductItemDTO productItemDTO = modelMapper.map(data, ProductItemDTO.class);
@@ -29,8 +29,8 @@ public class ProductItemMapper {
         }
 
         if (data.getSupplier() != null) {
-            SupplierDTO supplierDTO = supplierMapper.toDto(data.getSupplier());
-            productItemDTO.setSupplier(supplierDTO);
+            productItemDTO.setSupllierName(data.getSupplier().getName());
+            productItemDTO.setSupplierId(data.getSupplier().getId());
         }
 
         return productItemDTO;

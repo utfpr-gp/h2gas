@@ -2,6 +2,7 @@ package com.h2gas.model.mapper;
 
 import com.h2gas.model.dto.*;
 import com.h2gas.model.entity.City;
+import com.h2gas.model.entity.ProductItem;
 import com.h2gas.model.entity.Supplier;
 import com.h2gas.services.SupplierService;
 import org.modelmapper.ModelMapper;
@@ -10,6 +11,8 @@ import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class SupplierMapper {
@@ -18,6 +21,9 @@ public class SupplierMapper {
 
     @Autowired
     private UserMapper userMapper;
+
+//    @Autowired
+//    private ProductItemMapper productItemMapper;
 
     public SupplierDTO toDto(Supplier data) {
          return assemblerRelationships(
@@ -98,6 +104,14 @@ public class SupplierMapper {
         if (supplier.getAverageDeliveryTime() != null) {
             supplierDTO.setAverageDeliveryTime(supplier.getAverageDeliveryTime().toMinutes());
         }
+
+//        if (supplier.getProductItems() != null) {
+//            List<ProductItemDTO> productDTOs = new ArrayList<>();
+//            for(ProductItem item: supplier.getProductItems()) {
+//                productDTOs.add(productItemMapper.toDto(item));
+//            }
+//            supplierDTO.setProductItems(productDTOs);
+//        }
 
 //        if (supplier.getAverageDeliveryTime() != null) {
 //            supplierDTO.setAverageDeliveryTime(formatDuration(supplier.getAverageDeliveryTime()));
