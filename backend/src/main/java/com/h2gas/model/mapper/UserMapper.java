@@ -13,7 +13,13 @@ public class UserMapper {
     private ModelMapper modelMapper;
 
     public UserDto toDto(User data) {
-        return modelMapper.map(data, UserDto.class);
+        UserDto userDto = modelMapper.map(data, UserDto.class);
+
+        if (data.getSupplier() != null) {
+            userDto.setSupplierId(data.getSupplier().getId());
+        }
+
+        return userDto;
     }
 
     public User toEntityRegisterUser(RegisterDTO data) {

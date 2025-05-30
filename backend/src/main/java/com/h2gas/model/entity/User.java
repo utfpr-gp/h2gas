@@ -1,5 +1,6 @@
 package com.h2gas.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.h2gas.enums.UserTypeEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -37,6 +38,11 @@ public class User implements UserDetails {
     private String password;
 
     private UserTypeEnum userType;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private Supplier supplier;
+
 
 //    TODO AJUSTAR AQUI MAIS TARDE
 //    @OneToOne(mappedBy = "user")

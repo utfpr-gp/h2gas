@@ -40,7 +40,9 @@ public class UserServiceDBTest {
                 "123435345",
                 "234234234",
                 "4534534",
-                UserTypeEnum.CUSTOMER);
+                UserTypeEnum.CUSTOMER,
+                null
+        );
 
         userRepository.save(user);
 

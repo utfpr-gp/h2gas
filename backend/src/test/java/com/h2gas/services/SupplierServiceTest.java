@@ -61,7 +61,9 @@ class SupplierServiceTest {
                 "123435345",
                 "234234234",
                 "4534534",
-                UserTypeEnum.CUSTOMER);
+                UserTypeEnum.CUSTOMER,
+                null
+        );
 
         userRepository.save(user);
 
@@ -72,7 +74,9 @@ class SupplierServiceTest {
                 "123435345dd",
                 "234234234",
                 "453453334",
-                UserTypeEnum.CUSTOMER);
+                UserTypeEnum.CUSTOMER,
+                null
+        );
 
         userRepository.save(user2);
 

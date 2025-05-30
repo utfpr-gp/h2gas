@@ -16,4 +16,5 @@ public class UserDto {
     private String cpf;
     private String cnpj;
     private UserTypeEnum userType;
+    private Long supplierId;
 }
