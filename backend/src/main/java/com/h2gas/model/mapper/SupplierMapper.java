@@ -5,6 +5,7 @@ import com.h2gas.model.entity.City;
 import com.h2gas.model.entity.ProductItem;
 import com.h2gas.model.entity.Supplier;
 import com.h2gas.services.SupplierService;
+import com.h2gas.util.SupplierMapperHelper;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -40,6 +41,10 @@ public class SupplierMapper {
         return mapCommonFields(dto);
     }
 
+    public Supplier toEntitySupplierSummary(SupplierSummaryDTO dto) {
+        return mapCommonFields(dto);
+    }
+
     private Supplier mapCommonFields(Object dto) {
         Supplier supplier = modelMapper.map(dto, Supplier.class);
 
@@ -51,23 +56,31 @@ public class SupplierMapper {
             openingTime = d.getOpeningTime();
             closingTime = d.getClosingTime();
             averageDeliveryTime = d.getAverageDeliveryTime();
-        } else if (dto instanceof SupplierCreateDTO d) {
-            openingTime = d.getOpeningTime();
-            closingTime = d.getClosingTime();
-            averageDeliveryTime = d.getAverageDeliveryTime();
+        } else if (dto instanceof SupplierCreateDTO d || dto instanceof SupplierSummaryDTO) {
+            SupplierCreateDTO d1 = (SupplierCreateDTO) dto;
+            openingTime = d1.getOpeningTime();
+            closingTime = d1.getClosingTime();
+            averageDeliveryTime = d1.getAverageDeliveryTime();
         }
 
-        if (openingTime != null) {
-            supplier.setOpeningTime(LocalTime.parse(openingTime));
-        }
+        SupplierMapperHelper.applyTimeFields(
+                supplier,
+                openingTime,
+                closingTime,
+                averageDeliveryTime
+        );
 
-        if (closingTime != null) {
-            supplier.setClosingTime(LocalTime.parse(closingTime));
-        }
-
-        if (averageDeliveryTime != null) {
-            supplier.setAverageDeliveryTime(Duration.ofMinutes(averageDeliveryTime));
-        }
+//        if (openingTime != null) {
+//            supplier.setOpeningTime(LocalTime.parse(openingTime));
+//        }
+//
+//        if (closingTime != null) {
+//            supplier.setClosingTime(LocalTime.parse(closingTime));
+//        }
+//
+//        if (averageDeliveryTime != null) {
+//            supplier.setAverageDeliveryTime(Duration.ofMinutes(averageDeliveryTime));
+//        }
 
         return supplier;
     }

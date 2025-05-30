@@ -1,9 +1,6 @@
 package com.h2gas.controller;
 
-import com.h2gas.model.dto.AddressDTO;
-import com.h2gas.model.dto.CityDTO;
-import com.h2gas.model.dto.SupplierCreateDTO;
-import com.h2gas.model.dto.SupplierDTO;
+import com.h2gas.model.dto.*;
 import com.h2gas.model.mapper.SupplierMapper;
 import com.h2gas.services.SupplierService;
 import jakarta.annotation.security.RolesAllowed;
@@ -28,6 +25,13 @@ public class SupplierController {
     @ResponseBody
     public ResponseEntity<List<SupplierDTO>> getAllSuppliers() {
         List<SupplierDTO> supplierDTO = supplierService.findAllSuppliers();
+        return ResponseEntity.ok(supplierDTO);
+    }
+
+    @GetMapping("/summary")
+    @ResponseBody
+    public ResponseEntity<List<SupplierSummaryDTO>> getAllSuppliersSummary() {
+        List<SupplierSummaryDTO> supplierDTO = supplierService.findAllSuppliersSummary();
         return ResponseEntity.ok(supplierDTO);
     }
 

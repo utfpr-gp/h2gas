@@ -3,11 +3,9 @@ package com.h2gas.services;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
+import com.h2gas.model.dto.SupplierSummaryDTO;
 import com.h2gas.model.entity.*;
-import com.h2gas.model.mapper.AddressMapper;
-import com.h2gas.model.mapper.CityMapper;
-import com.h2gas.model.mapper.SupplierMapper;
-import com.h2gas.model.mapper.UserMapper;
+import com.h2gas.model.mapper.*;
 import com.h2gas.model.repository.SupplierRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -45,11 +43,20 @@ public class SupplierService {
     @Autowired
     private AddressService addressService ;
 
+    @Autowired
+    private SupplierSummaryMapper supplierSummaryMapper;
 
     public List<SupplierDTO> findAllSuppliers() {
         return supplierRepository.findAll()
                 .stream()
                 .map(supplierMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<SupplierSummaryDTO> findAllSuppliersSummary() {
+        return supplierRepository.findAll()
+                .stream()
+                .map(supplierSummaryMapper::toDto)
                 .collect(Collectors.toList());
     }
 

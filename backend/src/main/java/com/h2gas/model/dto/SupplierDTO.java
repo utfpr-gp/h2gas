@@ -32,5 +32,4 @@ public class SupplierDTO {
     private String addressStreetName;
     private String addressNumber;
     private Long addressId;
-    private List<ProductItemDTO> productItems;
 }

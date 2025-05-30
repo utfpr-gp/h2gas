@@ -1,6 +1,7 @@
 package com.h2gas.configuration;
 
 import com.h2gas.model.dto.SupplierDTO;
+import com.h2gas.model.dto.SupplierSummaryDTO;
 import com.h2gas.model.entity.Supplier;
 import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Bean;
@@ -17,6 +18,8 @@ public class MapperConfig {
         modelMapper.typeMap(Supplier.class, SupplierDTO.class)
                 .addMappings(mapper -> mapper.skip(SupplierDTO::setAverageDeliveryTime));
 
+        modelMapper.typeMap(Supplier.class, SupplierSummaryDTO.class)
+                .addMappings(mapper -> mapper.skip(SupplierSummaryDTO::setAverageDeliveryTime));
         return modelMapper;
     }
 }
