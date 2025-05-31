@@ -18,7 +18,7 @@
         <!-- Desktop Navigation -->
         <div class="flex items-center gap-3">
         <nav class="hidden lg:flex items-center">
-            <a routerLink="/" class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
+            <a routerLink="/" class="flex items-center cursor-pointer px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
             <i class="fas fa-home h-5 w-5"></i>
             <span class="ml-2">Início</span>
             </a>
@@ -27,7 +27,7 @@
                 <span class="ml-2">Produtos</span>
             </button>
             
-            <ul class="dropdown menu w-52 rounded-box bg-base-100 shadow-sm"
+            <ul *ngIf="user?.userType === 'ADMIN' && user?.userType === 'SUPPLIER'" class="dropdown menu w-52 rounded-box bg-base-100 shadow-sm"
                 popover id="popover-1" style="position-anchor:--anchor-1">
                 <li>
                     <a href="/product-items">Item produtos</a>
@@ -36,22 +36,22 @@
                     <a href="/category-products">Categoria de produtos</a>
                 </li>
             </ul>
-            <a routerLink="/pedidos" class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
-            <i class="fas fa-clipboard-list h-5 w-5"></i>
-            <span class="ml-2">Pedidos</span>
+            <a routerLink="/pedidos" class="flex items-center cursor-pointer px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
+                <i class="fas fa-clipboard-list h-5 w-5"></i>
+                <span class="ml-2">Pedidos</span>
             </a>
-            <a href="/register-city" class="flex items-center cursor-pointer px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
+            <a *ngIf="user?.userType === 'ADMIN'" href="/register-city" class="flex items-center cursor-pointer px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
                 <i class="fas fa-map-marked-alt h-5 w-5"></i>
             <span class="ml-2">Cidades</span>
             </a>
-            <a href="/supplier-approval" class="flex cursor-pointer items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
+            <a *ngIf="user?.userType === 'ADMIN'" href="/supplier-approval" class="flex cursor-pointer items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
                 <i class="fas fa-store h-5 w-5"></i>
             <span class="ml-2">Distribuidores</span>
             </a>
-            <a routerLink="/configuracoes" class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
+            <!-- <a routerLink="/configuracoes" class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
                 <i class="fas fa-cog h-5 w-5"></i>
             <span class="ml-2">Configurações</span>
-            </a>
+            </a> -->
         </nav>
 
         <!-- Notifications -->
@@ -68,16 +68,16 @@
             <i class="fas fa-user h-5 w-5"></i>
             </button>
             <div *ngIf="userMenuOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-50">
-            <button (click)="navigate('/management-distributor')" class="block px-4 cursor-pointer py-2 min-w-full text-sm text-gray-700 hover:bg-gray-100">
-                Minha Distribuidora
-            </button>
-            <button (click)="navigate('/management-distributor')" class="block cursor-pointer px-4 py-2 min-w-full text-sm text-gray-700 hover:bg-gray-100">
-                Meus Dados
-            </button>
-            <div class="border-t my-1"></div>
-            <button (click)="navigate('/management-distributor')" class="block px-4 py-2 cursor-pointer text-sm text-gray-700 min-w-full hover:bg-gray-100">
-                Sair
-            </button>
+                <button *ngIf="user?.userType === 'ADMIN' && user?.userType === 'SUPPLIER'"  (click)="navigate('/management-distributor')" class="block px-4 cursor-pointer py-2 min-w-full text-sm text-gray-700 hover:bg-gray-100">
+                    Minha Distribuidora
+                </button>
+                <button (click)="navigate('/management-distributor')" class="block cursor-pointer px-4 py-2 min-w-full text-sm text-gray-700 hover:bg-gray-100">
+                    Meus Dados
+                </button>
+                <div class="border-t my-1"></div>
+                <button (click)="logout()" class="block px-4 py-2 cursor-pointer text-sm text-gray-700 min-w-full hover:bg-gray-100">
+                    Sair
+                </button>
             </div>
         </div>
         </div>

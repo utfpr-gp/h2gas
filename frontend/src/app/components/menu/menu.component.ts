@@ -1,6 +1,8 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+import { User } from '../../models/user';
 
 @Component({
   selector: 'app-menu',
@@ -10,15 +12,24 @@ import { Router } from '@angular/router';
   templateUrl: './menu.component.html',
   styleUrl: './menu.component.css'
 })
-export class MenuComponent {
+export class MenuComponent implements OnInit {
   userMenuOpen = false;
   showDropdown = false;
+  user?: User;
 
   constructor(
     private router: Router,
+    private authService: AuthService
   ) {
 
   }
+  ngOnInit(): void {
+    const userJson = localStorage.getItem('user');
+    if (userJson) {
+      this.user = JSON.parse(userJson);
+    }
+  }
+  
 
   toggleUserMenu() {
     this.userMenuOpen = !this.userMenuOpen;
@@ -40,5 +51,8 @@ export class MenuComponent {
     }
   }
 
+  logout() {
+    this.authService.logout()
+  }
 
 }
