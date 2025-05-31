@@ -1,9 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { MenuComponent } from '../../menu/menu.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { DeleteConfirmationModalComponent } from '../../delete-confirmation-modal/delete-confirmation-modal.component';
 import { Router } from '@angular/router';
+import { ProductItemService } from '../../../services/product-item.service';
+import { ProductItem } from '../../../models/product-item';
+import { ToastrService } from 'ngx-toastr';
+import { firstValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-product-item',
@@ -16,8 +20,16 @@ import { Router } from '@angular/router';
   templateUrl: './product-item.component.html',
   styleUrl: './product-item.component.css'
 })
-export class ProductItemComponent {
+export class ProductItemComponent implements OnInit {
   busca: string = '';
+
+  availableProduct: number = 0;
+
+  itemProducts?: ProductItem[]; 
+
+  esgotadoProducts: number = 0;
+
+  lowProducts: number = 0;
 
   produtos = [
     {
@@ -51,7 +63,16 @@ export class ProductItemComponent {
 
   constructor(
     private router: Router,
+    private productItemService: ProductItemService,
+    private toastr: ToastrService,
   ) {}
+
+
+  async ngOnInit() {
+    debugger
+    await this.findProdutos();
+    this.countingDisponivel();
+  }
 
   produtosFiltrados() {
     if (!this.busca) return this.produtos;
@@ -80,4 +101,43 @@ export class ProductItemComponent {
   navigateRoute(routeName: string) {
     this.router.navigate([routeName]);
   }
+
+  async findProdutos() {
+    debugger
+    try {
+      debugger
+      this.itemProducts = await firstValueFrom(this.productItemService.findAll());
+      console.log(this.itemProducts);
+      this.toastr.success("Buscado com sucesso os produtos!!");
+    } catch (err: any) {
+      this.toastr.error(`Erro ao buscar os produtos!! ${err.error?.message}`);
+      console.error(err);
+    }
+  }
+
+  countingDisponivel() {
+    debugger
+    for (let index = 0; index < this.itemProducts!.length; index++) {
+      const element = this.itemProducts![index];
+      debugger
+
+      if (element.stockQuantity! > 0) {
+        this.availableProduct++
+      } 
+
+      if (element.stockQuantity! == 0 || element.stockQuantity == null) {
+        this.esgotadoProducts++
+      }
+
+      if (element.stockQuantity! <= 8) {
+        this.lowProducts++
+      }
+
+    }
+
+    console.log(this.availableProduct);
+    
+  }
+
+
 }

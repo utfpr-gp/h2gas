@@ -1,6 +1,3 @@
-<!-- <header class="sticky top-0 z-40 w-full shadow-md">
-    <app-menu></app-menu>
-  </header> -->
 <div class="p-6 bg-blue-50 min-h-screen">
     
     <div class="bg-gradient-to-r from-blue-700 to-blue-400 rounded-2xl p-6 text-white shadow-md">
@@ -15,7 +12,7 @@
             <div>
                 <p class="text-blue-600 font-medium">Total de Produtos</p>
                 <p class="text-3xl font-bold text-blue-800">
-                {{ produtos.length }}
+                {{ itemProducts!!.length }}
                 </p>
             </div>
             <div class="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
@@ -31,8 +28,7 @@
             <div>
               <p class="text-green-600 font-medium">Disponíveis</p>
               <p class="text-3xl font-bold text-green-800">
-                <!-- {{ contarDisponiveis() }} -->
-                1
+                {{ availableProduct }}
               </p>
             </div>
             <div class="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -48,8 +44,7 @@
             <div>
               <p class="text-yellow-600 font-medium">Baixo Estoque</p>
               <p class="text-3xl font-bold text-yellow-800">
-                <!-- {{ contarBaixoEstoque() }} -->
-                3
+                {{lowProducts}}
               </p>
             </div>
             <div class="h-12 w-12 bg-yellow-100 rounded-full flex items-center justify-center">
@@ -65,8 +60,7 @@
             <div>
               <p class="text-red-600 font-medium">Esgotados</p>
               <p class="text-3xl font-bold text-red-800">
-                <!-- {{ contarEsgotados() }} -->
-                2
+                {{ esgotadoProducts }}
               </p>
             </div>
             <div class="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
@@ -85,13 +79,9 @@
       </div>
   
       <div class="space-y-4">
-        <div *ngFor="let produto of produtosFiltrados()" >
+        <div *ngFor="let produto of itemProducts" >
             <div class="bg-blue-50 py-2 px-4">
                 <div class="max-w-5xl mx-auto">
-                  <!-- Topo -->
-                  
-              
-                  <!-- Cards -->
                   <div class="space-y-2">
                     <!-- Card -->
                     <div class="bg-white hover:shadow-lg hover:-translate-y-1 hover:bg-gray-50 border border-transparent hover:border-blue-300 rounded-xl shadow p-4 flex items-center justify-between">
@@ -101,66 +91,42 @@
               
                       <div class="flex-1 px-6">
                         <div class="flex items-center gap-2 mb-2">
-                          <h2 class="text-lg font-semibold text-gray-800">Botijão P13 - Ultragaz</h2>
-                          <span class="bg-blue-100 text-blue-600 text-xs font-semibold px-2 py-0.5 rounded">P13</span>
+                          <h2 class="text-lg font-semibold text-gray-800">{{produto.type}}</h2>
+                          <span class="bg-blue-100 text-blue-600 text-xs font-semibold px-2 py-0.5 rounded">{{produto.category}}</span>
                           <span class="bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded">Disponível</span>
                         </div>
                         <div class="grid grid-cols-4 gap-4 text-sm text-gray-700">
                           <div>
                             <span class="block font-medium text-gray-500">Fornecedor:</span>
-                            Ultragaz
+                            {{produto.brand}}
                           </div>
                           <div>
                             <span class="block font-medium text-gray-500">Preço:</span>
-                            <span class="text-blue-700 font-bold">R$ 85,90</span>
+                            <span class="text-blue-700 font-bold">R$ {{produto.price}}</span>
                           </div>
                           <div>
                             <span class="block font-medium text-gray-500">Estoque:</span>
-                            <span class="text-blue-700 font-bold">45 unidades</span>
+                            <span class="text-blue-700 font-bold">{{produto.stockQuantity}} unidades</span>
                           </div>
                           <div>
                             <span class="block font-medium text-gray-500">Última atualização:</span>
-                            14/01/2024
+                              {{ produto.updatedAt | date:'dd/MM/yyyy HH:mm' }}
                           </div>
                         </div>
                       </div>
               
                       <div class="flex flex-col gap-2">
                         <button class="bg-blue-600 cursor-pointer hover:bg-blue-300 text-white text-sm font-semibold px-4 py-1 rounded">
-                          ✏️ Editar
+                          <i class="fa-solid fa-pen-to-square"></i> Editar
                         </button>
                         <button class="bg-blue-600 cursor-pointer hover:bg-blue-300 text-red-700 text-sm font-semibold px-4 py-1 rounded">
-                          ❌ Excluir
+                          <i class="fa-solid fa-trash"></i> Excluir
                         </button>
                       </div>
                     </div>
-              
-                    <!-- Repita o card acima para mais produtos -->
                   </div>
                 </div>
               </div>
-              
-              
-            <!-- <div class="flex items-start space-x-4">
-            <img *ngIf="produto.imagem" [src]="produto.imagem" alt="Imagem" class="w-20 h-20 object-cover rounded-lg" />
-            <div *ngIf="!produto.imagem" class="w-20 h-20 bg-gray-200 flex items-center justify-center rounded-lg">
-              📦
-            </div>
-            <div>
-              <h2 class="font-bold text-lg">{{ produto.nome }}</h2>
-              <p class="text-sm"><span class="font-medium">Fornecedor:</span> {{ produto.fornecedor }}</p>
-              <p class="text-sm"><span class="font-medium">Preço:</span> R$ {{ produto.preco }}</p>
-              <p class="text-sm"><span class="font-medium">Estoque:</span> {{ produto.estoque }} unidades</p>
-              <p class="text-sm"><span class="font-medium">Última atualização:</span> {{ produto.ultimaAtualizacao }}</p>
-            </div>
-          </div>
-          <div class="flex flex-col space-y-2">
-            <span [ngClass]="badgeClass(produto.status)" class="px-2 py-1 text-xs rounded-full font-semibold w-max">
-              {{ produto.status }}
-            </span>
-            <button class="bg-yellow-300 px-3 py-1 rounded font-semibold">Editar</button>
-            <button class="bg-yellow-500 px-3 py-1 rounded font-semibold text-white">Excluir</button>
-          </div> -->
         </div>
       </div>
     </div>
