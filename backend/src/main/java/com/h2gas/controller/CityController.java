@@ -5,6 +5,7 @@ import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.dto.CityDTO;
 import com.h2gas.model.entity.City;
 import com.h2gas.model.mapper.CityMapper;
+import com.h2gas.response.PageResponse;
 import com.h2gas.services.CityService;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +36,7 @@ public class CityController {
 
     @GetMapping("/cities-page")
     @ResponseBody
-    public Page<CityDTO> listarCidades(
+    public ResponseEntity<PageResponse<CityDTO>> listarCidades(
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(value = "size", required = false) Integer size
     ) {
@@ -48,8 +49,10 @@ public class CityController {
         }
 
         Pageable pageable = PageRequest.of(pagina, tamanhoPagina);
+        Page<CityDTO> result = cityService.findAllCities(pageable);
+        PageResponse<CityDTO> response = new PageResponse<>(result);
 
-        return cityService.findAllCities(pageable);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping
