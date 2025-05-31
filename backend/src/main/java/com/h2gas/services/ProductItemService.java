@@ -63,5 +63,32 @@ public class ProductItemService {
         return productItemMapper.toDto(productItemRepository.save(productItem));
     }
 
+    public void deleteProductItem(Long id) {
+        ProductItem productItem = productItemRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Produto com " + id + " não encontrado"));
+
+        productItemRepository.delete(productItem);
+    }
+
+    public ProductItemDTO updateProductItem(Long id, CreateProductItemDTO productItemDto) {
+        ProductItem productItemUpdate = productItemRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Produto com " + id + " não encontrado"));
+
+        if (productItemDto.getCategoryProductId() != null &&
+                !productItemDto.getCategoryProductId().equals(productItemUpdate.getCategoryProduct().getId())) {
+            CategoryProduct categoryProduct = categoryProductService.findEntityById(
+                    productItemDto.getCategoryProductId()
+            );
+            productItemUpdate.setCategoryProduct(categoryProduct);
+        }
+
+        productItemUpdate.setBrand(productItemDto.getBrand());
+        productItemUpdate.setPrice(productItemDto.getPrice());
+        productItemUpdate.setStockQuantity(productItemDto.getStockQuantity());
+        productItemRepository.save(productItemUpdate);
+
+        return productItemMapper.toDto(productItemUpdate);
+    }
+
 
 }

@@ -26,6 +26,7 @@ public class ProductItemMapper {
 
         if (data.getCategoryProduct().getProductType().getName() != null) {
             productItemDTO.setType(data.getCategoryProduct().getProductType().getName());
+            productItemDTO.setCategoryProductId(data.getCategoryProduct().getProductType().getId());
         }
 
         if (data.getSupplier() != null) {
