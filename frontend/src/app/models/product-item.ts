@@ -6,7 +6,7 @@ export class ProductItem {
     price?: number;
     category?: string;
     type?: string;
-    supplier?: Supplier;
+    distributorId?: number;
 
     constructor(
         id?: number,
@@ -14,13 +14,13 @@ export class ProductItem {
         price?: number,
         category?: string,
         type?: string,
-        supplier?: Supplier
+        distributorId?: number
     ) {
         this.id = id
         this.brand = brand
         this.price = price
         this.category = category
         this.type = type
-        this.supplier = supplier
+        this.distributorId = distributorId
     }
 }
