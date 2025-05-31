@@ -22,42 +22,49 @@ export const routes: Routes = [
         path: 'register-supplier', 
         component: RegisterSupplierComponent,
         canActivate: [authGuard],
+        data: {roles: ['ADMIN', 'SUPPLIER']}
     },
     {
         path: 'management-distributor', 
         component: DistributorManagementComponent,
         canActivate: [authGuard],
+        data: {roles: ['ADMIN', 'SUPPLIER']}
     },
     {
         path: 'distributor/new', 
         component: DistribuitorFormComponent,
         canActivate: [authGuard],
+        data: {roles: ['ADMIN', 'SUPPLIER']}
     },
     {
         path: 'distributor/edit/:id', 
         component: DistribuitorFormComponent,
         canActivate: [authGuard],
+        data: {roles: ['ADMIN', 'SUPPLIER']}
     },
     {
         path: 'category-products', 
         component: CategoryProductsComponent,
         canActivate: [authGuard],
+        data: {roles: ['ADMIN', 'SUPPLIER']}
     },
     {
         path: 'product-items', 
         component: ProductItemComponent,
         canActivate: [authGuard],
+        data: {roles: ['ADMIN', 'SUPPLIER']}
     },
     {
         path: 'product-items/new', 
         component: ProductItemFormComponent,
         canActivate: [authGuard],
+        data: {roles: ['ADMIN', 'SUPPLIER']}
     },
     {
         path: 'product-items/edit/:id', 
         component: ProductItemFormComponent,
         canActivate: [authGuard],
-
+        data: {roles: ['ADMIN', 'SUPPLIER']}
     },
     {
         path: 'register-city', 
