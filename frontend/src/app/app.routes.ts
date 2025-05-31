@@ -11,11 +11,13 @@ import { DistribuitorFormComponent } from './components/pages/distribuitor-form/
 import { CategoryProductsComponent } from './components/pages/category-products/category-products.component';
 import { ProductItemComponent } from './components/pages/product-item/product-item.component';
 import { ProductItemFormComponent } from './components/pages/product-item-form/product-item-form.component';
+import { UnauthorizedComponent } from './components/pages/unauthorized/unauthorized.component';
 
 export const routes: Routes = [
     {path: '', component: InitialScreenComponent},
     {path: 'login', component: LoginComponent},
     {path: 'register', component: RegisterComponent},
+    { path: 'unauthorized', component: UnauthorizedComponent },
     {
         path: 'register-supplier', 
         component: RegisterSupplierComponent,
