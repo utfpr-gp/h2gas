@@ -12,6 +12,7 @@ import { Router } from '@angular/router';
 })
 export class MenuComponent {
   userMenuOpen = false;
+  showDropdown = false;
 
   constructor(
     private router: Router,

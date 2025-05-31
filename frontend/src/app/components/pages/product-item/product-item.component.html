@@ -80,55 +80,65 @@
   
       <div class="space-y-4">
         <div *ngFor="let produto of itemProducts" >
-            <div class="bg-blue-50 py-2 px-4">
-                <div class="max-w-5xl mx-auto">
-                  <div class="space-y-2">
-                    <!-- Card -->
-                    <div class="bg-white hover:shadow-lg hover:-translate-y-1 hover:bg-gray-50 border border-transparent hover:border-blue-300 rounded-xl shadow p-4 flex items-center justify-between">
-                      <div class="w-24 h-24 rounded overflow-hidden">
-                        <img src="https://cdn.awsli.com.br/2004/2004471/produto/278043856/produto-teste_6355364765230299551-5dca5b60c67efea46e15917435354683-640-0-4meiyrif8i.jpg" alt="Botijão" class="w-full h-full object-cover" />
+          <div class="bg-blue-50 py-2 px-4">
+            <div class="max-w-5xl mx-auto">
+              <div class="space-y-2">
+                <!-- Card -->
+                <div class="bg-white hover:shadow-lg hover:-translate-y-1 hover:bg-gray-50 border border-transparent hover:border-blue-300 rounded-xl shadow p-4 flex items-center justify-between">
+                  <div class="w-24 h-24 rounded overflow-hidden">
+                    <img src="https://cdn.awsli.com.br/2004/2004471/produto/278043856/produto-teste_6355364765230299551-5dca5b60c67efea46e15917435354683-640-0-4meiyrif8i.jpg" alt="Botijão" class="w-full h-full object-cover" />
+                  </div>
+
+                  <div class="flex-1 px-6">
+                    <div class="flex items-center gap-2 mb-2">
+                      <h2 class="text-lg font-semibold text-gray-800">{{produto.type}}</h2>
+                      <span class="bg-blue-100 text-blue-600 text-xs font-semibold px-2 py-0.5 rounded">{{produto.category}}</span>
+                      <span class="bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded">Disponível</span>
+                    </div>
+                    <div class="grid grid-cols-4 gap-4 text-sm text-gray-700">
+                      <div>
+                        <span class="block font-medium text-gray-500">Fornecedor:</span>
+                        {{produto.brand}}
                       </div>
-              
-                      <div class="flex-1 px-6">
-                        <div class="flex items-center gap-2 mb-2">
-                          <h2 class="text-lg font-semibold text-gray-800">{{produto.type}}</h2>
-                          <span class="bg-blue-100 text-blue-600 text-xs font-semibold px-2 py-0.5 rounded">{{produto.category}}</span>
-                          <span class="bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded">Disponível</span>
-                        </div>
-                        <div class="grid grid-cols-4 gap-4 text-sm text-gray-700">
-                          <div>
-                            <span class="block font-medium text-gray-500">Fornecedor:</span>
-                            {{produto.brand}}
-                          </div>
-                          <div>
-                            <span class="block font-medium text-gray-500">Preço:</span>
-                            <span class="text-blue-700 font-bold">R$ {{produto.price}}</span>
-                          </div>
-                          <div>
-                            <span class="block font-medium text-gray-500">Estoque:</span>
-                            <span class="text-blue-700 font-bold">{{produto.stockQuantity}} unidades</span>
-                          </div>
-                          <div>
-                            <span class="block font-medium text-gray-500">Última atualização:</span>
-                              {{ produto.updatedAt | date:'dd/MM/yyyy HH:mm' }}
-                          </div>
-                        </div>
+                      <div>
+                        <span class="block font-medium text-gray-500">Preço:</span>
+                        <span class="text-blue-700 font-bold">
+                          R$ {{produto.price}}
+                        </span>
                       </div>
-              
-                      <div class="flex flex-col gap-2">
-                        <button class="bg-blue-600 cursor-pointer hover:bg-blue-300 text-white text-sm font-semibold px-4 py-1 rounded">
-                          <i class="fa-solid fa-pen-to-square"></i> Editar
-                        </button>
-                        <button class="bg-blue-600 cursor-pointer hover:bg-blue-300 text-red-700 text-sm font-semibold px-4 py-1 rounded">
-                          <i class="fa-solid fa-trash"></i> Excluir
-                        </button>
+                      <div>
+                        <span class="block font-medium text-gray-500">Estoque:</span>
+                        <span class="text-blue-700 font-bold">
+                          {{produto.stockQuantity}} unidades
+                        </span>
+                      </div>
+                      <div>
+                        <span class="block font-medium text-gray-500">Última atualização:</span>
+                          {{ produto.updatedAt | date:'dd/MM/yyyy HH:mm' }}
                       </div>
                     </div>
                   </div>
+
+                  <div class="flex flex-col gap-2">
+                    <button (click)="navigateEdit(produto.id)" class="bg-blue-600 cursor-pointer hover:bg-blue-300 text-white text-sm font-semibold px-4 py-1 rounded">
+                      <i class="fa-solid fa-pen-to-square"></i> Editar
+                    </button>
+                    <button (click)="openModalDelete(produto)" class="bg-blue-600 cursor-pointer hover:bg-blue-300 text-red-700 text-sm font-semibold px-4 py-1 rounded">
+                      <i class="fa-solid fa-trash"></i> Excluir
+                    </button>
+                  </div>
                 </div>
               </div>
+            </div>
+          </div>
         </div>
       </div>
+
+      <app-delete-confirmation-modal
+        [itemName]="deleteNameProduct!!"
+        (confirm)="deleteConfirmed()"
+        (cancel)="idProductRow = undefined">
+      </app-delete-confirmation-modal>
     </div>
   </div>
   

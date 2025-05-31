@@ -16,13 +16,47 @@ export const routes: Routes = [
     {path: '', component: InitialScreenComponent},
     {path: 'login', component: LoginComponent},
     {path: 'register', component: RegisterComponent},
-    {path: 'register-supplier', component: RegisterSupplierComponent},
-    {path: 'management-distributor', component: DistributorManagementComponent},
-    {path: 'distributor/new', component: DistribuitorFormComponent},
-    {path: 'distributor/edit/:id', component: DistribuitorFormComponent},
-    {path: 'category-products', component: CategoryProductsComponent},
-    {path: 'product-items', component: ProductItemComponent},
-    {path: 'product-items/new', component: ProductItemFormComponent},
+    {
+        path: 'register-supplier', 
+        component: RegisterSupplierComponent,
+        canActivate: [authGuard],
+    },
+    {
+        path: 'management-distributor', 
+        component: DistributorManagementComponent,
+        canActivate: [authGuard],
+    },
+    {
+        path: 'distributor/new', 
+        component: DistribuitorFormComponent,
+        canActivate: [authGuard],
+    },
+    {
+        path: 'distributor/edit/:id', 
+        component: DistribuitorFormComponent,
+        canActivate: [authGuard],
+    },
+    {
+        path: 'category-products', 
+        component: CategoryProductsComponent,
+        canActivate: [authGuard],
+    },
+    {
+        path: 'product-items', 
+        component: ProductItemComponent,
+        canActivate: [authGuard],
+    },
+    {
+        path: 'product-items/new', 
+        component: ProductItemFormComponent,
+        canActivate: [authGuard],
+    },
+    {
+        path: 'product-items/edit/:id', 
+        component: ProductItemFormComponent,
+        canActivate: [authGuard],
+
+    },
     {
         path: 'register-city', 
         component: CityRegisterComponent,

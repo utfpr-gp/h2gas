@@ -10,7 +10,7 @@ import { CategoryProduct } from '../../../models/category-product';
 import { CommonModule } from '@angular/common';
 import { User } from '../../../models/user';
 import { ProductItem } from '../../../models/product-item';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-product-item-form',
@@ -34,6 +34,8 @@ export class ProductItemFormComponent implements OnInit {
   user?: User;
 
   productItemSave?: ProductItem;
+  isEdit: boolean = false;
+  idEdit: number = 0;
 
   constructor(
     private productItemService: ProductItemService,
@@ -43,6 +45,7 @@ export class ProductItemFormComponent implements OnInit {
     private categoryService: CategoryProductService,
     private userService: UserService,
     private router: Router,
+    private routeActive: ActivatedRoute
   ) {
     this.formProductItem = this.fb.group({
       brand: ['', [Validators.required]],
@@ -54,25 +57,54 @@ export class ProductItemFormComponent implements OnInit {
 
 
   ngOnInit(): void {
+    this.idEdit = parseInt(this.routeActive.snapshot.paramMap.get('id') || '', 10);
+    if (this.idEdit) {
+      this.isEdit = true;
+      this.finProductId(this.idEdit);
+    } 
     this.findAllCategoryProducts();
     this.user = this.userService.getUserLocalStorage();
+  }
+
+
+  finProductId(idEdit: number) {
+    this.productItemService.findById(idEdit).subscribe({
+      next: (response) => {
+        console.log('Produto buscado com sucesso!', response);
+        this.formProductItem.patchValue(response);
+        this.toastr.success('Produto buscado com sucesso!');
+      },
+      error: (err) => {
+        console.error('Erro ao buscar:', err.error.message);
+        this.toastr.error(`Erro ao buscar: ${err.error.message}`)
+      },
+    })
   }
 
   onFileSelected(event: any) {
     this.selectedFile = event.target.files[0];
   }
 
-  // onSubmit() {
-  //   if (!this.selectedFile) return;
+  updateProduct() {
+    if (this.formProductItem.invalid) {
+      this.toastr.warning("Confira os campos vazios")
+      return;
+    }
 
-  //   const formData = new FormData();
-  //   formData.append('image', this.selectedFile);
-  //   formData.append('nome', this.nome);
+    this.productItemSave = this.formProductItem.value;
 
-  //   this.http.post('/api/produtos', formData).subscribe(response => {
-  //     console.log('Produto cadastrado com sucesso!', response);
-  //   });
-  // }
+    this.productItemService.update(this.idEdit, this.productItemSave!).subscribe({
+      next: (response) => {
+        console.log("Atulizado com sucesso!!");
+        this.toastr.success("Produto atualizado com sucesso!!");
+        this.navigateRoute('/product-items')
+      },
+      error: (err) => {
+        console.error("Erros ao atualizar!!");
+        this.toastr.error("Erros ao atualizar produtos!!");
+      },
+    }) 
+  }
 
 
   findAllCategoryProducts() {

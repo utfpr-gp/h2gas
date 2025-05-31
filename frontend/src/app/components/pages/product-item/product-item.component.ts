@@ -31,6 +31,9 @@ export class ProductItemComponent implements OnInit {
 
   lowProducts: number = 0;
 
+  deleteNameProduct?: string;
+  idProductRow?: number;
+
   produtos = [
     {
       nome: 'Botijão P13 - Ultragaz',
@@ -81,6 +84,16 @@ export class ProductItemComponent implements OnInit {
     );
   }
 
+  openModalDelete(productItem: ProductItem) {
+    this.deleteNameProduct = `${productItem.brand} - ${productItem.category}`
+    this.idProductRow = productItem.id
+    
+    setTimeout(() => {
+      const checkbox: any = document.getElementById('delete-modal');
+      if (checkbox) checkbox.checked = true;
+    });
+  }
+
   contarPorStatus(status: string): number {
     return this.produtos.filter(p => p.status === status).length;
   }
@@ -115,8 +128,31 @@ export class ProductItemComponent implements OnInit {
     }
   }
 
+  navigateEdit(id?: number) {
+    this.router.navigate(['/product-items/edit', id])
+  }
+
+  deleteConfirmed() {
+    debugger
+    this.productItemService.delete(this.idProductRow!).subscribe({
+      next: async (response) => {
+        this.toastr.success("Produto deletado com sucesso!!");
+        await this.findProdutos();
+        this.countingDisponivel();
+      },
+      error: (err) => {
+        this.toastr.error(`Erro ao deletar produto!! ${err.error?.message}`);
+        console.error(err);
+      },
+    })
+  }
+
   countingDisponivel() {
     debugger
+    this.availableProduct = 0
+    this.esgotadoProducts = 0
+    this.lowProducts = 0
+
     for (let index = 0; index < this.itemProducts!.length; index++) {
       const element = this.itemProducts![index];
       debugger

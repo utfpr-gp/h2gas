@@ -61,8 +61,8 @@
       <div class="flex justify-between mt-6">
         <button type="button" class="bg-gray-400 text-white font-semibold px-6 py-2 cursor-pointer rounded-md hover:bg-blue-500">
           Cancelar
-        </button>
-        <button type="button" (click)="saveItemProduct()" class="bg-blue-700 text-white font-semibold px-6 py-2 cursor-pointer rounded-md hover:bg-blue-800">
+        </button> 
+        <button type="button" (click)="isEdit ? updateProduct() : saveItemProduct()" class="bg-blue-700 text-white font-semibold px-6 py-2 cursor-pointer rounded-md hover:bg-blue-800">
           Adicionar Produto
         </button>
       </div>

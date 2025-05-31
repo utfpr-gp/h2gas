@@ -22,24 +22,34 @@
             <i class="fas fa-home h-5 w-5"></i>
             <span class="ml-2">Início</span>
             </a>
-            <button (click)="navigate('/category-products')" class="flex items-center px-3 py-2 cursor-pointer text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
-                <i class="fas fa-gas-pump h-5 w-5"></i>
+            <button style="anchor-name:--anchor-1" popovertarget="popover-1" class="flex items-center px-3 py-2 cursor-pointer text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
+                <i class="fa-solid fa-fire-flame-simple"></i>
                 <span class="ml-2">Produtos</span>
             </button>
+            
+            <ul class="dropdown menu w-52 rounded-box bg-base-100 shadow-sm"
+                popover id="popover-1" style="position-anchor:--anchor-1">
+                <li>
+                    <a href="/product-items">Item produtos</a>
+                </li>
+                <li>
+                    <a href="/category-products">Categoria de produtos</a>
+                </li>
+            </ul>
             <a routerLink="/pedidos" class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
             <i class="fas fa-clipboard-list h-5 w-5"></i>
             <span class="ml-2">Pedidos</span>
             </a>
-            <a routerLink="/cidades" class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
-            <i class="fas fa-map-marked-alt h-5 w-5"></i>
+            <a href="/register-city" class="flex items-center cursor-pointer px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
+                <i class="fas fa-map-marked-alt h-5 w-5"></i>
             <span class="ml-2">Cidades</span>
             </a>
-            <a routerLink="/distribuidores" class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
-            <i class="fas fa-store h-5 w-5"></i>
+            <a href="/supplier-approval" class="flex cursor-pointer items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
+                <i class="fas fa-store h-5 w-5"></i>
             <span class="ml-2">Distribuidores</span>
             </a>
             <a routerLink="/configuracoes" class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
-            <i class="fas fa-cog h-5 w-5"></i>
+                <i class="fas fa-cog h-5 w-5"></i>
             <span class="ml-2">Configurações</span>
             </a>
         </nav>
