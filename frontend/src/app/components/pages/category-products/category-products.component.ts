@@ -12,7 +12,6 @@ import { DeleteConfirmationModalComponent } from '../../delete-confirmation-moda
 @Component({
   selector: 'app-category-products',
   imports: [
-    MenuComponent,
     ReactiveFormsModule,
     CommonModule,
     FormsModule,

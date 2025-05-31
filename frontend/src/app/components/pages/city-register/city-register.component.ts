@@ -18,7 +18,6 @@ import { MenuComponent } from '../../menu/menu.component';
     FormsModule,
     DeleteConfirmationModalComponent,
     DynamicTableComponent,
-    MenuComponent
   ],
   templateUrl: './city-register.component.html',
   styleUrl: './city-register.component.css'

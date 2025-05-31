@@ -10,6 +10,7 @@ import { DistributorManagementComponent } from './components/pages/distributor-m
 import { DistribuitorFormComponent } from './components/pages/distribuitor-form/distribuitor-form.component';
 import { CategoryProductsComponent } from './components/pages/category-products/category-products.component';
 import { ProductItemComponent } from './components/pages/product-item/product-item.component';
+import { ProductItemFormComponent } from './components/pages/product-item-form/product-item-form.component';
 
 export const routes: Routes = [
     {path: '', component: InitialScreenComponent},
@@ -21,6 +22,7 @@ export const routes: Routes = [
     {path: 'distributor/edit/:id', component: DistribuitorFormComponent},
     {path: 'category-products', component: CategoryProductsComponent},
     {path: 'product-items', component: ProductItemComponent},
+    {path: 'product-items/new', component: ProductItemFormComponent},
     {
         path: 'register-city', 
         component: CityRegisterComponent,

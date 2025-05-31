@@ -3,11 +3,11 @@ import { MenuComponent } from '../../menu/menu.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { DeleteConfirmationModalComponent } from '../../delete-confirmation-modal/delete-confirmation-modal.component';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-product-item',
   imports: [
-    MenuComponent,
     ReactiveFormsModule,
     CommonModule,
     FormsModule,
@@ -49,6 +49,10 @@ export class ProductItemComponent {
     }
   ];
 
+  constructor(
+    private router: Router,
+  ) {}
+
   produtosFiltrados() {
     if (!this.busca) return this.produtos;
     return this.produtos.filter(p =>
@@ -71,5 +75,9 @@ export class ProductItemComponent {
       default:
         return 'bg-gray-200 text-gray-700';
     }
+  }
+
+  navigateRoute(routeName: string) {
+    this.router.navigate([routeName]);
   }
 }

@@ -17,7 +17,6 @@ import { User } from '../../../models/user';
 @Component({
   selector: 'app-distribuitor-create',
   imports: [
-    MenuComponent,
     ReactiveFormsModule,
     CommonModule,
     FormsModule,

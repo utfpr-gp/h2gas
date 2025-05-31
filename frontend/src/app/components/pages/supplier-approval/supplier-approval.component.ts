@@ -10,7 +10,6 @@ import { MenuComponent } from '../../menu/menu.component';
   selector: 'app-supplier-approval',
   imports: [
     DynamicTableComponent,
-    MenuComponent
   ],
   templateUrl: './supplier-approval.component.html',
   styleUrl: './supplier-approval.component.css'

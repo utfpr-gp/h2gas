@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
   </head>
+  <header *ngIf="showMenu" class="sticky top-0 z-40 w-full shadow-md mb-5">
+    <app-menu></app-menu>
+  </header>
   <body>
     <main>
       <router-outlet></router-outlet>
