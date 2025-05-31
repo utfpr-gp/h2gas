@@ -8,6 +8,9 @@ import com.h2gas.model.mapper.CityMapper;
 import com.h2gas.services.CityService;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +31,25 @@ public class CityController {
     public ResponseEntity<List<CityDTO>> getAllCities() {
         List<CityDTO> cityDTO = cityService.findAllCities();
         return ResponseEntity.ok(cityDTO);
+    }
+
+    @GetMapping("/cities-page")
+    @ResponseBody
+    public Page<CityDTO> listarCidades(
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "size", required = false) Integer size
+    ) {
+        int pagina = (page == null || page < 0) ? 0 : page;
+        int tamanhoPagina = (size == null || size < 1) ? 10 : size;
+        int maxSize = 50;
+
+        if (tamanhoPagina > maxSize) {
+            tamanhoPagina = maxSize;
+        }
+
+        Pageable pageable = PageRequest.of(pagina, tamanhoPagina);
+
+        return cityService.findAllCities(pageable);
     }
 
     @PostMapping
