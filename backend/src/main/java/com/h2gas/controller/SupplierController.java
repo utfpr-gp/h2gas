@@ -83,4 +83,13 @@ public class SupplierController {
         return ResponseEntity.ok(updated);
     }
 
+    @PatchMapping("/{id}/status")
+    @ResponseBody
+    public ResponseEntity<Map<String, String>> changeStatusOpenClosed(@PathVariable Long id,
+                                                              @RequestBody Map<String, Boolean> status) {
+        boolean novoStatus = status.get("status");
+        supplierService.updateStatusOpenClosed(id, novoStatus);
+        return ResponseEntity.ok(Map.of("message", "Status atualizado com sucesso"));
+    }
+
 }

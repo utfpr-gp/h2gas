@@ -35,6 +35,7 @@ public class Supplier {
 
     private boolean active;
 
+
     @OneToOne
     @JoinColumn(name = "address_id")
     private Address address;
@@ -50,4 +51,7 @@ public class Supplier {
 
     @OneToMany(mappedBy = "supplier")
     private List<ProductItem> productItems;
+
+    private boolean open = false;
+
 }

@@ -123,7 +123,8 @@ class SupplierServiceTest {
                 address,
                 cityFirst,
                 user,
-                null
+                null,
+                false
         );
 
         supplierRepository.save(supplierFirst);
@@ -139,7 +140,8 @@ class SupplierServiceTest {
                 address2,
                 cityFirst,
                 user2,
-                null
+                null,
+                false
         );
 
         supplierRepository.save(supplierSecond);

@@ -22,6 +22,7 @@ public class SupplierDTO {
 
     private Long averageDeliveryTime;
     private boolean active;
+    private boolean open;
     private String cityName;
     private Long cityId;
     private UserDto user;

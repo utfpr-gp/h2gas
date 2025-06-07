@@ -137,6 +137,14 @@ public class SupplierService {
         supplierRepository.save(supplier);
     }
 
+    public void updateStatusOpenClosed(Long id, boolean openClose) {
+        Supplier supplier = supplierRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Fornecedor com " + id + " não encontrado"));
+
+        supplier.setOpen(openClose);
+        supplierRepository.save(supplier);
+    }
+
     public SupplierDTO findByUserIdSupplier(String userId) {
         Optional<Supplier> supplierOptional = supplierRepository.findByUserId(userId);
         return supplierOptional.map(supplierMapper::toDto).orElseThrow(()
