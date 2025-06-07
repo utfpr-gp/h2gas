@@ -74,6 +74,7 @@ class AuthenticationControllerTest {
         User user = new User();
         user.setEmail("teste@exemplo.com");
         user.setId("94c4c7ca-6dca-4bc5-80ee-5f564918ca07");
+        user.setUserType(UserTypeEnum.CUSTOMER);
         user.setPassword(passwordEncoder.encode("123456"));
         userRepository.save(user);
         var authToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
