@@ -5,10 +5,15 @@ import { ToastrService } from 'ngx-toastr';
 import { UserService } from '../../../services/user.service';
 import { User } from '../../../models/user';
 import { Supplier } from '../../../models/supplier';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-distributor-management',
-  imports: [],
+  imports: [
+    CommonModule,
+    FormsModule
+  ],
   templateUrl: './distributor-management.component.html',
   styleUrl: './distributor-management.component.css'
 })
@@ -24,6 +29,7 @@ export class DistributorManagementComponent implements OnInit {
   }
 
   userLogado?: User;
+  showDistribuidora = false;
 
   supplierDistribuidor?: Supplier;
 
@@ -41,6 +47,26 @@ export class DistributorManagementComponent implements OnInit {
     this.router.navigate([route])
   }
 
+  onToggleDistribuidora(checked: any) {
+    debugger
+    this.showDistribuidora = checked.target.checked;
+    console.log('Distribuidora aberta?', checked);
+
+    let data = {
+      "status": this.showDistribuidora
+    }
+
+    this.supplierService.openDistribuidor(data, this.supplierDistribuidor?.id!).subscribe({
+      next: (value) => {
+        this.toastr.success("Distribuidora aberta com sucesso!!");
+      },
+      error: (err) => {
+        this.toastr.error(`Erro ao abrir distribuidora: ${err.error.message} `);
+      },
+    })
+
+  }
+
   buscaDistribuidoraFornecedor(userId: string) {
     debugger
     this.supplierService.findByUserId(userId).subscribe({
@@ -48,7 +74,7 @@ export class DistributorManagementComponent implements OnInit {
         debugger
         console.log('Distribuidora buscada com sucesso!', response);
         this.supplierDistribuidor = response;
-        console.log(this.supplierDistribuidor);
+        this.showDistribuidora = this.supplierDistribuidor.open!;
         this.toastr.success('Distribuidora buscada com sucesso!');
       },
       error: (err) => {

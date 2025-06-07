@@ -21,4 +21,8 @@ export class SupplierService extends AbstractService<Supplier> {
   findByUserId(userId: string) {
     return this.http.get(`${this.baseUrl}/by-user/${userId}`);
   }
+
+  openDistribuidor(data: any, id: number) {
+    return this.http.patch(`${this.baseUrl}/${id}/status`, data);
+  }
 }

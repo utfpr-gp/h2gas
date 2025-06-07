@@ -17,6 +17,7 @@ export class Supplier {
     userId?: string;
     addressStreetName?: string;
     addressNumber?: string;
+    open?: boolean;
 
     constructor(
         id?: number,
@@ -32,7 +33,8 @@ export class Supplier {
         user?: User,
         userId?: string,
         addressStreetName?: string,
-        addressNumber?: string
+        addressNumber?: string,
+        open?: boolean
     ) {
         this.id = id;
         this.name = name;
@@ -48,5 +50,6 @@ export class Supplier {
         this.userId = userId;
         this.addressStreetName = addressStreetName;
         this.addressNumber = addressNumber;
+        this.open = open
     }
 }

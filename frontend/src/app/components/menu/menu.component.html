@@ -27,7 +27,7 @@
                 <span class="ml-2">Produtos</span>
             </button>
             
-            <ul *ngIf="user?.userType === 'ADMIN' && user?.userType === 'SUPPLIER'" class="dropdown menu w-52 rounded-box bg-base-100 shadow-sm"
+            <ul *ngIf="user?.userType === 'ADMIN' || user?.userType === 'SUPPLIER'" class="dropdown menu w-52 rounded-box bg-base-100 shadow-sm"
                 popover id="popover-1" style="position-anchor:--anchor-1">
                 <li>
                     <a href="/product-items">Item produtos</a>
@@ -68,7 +68,7 @@
             <i class="fas fa-user h-5 w-5"></i>
             </button>
             <div *ngIf="userMenuOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-50">
-                <button *ngIf="user?.userType === 'ADMIN' && user?.userType === 'SUPPLIER'"  (click)="navigate('/management-distributor')" class="block px-4 cursor-pointer py-2 min-w-full text-sm text-gray-700 hover:bg-gray-100">
+                <button *ngIf="user?.userType === 'ADMIN' || user?.userType === 'SUPPLIER'"  (click)="navigate('/management-distributor')" class="block px-4 cursor-pointer py-2 min-w-full text-sm text-gray-700 hover:bg-gray-100">
                     Minha Distribuidora
                 </button>
                 <button (click)="navigate('/management-distributor')" class="block cursor-pointer px-4 py-2 min-w-full text-sm text-gray-700 hover:bg-gray-100">
