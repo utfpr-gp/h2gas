@@ -35,11 +35,11 @@ class CategoryProductServiceTest {
     @Autowired
     private ProductTypeRepository productTypeRepository;
 
-    @Autowired
-    private ProductTypeMapper productTypeMapper;
-
-    @Autowired
-    private ProductTypeService productTypeService;
+//    @Autowired
+//    private ProductTypeMapper productTypeMapper;
+//
+//    @Autowired
+//    private ProductTypeService productTypeService;
 
     private Long validCategoryId;
 
