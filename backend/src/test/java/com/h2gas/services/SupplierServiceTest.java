@@ -82,7 +82,7 @@ class SupplierServiceTest {
 
         City cityFirst = new City(
                 null,
-                "Curitiba",
+                "Pato Branco",
                 "PR"
         );
         cityRepository.save(cityFirst);
