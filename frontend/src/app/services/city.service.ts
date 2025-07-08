@@ -9,8 +9,6 @@ import { environment } from '../../environments/environment';
 })
 export class CityService extends AbstractService<City>{
   override baseUrl: string = `${environment.apiUrl}/cities`
-  // override baseUrl: string = `${environment.apiUrl}/auth/register`;
-
 
   constructor(protected override http: HttpClient) {
     super(http);

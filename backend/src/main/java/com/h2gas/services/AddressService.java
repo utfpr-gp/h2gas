@@ -5,8 +5,10 @@ import com.h2gas.model.dto.AddressDTO;
 import com.h2gas.model.dto.CityDTO;
 import com.h2gas.model.entity.Address;
 import com.h2gas.model.entity.City;
+import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.AddressMapper;
 import com.h2gas.model.mapper.CityMapper;
+import com.h2gas.model.mapper.UserMapper;
 import com.h2gas.model.repository.AddressRepository;
 import com.h2gas.model.repository.CityRepository;
 import org.modelmapper.ModelMapper;
@@ -31,6 +33,12 @@ public class AddressService {
     @Autowired
     private CityMapper cityMapper;
 
+    @Autowired
+    private UserMapper userMapper;
+
+    @Autowired
+    private UserService userService;
+
     public List<AddressDTO> findAllAddresses() {
         return addressRepository.findAll()
                 .stream()
@@ -41,15 +49,23 @@ public class AddressService {
     public AddressDTO findByIdAddress(Long id) {
         Optional<Address> adrresEntityOptional = addressRepository.findById(id);
         return adrresEntityOptional.map(addressMapper::toDto).orElseThrow(()
-                -> new ResourceNotFoundException("User not found with id: " + id));
+                -> new ResourceNotFoundException("Endereço não encontrado com esse id: " + id));
     }
 
     public AddressDTO createAddress(AddressDTO addressDTO) {
-        City city = cityMapper.toEntity(cityService.findByName(addressDTO.getCityName()));
         Address address = addressMapper.toEntity(addressDTO);
+        City city = cityMapper.toEntity(cityService.findByName(addressDTO.getCityName()));
+        User user = userMapper.toEntityUser(userService.findByIdUSer(addressDTO.getUserId()));
         address.setCity(city);
+        address.setUser(user);
         addressRepository.save(address);
         return addressMapper.toDto(address);
+    }
+
+    public AddressDTO findByStreetName(String streetName) {
+        Optional<Address> addressOptional = addressRepository.findByStreetName(streetName);
+        return addressOptional.map(addressMapper::toDto).orElseThrow(()
+                -> new ResourceNotFoundException("Endereço não encontrada com esse nome de rua: " + streetName));
     }
 
     public AddressDTO updateAddress(AddressDTO addressDTO) {

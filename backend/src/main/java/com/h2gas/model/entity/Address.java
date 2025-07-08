@@ -21,7 +21,7 @@ public class Address {
     private String streetName;
 
     private String number;
-
+//   TODO mudar o nome do atributo para numberHouse
     private String complement;
 
     private String neighborhood;
@@ -31,5 +31,9 @@ public class Address {
     @ManyToOne
     @JoinColumn(name = "city_id")
     private City city;
+
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
 }

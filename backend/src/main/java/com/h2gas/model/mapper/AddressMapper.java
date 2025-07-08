@@ -19,6 +19,10 @@ public class AddressMapper {
             addressDTO.setCityName(data.getCity().getName());
         }
 
+        if (data.getUser() != null) {
+            addressDTO.setUserId(data.getUser().getId());
+        }
+
         return addressDTO;
     }
 

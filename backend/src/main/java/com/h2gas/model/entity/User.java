@@ -38,9 +38,13 @@ public class User implements UserDetails {
 
     private UserTypeEnum userType;
 
-    @OneToOne
-    @JoinColumn(name = "address_id")
-    private Address address;
+//    TODO AJUSTAR AQUI MAIS TARDE
+//    @OneToOne(mappedBy = "user")
+//    private Address address;
+
+//    @OneToOne
+//    @JoinColumn(name = "address_id")
+//    private Address address;
 
     public User(String name, String email, String phoneNumber,
                 String cpf, String cnpj, String password,

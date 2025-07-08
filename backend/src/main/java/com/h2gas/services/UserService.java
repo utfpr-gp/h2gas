@@ -33,4 +33,10 @@ public class UserService {
         return userEntityOptional.map(userMapper::toDto).orElseThrow(()
                 -> new ResourceNotFoundException("User not found with id: " + id));
     }
+
+    public UserDto findByName(String name) {
+        Optional<User> userEntityOptional = userRepository.findByName(name);
+        return userEntityOptional.map(userMapper::toDto).orElseThrow(()
+                -> new ResourceNotFoundException("Não encontrado nenhum usuário com esse nome: " + name));
+    }
 }
