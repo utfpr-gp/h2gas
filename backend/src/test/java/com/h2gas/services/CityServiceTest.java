@@ -34,7 +34,7 @@ class CityServiceTest {
 
     private Long validCityId;
 
-    @BeforeAll
+    @BeforeEach
     public void setUp() {
         City cityFirst = new City(
                 null,
