@@ -23,6 +23,6 @@ public class OrderResponseDTO {
     private String customerName;
     private String distributorName;
     private String customerId;
-    private String distributorId;
+    private Long distributorId;
     private List<OrderItemResponseDTO> orderItems;
 }
