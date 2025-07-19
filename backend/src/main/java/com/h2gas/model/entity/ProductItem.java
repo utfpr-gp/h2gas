@@ -8,6 +8,7 @@ import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -22,7 +23,7 @@ public class ProductItem {
     private Long id;
 
     private String brand;
-    private Double price;
+    private BigDecimal price;
     private String imageUrl;
     private Integer stockQuantity;
     @CreationTimestamp
