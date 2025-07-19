@@ -50,6 +50,11 @@ public class ProductItemService {
                 -> new ResourceNotFoundException("Produto não encontrado com esse id: " + id));
     }
 
+    public ProductItem findEntityById(Long id) {
+        return productItemRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado com esse id: " + id));
+    }
+
     public ProductItemDTO createProductItem(CreateProductItemDTO productItemDto) {
         ProductItem productItem = createProductItemMapper.toEntity(productItemDto);
         Supplier supplier = supplierService.findEntityById(productItemDto.getDistributorId());
