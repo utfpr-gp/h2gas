@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -25,7 +27,7 @@ public class Order {
     private User customer;
 
     @ManyToOne
-    private User distributor;
+    private Supplier supplier;
 
     @ManyToOne
     @JoinColumn(name = "address_id", nullable = false)
@@ -44,7 +46,10 @@ public class Order {
 
     private LocalDateTime deliveryDate;
 
+    @CreationTimestamp
     private LocalDateTime createdAt;
+
+    @UpdateTimestamp
     private LocalDateTime updatedAt;
 
 }

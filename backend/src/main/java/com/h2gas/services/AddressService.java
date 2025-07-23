@@ -88,4 +88,10 @@ public class AddressService {
                 -> new ResourceNotFoundException("Endereço não encontrada para esse usuario com esse id: " + userId));
 
     }
+
+    public Address findEntityByUserId(String userId) {
+        return addressRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Endereço não encontrado para esse usuário com id: " + userId));
+    }
+
 }

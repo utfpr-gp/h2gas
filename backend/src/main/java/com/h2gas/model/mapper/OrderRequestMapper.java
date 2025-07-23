@@ -24,8 +24,8 @@ public class OrderRequestMapper {
             orderRequestDTO.setCustomerId(data.getCustomer().getId());
         }
 
-        if (data.getDistributor().getSupplier().getId() != null) {
-            orderRequestDTO.setSupplierId(data.getDistributor().getSupplier().getId());
+        if (data.getSupplier().getId() != null) {
+            orderRequestDTO.setSupplierId(data.getSupplier().getId());
         }
 
         if (data.getItems() != null) {
