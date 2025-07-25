@@ -2,6 +2,7 @@ package com.h2gas.services;
 
 import com.h2gas.model.dto.OrderItemRequestDTO;
 import com.h2gas.model.dto.OrderRequestDTO;
+import com.h2gas.model.dto.OrderResponseDTO;
 import com.h2gas.model.entity.Order;
 import com.h2gas.model.entity.OrderItem;
 import com.h2gas.model.entity.Supplier;
@@ -39,7 +40,7 @@ public class OrderService {
     @Autowired
     private AddressService addressService;
 
-    public Order createOrder(OrderRequestDTO orderRequestDTO) {
+    public OrderResponseDTO createOrder(OrderRequestDTO orderRequestDTO) {
         Order order = orderRequestMapper.toEntity(orderRequestDTO);
         Supplier supplier = supplierService.findEntityById(orderRequestDTO.getSupplierId());
         User user = userService.findEntityByIdUser(orderRequestDTO.getCustomerId());
@@ -60,7 +61,7 @@ public class OrderService {
 
         orderRepository.save(order);
 
-        return order;
+        return null;
     }
 
     private BigDecimal calculateTotalPrice(List<OrderItem> orderItems) {
