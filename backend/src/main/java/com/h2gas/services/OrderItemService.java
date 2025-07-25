@@ -4,7 +4,7 @@ import com.h2gas.model.dto.OrderItemRequestDTO;
 import com.h2gas.model.entity.Order;
 import com.h2gas.model.entity.OrderItem;
 import com.h2gas.model.entity.ProductItem;
-import com.h2gas.model.mapper.OrderItemRequestMapper;
+import com.h2gas.model.mapper.OrderItemMapper;
 import com.h2gas.model.repository.OrderItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -17,14 +17,14 @@ public class OrderItemService {
     private OrderItemRepository repository;
 
     @Autowired
-    private OrderItemRequestMapper orderItemRequestMapper;
+    private OrderItemMapper orderItemMapper;
 
     @Autowired
     private ProductItemService productItemService;
 
     public OrderItem createOrderItem(OrderItemRequestDTO orderItemRequestDTO, Order order) {
         ProductItem productItem = productItemService.findEntityById(orderItemRequestDTO.getProductItemId());
-        OrderItem orderItem = orderItemRequestMapper.toEntity(orderItemRequestDTO);
+        OrderItem orderItem = orderItemMapper.toRequestEntity(orderItemRequestDTO);
 
         BigDecimal totalPrice = calculateTotalPrice(orderItem.getQuantity(), productItem.getPrice());
         orderItem.setTotalPrice(totalPrice);

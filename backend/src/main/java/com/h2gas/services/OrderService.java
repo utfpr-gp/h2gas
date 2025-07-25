@@ -7,7 +7,7 @@ import com.h2gas.model.entity.Order;
 import com.h2gas.model.entity.OrderItem;
 import com.h2gas.model.entity.Supplier;
 import com.h2gas.model.entity.User;
-import com.h2gas.model.mapper.OrderRequestMapper;
+import com.h2gas.model.mapper.OrderMapper;
 import com.h2gas.model.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -26,7 +26,7 @@ public class OrderService {
     private ProductItemService productItemService;
 
     @Autowired
-    private OrderRequestMapper orderRequestMapper;
+    private OrderMapper orderMapper;
 
     @Autowired
     private OrderItemService orderItemService;
@@ -41,7 +41,7 @@ public class OrderService {
     private AddressService addressService;
 
     public OrderResponseDTO createOrder(OrderRequestDTO orderRequestDTO) {
-        Order order = orderRequestMapper.toEntity(orderRequestDTO);
+        Order order = orderMapper.toRequestEntity(orderRequestDTO);
         Supplier supplier = supplierService.findEntityById(orderRequestDTO.getSupplierId());
         User user = userService.findEntityByIdUser(orderRequestDTO.getCustomerId());
         List<OrderItem> listOrderItems = new ArrayList<>();

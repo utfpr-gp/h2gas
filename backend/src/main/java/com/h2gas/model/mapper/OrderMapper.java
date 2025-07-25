@@ -2,6 +2,7 @@ package com.h2gas.model.mapper;
 
 import com.h2gas.model.dto.OrderItemRequestDTO;
 import com.h2gas.model.dto.OrderRequestDTO;
+import com.h2gas.model.dto.OrderResponseDTO;
 import com.h2gas.model.entity.Order;
 import com.h2gas.model.entity.OrderItem;
 import com.h2gas.model.entity.Supplier;
@@ -14,11 +15,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
-public class OrderRequestMapper {
+public class OrderMapper {
     @Autowired
     private ModelMapper modelMapper;
 
-    public OrderRequestDTO toDto(Order data) {
+    public OrderRequestDTO toRequestDto(Order data) {
         OrderRequestDTO orderRequestDTO = modelMapper.map(data, OrderRequestDTO.class);
         if (data.getCustomer().getId() != null) {
             orderRequestDTO.setCustomerId(data.getCustomer().getId());
@@ -43,7 +44,9 @@ public class OrderRequestMapper {
         return orderRequestDTO;
     }
 
-    public Order toEntity(OrderRequestDTO dto) {
+//    public OrderResponseDTO toResponseDto(Order data) {}
+
+    public Order toRequestEntity(OrderRequestDTO dto) {
         Order order = modelMapper.map(dto, Order.class);
         if (dto.getCustomerId() != null) {
             User customerUser = new User();
