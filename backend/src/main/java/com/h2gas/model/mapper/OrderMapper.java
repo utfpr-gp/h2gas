@@ -86,6 +86,28 @@ public class OrderMapper {
     public Order toResponseEntity(OrderResponseDTO dto) {
         Order order = modelMapper.map(dto, Order.class);
 
+        if (dto.getCustomerId() != null) {
+            User customerUser = new User();
+            customerUser.setId(dto.getCustomerId());
+            order.setCustomer(customerUser);
+        }
+
+        if (dto.getSupplierId() != null) {
+            Supplier supplier = new Supplier();
+            supplier.setId(dto.getSupplierId());
+        }
+
+        if (dto.getOrderItems() != null) {
+            List<OrderItem> items = new ArrayList<>();
+            for (OrderItemResponseDTO orderItemResponseDTO : dto.getOrderItems()) {
+                OrderItem orderItem = new OrderItem();
+                orderItem.setId(orderItemResponseDTO.getId());
+                items.add(orderItem);
+            }
+
+            order.setItems(items);
+        }
+
 
         return null;
     }
