@@ -21,8 +21,8 @@ public class OrderResponseDTO {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String customerName;
-    private String distributorName;
+    private String supplierName;
     private String customerId;
-    private Long distributorId;
+    private Long supplierId;
     private List<OrderItemResponseDTO> orderItems;
 }
