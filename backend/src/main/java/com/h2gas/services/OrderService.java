@@ -1,6 +1,8 @@
 package com.h2gas.services;
 
+import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.OrderItemRequestDTO;
+import com.h2gas.model.dto.OrderItemResponseDTO;
 import com.h2gas.model.dto.OrderRequestDTO;
 import com.h2gas.model.dto.OrderResponseDTO;
 import com.h2gas.model.entity.Order;
@@ -10,12 +12,15 @@ import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.OrderMapper;
 import com.h2gas.model.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Component
 public class OrderService {
@@ -68,6 +73,18 @@ public class OrderService {
         return orderItems.stream()
                 .map(OrderItem::getTotalPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
+
+    public Page<OrderResponseDTO> findAllOrders(Pageable pageable) {
+        return orderRepository.findAll(pageable)
+                .map(orderMapper::toResponseDto);
+    }
+
+    public OrderResponseDTO findByIdOrder(String id) {
+        Optional<Order> orderOptional = orderRepository.findById(id);
+        return orderOptional.map(orderMapper::toResponseDto).orElseThrow(()
+                -> new ResourceNotFoundException("Pedido não encontrado com esse id: " + id));
     }
 
 }
