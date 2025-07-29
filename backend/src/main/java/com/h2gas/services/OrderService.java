@@ -2,7 +2,6 @@ package com.h2gas.services;
 
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.OrderItemRequestDTO;
-import com.h2gas.model.dto.OrderItemResponseDTO;
 import com.h2gas.model.dto.OrderRequestDTO;
 import com.h2gas.model.dto.OrderResponseDTO;
 import com.h2gas.model.entity.Order;

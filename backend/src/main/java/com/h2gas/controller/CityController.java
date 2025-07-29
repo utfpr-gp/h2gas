@@ -7,6 +7,7 @@ import com.h2gas.model.entity.City;
 import com.h2gas.model.mapper.CityMapper;
 import com.h2gas.response.PageResponse;
 import com.h2gas.services.CityService;
+import com.h2gas.util.PaginationUtil;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -40,15 +41,7 @@ public class CityController {
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(value = "size", required = false) Integer size
     ) {
-        int pagina = (page == null || page < 0) ? 0 : page;
-        int tamanhoPagina = (size == null || size < 1) ? 10 : size;
-        int maxSize = 50;
-
-        if (tamanhoPagina > maxSize) {
-            tamanhoPagina = maxSize;
-        }
-
-        Pageable pageable = PageRequest.of(pagina, tamanhoPagina);
+        Pageable pageable = PaginationUtil.getPageableRequest(page, size);
         Page<CityDTO> result = cityService.findAllCities(pageable);
         PageResponse<CityDTO> response = new PageResponse<>(result);
 
