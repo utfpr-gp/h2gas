@@ -1,10 +1,7 @@
 package com.h2gas.model.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -24,9 +21,11 @@ public class Order {
     private String id;
 
     @ManyToOne
+    @NonNull
     private User customer;
 
     @ManyToOne
+    @NonNull
     private Supplier supplier;
 
     @ManyToOne

@@ -4,19 +4,13 @@ import com.h2gas.model.dto.OrderItemRequestDTO;
 import com.h2gas.model.dto.OrderItemResponseDTO;
 import com.h2gas.model.dto.OrderRequestDTO;
 import com.h2gas.model.dto.OrderResponseDTO;
-import com.h2gas.model.entity.Order;
-import com.h2gas.model.entity.OrderItem;
-import com.h2gas.model.entity.Supplier;
-import com.h2gas.model.entity.User;
+import com.h2gas.model.entity.*;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 public class OrderMapper {
@@ -26,11 +20,11 @@ public class OrderMapper {
     public OrderRequestDTO toRequestDto(Order data) {
         OrderRequestDTO orderRequestDTO = modelMapper.map(data, OrderRequestDTO.class);
         if (data.getCustomer().getId() != null) {
-            orderRequestDTO.setCustomerId(data.getCustomer().getId());
+            orderRequestDTO.setCustomerUuid(data.getCustomer().getId());
         }
 
         if (data.getSupplier().getId() != null) {
-            orderRequestDTO.setSupplierId(data.getSupplier().getId());
+            orderRequestDTO.setSupplierRef(data.getSupplier().getId());
         }
 
         if (data.getItems() != null) {
@@ -114,29 +108,31 @@ public class OrderMapper {
 
     public Order toRequestEntity(OrderRequestDTO dto) {
         Order order = modelMapper.map(dto, Order.class);
-        if (dto.getCustomerId() != null) {
+        if (dto.getCustomerUuid() != null) {
             User customerUser = new User();
-            customerUser.setId(dto.getCustomerId());
+            customerUser.setId(dto.getCustomerUuid());
             order.setCustomer(customerUser);
         }
 
-        if (dto.getSupplierId() != null) {
+        if (dto.getSupplierRef() != null) {
             Supplier supplier = new Supplier();
-            supplier.setId(dto.getSupplierId());
+            supplier.setId(dto.getSupplierRef());
         }
 
-        if (dto.getItems() != null) {
-            List<OrderItem> items = new ArrayList<>();
-
-            for (OrderItemRequestDTO oderItemRequestDto : dto.getItems()) {
-                OrderItem orderItem = new OrderItem();
-                orderItem.setId(oderItemRequestDto.getProductItemId());
-                orderItem.setQuantity(oderItemRequestDto.getQuantity());
-                items.add(orderItem);
-            }
-
-            order.setItems(items);
-        }
+//        if (dto.getItems() != null) {
+//            List<OrderItem> items = new ArrayList<>();
+//
+//            for (OrderItemRequestDTO oderItemRequestDto : dto.getItems()) {
+//                OrderItem orderItem = new OrderItem();
+//                ProductItem productItem = new ProductItem();
+//                productItem.setId(oderItemRequestDto.getProductItemId());
+//                orderItem.setProduct(productItem);
+//                orderItem.setQuantity(oderItemRequestDto.getQuantity());
+//                items.add(orderItem);
+//            }
+//
+//            order.setItems(items);
+//        }
 
         return order;
     }

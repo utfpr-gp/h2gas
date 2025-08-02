@@ -10,8 +10,8 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderRequestDTO {
-    private String customerId;
-    private Long supplierId;
+    private String customerUuid;
+    private Long supplierRef;
     private String paymentMethod;
     private String note;
     private List<OrderItemRequestDTO> items;

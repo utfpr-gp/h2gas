@@ -17,6 +17,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.List;
@@ -77,7 +78,7 @@ class ProductItemServiceTest {
         ProductItem productItemFirst = new ProductItem(
                 null,
                 "Agua azul",
-                150.0,
+                new BigDecimal("150.00"),
                 "urlImageTest//",
                 5,
                 null,
@@ -92,7 +93,7 @@ class ProductItemServiceTest {
         ProductItem productItemSecond = new ProductItem(
                 null,
                 "Agua vermelho",
-                150.0,
+                new BigDecimal("150.00"),
                 "urlImageTest2//",
                 5,
                 null,

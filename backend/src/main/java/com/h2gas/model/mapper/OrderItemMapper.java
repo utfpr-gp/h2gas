@@ -8,8 +8,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
-
 @Component
 public class OrderItemMapper {
     @Autowired
@@ -18,7 +16,7 @@ public class OrderItemMapper {
     public OrderItemRequestDTO toRequestDto(OrderItem data) {
         OrderItemRequestDTO orderItemRequestDTO = modelMapper.map(data, OrderItemRequestDTO.class);
         if (data.getProduct() != null) {
-            orderItemRequestDTO.setProductItemId(data.getProduct().getId());
+            orderItemRequestDTO.setProductItemRef(data.getProduct().getId());
         }
 
         return orderItemRequestDTO;
@@ -49,9 +47,9 @@ public class OrderItemMapper {
     public OrderItem toRequestEntity(OrderItemRequestDTO dto) {
         OrderItem orderItem = modelMapper.map(dto, OrderItem.class);
 
-        if (dto.getProductItemId() != null) {
+        if (dto.getProductItemRef() != null) {
             ProductItem productItem = new ProductItem();
-            productItem.setId(dto.getProductItemId());
+            productItem.setId(dto.getProductItemRef());
             orderItem.setProduct(productItem);
         }
 

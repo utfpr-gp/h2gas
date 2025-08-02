@@ -46,14 +46,16 @@ public class OrderService {
 
     public OrderResponseDTO createOrder(OrderRequestDTO orderRequestDTO) {
         Order order = orderMapper.toRequestEntity(orderRequestDTO);
-        Supplier supplier = supplierService.findEntityById(orderRequestDTO.getSupplierId());
-        User user = userService.findEntityByIdUser(orderRequestDTO.getCustomerId());
+        order.setItems(null);
+        Supplier supplier = supplierService.findEntityById(orderRequestDTO.getSupplierRef());
+        User user = userService.findEntityByIdUser(orderRequestDTO.getCustomerUuid());
         List<OrderItem> listOrderItems = new ArrayList<>();
 
         order.setCustomer(user);
         order.setSupplier(supplier);
         order.setOrderDate(LocalDateTime.now());
         order.setDeliveryAddress(addressService.findEntityByUserId(user.getId()));
+        orderRepository.save(order);
 
         for (OrderItemRequestDTO item: orderRequestDTO.getItems()) {
             OrderItem orderItem = orderItemService.createOrderItem(item, order);
@@ -65,7 +67,7 @@ public class OrderService {
 
         orderRepository.save(order);
 
-        return null;
+        return orderMapper.toResponseDto(order);
     }
 
     private BigDecimal calculateTotalPrice(List<OrderItem> orderItems) {

@@ -30,7 +30,7 @@ public class OrderItemService {
     private OrderItemRepository orderItemRepository;
 
     public OrderItem createOrderItem(OrderItemRequestDTO orderItemRequestDTO, Order order) {
-        ProductItem productItem = productItemService.findEntityById(orderItemRequestDTO.getProductItemId());
+        ProductItem productItem = productItemService.findEntityById(orderItemRequestDTO.getProductItemRef());
         OrderItem orderItem = orderItemMapper.toRequestEntity(orderItemRequestDTO);
 
         BigDecimal totalPrice = calculateTotalPrice(orderItem.getQuantity(), productItem.getPrice());
