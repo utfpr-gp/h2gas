@@ -2,9 +2,13 @@ package com.h2gas.controller;
 
 import com.h2gas.model.dto.*;
 import com.h2gas.model.mapper.SupplierMapper;
+import com.h2gas.response.PageResponse;
 import com.h2gas.services.SupplierService;
+import com.h2gas.util.PaginationUtil;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,9 +27,15 @@ public class SupplierController {
 
     @GetMapping
     @ResponseBody
-    public ResponseEntity<List<SupplierDTO>> getAllSuppliers() {
-        List<SupplierDTO> supplierDTO = supplierService.findAllSuppliers();
-        return ResponseEntity.ok(supplierDTO);
+    public ResponseEntity<PageResponse<SupplierDTO>> getAllSuppliers(
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "size", required = false) Integer size
+    ) {
+        Pageable pageable = PaginationUtil.getPageableRequest(page, size);
+        Page<SupplierDTO> result = supplierService.findAllSuppliers(pageable);
+        PageResponse<SupplierDTO> response = new PageResponse<>(result);
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/summary")

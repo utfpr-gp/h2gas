@@ -1,6 +1,7 @@
 package com.h2gas.services;
 
 import com.h2gas.exceptions.ResourceNotFoundException;
+import com.h2gas.model.dto.CityDTO;
 import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
 import com.h2gas.model.dto.SupplierSummaryDTO;
@@ -8,6 +9,8 @@ import com.h2gas.model.entity.*;
 import com.h2gas.model.mapper.*;
 import com.h2gas.model.repository.SupplierRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -46,11 +49,16 @@ public class SupplierService {
     @Autowired
     private SupplierSummaryMapper supplierSummaryMapper;
 
-    public List<SupplierDTO> findAllSuppliers() {
-        return supplierRepository.findAll()
-                .stream()
-                .map(supplierMapper::toDto)
-                .collect(Collectors.toList());
+//    public List<SupplierDTO> findAllSuppliers() {
+//        return supplierRepository.findAll()
+//                .stream()
+//                .map(supplierMapper::toDto)
+//                .collect(Collectors.toList());
+//    }
+
+    public Page<SupplierDTO> findAllSuppliers(Pageable pageable) {
+        return supplierRepository.findAll(pageable)
+                .map(supplierMapper::toDto);
     }
 
     public List<SupplierSummaryDTO> findAllSuppliersSummary() {

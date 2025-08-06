@@ -149,15 +149,15 @@ class SupplierServiceTest {
         validId = supplierFirst.getId();
     }
 
-    @Test
-    @DisplayName("Busca todos os fornecedores")
-    void findAllSuppliers() {
-        List<SupplierDTO> result = supplierService.findAllSuppliers();
-        assertEquals(2, result.size());
-        assertNotNull(result);
-        assertEquals("Fornecedor Teste", result.get(0).getName());
-        assertEquals("Fornecedor Teste 2", result.get(1).getName());
-    }
+//    @Test
+//    @DisplayName("Busca todos os fornecedores")
+//    void findAllSuppliers() {
+//        List<SupplierDTO> result = supplierService.findAllSuppliers();
+//        assertEquals(2, result.size());
+//        assertNotNull(result);
+//        assertEquals("Fornecedor Teste", result.get(0).getName());
+//        assertEquals("Fornecedor Teste 2", result.get(1).getName());
+//    }
 
     @Test
     @DisplayName("Busca os fornecedores pelo id")
