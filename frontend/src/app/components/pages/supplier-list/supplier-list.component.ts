@@ -4,6 +4,7 @@ import { Supplier } from '../../../models/supplier';
 import { ToastrService } from 'ngx-toastr';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-supplier-list',
@@ -19,6 +20,7 @@ export class SupplierListComponent implements OnInit {
   constructor(
     private supplierService: SupplierService,
     private toastr: ToastrService,
+    private router: Router
   ) {}
 
 
@@ -43,6 +45,10 @@ export class SupplierListComponent implements OnInit {
         this.toastr.error(`Erro ao buscar fornecedores: ${err.error.message}`)
       },
     })
+  }
+
+  navigate(route: string) {
+    this.router.navigate([route])
   }
 
 }
