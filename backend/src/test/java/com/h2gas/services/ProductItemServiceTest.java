@@ -245,6 +245,7 @@ class ProductItemServiceTest {
         Supplier supplier = new Supplier(
                 null,
                 "Fornecedor Teste",
+                "descricao teste",
                 "1234567890",
                 LocalTime.of(8, 0),
                 LocalTime.of(18, 0),
@@ -265,6 +266,7 @@ class ProductItemServiceTest {
                 null,
                 "Fornecedor Teste 2",
                 "1234567890433",
+                "descricao teste2",
                 LocalTime.of(8, 0),
                 LocalTime.of(18, 0),
                 Duration.ofMinutes(30),

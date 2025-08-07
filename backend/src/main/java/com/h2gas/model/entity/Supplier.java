@@ -26,6 +26,8 @@ public class Supplier {
 
     private String phone;
 
+    private String description;
+
 //    private String workingHours;
     private LocalTime openingTime;
     private LocalTime closingTime;

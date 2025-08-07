@@ -16,6 +16,7 @@ public class SupplierDTO {
     private Long id;
     private String name;
     private String phone;
+    private String description;
     // Novo formato
     private String openingTime;  // ex: "08:00"
     private String closingTime;  // ex: "18:00"

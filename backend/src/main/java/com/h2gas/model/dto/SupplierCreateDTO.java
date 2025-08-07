@@ -12,6 +12,7 @@ public class SupplierCreateDTO {
     private Long id;
     private String name;
     private String phone;
+    private String description;
     private String openingTime;
     private String closingTime;
     private Long averageDeliveryTime;
