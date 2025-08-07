@@ -68,18 +68,22 @@
                         <span class="material-icons text-blue-500 mr-2">local_fire_department</span>
                         <span class="text-sm font-semibold text-blue-500">Gás</span>
                     </div>
-                    <div class="flex items-center bg-blue-50 text-blue-600 px-3 py-1 rounded-full">
+                    <!-- <div class="flex items-center bg-blue-50 text-blue-600 px-3 py-1 rounded-full">
                         <span class="material-icons text-sm">star</span>
                         <span class="ml-1 text-sm font-bold">4.7</span>
-                    </div>
+                    </div> -->
                 </div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-1">Chama Certa Gás</h2>
+                <h2 class="text-2xl font-bold text-gray-800 mb-1">
+                    {{supplier.name}}
+                </h2>
                 <div class="flex items-center text-gray-500 text-sm mb-4">
                     <span class="material-icons text-base mr-1">location_on</span>
-                    <span>Curitiba, PR</span>
+                    <span>
+                        {{supplier.addressStreetName}}, {{supplier.cityName}}
+                    </span>
                 </div>
                 <p class="text-gray-600 mb-6">
-                    Seu fornecedor de confiança para gás de cozinha e industrial. Entrega agilizada e segura.
+                    {{supplier.description}}
                 </p>
                 <div class="flex flex-wrap gap-2 mb-6">
                     <span class="bg-gray-100 text-gray-700 text-xs font-medium px-3 py-1 rounded-full">GLP
@@ -89,10 +93,10 @@
                     <span class="bg-gray-100 text-gray-700 text-xs font-medium px-3 py-1 rounded-full">Recarga</span>
                 </div>
                 <div class="flex justify-between items-center">
-                    <div>
+                    <!-- <div>
                         <span class="text-3xl font-bold text-gray-800">R$ 115</span>
                         <span class="text-gray-500">/mês</span>
-                    </div>
+                    </div> -->
                     <a class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg transition duration-300"
                         href="#">Ver Produtos</a>
                 </div>
