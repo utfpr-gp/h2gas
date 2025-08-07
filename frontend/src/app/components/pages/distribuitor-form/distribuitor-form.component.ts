@@ -55,6 +55,7 @@ export class DistribuitorFormComponent implements OnInit {
     this.registerFormSupplier = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(3)]],
       phone: ['', [Validators.required]],
+      description: ['', [Validators.required]],
       active: [false],
       cityId: [null, [Validators.required]],
       addressId: [null],

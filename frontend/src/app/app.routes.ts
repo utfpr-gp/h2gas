@@ -12,6 +12,7 @@ import { CategoryProductsComponent } from './components/pages/category-products/
 import { ProductItemComponent } from './components/pages/product-item/product-item.component';
 import { ProductItemFormComponent } from './components/pages/product-item-form/product-item-form.component';
 import { UnauthorizedComponent } from './components/pages/unauthorized/unauthorized.component';
+import { SupplierListComponent } from './components/pages/supplier-list/supplier-list.component';
 
 export const routes: Routes = [
     {path: '', component: InitialScreenComponent},
@@ -75,6 +76,12 @@ export const routes: Routes = [
     {
         path: 'supplier-approval', 
         component: SupplierApprovalComponent,
+        canActivate: [authGuard],
+        data: {roles: ['ADMIN']}
+    },
+    {
+        path: 'fornecedores', 
+        component: SupplierListComponent,
         canActivate: [authGuard],
         data: {roles: ['ADMIN']}
     },

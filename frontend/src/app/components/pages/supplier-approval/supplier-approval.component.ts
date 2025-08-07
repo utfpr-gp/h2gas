@@ -46,10 +46,10 @@ export class SupplierApprovalComponent implements OnInit {
   }
 
   getSuppliers() {
-    this.supplierService.findAll().subscribe({
+    this.supplierService.findAllPaginated().subscribe({
       next: (response) => {
         console.log('Buscado com sucesso', response);
-        this.suppliers = response
+        this.suppliers = response.data
         console.log(this.suppliers);
         
         this.toastr.success('Fornecedores buscados com sucesso!');

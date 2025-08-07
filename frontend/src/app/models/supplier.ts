@@ -1,11 +1,10 @@
-import { Address } from "./address";
-import { City } from "./city";
 import { User } from "./user";
 
 export class Supplier {
     id?: number;
     name?: string;
     phone?: string;
+    description?: string;
     openingTime?: string;
     closingTime?: string;
     averageDeliveryTime?: string;
@@ -23,6 +22,7 @@ export class Supplier {
         id?: number,
         name?: string,
         phone?: string,
+        description?: string,
         openingTime?: string,
         closingTime?: string,
         averageDeliveryTime?: string,
@@ -39,6 +39,7 @@ export class Supplier {
         this.id = id;
         this.name = name;
         this.phone = phone;
+        this.description = description;
         this.openingTime = openingTime;
         this.closingTime = closingTime;
         this.averageDeliveryTime = averageDeliveryTime;
