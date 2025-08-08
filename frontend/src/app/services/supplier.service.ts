@@ -3,6 +3,8 @@ import { Supplier } from '../models/supplier';
 import { AbstractService } from './abstract.service';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
+import { Observable } from 'rxjs';
+import { PaginatedResponse } from '../models/paginated-response';
 
 @Injectable({
   providedIn: 'root'
@@ -24,5 +26,9 @@ export class SupplierService extends AbstractService<Supplier> {
 
   openDistribuidor(data: any, id: number) {
     return this.http.patch(`${this.baseUrl}/${id}/status`, data);
+  }
+
+  getAllSupplierOpenAndActive(): Observable<PaginatedResponse<Supplier>> {
+    return this.http.get<PaginatedResponse<Supplier>>(`${this.baseUrl}/actives/open`);
   }
 }

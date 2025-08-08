@@ -31,11 +31,11 @@ export class SupplierListComponent implements OnInit {
   suppliers?: Supplier[];
 
   getSuppliers() {
-    this.supplierService.findAllPaginated().subscribe({
+    this.supplierService.getAllSupplierOpenAndActive().subscribe({
       next: (response) => {
         console.log('Buscado com sucesso', response);
         this.suppliers = response.data
-        console.log(this.suppliers.length);
+        console.log(this.suppliers!.length);
         
         this.toastr.success('Fornecedores buscados com sucesso!');
       },
