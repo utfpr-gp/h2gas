@@ -38,6 +38,19 @@ public class SupplierController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/actives/open")
+    @ResponseBody
+    public ResponseEntity<PageResponse<SupplierDTO>> getAllSuppliersOpenAndActive(
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "size", required = false) Integer size
+    ) {
+        Pageable pageable = PaginationUtil.getPageableRequest(page, size);
+        Page<SupplierDTO> result = supplierService.findAllSuppliersOpenAndActive(pageable);
+        PageResponse<SupplierDTO> response = new PageResponse<>(result);
+
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/summary")
     @ResponseBody
     public ResponseEntity<List<SupplierSummaryDTO>> getAllSuppliersSummary() {
