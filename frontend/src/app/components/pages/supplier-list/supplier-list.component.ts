@@ -40,15 +40,14 @@ export class SupplierListComponent implements OnInit {
         this.toastr.success('Fornecedores buscados com sucesso!');
       },
       error: (err) => {
-        debugger
         console.error('Erro ao buscar:', err.error.message);
         this.toastr.error(`Erro ao buscar fornecedores: ${err.error.message}`)
       },
     })
   }
 
-  navigate(route: string) {
-    this.router.navigate([route])
+  navigate(id?: number) {
+    this.router.navigate(['/fornecedores', id, 'produtos']);
   }
 
 }

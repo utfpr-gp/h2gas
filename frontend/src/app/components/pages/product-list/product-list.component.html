@@ -21,10 +21,11 @@
         <div class="mb-8">
             <div
                 class="flex flex-col sm:flex-row items-center bg-white border border-gray-200 rounded-lg p-2 shadow-sm gap-4">
-                <div class="flex-grow w-full flex items-center">
-                    <span class="material-icons text-gray-400 ml-2">search</span>
-                    <input class="flex-grow border-none focus:ring-0 text-gray-700 px-4"
-                        placeholder="Buscar produtos..." type="text" />
+                <div class="relative flex-grow">
+                    <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                    <input
+                        class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Pesquise por nome ou palavra-chave" type="text" />
                 </div>
                 <div class="flex items-center space-x-2 w-full sm:w-auto">
                     <button
@@ -40,108 +41,55 @@
             </div>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div class="product-card">
+
+            <div class="product-card" *ngFor="let product of products">
                 <div class="bg-gray-100 p-4 flex-grow flex items-center justify-center overflow-hidden">
                     <img alt="Botijão de gás GLP 13kg"
                         class="h-48 object-contain transition-transform duration-500 ease-in-out hover:scale-110"
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDASW07iN42-qzvXoPmo_wyKs7bN0pCDiEjULpXKuo6Ow3grrsTXDaneRrjqQiD3tpCPJiUKYyEgrj6vqaftDcWLWyJsLffLcg8pWBlZp6fFep1gAAs_aAuUF2oDn-OGjCfBkTTdEjcC9VJTuhMCLeq9G6pIg77ic9_Vf8OoHNjrxMYNdfhmlsRDmVzj6Lph27ydc737U2kFyz7OHtJErHJuFhTmF4nVVTuR-n-G4nmcMGy1lflqhZaHUWXfr4yYcWGEIZkEhGXgGM" />
+                        src="https://nvconstrutora.com.br/wp-content/uploads/2023/05/em_breve.jpg" />
                 </div>
                 <div class="p-6 flex flex-col flex-grow">
                     <div class="flex items-center justify-between mb-2">
                         <h3 class="font-bold text-lg text-gray-800 flex items-center"><span
-                                class="material-icons text-blue-500 mr-2">local_fire_department</span>Gás GLP 13kg</h3>
+                                class="material-icons text-blue-500 mr-2">local_fire_department</span>
+                            {{product!!.type}} {{product!!.brand}} {{product!!.category}}
+                        </h3>
                         <span
                             class="text-xs font-semibold bg-green-100 text-green-800 px-2 py-1 rounded-full">Disponível</span>
                     </div>
-                    <p class="text-gray-600 text-sm mb-4 flex-grow">Botijão de gás GLP de 13kg, ideal para uso
-                        residencial e comercial. Produto certificado e seguro.</p>
+                    <p class="text-gray-600 text-sm mb-4 flex-grow">
+                        Descrição embreve
+                    </p>
                     <div class="flex flex-col sm:flex-row items-center justify-between mt-auto gap-4">
                         <div>
-                            <p class="text-2xl font-bold text-gray-900">R$ 89,90</p>
-                            <p class="text-sm text-gray-500 text-center sm:text-left">por botijão</p>
+                            <p class="text-2xl font-bold text-gray-900">{{product!!.price | currency:'BRL':'symbol':'1.2-2'}}</p>
+                            <p class="text-sm text-gray-500 text-center sm:text-left">por produto</p>
                         </div>
-                        <button
-                            class="w-full sm:w-auto bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-all duration-300 font-semibold transform hover:scale-105">Solicitar</button>
-                    </div>
-                </div>
-            </div>
-            <div class="product-card">
-                <div class="bg-gray-100 p-4 flex-grow flex items-center justify-center overflow-hidden">
-                    <img alt="Galão de água mineral 20L"
-                        class="h-48 object-contain transition-transform duration-500 ease-in-out hover:scale-110"
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuBVtxARe-7AYUB-sxqWxdQ7iQ_sSo50YEejZjiibN21NySEWVJG3_isBLq2R-GpRx6B4GDxq5vLluxFgLUsV4BcybJ5ciBTcLg_rDtny7kejNsz2IELju7XAVV4_GcBPgmCUNH01w9JSu6qoX1Cdd_fw7lIdxxvykVr6nMrD0QoAN2Cx8FCzEd-pZKsJUet4Gu9MNaq3-rAYLcPZyxE8oOGAD-ttZwEjZmaw4h6Otj0eem9F5HZn9Ceg6uTPTms4_fBJGJuZgd_cXY" />
-                </div>
-                <div class="p-6 flex flex-col flex-grow">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="font-bold text-lg text-gray-800 flex items-center"><span
-                                class="material-icons text-blue-500 mr-2">water_drop</span>Água Mineral 20L</h3>
-                        <span
-                            class="text-xs font-semibold bg-green-100 text-green-800 px-2 py-1 rounded-full">Disponível</span>
-                    </div>
-                    <p class="text-gray-600 text-sm mb-4 flex-grow">Galão de água mineral natural de 20 litros,
-                        purificada e ideal para consumo direto.</p>
-                    <div class="flex flex-col sm:flex-row items-center justify-between mt-auto gap-4">
-                        <div>
-                            <p class="text-2xl font-bold text-gray-900">R$ 18,50</p>
-                            <p class="text-sm text-gray-500 text-center sm:text-left">por galão</p>
-                        </div>
-                        <button
-                            class="w-full sm:w-auto bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-all duration-300 font-semibold transform hover:scale-105">Solicitar</button>
-                    </div>
-                </div>
-            </div>
-            <div class="product-card">
-                <div class="bg-gray-100 p-4 flex-grow flex items-center justify-center overflow-hidden">
-                    <img alt="Botijão de gás GLP 45kg"
-                        class="h-48 object-contain transition-transform duration-500 ease-in-out hover:scale-110"
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEQ8kDbMoN_mxLO5baPOs_1McLvxrR9TIhQmYeK3V3xt0tkOfyxRNbD090BvxTda2PrQ0HOxDdcbxNpt74TG1TpLi1YboNWwU-yZ7D_wIlsp0nZyCa041Adfbu7jyNUZ2pGfV7YzK5bhS6IZWosJ1yP9N3vfLl3Q6DdAA4vGfOS3PWxFY4FPSBlwY_e1kHEHmMnzDRKtwInAQafKq6_TsR_x1qQFJ9JzVg6ozywCEZxOxs0Qw5VX0jhTaTnNhhDGUnQjUEmB-KtnU" />
-                </div>
-                <div class="p-6 flex flex-col flex-grow">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="font-bold text-lg text-gray-800 flex items-center"><span
-                                class="material-icons text-blue-500 mr-2">local_fire_department</span>Gás GLP 45kg</h3>
-                        <span class="text-xs font-semibold bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Estoque
-                            Limitado</span>
-                    </div>
-                    <p class="text-gray-600 text-sm mb-4 flex-grow">Botijão industrial de gás GLP de 45kg para uso
-                        comercial e industrial de grande porte.</p>
-                    <div class="flex flex-col sm:flex-row items-center justify-between mt-auto gap-4">
-                        <div>
-                            <p class="text-2xl font-bold text-gray-900">R$ 280,00</p>
-                            <p class="text-sm text-gray-500 text-center sm:text-left">por botijão</p>
-                        </div>
-                        <button
-                            class="w-full sm:w-auto bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-all duration-300 font-semibold transform hover:scale-105">Solicitar</button>
-                    </div>
-                </div>
-            </div>
-            <div class="product-card">
-                <div class="bg-gray-100 p-4 flex-grow flex items-center justify-center overflow-hidden">
-                    <img alt="Garrafa de água destilada 5L"
-                        class="h-48 object-contain transition-transform duration-500 ease-in-out hover:scale-110"
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuCotA1u8mxd9JUWjejpiHdCoB8O3FLXYIYOJUk-Am3VbhMFBiMxjmDQDnZBu7L1cOtI40PoSLNWCGU5XB_55YGna5RZYVU7x9tzAk68lnINu4_dtOVq_-7AXLyMhGFBPkN3Zs6ii6ZP1EpBNDxBspNGtFtPR0VEgoYjrAoGj7VrAcSbT_HCfhnn8r9v9uZdd5tD24A4ie7TyM_VMptEmPWjEdySveLzdN_WuzdOAS4WeLecKH6OdR04Rk9El5taxrGqq7Y6u_RXb74" />
-                </div>
-                <div class="p-6 flex flex-col flex-grow">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="font-bold text-lg text-gray-800 flex items-center"><span
-                                class="material-icons text-blue-500 mr-2">science</span>Água Destilada 5L</h3>
-                        <span
-                            class="text-xs font-semibold bg-green-100 text-green-800 px-2 py-1 rounded-full">Disponível</span>
-                    </div>
-                    <p class="text-gray-600 text-sm mb-4 flex-grow">Água destilada de alta pureza para uso laboratorial,
-                        hospitalar e industrial.</p>
-                    <div class="flex flex-col sm:flex-row items-center justify-between mt-auto gap-4">
-                        <div>
-                            <p class="text-2xl font-bold text-gray-900">R$ 12,00</p>
-                            <p class="text-sm text-gray-500 text-center sm:text-left">por galão</p>
-                        </div>
-                        <button
-                            class="w-full sm:w-auto bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-all duration-300 font-semibold transform hover:scale-105">Solicitar</button>
+                        <button (click)="openModal(product)"
+                            class="w-full sm:w-auto cursor-pointer bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-all duration-300 font-semibold transform hover:scale-105">
+                            Solicitar
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Modal -->
+    <dialog #productModal class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg">Solicitar Produto</h3>
+            <p class="py-2">Selecione a quantidade desejada para {{productSelect!!.type}} {{productSelect!!.brand}} {{productSelect!!.category}}</p>
+
+            <input type="number" min="1" [(ngModel)]="quantity"  class="input input-bordered w-full"
+                placeholder="Quantidade" />
+
+            <div class="modal-action">
+                <button class="btn" (click)="closeModal()">Cancelar</button>
+                <button class="btn btn-primary" (click)="confirmRequest()">Confirmar</button>
+            </div>
+        </div>
+    </dialog>
 
 </body>
 
