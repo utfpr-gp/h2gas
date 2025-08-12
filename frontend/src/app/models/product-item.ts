@@ -9,6 +9,7 @@ export class ProductItem {
     distributorId?: number;
     stockQuantity?: number;
     updatedAt?: Date;
+    quantitySelect?: number;
     constructor(
         id?: number,
         brand?: string,

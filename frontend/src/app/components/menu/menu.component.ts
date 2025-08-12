@@ -4,11 +4,14 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user';
 import { ProductItem } from '../../models/product-item';
+import { CartService } from '../../services/cart.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-menu',
   imports: [
-    CommonModule
+    CommonModule,
+    FormsModule
   ],
   templateUrl: './menu.component.html',
   styleUrl: './menu.component.css'
@@ -17,12 +20,21 @@ export class MenuComponent implements OnInit {
   userMenuOpen = false;
   showDropdown = false;
   user?: User;
-  cartProduct?: ProductItem[];
+  cartProductss?: ProductItem[];
 
+  quantity: number = 1;
+  min: number = 1;
+  max: number = 10;
 
+  onQuantityInput() {
+    if (this.quantity < this.min) {
+      this.quantity = this.min;
+    }
+  }
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private cartService: CartService
   ) {
 
   }
@@ -30,25 +42,30 @@ export class MenuComponent implements OnInit {
   ngOnInit(): void {
     const userJson = localStorage.getItem('user');
     console.log("naquele pique");
-    
-    this.cartProduct = JSON.parse(localStorage.getItem('cart-product')!!)
-    console.log(this.cartProduct);
-    
+
+    // this.cartProduct = JSON.parse(localStorage.getItem('cart-product')!!)
+    // console.log(this.cartProduct);
+
+    this.cartService.cartProducts$.subscribe(cart => {
+      this.cartProductss = cart;
+      console.log('Carrinho atualizado:', this.cartProductss);
+    });
+
     if (userJson) {
       this.user = JSON.parse(userJson);
     }
   }
 
   isCartOpen = false;
-cartProducts = [
-  { name: 'Produto 1', price: 50 },
-  { name: 'Produto 2', price: 30 }
-];
+  cartProductTeste = [
+    { name: 'Produto 1', price: 50 },
+    { name: 'Produto 2', price: 30 }
+  ];
 
-get totalPrice() {
-  return this.cartProducts.reduce((sum, p) => sum + p.price, 0);
-}
-  
+  get totalPrice() {
+    return this.cartProductss!.reduce((sum, p) => sum + p.price!, 0);
+  }
+
 
   toggleUserMenu() {
     this.userMenuOpen = !this.userMenuOpen;
@@ -58,7 +75,7 @@ get totalPrice() {
     this.userMenuOpen = false;
   }
 
-  navigate(route: string) {    
+  navigate(route: string) {
     this.router.navigate([route])
   }
 

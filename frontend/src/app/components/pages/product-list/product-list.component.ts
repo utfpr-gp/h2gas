@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { ProductItemService } from '../../../services/product-item.service';
 import { ProductItem } from '../../../models/product-item';
+import { CartService } from '../../../services/cart.service';
 
 @Component({
   selector: 'app-product-list',
@@ -20,8 +21,10 @@ export class ProductListComponent implements OnInit {
     private toastr: ToastrService,
     private router: Router,
     private routeActive: ActivatedRoute,
-    private productItemService: ProductItemService
+    private productItemService: ProductItemService,
+    private cartService: CartService
   ) {}
+
   @ViewChild('productModal') productModal!: ElementRef<HTMLDialogElement>;
   idSupplier?: number;
   products?: ProductItem[];
@@ -78,12 +81,8 @@ export class ProductListComponent implements OnInit {
       cart.push({ ...this.productSelect, quantitySelect: this.quantity });
     }
 
-    console.log("salveeee");
-    
     console.log(this.cartProduct);
-    localStorage.setItem('cart-product', JSON.stringify(cart))
-    
-    // this.cartProduct = cart;
+    this.cartService.setCart(cart);
 
     this.closeModal();
   }

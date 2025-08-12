@@ -57,13 +57,12 @@
                 <div class="drawer drawer-end">
                     <input id="cart-drawer" type="checkbox" class="drawer-toggle" />
 
-                    <!-- Conteúdo principal -->
                     <div class="drawer-content">
-                        <!-- Botão do carrinho -->
                         <label for="cart-drawer"
                             class="relative cursor-pointer p-2 rounded-md text-white hover:bg-white/10">
-                            <i class="fas fa-shopping-cart h-5 w-5"></i>
-                            <span class="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-red-500"></span>
+                            <i class="fas fa-shopping-cart h-5 w-5">
+                                <div class="absolute top-1 badge badge-info text-white badge-xs">{{cartProductss!!.length}}</div>
+                            </i>
                         </label>
                     </div>
 
@@ -74,24 +73,47 @@
                             <div class="p-6 border-b border-gray-200 flex justify-between items-center">
                                 <div>
                                     <h2 class="text-xl font-bold text-gray-800">Carrinho de Compras</h2>
-                                    <p class="text-sm text-gray-500">4 item(s) no carrinho</p>
+                                    <p class="text-sm text-gray-500">{{cartProductss!!.length}} item(s) no carrinho</p>
                                 </div>
                                 <!-- <button class="text-gray-400 hover:text-gray-600">
                                     <span class="material-icons">close</span>
                                 </button> -->
                             </div>
                             <div class="p-6 space-y-4">
-                                <div class="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
+                                <div *ngFor="let cartProduct of cartProductss"
+                                    class="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
                                     <div class="flex items-center space-x-4">
                                         <img alt="Botijão de Gás GLP 13kg" class="w-16 h-16 object-contain"
                                             src="https://lh3.googleusercontent.com/aida-public/AB6AXuDSkF5OjFxchm7Cy07MpZ_Mxpkh09wroonK-4Twf-WMGeuVS4XNu_5okndwMFuQGDiVfFYEqCKEcIctOqGQVCwrnvVxBaeU646SUknTEoinGbjW6h7RA6oqmdcfkTFxfjo7qN57QPbCYy0NJPwZeqw2gE8ZyWIM5J7RDgqYU6CuH7y-k5PrWHzM_nE4UB2gZAbglUQimL5jVJmZ-C9wAYCfv56sv61Kg8UC_NG3pH4vzrU1nlgrN1tiuniBUTOhZ3AzQtLX_I_nfozc" />
                                         <div>
-                                            <h3 class="font-semibold text-gray-800">Gás GLP 13kg</h3>
-                                            <p class="text-sm text-gray-500">R$ 89,90 por botijão</p>
+                                            <h3 class="font-semibold text-gray-800">
+                                                {{cartProduct!!.type}} {{cartProduct!!.brand}}
+                                                {{cartProduct!!.category}}
+                                            </h3>
+                                            <p class="text-sm text-gray-500">{{cartProduct!.price | currency:'BRL':'symbol':'1.2-2'}} por produto</p>
                                         </div>
                                     </div>
                                     <div class="flex items-center space-x-2">
-                                        <div class="flex items-center border border-gray-200 rounded-md">
+                                        <button class="btn btn-square btn-sm" (click)="
+                                            cartProduct!.quantitySelect = (cartProduct!.quantitySelect ?? min) > min 
+                                            ? (cartProduct!.quantitySelect ?? min) - 1 
+                                            : (cartProduct!.quantitySelect ?? min)" 
+                                            [disabled]="(cartProduct!.quantitySelect ?? min) <= min">
+                                            –
+                                        </button>
+
+                                        <input type="number" class="input input-bordered input-sm w-16 text-center"
+                                            [(ngModel)]="cartProduct!.quantitySelect" [min]="min"
+                                            (input)="onQuantityInput()" />
+
+                                        <button class="btn btn-square btn-sm" (click)="
+                                            cartProduct!.quantitySelect = (cartProduct!.quantitySelect ?? 0) + 1
+                                        ">
+                                            +
+                                        </button>
+
+
+                                        <!-- <div class="flex items-center border border-gray-200 rounded-md">
                                             <button class="px-2 py-1 text-gray-500 hover:bg-gray-100 rounded-l-md">
                                                 <span class="material-icons text-sm">remove</span>
                                             </button>
@@ -99,13 +121,13 @@
                                             <button class="px-2 py-1 text-gray-500 hover:bg-gray-100 rounded-r-md">
                                                 <span class="material-icons text-sm">add</span>
                                             </button>
-                                        </div>
+                                        </div> -->
                                         <button class="text-red-500 hover:text-red-700">
                                             <span class="material-icons">delete</span>
                                         </button>
                                     </div>
                                 </div>
-                                <div class="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
+                                <!-- <div class="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
                                     <div class="flex items-center space-x-4">
                                         <img alt="Galão de Água Mineral 20L" class="w-16 h-16 object-contain"
                                             src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZjQwg_rSiCra5nODMGxBFKWEfBsM5xnWbMoIfG0kni9YHj-Ye678Vu9Wf6tT9to5J9Juij9nDDCAZ91d1pG9ArYA5thhW6usyUU49QgcSmZYZkIeB5iic6NHskXhDjikqvyTh8vMwjWsHi4-RrnO8wQX6edd5zfcQfDPwm4oIHhXulYfU_1lXxQ5fssF92RWpQeyKoKk1AtV9IZ8BAZv_suu9_ZWsQsfxv_wPz_FedGGUVs62S4ZVrkIazbeyjCYETA5Ck6x-N43M" />
@@ -128,14 +150,15 @@
                                             <span class="material-icons">delete</span>
                                         </button>
                                     </div>
-                                </div>
+                                </div> -->
                             </div>
                             <div class="p-6 border-t border-gray-200">
                                 <div class="flex justify-between items-center mb-4">
                                     <span class="text-lg font-medium text-gray-800">Total:</span>
-                                    <span class="text-xl font-bold text-gray-900">R$ 288,20</span>
+                                    <span class="text-xl font-bold text-gray-900">{{totalPrice | currency:'BRL':'symbol':'1.2-2'}}</span>
                                 </div>
-                                <button class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg">
+                                <button
+                                    class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg">
                                     Finalizar Pedido
                                 </button>
                             </div>
@@ -147,10 +170,10 @@
             </nav>
 
             <!-- Notifications -->
-            <button class="text-white hover:bg-white/10 relative p-2 rounded-md">
+            <!-- <button class="text-white hover:bg-white/10 relative p-2 rounded-md">
                 <i class="fas fa-bell h-5 w-5"></i>
                 <span class="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-red-500"></span>
-            </button>
+            </button> -->
 
             <!-- User Dropdown -->
             <div class="relative" (clickOutside)="closeUserMenu()">
