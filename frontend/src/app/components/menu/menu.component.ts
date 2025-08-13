@@ -6,6 +6,7 @@ import { User } from '../../models/user';
 import { ProductItem } from '../../models/product-item';
 import { CartService } from '../../services/cart.service';
 import { FormsModule } from '@angular/forms';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-menu',
@@ -17,38 +18,37 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './menu.component.css'
 })
 export class MenuComponent implements OnInit {
+
+  constructor(
+    private router: Router,
+    private authService: AuthService,
+    private cartService: CartService,
+    private toastr: ToastrService,
+  ) {}
+
   userMenuOpen = false;
   showDropdown = false;
   user?: User;
-  cartProductss?: ProductItem[];
+  cartProducts?: ProductItem[];
+  isCartOpen = false;
 
   quantity: number = 1;
   min: number = 1;
   max: number = 10;
 
-  onQuantityInput() {
-    if (this.quantity < this.min) {
-      this.quantity = this.min;
+  onQuantityInput(cartProduct?: ProductItem) {
+    if (cartProduct!.quantitySelect! < this.min) {
+      cartProduct!.quantitySelect = this.min;
+      this.toastr.warning("Por favor coloque um valor positivo!!");
     }
   }
-  constructor(
-    private router: Router,
-    private authService: AuthService,
-    private cartService: CartService
-  ) {
-
-  }
+  
 
   ngOnInit(): void {
     const userJson = localStorage.getItem('user');
-    console.log("naquele pique");
-
-    // this.cartProduct = JSON.parse(localStorage.getItem('cart-product')!!)
-    // console.log(this.cartProduct);
-
     this.cartService.cartProducts$.subscribe(cart => {
-      this.cartProductss = cart;
-      console.log('Carrinho atualizado:', this.cartProductss);
+      this.cartProducts = cart;
+      console.log('Carrinho atualizado:', this.cartProducts);
     });
 
     if (userJson) {
@@ -56,14 +56,9 @@ export class MenuComponent implements OnInit {
     }
   }
 
-  isCartOpen = false;
-  cartProductTeste = [
-    { name: 'Produto 1', price: 50 },
-    { name: 'Produto 2', price: 30 }
-  ];
 
   get totalPrice() {
-    return this.cartProductss!.reduce((sum, p) => sum + p.price!, 0);
+    return this.cartProducts!.reduce((sum, item) => sum + item.price! * item.quantitySelect!, 0);
   }
 
 
@@ -85,6 +80,20 @@ export class MenuComponent implements OnInit {
     if (!target.closest('.relative')) {
       this.userMenuOpen = false;
     }
+  }
+
+  minusClickCart(cartProduct: ProductItem) {
+    cartProduct!.quantitySelect = (cartProduct!.quantitySelect ?? this.min) > this.min
+      ? (cartProduct!.quantitySelect ?? this.min) - 1
+      : (cartProduct!.quantitySelect ?? this.min);
+  }
+
+  deleteItemCart(cartProduct: ProductItem) {
+    this.cartService.setCart(this.cartService.getCart().filter(item => item.id !== cartProduct.id));
+  }
+
+  plusClickCart(cartProduct: ProductItem) {
+    cartProduct!.quantitySelect = (cartProduct!.quantitySelect ?? 0) + 1
   }
 
   logout() {

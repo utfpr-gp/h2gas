@@ -61,7 +61,8 @@
                         <label for="cart-drawer"
                             class="relative cursor-pointer p-2 rounded-md text-white hover:bg-white/10">
                             <i class="fas fa-shopping-cart h-5 w-5">
-                                <div class="absolute top-1 badge badge-info text-white badge-xs">{{cartProductss!!.length}}</div>
+                                <div class="absolute top-1 badge badge-info text-white badge-xs">
+                                    {{cartProducts!!.length}}</div>
                             </i>
                         </label>
                     </div>
@@ -73,14 +74,14 @@
                             <div class="p-6 border-b border-gray-200 flex justify-between items-center">
                                 <div>
                                     <h2 class="text-xl font-bold text-gray-800">Carrinho de Compras</h2>
-                                    <p class="text-sm text-gray-500">{{cartProductss!!.length}} item(s) no carrinho</p>
+                                    <p class="text-sm text-gray-500">{{cartProducts!!.length}} item(s) no carrinho</p>
                                 </div>
-                                <!-- <button class="text-gray-400 hover:text-gray-600">
-                                    <span class="material-icons">close</span>
-                                </button> -->
+                            </div>
+                            <div *ngIf="!cartProducts || cartProducts.length === 0" class="empty-cart">
+                                <p>Seu carrinho está vazio</p>
                             </div>
                             <div class="p-6 space-y-4">
-                                <div *ngFor="let cartProduct of cartProductss"
+                                <div *ngFor="let cartProduct of cartProducts"
                                     class="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
                                     <div class="flex items-center space-x-4">
                                         <img alt="Botijão de Gás GLP 13kg" class="w-16 h-16 object-contain"
@@ -90,72 +91,41 @@
                                                 {{cartProduct!!.type}} {{cartProduct!!.brand}}
                                                 {{cartProduct!!.category}}
                                             </h3>
-                                            <p class="text-sm text-gray-500">{{cartProduct!.price | currency:'BRL':'symbol':'1.2-2'}} por produto</p>
+                                            <p class="text-sm text-gray-500">{{cartProduct!.price |
+                                                currency:'BRL':'symbol':'1.2-2'}} por produto</p>
                                         </div>
                                     </div>
                                     <div class="flex items-center space-x-2">
-                                        <button class="btn btn-square btn-sm" (click)="
-                                            cartProduct!.quantitySelect = (cartProduct!.quantitySelect ?? min) > min 
-                                            ? (cartProduct!.quantitySelect ?? min) - 1 
-                                            : (cartProduct!.quantitySelect ?? min)" 
+                                        <button class="btn btn-square btn-sm" (click)="minusClickCart(cartProduct)"
                                             [disabled]="(cartProduct!.quantitySelect ?? min) <= min">
                                             –
                                         </button>
 
                                         <input type="number" class="input input-bordered input-sm w-16 text-center"
-                                            [(ngModel)]="cartProduct!.quantitySelect" [min]="min"
-                                            (input)="onQuantityInput()" />
+                                            [(ngModel)]="cartProduct.quantitySelect" [min]="min"
+                                            [disabled]="(cartProduct?.quantitySelect ?? 0) >= (cartProduct?.stockQuantity ?? 0)"
+                                            (input)="onQuantityInput(cartProduct)"/>
 
-                                        <button class="btn btn-square btn-sm" (click)="
-                                            cartProduct!.quantitySelect = (cartProduct!.quantitySelect ?? 0) + 1
-                                        ">
+                                        <button class="btn btn-square btn-sm" (click)="plusClickCart(cartProduct)"
+                                            [disabled]="(cartProduct?.quantitySelect ?? 0) >= (cartProduct?.stockQuantity ?? 0)">
                                             +
                                         </button>
 
+                                        <div class="tooltip tooltip-error" data-tip="Excluir item">
+                                            <button class="text-red-500 hover:text-red-700 cursor-pointer"
+                                                (click)="deleteItemCart(cartProduct)">
+                                                <span class="material-icons">delete</span>
+                                            </button>
+                                        </div>
 
-                                        <!-- <div class="flex items-center border border-gray-200 rounded-md">
-                                            <button class="px-2 py-1 text-gray-500 hover:bg-gray-100 rounded-l-md">
-                                                <span class="material-icons text-sm">remove</span>
-                                            </button>
-                                            <span class="px-3 text-gray-800">3</span>
-                                            <button class="px-2 py-1 text-gray-500 hover:bg-gray-100 rounded-r-md">
-                                                <span class="material-icons text-sm">add</span>
-                                            </button>
-                                        </div> -->
-                                        <button class="text-red-500 hover:text-red-700">
-                                            <span class="material-icons">delete</span>
-                                        </button>
                                     </div>
                                 </div>
-                                <!-- <div class="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
-                                    <div class="flex items-center space-x-4">
-                                        <img alt="Galão de Água Mineral 20L" class="w-16 h-16 object-contain"
-                                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZjQwg_rSiCra5nODMGxBFKWEfBsM5xnWbMoIfG0kni9YHj-Ye678Vu9Wf6tT9to5J9Juij9nDDCAZ91d1pG9ArYA5thhW6usyUU49QgcSmZYZkIeB5iic6NHskXhDjikqvyTh8vMwjWsHi4-RrnO8wQX6edd5zfcQfDPwm4oIHhXulYfU_1lXxQ5fssF92RWpQeyKoKk1AtV9IZ8BAZv_suu9_ZWsQsfxv_wPz_FedGGUVs62S4ZVrkIazbeyjCYETA5Ck6x-N43M" />
-                                        <div>
-                                            <h3 class="font-semibold text-gray-800">Água Mineral 20L</h3>
-                                            <p class="text-sm text-gray-500">R$ 18,50 por galão</p>
-                                        </div>
-                                    </div>
-                                    <div class="flex items-center space-x-2">
-                                        <div class="flex items-center border border-gray-200 rounded-md">
-                                            <button class="px-2 py-1 text-gray-500 hover:bg-gray-100 rounded-l-md">
-                                                <span class="material-icons text-sm">remove</span>
-                                            </button>
-                                            <span class="px-3 text-gray-800">1</span>
-                                            <button class="px-2 py-1 text-gray-500 hover:bg-gray-100 rounded-r-md">
-                                                <span class="material-icons text-sm">add</span>
-                                            </button>
-                                        </div>
-                                        <button class="text-red-500 hover:text-red-700">
-                                            <span class="material-icons">delete</span>
-                                        </button>
-                                    </div>
-                                </div> -->
                             </div>
                             <div class="p-6 border-t border-gray-200">
                                 <div class="flex justify-between items-center mb-4">
                                     <span class="text-lg font-medium text-gray-800">Total:</span>
-                                    <span class="text-xl font-bold text-gray-900">{{totalPrice | currency:'BRL':'symbol':'1.2-2'}}</span>
+                                    <span class="text-xl font-bold text-gray-900">{{totalPrice |
+                                        currency:'BRL':'symbol':'1.2-2'}}</span>
                                 </div>
                                 <button
                                     class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg">
