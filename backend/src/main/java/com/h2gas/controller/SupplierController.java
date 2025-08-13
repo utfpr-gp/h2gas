@@ -27,6 +27,7 @@ public class SupplierController {
 
     @GetMapping
     @ResponseBody
+    @RolesAllowed("ADMIN")
     public ResponseEntity<PageResponse<SupplierDTO>> getAllSuppliers(
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(value = "size", required = false) Integer size
@@ -53,6 +54,7 @@ public class SupplierController {
 
     @GetMapping("/summary")
     @ResponseBody
+    @RolesAllowed("ADMIN")
     public ResponseEntity<List<SupplierSummaryDTO>> getAllSuppliersSummary() {
         List<SupplierSummaryDTO> supplierDTO = supplierService.findAllSuppliersSummary();
         return ResponseEntity.ok(supplierDTO);
