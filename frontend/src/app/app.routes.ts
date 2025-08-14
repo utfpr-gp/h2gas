@@ -14,6 +14,7 @@ import { ProductItemFormComponent } from './components/pages/product-item-form/p
 import { UnauthorizedComponent } from './components/pages/unauthorized/unauthorized.component';
 import { SupplierListComponent } from './components/pages/supplier-list/supplier-list.component';
 import { ProductListComponent } from './components/pages/product-list/product-list.component';
+import { OrderResumeComponent } from './components/pages/order-resume/order-resume.component';
 
 export const routes: Routes = [
     {path: '', component: InitialScreenComponent},
@@ -89,6 +90,12 @@ export const routes: Routes = [
     {
         path: 'fornecedores/:id/produtos', 
         component: ProductListComponent,
+        canActivate: [authGuard],
+        data: {roles: ['ADMIN']}
+    },
+    {
+        path: 'resumo-pedido', 
+        component: OrderResumeComponent,
         canActivate: [authGuard],
         data: {roles: ['ADMIN']}
     },

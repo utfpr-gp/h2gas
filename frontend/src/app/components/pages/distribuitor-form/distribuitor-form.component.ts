@@ -48,7 +48,7 @@ export class DistribuitorFormComponent implements OnInit {
     private router: Router,
     private supplierService: SupplierService,
     private cityService: CityService,
-    private addressSevice: AddressService,
+    private addressService: AddressService,
     private userService: UserService,
     private routeActive: ActivatedRoute
   ) {
@@ -123,7 +123,7 @@ export class DistribuitorFormComponent implements OnInit {
   // }
 
   buscarCep() {
-    this.addressSevice.buscaViaCep(this.registerFormAddress.get('zipCode')?.value).subscribe({
+    this.addressService.buscaViaCep(this.registerFormAddress.get('zipCode')?.value).subscribe({
       next: (response: any) => {
         console.log(response);
         this.toastr.success('Cep buscado com sucesso');
@@ -144,7 +144,7 @@ export class DistribuitorFormComponent implements OnInit {
     if (this.registerFormAddress.valid) {
       this.registerFormAddress.get('userId')?.setValue(this.userLogado?.id)
       this.address = this.registerFormAddress.value;
-      this.addressSevice.create(this.address!!).subscribe({
+      this.addressService.create(this.address!!).subscribe({
         next: (response) => {
           console.log(response);
           this.toastr.success('Seu enderelo foi salvo com sucesso');
@@ -159,7 +159,7 @@ export class DistribuitorFormComponent implements OnInit {
   }
 
   buscaAddressIdUser() {
-    this.addressSevice.findByUserId(this.userLogado?.id!!).subscribe({
+    this.addressService.findByUserId(this.userLogado?.id!!).subscribe({
       next: (response) => {
         console.log(response);
         this.address = response;

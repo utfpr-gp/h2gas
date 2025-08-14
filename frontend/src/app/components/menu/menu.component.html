@@ -121,14 +121,15 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="p-6 border-t border-gray-200">
+                            <div *ngIf="cartProducts && cartProducts.length != 0"  class="p-6 border-t border-gray-200">
                                 <div class="flex justify-between items-center mb-4">
                                     <span class="text-lg font-medium text-gray-800">Total:</span>
                                     <span class="text-xl font-bold text-gray-900">{{totalPrice |
                                         currency:'BRL':'symbol':'1.2-2'}}</span>
                                 </div>
                                 <button
-                                    class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg">
+                                    (click)="navigate('resumo-pedido')"
+                                    class="w-full bg-blue-500 cursor-pointer hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg">
                                     Finalizar Pedido
                                 </button>
                             </div>
