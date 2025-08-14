@@ -19,9 +19,8 @@ public class Address {
     private Long id;
 
     private String streetName;
-
+    private String addressName;
     private String number;
-//   TODO mudar o nome do atributo para numberHouse
     private String complement;
 
     private String neighborhood;

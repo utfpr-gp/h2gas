@@ -90,6 +90,7 @@ class SupplierServiceTest {
         Address address = new Address(
                 null,
                 "rua teste fornecedor",
+                "casa aqui",
                 "123412343",
                 "perto do lugar teste 3",
                 "bairro do testado",
@@ -102,6 +103,7 @@ class SupplierServiceTest {
         Address address2 = new Address(
                 null,
                 "rua teste fornecedor testando",
+                "trabalho teste",
                 "1234123433333",
                 "perto do lugar teste 33",
                 "bairro do testado2",

@@ -51,6 +51,7 @@ class AddressServiceTest {
         Address address = new Address(
             null,
             "rua teste 2",
+            "casa 2",
             "123412343",
             "perto do lugar teste 3",
             "bairro do testado",
@@ -64,6 +65,7 @@ class AddressServiceTest {
         Address address2 = new Address(
                 null,
                 "rua teste 3",
+                "casa 3",
                 "1234123433333",
                 "perto do lugar teste 33",
                 "bairro do testado2",

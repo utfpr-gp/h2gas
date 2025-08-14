@@ -220,6 +220,7 @@ class ProductItemServiceTest {
         Address address = new Address(
                 null,
                 "rua teste fornecedor",
+                "testeee",
                 "123412343",
                 "perto do lugar teste 3",
                 "bairro do testado",
@@ -232,6 +233,7 @@ class ProductItemServiceTest {
         Address address2 = new Address(
                 null,
                 "rua teste fornecedor testando",
+                "casa teste",
                 "1234123433333",
                 "perto do lugar teste 33",
                 "bairro do testado2",
