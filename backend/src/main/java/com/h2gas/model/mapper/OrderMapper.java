@@ -59,6 +59,10 @@ public class OrderMapper {
             orderResponseDTO.setSupplierName(data.getSupplier().getName());
         }
 
+        if (data.getStatus() != null) {
+            orderResponseDTO.setStatus(data.getStatus().getStatus());
+        }
+
         if (data.getItems() != null) {
             List<OrderItemResponseDTO> itemsDto = data.getItems().stream()
                     .map(item -> new OrderItemResponseDTO(

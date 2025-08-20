@@ -1,5 +1,6 @@
 package com.h2gas.model.dto;
 
+import com.h2gas.enums.OrderStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,5 +25,6 @@ public class OrderResponseDTO {
     private String supplierName;
     private String customerId;
     private Long supplierId;
+    private String status;
     private List<OrderItemResponseDTO> orderItems;
 }

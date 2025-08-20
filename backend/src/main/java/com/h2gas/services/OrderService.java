@@ -1,5 +1,6 @@
 package com.h2gas.services;
 
+import com.h2gas.enums.OrderStatusEnum;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.OrderItemRequestDTO;
 import com.h2gas.model.dto.OrderRequestDTO;
@@ -54,6 +55,7 @@ public class OrderService {
         order.setCustomer(user);
         order.setSupplier(supplier);
         order.setOrderDate(LocalDateTime.now());
+        order.setStatus(OrderStatusEnum.PENDING);
         order.setDeliveryAddress(addressService.findEntityByUserId(user.getId()));
         orderRepository.save(order);
 
