@@ -128,7 +128,7 @@ export class ProductItemFormComponent implements OnInit {
     this.productItemSave = this.formProductItem.value;
 
     if (this.productItemSave) {
-      this.productItemSave.distributorId = this.user?.supplierId;
+      this.productItemSave.supplierId = this.user?.supplierId ?? 0;
     }
     
     this.productItemService.create(this.productItemSave!!).subscribe({
