@@ -39,6 +39,21 @@ public class SupplierController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/search")
+    @ResponseBody
+    @RolesAllowed("ADMIN")
+    public ResponseEntity<PageResponse<SupplierDTO>> searchSuppliers(
+            @RequestParam String name,
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "size", required = false) Integer size
+    ) {
+        Pageable pageable = PaginationUtil.getPageableRequest(page, size);
+        Page<SupplierDTO> result = supplierService.searchSuppliers(name, pageable);
+        PageResponse<SupplierDTO> response = new PageResponse<>(result);
+
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/actives/open")
     @ResponseBody
     public ResponseEntity<PageResponse<SupplierDTO>> getAllSuppliersOpenAndActive(

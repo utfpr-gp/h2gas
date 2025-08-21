@@ -1,13 +1,13 @@
 package com.h2gas.enums;
 
 public enum OrderStatusEnum {
-    PENDING("pendente"),
-    CONFIRMED("confirmado"),
-    IN_PREPARATION("em-preparacao"),
-    OUT_FOR_DELIVERY("saiu-para-entrega"),
-    DELIVERED("entregue"),
-    CANCELED("cancelado"),
-    FAILED("falhou");
+    PENDING("Pendente"),
+    CONFIRMED("Confirmado"),
+    IN_PREPARATION("Em preparacao"),
+    OUT_FOR_DELIVERY("Saiu para entrega"),
+    DELIVERED("Entregue"),
+    CANCELED("Cancelado"),
+    FAILED("Falhou");
 
     private final String status;
 

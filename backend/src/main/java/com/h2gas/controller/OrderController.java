@@ -2,6 +2,7 @@ package com.h2gas.controller;
 
 import com.h2gas.model.dto.OrderRequestDTO;
 import com.h2gas.model.dto.OrderResponseDTO;
+import com.h2gas.model.dto.SupplierDTO;
 import com.h2gas.model.mapper.OrderMapper;
 import com.h2gas.response.PageResponse;
 import com.h2gas.services.OrderService;
@@ -48,5 +49,18 @@ public class OrderController {
         return ResponseEntity.ok(orderResponseDTO);
     }
 
+    @GetMapping("/by-customer/{customerId}")
+    @ResponseBody
+    public ResponseEntity<PageResponse<OrderResponseDTO>> listAllOrderItems(
+            @PathVariable String customerId,
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "size", required = false) Integer size
+    ) {
+        Pageable pageable = PaginationUtil.getPageableRequest(page, size);
+        Page<OrderResponseDTO> result = orderService.findByCustomerId(customerId, pageable);
+        PageResponse<OrderResponseDTO> response = new PageResponse<>(result);
+
+        return ResponseEntity.ok(response);
+    }
 
 }

@@ -63,6 +63,13 @@ public class OrderMapper {
             orderResponseDTO.setStatus(data.getStatus().getStatus());
         }
 
+        if (data.getDeliveryAddress() != null) {
+            orderResponseDTO.setNumber(data.getDeliveryAddress().getNumber());
+            orderResponseDTO.setStreetName(data.getDeliveryAddress().getStreetName());
+            orderResponseDTO.setComplement(data.getDeliveryAddress().getComplement());
+            orderResponseDTO.setNeighborhood(data.getDeliveryAddress().getNeighborhood());
+        }
+
         if (data.getItems() != null) {
             List<OrderItemResponseDTO> itemsDto = data.getItems().stream()
                     .map(item -> new OrderItemResponseDTO(

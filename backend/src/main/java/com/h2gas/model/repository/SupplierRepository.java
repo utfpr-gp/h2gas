@@ -11,4 +11,5 @@ public interface SupplierRepository extends JpaRepository<Supplier, Long> {
     Optional<Supplier> findByName(String name);
     Optional<Supplier> findByUserId(String userId);
     Page<Supplier> findByActiveAndOpen(Boolean active, Boolean open, Pageable pageable);
+    Page<Supplier> findByNameContainingIgnoreCase(String name, Pageable pageable);
 }

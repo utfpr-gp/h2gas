@@ -90,4 +90,11 @@ public class OrderService {
                 -> new ResourceNotFoundException("Pedido não encontrado com esse id: " + id));
     }
 
+    public Page<OrderResponseDTO> findByCustomerId(String id, Pageable pageable) {
+        return orderRepository.findByCustomerId(id, pageable)
+                .map(orderMapper::toResponseDto);
+    }
+
+
+
 }

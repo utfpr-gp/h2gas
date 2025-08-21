@@ -27,4 +27,8 @@ public class OrderResponseDTO {
     private Long supplierId;
     private String status;
     private List<OrderItemResponseDTO> orderItems;
+    private String streetName;
+    private String number;
+    private String complement;
+    private String neighborhood;
 }

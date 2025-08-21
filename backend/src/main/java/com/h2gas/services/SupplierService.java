@@ -61,6 +61,11 @@ public class SupplierService {
                 .map(supplierMapper::toDto);
     }
 
+    public Page<SupplierDTO> searchSuppliers(String name, Pageable pageable) {
+        return supplierRepository.findByNameContainingIgnoreCase(name, pageable)
+                .map(supplierMapper::toDto);
+    }
+
     public Page<SupplierDTO> findAllSuppliersOpenAndActive(Pageable pageable) {
         return supplierRepository.findByActiveAndOpen(true, true, pageable)
                 .map(supplierMapper::toDto);
