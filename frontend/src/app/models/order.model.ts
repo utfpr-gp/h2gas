@@ -22,4 +22,9 @@ export interface OrderResponse {
     customerId: string;
     supplierId: number;
     orderItems: OrderItemResponse[];
+    status: string;
+    streetName:string;
+    number:string;
+    complement:string;
+    neighborhood:string;
 }

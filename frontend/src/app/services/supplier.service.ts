@@ -31,4 +31,8 @@ export class SupplierService extends AbstractService<Supplier> {
   getAllSupplierOpenAndActive(): Observable<PaginatedResponse<Supplier>> {
     return this.http.get<PaginatedResponse<Supplier>>(`${this.baseUrl}/actives/open`);
   }
+
+  searchSuppliers(name: string): Observable<PaginatedResponse<Supplier>> {
+    return this.http.get<PaginatedResponse<Supplier>>(`${this.baseUrl}/search?name=${name}`);
+  }
 }

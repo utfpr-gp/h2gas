@@ -15,6 +15,7 @@ import { UnauthorizedComponent } from './components/pages/unauthorized/unauthori
 import { SupplierListComponent } from './components/pages/supplier-list/supplier-list.component';
 import { ProductListComponent } from './components/pages/product-list/product-list.component';
 import { OrderResumeComponent } from './components/pages/order-resume/order-resume.component';
+import { OrderListComponent } from './components/pages/order-list/order-list.component';
 
 export const routes: Routes = [
     {path: '', component: InitialScreenComponent},
@@ -85,18 +86,24 @@ export const routes: Routes = [
         path: 'fornecedores', 
         component: SupplierListComponent,
         canActivate: [authGuard],
-        data: {roles: ['ADMIN']}
+        data: {roles: ['ADMIN', 'SUPPLIER', 'CUSTOMER']}
     },
     {
         path: 'fornecedores/:id/produtos', 
         component: ProductListComponent,
         canActivate: [authGuard],
-        data: {roles: ['ADMIN']}
+        data: {roles: ['ADMIN', 'SUPPLIER', 'CUSTOMER']}
     },
     {
         path: 'resumo-pedido', 
         component: OrderResumeComponent,
         canActivate: [authGuard],
-        data: {roles: ['ADMIN']}
+        data: {roles: ['ADMIN', 'CUSTOMER']}
+    },
+    {
+        path: 'meus-pedidos', 
+        component: OrderListComponent,
+        canActivate: [authGuard],
+        data: {roles: ['ADMIN', 'CUSTOMER']}
     },
 ];
