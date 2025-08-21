@@ -5,6 +5,7 @@ import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
 import com.h2gas.model.mapper.ProductTypeMapper;
 import com.h2gas.services.ProductTypeService;
+import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +30,7 @@ public class ProductTypeController {
 
     @PostMapping
     @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER"})
     public ResponseEntity<ProductTypeDTO> createTypesProducts(@RequestBody ProductTypeDTO productTypeDTO) {
         ProductTypeDTO productTypeCreate = productTypeService.createProductType(productTypeDTO);
         return ResponseEntity.ok(productTypeCreate);

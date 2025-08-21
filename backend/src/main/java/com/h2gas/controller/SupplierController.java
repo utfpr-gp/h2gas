@@ -27,7 +27,7 @@ public class SupplierController {
 
     @GetMapping
     @ResponseBody
-    @RolesAllowed("ADMIN")
+    @RolesAllowed({"ADMIN", "SUPPLIER", "CUSTOMER"})
     public ResponseEntity<PageResponse<SupplierDTO>> getAllSuppliers(
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(value = "size", required = false) Integer size
@@ -41,7 +41,7 @@ public class SupplierController {
 
     @GetMapping("/search")
     @ResponseBody
-    @RolesAllowed("ADMIN")
+    @RolesAllowed({"ADMIN", "SUPPLIER", "CUSTOMER"})
     public ResponseEntity<PageResponse<SupplierDTO>> searchSuppliers(
             @RequestParam String name,
             @RequestParam(value = "page", required = false) Integer page,
@@ -125,6 +125,7 @@ public class SupplierController {
 
     @PatchMapping("/{id}/status")
     @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER"})
     public ResponseEntity<Map<String, String>> changeStatusOpenClosed(@PathVariable Long id,
                                                               @RequestBody Map<String, Boolean> status) {
         boolean novoStatus = status.get("status");

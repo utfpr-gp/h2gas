@@ -37,6 +37,7 @@ public class ProductItemController {
 
     @PostMapping
     @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER"})
     public ResponseEntity<ProductItemDTO> createCategoryProduct(@RequestBody CreateProductItemDTO productItemDTO) {
         ProductItemDTO productItemCreate = productItemService.createProductItem(productItemDTO);
         return ResponseEntity.ok(productItemCreate);
@@ -51,14 +52,15 @@ public class ProductItemController {
 
     @DeleteMapping("/{id}")
     @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER"})
     public ResponseEntity<Long> deleteProduct(@PathVariable("id") Long id) {
         productItemService.deleteProductItem(id);
         return ResponseEntity.ok(id);
     }
 
-//    @RolesAllowed({"ADMIN", "SUPPLIER"})
     @PutMapping("/{id}")
     @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER"})
     public ResponseEntity<ProductItemDTO> update(@PathVariable Long id, @RequestBody CreateProductItemDTO dto) {
         ProductItemDTO updated = productItemService.updateProductItem(id, dto);
         return ResponseEntity.ok(updated);
