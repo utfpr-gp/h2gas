@@ -76,7 +76,7 @@ export class RegisterUserComponent implements OnInit {
         }, 
         error: (error) => {
           console.error('Erro ao criar usuário:', error);
-          this.toastr.error(`Erro ao criar usuário: ${error}`)
+          this.toastr.error(`Erro ao criar usuário: ${error.error.message}`)
         }
       })
     }    

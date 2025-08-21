@@ -5,6 +5,7 @@ import { UserService } from '../../../services/user.service';
 import { ToastrService } from 'ngx-toastr';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../services/auth.service';
+import { CartService } from '../../../services/cart.service';
 
 @Component({
   selector: 'app-login',
@@ -23,7 +24,8 @@ export class LoginComponent {
     private fb: FormBuilder, 
     private userService: UserService,
     private toastr: ToastrService,
-    private authService: AuthService
+    private authService: AuthService,
+    private cartService: CartService,
   ) {
     this.loginform = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -35,9 +37,9 @@ export class LoginComponent {
 
 
   login() {
-    debugger
     localStorage.removeItem('access_token');
     localStorage.removeItem('user');
+    this.cartService.setCart([]);
     this.authService.loginUser(this.loginform.value).subscribe({
       next: (response: any) => {
         console.log('Usuario logado com sucesso!', response);
@@ -67,9 +69,6 @@ export class LoginComponent {
   }
 
   navigate(route: string) {
-    console.log("funcionou");
-    console.log(route);
-    
     this.router.navigate([route])
   }
 
