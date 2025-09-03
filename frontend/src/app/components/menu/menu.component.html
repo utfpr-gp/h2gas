@@ -18,7 +18,7 @@
         <!-- Desktop Navigation -->
         <div class="flex items-center gap-3">
             <nav class="hidden lg:flex items-center">
-                <a routerLink="/"
+                <a href="/fornecedores"
                     class="flex items-center cursor-pointer px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
                     <i class="fas fa-home h-5 w-5"></i>
                     <span class="ml-2">Início</span>
@@ -158,9 +158,13 @@
                         class="block px-4 cursor-pointer py-2 min-w-full text-sm text-gray-700 hover:bg-gray-100">
                         Minha Distribuidora
                     </button>
-                    <button (click)="navigate('/management-distributor')"
+                    <button (click)="navigate('/painel-cliente')"
                         class="block cursor-pointer px-4 py-2 min-w-full text-sm text-gray-700 hover:bg-gray-100">
                         Meus Dados
+                    </button>
+                    <button (click)="navigate('/meus-pedidos')"
+                        class="block cursor-pointer px-4 py-2 min-w-full text-sm text-gray-700 hover:bg-gray-100">
+                        Meus Pedidos
                     </button>
                     <div class="border-t my-1"></div>
                     <button (click)="logout()"

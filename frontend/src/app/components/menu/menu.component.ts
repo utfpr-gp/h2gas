@@ -42,7 +42,6 @@ export class MenuComponent implements OnInit {
       this.toastr.warning("Por favor coloque um valor positivo!!");
     }
   }
-  
 
   ngOnInit(): void {
     const userJson = localStorage.getItem('user');
@@ -97,7 +96,8 @@ export class MenuComponent implements OnInit {
   }
 
   logout() {
-    this.authService.logout()
+    this.authService.logout();
+    this.navigate('/login');
   }
 
 }

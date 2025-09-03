@@ -46,7 +46,37 @@
   @apply bg-gray-200 text-gray-800;
 }
 
+:root {
+  --background-color: #f7f8fc;
+  --primary-color: #6c63ff;
+  --secondary-color: #f0f2f5;
+  --text-color: #1c1c1e;
+  --subtext-color: #6b7280;
+  --white-color: #ffffff;
+  --accent-color: #e0e7ff;
+}
 
+.card {
+  @apply bg-[var(--white-color)] rounded-2xl shadow-sm transition-all duration-300 hover:shadow-lg;
+}
+.card-header {
+  @apply p-6 border-b border-gray-200 flex justify-between items-center;
+}
+.card-title {
+  @apply text-xl font-semibold text-[var(--text-color)];
+}
+.icon-button {
+  @apply flex items-center text-sm font-medium text-[var(--primary-color)] hover:text-indigo-700 transition-colors;
+}
+.icon-button-secondary {
+  @apply flex items-center text-sm font-medium text-[var(--subtext-color)] hover:text-[var(--text-color)] transition-colors;
+}
+.label {
+  @apply block text-xs font-medium text-[var(--subtext-color)] mb-1;
+}
+.value {
+  @apply text-base font-medium text-[var(--text-color)];
+}
 
 
 @layer utilities {

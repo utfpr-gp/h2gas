@@ -16,6 +16,7 @@ import { SupplierListComponent } from './components/pages/supplier-list/supplier
 import { ProductListComponent } from './components/pages/product-list/product-list.component';
 import { OrderResumeComponent } from './components/pages/order-resume/order-resume.component';
 import { OrderListComponent } from './components/pages/order-list/order-list.component';
+import { CustomerPanelComponent } from './components/pages/customer-panel/customer-panel.component';
 
 export const routes: Routes = [
     {path: '', component: InitialScreenComponent},
@@ -103,6 +104,12 @@ export const routes: Routes = [
     {
         path: 'meus-pedidos', 
         component: OrderListComponent,
+        canActivate: [authGuard],
+        data: {roles: ['ADMIN', 'CUSTOMER']}
+    },
+    {
+        path: 'painel-cliente', 
+        component: CustomerPanelComponent,
         canActivate: [authGuard],
         data: {roles: ['ADMIN', 'CUSTOMER']}
     },

@@ -11,6 +11,7 @@ import { ToastrService } from 'ngx-toastr';
 import { OrderRequest } from '../../../models/order.model';
 import { OrderItemRequest } from '../../../models/order-item.model';
 import { OrderService } from '../../../services/order.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-order-resume',
@@ -30,7 +31,8 @@ export class OrderResumeComponent implements OnInit {
     private userService: UserService,
     private toastr: ToastrService,
     private fb: FormBuilder, 
-    private orderService: OrderService
+    private orderService: OrderService,
+    private router: Router,
   ) {
     this.formOrder = this.fb.group({
       observation: [''],
@@ -69,9 +71,6 @@ export class OrderResumeComponent implements OnInit {
       next: (response) => {
         console.log(response);
         this.address = response;
-        console.log("aeee");
-        console.log(this.address);
-        
       },
       error: (err) => {
         console.log(err);
@@ -85,7 +84,6 @@ export class OrderResumeComponent implements OnInit {
       this.toastr.error("Por favor selecione um meio de pagamento!!")
       return
     }
-    debugger
     let orderItemRequests: OrderItemRequest[] = [];
 
     this.productsCarts!.forEach(element => {
@@ -102,13 +100,14 @@ export class OrderResumeComponent implements OnInit {
       note: this.formOrder.get('observation')?.value,
       items: orderItemRequests
     }
-    debugger
+
     this.orderService.createOrder(this.order).subscribe({
       next: (value) => {
         debugger
         console.log(value);
         this.cartService.setCart([]);
-        this.toastr.success("Pedido realizado com sucesso")
+        this.toastr.success("Pedido realizado com sucesso");
+        this.navigate('/meus-pedidos');
       },
       error: (err) => {
         this.toastr.error(`Falha ao realizar o pedido: ${err.error.message}`)
@@ -116,6 +115,8 @@ export class OrderResumeComponent implements OnInit {
     })
     
   }
-  
 
+  navigate(route: string) {
+    this.router.navigate([route])
+  }
 }

@@ -90,8 +90,6 @@ export class DistribuitorFormComponent implements OnInit {
     } 
     this.getCities();
     this.userLogado = this.userService.getUserLocalStorage();
-    console.log(this.userLogado);
-    console.log("testando local storage");
     this.buscaAddressIdUser();
   }
 
@@ -108,19 +106,7 @@ export class DistribuitorFormComponent implements OnInit {
 
   closeAddressModal() {
     this.showAddressModal = false;
-    // this.tempAddress = { street: '', city: '', state: '', cep: '' };
   }
-
-  // addAddress() {
-  //   // Aqui você pode substituir por uma chamada ao seu backend (ex: this.addressService.create(this.tempAddress))
-  //   // Para fins de exemplo, vamos simular que salvou e retornou um ID:
-
-  //   const fakeSavedAddress = { id: 123, ...this.tempAddress }; // substitua pelo retorno real da API
-  //   this.selectedAddress = fakeSavedAddress;
-  //   this.registerFormSupplier.patchValue({ addressId: fakeSavedAddress.id });
-
-  //   this.closeAddressModal();
-  // }
 
   buscarCep() {
     this.addressService.buscaViaCep(this.registerFormAddress.get('zipCode')?.value).subscribe({
