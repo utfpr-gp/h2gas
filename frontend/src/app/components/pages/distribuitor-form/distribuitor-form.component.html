@@ -5,29 +5,29 @@
   <div class="max-w-4xl mx-auto p-4 mb-6">
     <div class="bg-white rounded-xl border border-blue-300 shadow-2xl">
       <div class="bg-blue-700 text-white rounded-t-xl p-4 shadow-md">
-        <h2 *ngIf="!isEdit" class="text-xl font-semibold">Cadastro de Distribuidora</h2>
-        <h2 *ngIf="isEdit" class="text-xl font-semibold">Editar sua Distribuidora</h2>
-        <p class="text-sm text-blue-100">Preencha as informações da sua distribuidora</p>
+        <h2 *ngIf="!isEdit" class="text-xl font-semibold">Cadastro de Fornecedor</h2>
+        <h2 *ngIf="isEdit" class="text-xl font-semibold">Editar</h2>
+        <p class="text-sm text-blue-100">Preencha as informações</p>
       </div>
   
       <div class="p-6">
         <form [formGroup]="registerFormSupplier" class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-gray-700">Nome distribuidora</label>
+              <label class="block text-sm font-medium text-gray-700">Nome Fornecedora</label>
               <input formControlName="name" type="text"
                 class="mt-1 block w-full rounded-lg border-2 border-blue-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Nome Distribuidora" />
             </div>
   
             <div>
-              <label class="block text-sm font-medium text-gray-700">Telefone</label>
+              <label class="block text-sm font-medium text-gray-700">Telefone da sua Fornecedora</label>
               <input formControlName="phone" type="text" mask="(00) 00000-0000"
                 class="mt-1 block w-full rounded-lg border-2 border-blue-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="(00) 00000-0000" />
             </div>
 
-            <div class="md:col-span-2">
+            <!-- <div class="md:col-span-2">
               <label class="block text-sm font-medium text-gray-700">Horário de Funcionamento</label>
               <div class="grid grid-cols-2 gap-2 mt-1">
                 <div>
@@ -41,14 +41,14 @@
                     placeholder="Fechamento" />
                 </div>
               </div>
-            </div>
+            </div> -->
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
-              <div>
+              <!-- <div>
                 <label class="block text-sm font-medium text-gray-700">Tempo médio de entrega (minutos)</label>
                 <input formControlName="averageDeliveryTime" type="number" min="0"
                   class="input input-bordered w-full rounded-lg border-2 border-blue-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Ex: 30" />
-              </div>
+              </div> -->
             
               <div>
                 <label class="block text-sm font-medium text-gray-700">Cidade</label>
@@ -75,18 +75,22 @@
               <label class="block text-sm font-medium text-gray-700">Endereço</label>
           
               <div class="flex items-center gap-2 mt-1">
-                <button *ngIf="!address" type="button"
+                <button type="button"
                   class="flex items-center gap-1 px-3 py-1.5 text-blue-600 border border-blue-500 rounded-lg hover:bg-blue-50"
                   (click)="openModal()">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                   </svg>
-                  Adicionar
+                  <span *ngIf="!address">
+                    Adicionar
+                  </span>
+                  <span *ngIf="address">
+                    Editar
+                  </span>
                 </button>
           
                 <p *ngIf="address" class="text-sm text-gray-800 font-medium">
-                  <!-- {{ selectedAddress.street }}, {{ selectedAddress.city }} - {{ selectedAddress.state }}, {{ selectedAddress.cep }} -->
                   {{ address.streetName }}, {{address.cityName}}
                 </p>
           
@@ -101,7 +105,7 @@
             <div class="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-md mx-4">
               <div class="p-6">
                 <div class="flex justify-between items-center mb-4">
-                  <h2 class="text-xl font-bold">Endereço Distribuidora</h2>
+                  <h2 class="text-xl font-bold">Endereço Fornecedora</h2>
                   <button class="text-gray-500 hover:text-gray-700" (click)="modalAberta = false">
                     <i class="fas fa-times h-5 w-5"></i>
                   </button>

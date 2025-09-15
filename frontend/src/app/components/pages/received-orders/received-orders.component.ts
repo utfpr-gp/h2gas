@@ -99,6 +99,9 @@ export class ReceivedOrdersComponent implements OnInit {
       next: (response: any) => {
         order.status = response.status
         this.toastr.success(`Status do pedido atualizado para: ${response.status}`)        
+        if (order.status === 'Cancelado' || order.status === 'Entregue') {
+          this.orders = this.orders?.filter(o => o.id !== order.id);
+        }
       },
       error: (err) => {
         this.toastr.error(`Erro ao salvar categoria: ${err.error.message}`)        

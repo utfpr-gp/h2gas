@@ -80,6 +80,7 @@
             </div>
 
             <!-- Pedido 1 -->
+            <!-- *ngIf="order.status != 'Entregue' && order.status != 'Cancelado'" -->
             <div *ngFor="let order of orders; let i = index">
                 <div class="bg-white p-5 rounded-xl shadow-md mb-4">
                     <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-center">
