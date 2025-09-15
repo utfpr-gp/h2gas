@@ -111,6 +111,10 @@ export class ReceivedOrdersComponent implements OnInit {
     // aqui você chama o serviço para atualizar no backend
   }
 
+  navigateEdit(id?: number) {
+    this.router.navigate(['/distributor/edit', id])
+  }
+
   getCountByStatus(status: string): number {
     return this.orders?.filter(order => order.status === status).length || 0;
   }

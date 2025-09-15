@@ -5,10 +5,18 @@
     <main class="p-8 max-w-7xl mx-auto">
         <!-- HEADER -->
         <header class="flex items-center justify-between mb-8">
-            <div class="flex items-center gap-4">
+            <div class="flex justify-between items-center gap-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-800">Dashboard do Fornecedor</h1>
-                    <p class="text-sm text-gray-500">Visão geral dos seus pedidos de água e gás.</p>
+                  <h1 class="text-2xl font-bold text-gray-800">Dashboard do Fornecedor</h1>
+                  <p class="text-sm text-gray-500">Visão geral dos seus pedidos de água e gás.</p>
+                </div>
+                <div>
+                  <button 
+                    (click)="navigateEdit(userLogado?.supplierId)" 
+                    class="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg flex items-center gap-2 transition-all duration-300 transform hover:scale-105">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    Editar fornecedora
+                  </button>
                 </div>
             </div>
             <div class="flex items-center gap-4">

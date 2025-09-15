@@ -71,7 +71,6 @@ export class DistributorManagementComponent implements OnInit {
     debugger
     this.supplierService.findByUserId(userId).subscribe({
       next: (response) => {
-        debugger
         console.log('Distribuidora buscada com sucesso!', response);
         this.supplierDistribuidor = response;
         this.showDistribuidora = this.supplierDistribuidor.open!;
@@ -79,7 +78,7 @@ export class DistributorManagementComponent implements OnInit {
       },
       error: (err) => {
         console.error('Erro ao buscar:', err.error.message);
-        this.toastr.error(`Erro ao buscar distribuidora: ${err.error.message}`)
+        // this.toastr.error(`Erro ao buscar distribuidora: ${err.error.message}`)
       }
     })
   }
