@@ -95,6 +95,27 @@ public class OrderService {
                 .map(orderMapper::toResponseDto);
     }
 
+    public Page<OrderResponseDTO> findBySupplierId(Long id, Pageable pageable) {
+        return orderRepository.findBySupplierIdOrderByCreatedAtDesc(id, pageable)
+                .map(orderMapper::toResponseDto);
+    }
 
+    public Page<OrderResponseDTO> findBySupplierIdAndStatus(Long id, OrderStatusEnum status, Pageable pageable) {
+        return orderRepository.findBySupplierIdAndStatusOrderByCreatedAtDesc(id, status, pageable)
+                .map(orderMapper::toResponseDto);
+    }
 
+    public Page<OrderResponseDTO> findByStatus(OrderStatusEnum status, Pageable pageable) {
+        return orderRepository.findByStatus(status, pageable)
+                .map(orderMapper::toResponseDto);
+    }
+
+    public String updateOrderStatus(String id, String newStatus) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido com " + id + " não encontrado"));
+
+        order.setStatus(OrderStatusEnum.valueOf(newStatus));
+        orderRepository.save(order);
+        return order.getStatus().getStatus();
+    }
 }

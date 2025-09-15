@@ -6,8 +6,7 @@ public enum OrderStatusEnum {
     IN_PREPARATION("Em preparacao"),
     OUT_FOR_DELIVERY("Saiu para entrega"),
     DELIVERED("Entregue"),
-    CANCELED("Cancelado"),
-    FAILED("Falhou");
+    CANCELED("Cancelado");
 
     private final String status;
 

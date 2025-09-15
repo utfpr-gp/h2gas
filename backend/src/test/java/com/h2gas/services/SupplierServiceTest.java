@@ -2,6 +2,7 @@ package com.h2gas.services;
 
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.dto.AddressDTO;
+import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
 import com.h2gas.model.entity.Address;
 import com.h2gas.model.entity.City;
@@ -61,7 +62,7 @@ class SupplierServiceTest {
                 "123435345",
                 "234234234",
                 "4534534",
-                UserTypeEnum.CUSTOMER,
+                UserTypeEnum.SUPPLIER,
                 null
         );
 
@@ -74,7 +75,7 @@ class SupplierServiceTest {
                 "123435345dd",
                 "234234234",
                 "453453334",
-                UserTypeEnum.CUSTOMER,
+                UserTypeEnum.SUPPLIER,
                 null
         );
 
@@ -183,8 +184,49 @@ class SupplierServiceTest {
     }
 
 //    @Test
-//    void createSupplier() {
+//    @DisplayName("Deve criar um fornecedor com sucesso")
+//    void createSupplierSuccess() {
+//        // Arrange
+//        User user = userRepository.findAll().get(0); // pega o primeiro usuário salvo no setUp
+//        City city = cityRepository.findAll().get(0); // pega a cidade salva
+//
+//        // Criar um novo endereço para não violar a constraint UNIQUE
+//        Address newAddress = new Address(
+//                null,
+//                "Rua Nova do Teste",
+//                "casa 123",
+//                "999999",
+//                "Perto da praça",
+//                "Bairro Central",
+//                "8888888",
+//                city,
+//                null
+//        );
+//        addressRepository.save(newAddress);
+//
+//        SupplierCreateDTO dto = new SupplierCreateDTO();
+//        dto.setName("Fornecedor Novo");
+//        dto.setDescription("Fornecedor criado no teste");
+//        dto.setOpeningTime(String.valueOf(LocalTime.of(9, 0)));
+//        dto.setClosingTime(String.valueOf(LocalTime.of(17, 0)));
+//        dto.setCityId(city.getId());
+//        dto.setAddressId(newAddress.getId()); // usa endereço novo
+//        dto.setUserId(user.getId());
+//
+//        // Act
+//        SupplierDTO result = supplierService.createSupplier(dto);
+//
+//        // Assert
+//        assertNotNull(result);
+//        assertEquals("Fornecedor Novo", result.getName());
+//
+//        // garante que salvou no banco
+//        Supplier fornecedorSalvo = supplierRepository.findById(result.getId()).orElse(null);
+//        assertNotNull(fornecedorSalvo);
+//        assertEquals("Fornecedor Novo", fornecedorSalvo.getName());
 //    }
+
+
 //
 //    @Test
 //    void deleteSupplier() {
