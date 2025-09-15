@@ -1,0 +1,103 @@
+import { CommonModule } from '@angular/common';
+import { Component, HostListener, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+import { User } from '../../models/user';
+import { ProductItem } from '../../models/product-item';
+import { CartService } from '../../services/cart.service';
+import { FormsModule } from '@angular/forms';
+import { ToastrService } from 'ngx-toastr';
+
+@Component({
+  selector: 'app-menu',
+  imports: [
+    CommonModule,
+    FormsModule
+  ],
+  templateUrl: './menu.component.html',
+  styleUrl: './menu.component.css'
+})
+export class MenuComponent implements OnInit {
+
+  constructor(
+    private router: Router,
+    private authService: AuthService,
+    private cartService: CartService,
+    private toastr: ToastrService,
+  ) {}
+
+  userMenuOpen = false;
+  showDropdown = false;
+  user?: User;
+  cartProducts?: ProductItem[];
+  isCartOpen = false;
+
+  quantity: number = 1;
+  min: number = 1;
+  max: number = 10;
+
+  onQuantityInput(cartProduct?: ProductItem) {
+    if (cartProduct!.quantitySelect! < this.min) {
+      cartProduct!.quantitySelect = this.min;
+      this.toastr.warning("Por favor coloque um valor positivo!!");
+    }
+  }
+
+  ngOnInit(): void {
+    const userJson = localStorage.getItem('user');
+    this.cartService.cartProducts$.subscribe(cart => {
+      this.cartProducts = cart;
+      console.log('Carrinho atualizado:', this.cartProducts);
+    });
+
+    if (userJson) {
+      this.user = JSON.parse(userJson);
+    }
+  }
+
+
+  get totalPrice() {
+    return this.cartProducts!.reduce((sum, item) => sum + item.price! * item.quantitySelect!, 0);
+  }
+
+
+  toggleUserMenu() {
+    this.userMenuOpen = !this.userMenuOpen;
+  }
+
+  closeUserMenu() {
+    this.userMenuOpen = false;
+  }
+
+  navigate(route: string) {    
+    this.router.navigate([route])
+  }
+
+  @HostListener('document:click', ['$event'])
+  clickOutside(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.relative')) {
+      this.userMenuOpen = false;
+    }
+  }
+
+  minusClickCart(cartProduct: ProductItem) {
+    cartProduct!.quantitySelect = (cartProduct!.quantitySelect ?? this.min) > this.min
+      ? (cartProduct!.quantitySelect ?? this.min) - 1
+      : (cartProduct!.quantitySelect ?? this.min);
+  }
+
+  deleteItemCart(cartProduct: ProductItem) {
+    this.cartService.setCart(this.cartService.getCart().filter(item => item.id !== cartProduct.id));
+  }
+
+  plusClickCart(cartProduct: ProductItem) {
+    cartProduct!.quantitySelect = (cartProduct!.quantitySelect ?? 0) + 1
+  }
+
+  logout() {
+    this.authService.logout();
+    this.navigate('/login');
+  }
+
+}

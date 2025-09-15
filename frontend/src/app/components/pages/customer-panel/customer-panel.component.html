@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<body class="p-4 sm:p-6 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <header class="mb-10">
+            <h1 class="text-4xl font-bold text-[var(--text-color)]">Painel do Cliente</h1>
+            <p class="text-lg text-[var(--subtext-color)] mt-2">Bem-vindo(a) de volta! Gerencie suas informações com
+                facilidade.</p>
+        </header>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1">
+                <div class="card p-8 text-center items-center flex flex-col">
+                    <div
+                        class="w-28 h-28 rounded-full bg-indigo-100 flex items-center justify-center mb-4 ring-4 ring-indigo-200">
+                        <span class="material-icons-outlined text-[var(--primary-color)] text-6xl">
+                            person
+                        </span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-[var(--text-color)]">
+                        {{userLogado?.name}}
+                    </h2>
+                    <!-- <p class="text-[var(--subtext-color)]">Cliente desde março 2023</p> -->
+                    <button class="icon-button mt-4">
+                        <span class="material-icons-outlined mr-1 text-base">edit</span>
+                        Editar Perfil
+                    </button>
+                </div>
+            </div>
+            <div class="lg:col-span-2">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title flex items-center">
+                            <span class="material-icons-outlined mr-3 text-[var(--primary-color)]">badge</span>
+                            Dados Pessoais
+                        </h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-8">
+                            <div>
+                                <label class="label" for="nome">Nome Completo</label>
+                                <div class="value">
+                                    {{userLogado?.name}}
+                                </div>
+                            </div>
+                            <div>
+                                <label class="label" for="email">E-mail</label>
+                                <div class="value">
+                                    {{userLogado?.email}}
+                                </div>
+                            </div>
+                            <div>
+                                <label class="label" for="telefone">Telefone</label>
+                                <div class="value">
+                                    {{userLogado?.phoneNumber}}
+                                </div>
+                            </div>
+                            <!-- <div>
+                                <label class="label" for="cpf">CPF</label>
+                                <div class="value">123.456.789-00</div>
+                            </div> -->
+                        </div>
+                    </div>
+                </div>
+                <div class="card mt-8">
+                    <div class="card-header">
+                        <h2 class="card-title flex items-center">
+                            <span class="material-icons-outlined mr-3 text-[var(--primary-color)]">place</span>
+                            Endereço
+                        </h2>
+                        <button *ngIf="!address" class="icon-button" (click)="openModal()">
+                            <span class="material-icons-outlined mr-1 text-base">add_circle_outline</span>
+                            Adicionar Novo Endereço
+                        </button>
+                    </div>
+                    <div class="p-6" *ngIf="address">
+                        <div class="border border-gray-200 rounded-xl p-5 bg-[var(--secondary-color)]">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-2">
+                                    <span
+                                        class="bg-[var(--primary-color)] text-white text-xs font-semibold mr-2 px-2.5 py-1 rounded-full">Residencial</span>
+                                    <span
+                                        class="bg-[var(--accent-color)] text-[var(--primary-color)] text-xs font-semibold mr-2 px-2.5 py-1 rounded-full">Principal</span>
+                                </div>
+                                <button class="icon-button-secondary">
+                                    <span class="material-icons-outlined text-base">more_horiz</span>
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4 text-[var(--subtext-color)]">
+                                <p><span class="font-medium text-[var(--text-color)]">
+                                    Endereço:</span> 
+                                    {{address.streetName}}, {{address.number}} - {{address.complement}}
+                                </p>
+                                <p><span class="font-medium text-[var(--text-color)]">Bairro:</span> 
+                                    {{address.neighborhood}}
+                                </p>
+                                <p><span class="font-medium text-[var(--text-color)]">Cidade:</span> 
+                                    {{address.cityName}}
+                                </p>
+                                <p><span class="font-medium text-[var(--text-color)]">CEP:</span> 
+                                    {{address.zipCode}}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div *ngIf="modalAberta" class="fixed inset-0 bg-black/25 backdrop-blur-sm flex justify-center items-center z-50">
+        <div class="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-md mx-4">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-xl font-bold">Adicionar Endereço</h2>
+              <button class="text-gray-500 hover:text-gray-700" (click)="modalAberta = false">
+                <i class="fas fa-times h-5 w-5"></i>
+              </button>
+            </div>
+  
+            <form class="space-y-4" [formGroup]="registerFormAddress">
+
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">CEP</label>
+                <div class="flex gap-2">
+                  <input
+                    type="text"
+                    placeholder="Digite o seu CEP"
+                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
+                    required
+                    formControlName="zipCode"
+                  />
+                  <button
+                    type="button"
+                    (click)="buscarCep()"
+                    class="px-2 py-1 text-sm bg-[#0017bf] hover:bg-[#0017bf]/80 text-white rounded-md"
+                  >
+                    Buscar
+                  </button>
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Cidade</label>
+                <input
+                  type="text"
+                  placeholder="Digite o nome de sua Cidade"
+                  class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
+                  required
+                  formControlName="cityName"
+                />
+              </div>
+
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Rua</label>
+                <input
+                  type="text"
+                  placeholder="Digite o nome da sua Rua"
+                  class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
+                  required
+                  formControlName="streetName"
+                />
+              </div>
+
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Complemento</label>
+                <input
+                  type="text"
+                  placeholder="Digite um Complemento"
+                  class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
+                  required
+                  formControlName="complement"
+                />
+              </div>
+
+
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Bairro</label>
+                <input
+                  type="text"
+                  placeholder="Digite o bairro"
+                  class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
+                  required
+                  formControlName="neighborhood"
+                />
+              </div>
+  
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Numero</label>
+                <input
+                  type="number"
+                  placeholder="Digite o Numero"
+                  class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
+                  required
+                  formControlName="number"
+                />
+              </div>
+  
+              <div class="flex justify-end gap-2 pt-4">
+                <button
+                  type="button"
+                  class="cursor-pointer px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  (click)="modalAberta = false"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  (click)="salvarAddress()"
+                  class="px-4 py-2 bg-[#0017bf] hover:bg-[#0017bf]/80 text-white rounded-md cursor-pointer">
+                  Salvar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+
+</body>
+
+</html>
