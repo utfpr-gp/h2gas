@@ -1,5 +1,6 @@
 package com.h2gas.services;
 
+import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.SupplierCreateDTO;
@@ -54,12 +55,16 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
 
         userEdit.setName(userDto.getName());
-//        UserDetails existingUser = userRepository.findByEmail(userDto.getEmail());
-//        if (existingUser != null && !existingUser.getId().equals(id)) {
-//            throw new BusinessRuleException("Email já cadastrado.");
-//        }
+        if (userRepository.existsByEmail(userDto.getEmail()) &&
+                !userEdit.getEmail().equals(userDto.getEmail())) {
+            throw new BusinessRuleException("Email já cadastrado.");
+        }
+
         userEdit.setEmail(userDto.getEmail());
-        userEdit.setCnpj(userDto.getCnpj());
+        if (userEdit.getUserType() != UserTypeEnum.CUSTOMER) {
+            userEdit.setCnpj(userDto.getCnpj());
+        }
+        userEdit.setPhoneNumber(userDto.getPhoneNumber());
 
         User saved = userRepository.save(userEdit);
 

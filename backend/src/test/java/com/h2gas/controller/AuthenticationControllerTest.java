@@ -40,6 +40,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import org.springframework.test.context.TestPropertySource;
 
+import java.util.Optional;
+
 
 @SpringBootTest
 @Import(SecurityConfigurations.class)
@@ -128,7 +130,9 @@ class AuthenticationControllerTest {
                 UserTypeEnum.CUSTOMER
         );
 
-        when(userRepository.findByEmail("teste@email.com")).thenReturn(new User());
+//        when(userRepository.findByEmail("teste@email.com")).thenReturn(new User());
+        when(userRepository.findByEmail("teste@email.com"))
+                .thenReturn(Optional.of(new User()));
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)

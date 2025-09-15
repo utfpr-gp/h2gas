@@ -3,6 +3,7 @@ package com.h2gas.configuration.security;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.h2gas.model.repository.UserRepository;
+import com.h2gas.services.auth.AuthorizationService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,7 +25,8 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     @Autowired
     UserRepository userRepository;
-
+    @Autowired
+    private AuthorizationService authorizationService;
 
 
     @Override
@@ -34,7 +36,7 @@ public class SecurityFilter extends OncePerRequestFilter {
 
            if (token != null) {
                var subject = tokenService.validateToken(token);
-               UserDetails user = userRepository.findByEmail(subject);
+               UserDetails user = authorizationService.loadUserByUsername(subject);
 
                var authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
                SecurityContextHolder.getContext().setAuthentication(authentication);

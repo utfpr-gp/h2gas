@@ -1,9 +1,11 @@
 package com.h2gas.controller;
 
+import com.h2gas.model.dto.AddressDTO;
 import com.h2gas.model.dto.UserDto;
 import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.UserMapper;
 import com.h2gas.services.UserService;
+import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -34,4 +36,11 @@ public class UserController {
         return ResponseEntity.ok(userDto);
     }
 
+    @PutMapping("/{id}")
+    @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER", "CUSTOMER"})
+    public ResponseEntity<UserDto> updateUser(@PathVariable String id, @RequestBody UserDto dto) {
+        UserDto userDto = userService.update(id, dto);
+        return ResponseEntity.ok(userDto);
+    }
 }
