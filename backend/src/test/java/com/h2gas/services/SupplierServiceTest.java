@@ -186,10 +186,8 @@ class SupplierServiceTest {
     @Test
     @DisplayName("Deve criar um fornecedor com sucesso")
     void createSupplierSuccess() {
-        // Arrange
-        City city = cityRepository.findAll().get(0); // pega a cidade salva
+        City city = cityRepository.findAll().get(0);
 
-        // Criar novo usuário para não violar UNIQUE USER_ID
         User newUser = new User(
                 null,
                 "Usuário Novo",
@@ -203,7 +201,6 @@ class SupplierServiceTest {
         );
         userRepository.save(newUser);
 
-        // Criar novo endereço
         Address newAddress = new Address(
                 null,
                 "Rua Nova do Teste",
@@ -224,16 +221,13 @@ class SupplierServiceTest {
         dto.setClosingTime(String.valueOf(LocalTime.of(17, 0)));
         dto.setCityId(city.getId());
         dto.setAddressId(newAddress.getId());
-        dto.setUserId(newUser.getId()); // agora usa o novo usuário
+        dto.setUserId(newUser.getId());
 
-        // Act
         SupplierDTO result = supplierService.createSupplier(dto);
 
-        // Assert
         assertNotNull(result);
         assertEquals("Fornecedor Novo", result.getName());
 
-        // garante que salvou no banco
         Supplier fornecedorSalvo = supplierRepository.findById(result.getId()).orElse(null);
         assertNotNull(fornecedorSalvo);
         assertEquals("Fornecedor Novo", fornecedorSalvo.getName());
