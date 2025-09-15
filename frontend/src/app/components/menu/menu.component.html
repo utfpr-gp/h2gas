@@ -1,0 +1,178 @@
+<div class="bg-[#0017bf]">
+    <div class="container mx-auto flex h-16 items-center justify-between px-4">
+        <!-- Logo & Mobile menu -->
+        <div class="flex items-center gap-2">
+            <button class="lg:hidden text-white hover:bg-[#0017bf]/80 p-2 rounded-md">
+                <i class="fas fa-bars h-6 w-6"></i>
+            </button>
+            <div class="flex items-center">
+                <div class="h-9 w-9 rounded-full flex items-center justify-center mr-2">
+                    <img src="../assets/logo-sem-titulo.png" alt="">
+                </div>
+                <span class="text-white text-xl font-bold tracking-tight hidden sm:inline-block">
+                    H2Gás
+                </span>
+            </div>
+        </div>
+
+        <!-- Desktop Navigation -->
+        <div class="flex items-center gap-3">
+            <nav class="hidden lg:flex items-center">
+                <a href="/fornecedores"
+                    class="flex items-center cursor-pointer px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
+                    <i class="fas fa-home h-5 w-5"></i>
+                    <span class="ml-2">Início</span>
+                </a>
+                <button style="anchor-name:--anchor-1" popovertarget="popover-1"
+                    class="flex items-center px-3 py-2 cursor-pointer text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
+                    <i class="fa-solid fa-fire-flame-simple"></i>
+                    <span class="ml-2">Produtos</span>
+                </button>
+
+                <ul *ngIf="user?.userType === 'ADMIN' || user?.userType === 'SUPPLIER'"
+                    class="dropdown menu w-52 rounded-box bg-base-100 shadow-sm" popover id="popover-1"
+                    style="position-anchor:--anchor-1">
+                    <li>
+                        <a href="/product-items">Item produtos</a>
+                    </li>
+                    <li>
+                        <a href="/category-products">Categoria de produtos</a>
+                    </li>
+                </ul>
+                <a href="/meus-pedidos"
+                    class="flex items-center cursor-pointer px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
+                    <i class="fas fa-clipboard-list h-5 w-5"></i>
+                    <span class="ml-2">Pedidos</span>
+                </a>
+                <a *ngIf="user?.userType === 'ADMIN'" href="/register-city"
+                    class="flex items-center cursor-pointer px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
+                    <i class="fas fa-map-marked-alt h-5 w-5"></i>
+                    <span class="ml-2">Cidades</span>
+                </a>
+                <a *ngIf="user?.userType === 'ADMIN'" href="/supplier-approval"
+                    class="flex cursor-pointer items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
+                    <i class="fas fa-store h-5 w-5"></i>
+                    <span class="ml-2">Distribuidores</span>
+                </a>
+                <div class="drawer drawer-end">
+                    <input id="cart-drawer" type="checkbox" class="drawer-toggle" />
+
+                    <div class="drawer-content">
+                        <label for="cart-drawer"
+                            class="relative cursor-pointer p-2 rounded-md text-white hover:bg-white/10">
+                            <i class="fas fa-shopping-cart h-5 w-5">
+                                <div class="absolute top-1 badge badge-info text-white badge-xs">
+                                    {{cartProducts!!.length}}</div>
+                            </i>
+                        </label>
+                    </div>
+
+                    <!-- Sidebar do carrinho -->
+                    <div class="drawer-side z-50">
+                        <label for="cart-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
+                        <div class="w-full max-w-md bg-white rounded-lg shadow-lg">
+                            <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                                <div>
+                                    <h2 class="text-xl font-bold text-gray-800">Carrinho de Compras</h2>
+                                    <p class="text-sm text-gray-500">{{cartProducts!!.length}} item(s) no carrinho</p>
+                                </div>
+                            </div>
+                            <div *ngIf="!cartProducts || cartProducts.length === 0" class="empty-cart">
+                                <p>Seu carrinho está vazio</p>
+                            </div>
+                            <div class="p-6 space-y-4">
+                                <div *ngFor="let cartProduct of cartProducts"
+                                    class="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
+                                    <div class="flex items-center space-x-4">
+                                        <img alt="Botijão de Gás GLP 13kg" class="w-16 h-16 object-contain"
+                                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDSkF5OjFxchm7Cy07MpZ_Mxpkh09wroonK-4Twf-WMGeuVS4XNu_5okndwMFuQGDiVfFYEqCKEcIctOqGQVCwrnvVxBaeU646SUknTEoinGbjW6h7RA6oqmdcfkTFxfjo7qN57QPbCYy0NJPwZeqw2gE8ZyWIM5J7RDgqYU6CuH7y-k5PrWHzM_nE4UB2gZAbglUQimL5jVJmZ-C9wAYCfv56sv61Kg8UC_NG3pH4vzrU1nlgrN1tiuniBUTOhZ3AzQtLX_I_nfozc" />
+                                        <div>
+                                            <h3 class="font-semibold text-gray-800">
+                                                {{cartProduct!!.type}} {{cartProduct!!.brand}}
+                                                {{cartProduct!!.category}}
+                                            </h3>
+                                            <p class="text-sm text-gray-500">{{cartProduct!.price |
+                                                currency:'BRL':'symbol':'1.2-2'}} por produto</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <button class="btn btn-square btn-sm" (click)="minusClickCart(cartProduct)"
+                                            [disabled]="(cartProduct!.quantitySelect ?? min) <= min">
+                                            –
+                                        </button>
+
+                                        <input type="number" class="input input-bordered input-sm w-16 text-center"
+                                            [(ngModel)]="cartProduct.quantitySelect" [min]="min"
+                                            [disabled]="(cartProduct?.quantitySelect ?? 0) >= (cartProduct?.stockQuantity ?? 0)"
+                                            (input)="onQuantityInput(cartProduct)"/>
+
+                                        <button class="btn btn-square btn-sm" (click)="plusClickCart(cartProduct)"
+                                            [disabled]="(cartProduct?.quantitySelect ?? 0) >= (cartProduct?.stockQuantity ?? 0)">
+                                            +
+                                        </button>
+
+                                        <div class="tooltip tooltip-error" data-tip="Excluir item">
+                                            <button class="text-red-500 hover:text-red-700 cursor-pointer"
+                                                (click)="deleteItemCart(cartProduct)">
+                                                <span class="material-icons">delete</span>
+                                            </button>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                            <div *ngIf="cartProducts && cartProducts.length != 0"  class="p-6 border-t border-gray-200">
+                                <div class="flex justify-between items-center mb-4">
+                                    <span class="text-lg font-medium text-gray-800">Total:</span>
+                                    <span class="text-xl font-bold text-gray-900">{{totalPrice |
+                                        currency:'BRL':'symbol':'1.2-2'}}</span>
+                                </div>
+                                <button
+                                    (click)="navigate('resumo-pedido')"
+                                    class="w-full bg-blue-500 cursor-pointer hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg">
+                                    Finalizar Pedido
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+            </nav>
+
+            <!-- Notifications -->
+            <!-- <button class="text-white hover:bg-white/10 relative p-2 rounded-md">
+                <i class="fas fa-bell h-5 w-5"></i>
+                <span class="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-red-500"></span>
+            </button> -->
+
+            <!-- User Dropdown -->
+            <div class="relative" (clickOutside)="closeUserMenu()">
+                <button (click)="toggleUserMenu()" class="text-white hover:bg-white/10 p-2 cursor-pointer 
+                    rounded-md flex items-center focus:outline-none">
+                    <i class="fas fa-user h-5 w-5"></i>
+                </button>
+                <div *ngIf="userMenuOpen" class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-50">
+                    <button *ngIf="user?.userType === 'ADMIN' || user?.userType === 'SUPPLIER'"
+                        (click)="navigate('/management-distributor')"
+                        class="block px-4 cursor-pointer py-2 min-w-full text-sm text-gray-700 hover:bg-gray-100">
+                        Minha Distribuidora
+                    </button>
+                    <button (click)="navigate('/painel-cliente')"
+                        class="block cursor-pointer px-4 py-2 min-w-full text-sm text-gray-700 hover:bg-gray-100">
+                        Meus Dados
+                    </button>
+                    <button (click)="navigate('/meus-pedidos')"
+                        class="block cursor-pointer px-4 py-2 min-w-full text-sm text-gray-700 hover:bg-gray-100">
+                        Meus Pedidos
+                    </button>
+                    <div class="border-t my-1"></div>
+                    <button (click)="logout()"
+                        class="block px-4 py-2 cursor-pointer text-sm text-gray-700 min-w-full hover:bg-gray-100">
+                        Sair
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

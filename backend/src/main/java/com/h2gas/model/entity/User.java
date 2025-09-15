@@ -1,5 +1,6 @@
 package com.h2gas.model.entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.h2gas.enums.UserTypeEnum;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -38,6 +39,11 @@ public class User implements UserDetails {
 
     private UserTypeEnum userType;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @JsonManagedReference
+    private Supplier supplier;
+
+
 //    TODO AJUSTAR AQUI MAIS TARDE
 //    @OneToOne(mappedBy = "user")
 //    private Address address;
@@ -61,12 +67,14 @@ public class User implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        if (this.userType == UserTypeEnum.ADMIN) {
-            return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"),
-                            new SimpleGrantedAuthority("ROLE_USER"));
-        } else {
-            return List.of(new SimpleGrantedAuthority("ROLE_USER"));
-        }
+        String role = "ROLE_" + this.userType.name();
+        return List.of(new SimpleGrantedAuthority(role));
+//        if (this.userType == UserTypeEnum.ADMIN) {
+//            return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"),
+//                            new SimpleGrantedAuthority("ROLE_USER"));
+//        } else {
+//            return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+//        }
     }
 
     @Override

@@ -28,10 +28,15 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-    public UserDto findByIdUSer(String id) {
+    public UserDto findByIdUser(String id) {
         Optional<User> userEntityOptional = userRepository.findById(id);
         return userEntityOptional.map(userMapper::toDto).orElseThrow(()
                 -> new ResourceNotFoundException("User not found with id: " + id));
+    }
+
+    public User findEntityByIdUser(String id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
     }
 
     public UserDto findByName(String name) {

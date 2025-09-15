@@ -2,6 +2,7 @@ package com.h2gas.controller;
 
 import com.h2gas.configuration.security.TokenService;
 import com.h2gas.enums.UserTypeEnum;
+import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.model.dto.AuthenticationDTO;
 import com.h2gas.model.dto.LoginDTO;
 import com.h2gas.model.dto.RegisterDTO;
@@ -44,10 +45,12 @@ public class AuthenticationController {
     @PostMapping("/register")
     public ResponseEntity<AuthenticationDTO> register(@RequestBody @Validated RegisterDTO data) {
         System.out.println(this.userRepository.findByEmail(data.getEmail()));
-//        || data.getUserType() == UserTypeEnum.ADMIN
-        if (this.userRepository.findByEmail(data.getEmail()) != null ||
-                data.getUserType() == UserTypeEnum.ADMIN) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        if (this.userRepository.findByEmail(data.getEmail()) != null) {
+            throw new BusinessRuleException("Email já cadastrado.");
+        }
+
+        if (data.getUserType() == null || data.getUserType() == UserTypeEnum.ADMIN) {
+            throw new BusinessRuleException("Cadastro de usuário ADMIN não permitido ou tipo vazio");
         }
 
         String encryptedPassword = new BCryptPasswordEncoder().encode(data.getPassword());

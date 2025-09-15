@@ -5,6 +5,7 @@ import { UserService } from '../../../services/user.service';
 import { ToastrService } from 'ngx-toastr';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../services/auth.service';
+import { CartService } from '../../../services/cart.service';
 
 @Component({
   selector: 'app-login',
@@ -18,13 +19,13 @@ import { AuthService } from '../../../services/auth.service';
 })
 export class LoginComponent {
   
-
   constructor(
     private router: Router,
     private fb: FormBuilder, 
     private userService: UserService,
     private toastr: ToastrService,
-    private authService: AuthService
+    private authService: AuthService,
+    private cartService: CartService,
   ) {
     this.loginform = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -36,9 +37,9 @@ export class LoginComponent {
 
 
   login() {
-    debugger
     localStorage.removeItem('access_token');
     localStorage.removeItem('user');
+    this.cartService.setCart([]);
     this.authService.loginUser(this.loginform.value).subscribe({
       next: (response: any) => {
         console.log('Usuario logado com sucesso!', response);
@@ -46,9 +47,9 @@ export class LoginComponent {
         localStorage.setItem('access_token', response.token)
         this.getAndSaveMe();
       }, 
-      error: (error) => {
-        console.error('Erro ao logar:', error);
-        this.toastr.error(`Erro ao efetuar o login: ${error}`)
+      error: (err) => {
+        console.error('Erro ao logar:', err);
+        this.toastr.error(`Erro ao efetuar o login: ${err.error.message}`)
       }
     })
   }
@@ -58,19 +59,16 @@ export class LoginComponent {
       next: (response: any) => {
         console.log('Usuario buscado sucesso!', response);
         localStorage.setItem('user', JSON.stringify(response))
-        this.navigate('/register-city')
+        this.navigate('/fornecedores')
       }, 
-      error: (error) => {
-        console.error('Erro ao buscar o usuario logado:', error);
-        this.toastr.error(`Erro ao buscar o usuario: ${error}`)
+      error: (err) => {
+        console.error('Erro ao buscar o usuario logado:', err);
+        this.toastr.error(`Erro ao buscar o usuario: ${err.error.message}`)
       }
     })
   }
 
   navigate(route: string) {
-    console.log("funcionou");
-    console.log(route);
-    
     this.router.navigate([route])
   }
 

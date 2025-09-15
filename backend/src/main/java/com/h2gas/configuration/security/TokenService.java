@@ -33,16 +33,16 @@ public class TokenService {
     }
 
     public String validateToken(String token) {
-        try {
+//        try {
             Algorithm algorithm = Algorithm.HMAC256(secret);
             return JWT.require(algorithm)
                     .withIssuer("h2gas")
                     .build()
                     .verify(token)
                     .getSubject();
-        } catch (JWTVerificationException e) {
-            return "";
-        }
+//        } catch (JWTVerificationException e) {
+//            return "";
+//        }
     }
 
     private Instant genExperirationDate() {

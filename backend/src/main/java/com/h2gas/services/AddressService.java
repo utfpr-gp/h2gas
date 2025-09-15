@@ -2,7 +2,6 @@ package com.h2gas.services;
 
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.AddressDTO;
-import com.h2gas.model.dto.CityDTO;
 import com.h2gas.model.entity.Address;
 import com.h2gas.model.entity.City;
 import com.h2gas.model.entity.User;
@@ -10,8 +9,6 @@ import com.h2gas.model.mapper.AddressMapper;
 import com.h2gas.model.mapper.CityMapper;
 import com.h2gas.model.mapper.UserMapper;
 import com.h2gas.model.repository.AddressRepository;
-import com.h2gas.model.repository.CityRepository;
-import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -55,7 +52,7 @@ public class AddressService {
     public AddressDTO createAddress(AddressDTO addressDTO) {
         Address address = addressMapper.toEntity(addressDTO);
         City city = cityMapper.toEntity(cityService.findByName(addressDTO.getCityName()));
-        User user = userMapper.toEntityUser(userService.findByIdUSer(addressDTO.getUserId()));
+        User user = userMapper.toEntityUser(userService.findByIdUser(addressDTO.getUserId()));
         address.setCity(city);
         address.setUser(user);
         addressRepository.save(address);
@@ -83,6 +80,18 @@ public class AddressService {
 
         Address updatedAddress = addressRepository.save(addressExisting);
         return addressMapper.toDto(updatedAddress);
+    }
+
+    public AddressDTO findByUserIdAddress(String userId) {
+        Optional<Address> addressOptional = addressRepository.findByUserId(userId);
+        return addressOptional.map(addressMapper::toDto).orElseThrow(()
+                -> new ResourceNotFoundException("Endereço não encontrada para esse usuario com esse id: " + userId));
+
+    }
+
+    public Address findEntityByUserId(String userId) {
+        return addressRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Endereço não encontrado para esse usuário com id: " + userId));
     }
 
 }

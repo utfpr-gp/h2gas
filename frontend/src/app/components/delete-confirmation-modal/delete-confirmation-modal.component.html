@@ -1,7 +1,7 @@
 <input type="checkbox" id="delete-modal" class="modal-toggle" />
 <div class="modal">
   <div class="modal-box">
-    <h3 class="font-bold text-lg">Tem certeza que deseja excluir a cidade {{ itemName }}?</h3>
+    <h3 class="font-bold text-lg">Tem certeza que deseja excluir {{ itemName }}?</h3>
     <p class="py-4">Essa ação não poderá ser desfeita.</p>
     <div class="modal-action">
       <label for="delete-modal" class="btn btn-error" (click)="confirm.emit()">Confirmar</label>

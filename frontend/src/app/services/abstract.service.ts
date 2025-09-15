@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { PaginatedResponse } from '../models/paginated-response';
 // import { environment } from 'src/environments/environment';
 
 @Injectable({
@@ -24,6 +25,11 @@ export class AbstractService<T> {
   findAll(): Observable<T[]> {
     return this.http.get<T[]>(this.baseUrl);
   }
+
+  findAllPaginated(): Observable<PaginatedResponse<T>> {
+    return this.http.get<PaginatedResponse<T>>(this.baseUrl);
+  }
+  
 
   findById(id: number | string): Observable<T> {
     return this.http.get<T>(`${this.baseUrl}/${id}`);

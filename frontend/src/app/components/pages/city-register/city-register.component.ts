@@ -8,6 +8,7 @@ import { CityService } from '../../../services/city.service';
 import { City } from '../../../models/city';
 import { DeleteConfirmationModalComponent } from '../../delete-confirmation-modal/delete-confirmation-modal.component';
 import { DynamicTableComponent } from '../../dynamic-table/dynamic-table.component';
+import { MenuComponent } from '../../menu/menu.component';
 
 @Component({
   selector: 'app-city-register',
@@ -16,7 +17,7 @@ import { DynamicTableComponent } from '../../dynamic-table/dynamic-table.compone
     CommonModule,
     FormsModule,
     DeleteConfirmationModalComponent,
-    DynamicTableComponent
+    DynamicTableComponent,
   ],
   templateUrl: './city-register.component.html',
   styleUrl: './city-register.component.css'
@@ -113,7 +114,7 @@ export class CityRegisterComponent implements OnInit {
   openModalDelete(city: City) {
     debugger
     this.idSelectCity = city.id;
-    this.cityDeleteName = city.name!;
+    this.cityDeleteName = `Cidade ${city.name!}`;
     
     setTimeout(() => {
       const checkbox: any = document.getElementById('delete-modal');

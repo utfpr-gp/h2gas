@@ -8,6 +8,8 @@ import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.CityMapper;
 import com.h2gas.model.repository.CityRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -28,6 +30,11 @@ public class CityService {
                 .stream()
                 .map(cityMapper::toDto)
                 .collect(Collectors.toList());
+    }
+
+    public Page<CityDTO> findAllCities(Pageable pageable) {
+        return cityRepository.findAll(pageable)
+                .map(cityMapper::toDto);
     }
 
     public CityDTO findByIdCity(Long id) {

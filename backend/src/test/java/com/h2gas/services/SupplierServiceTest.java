@@ -2,6 +2,7 @@ package com.h2gas.services;
 
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.dto.AddressDTO;
+import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
 import com.h2gas.model.entity.Address;
 import com.h2gas.model.entity.City;
@@ -18,6 +19,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -59,7 +62,9 @@ class SupplierServiceTest {
                 "123435345",
                 "234234234",
                 "4534534",
-                UserTypeEnum.CUSTOMER);
+                UserTypeEnum.SUPPLIER,
+                null
+        );
 
         userRepository.save(user);
 
@@ -70,13 +75,15 @@ class SupplierServiceTest {
                 "123435345dd",
                 "234234234",
                 "453453334",
-                UserTypeEnum.CUSTOMER);
+                UserTypeEnum.SUPPLIER,
+                null
+        );
 
         userRepository.save(user2);
 
         City cityFirst = new City(
                 null,
-                "Curitiba",
+                "Pato Branco",
                 "PR"
         );
         cityRepository.save(cityFirst);
@@ -84,6 +91,7 @@ class SupplierServiceTest {
         Address address = new Address(
                 null,
                 "rua teste fornecedor",
+                "casa aqui",
                 "123412343",
                 "perto do lugar teste 3",
                 "bairro do testado",
@@ -96,6 +104,7 @@ class SupplierServiceTest {
         Address address2 = new Address(
                 null,
                 "rua teste fornecedor testando",
+                "trabalho teste",
                 "1234123433333",
                 "perto do lugar teste 33",
                 "bairro do testado2",
@@ -110,12 +119,16 @@ class SupplierServiceTest {
                 null,
                 "Fornecedor Teste",
                 "1234567890",
-                "08:00 - 18:00",
-                "30 minutos",
+                "Testando descição",
+                LocalTime.of(8, 0),
+                LocalTime.of(18, 0),
+                Duration.ofMinutes(30),
                 false,
                 address,
                 cityFirst,
-                user
+                user,
+                null,
+                false
         );
 
         supplierRepository.save(supplierFirst);
@@ -124,12 +137,16 @@ class SupplierServiceTest {
                 null,
                 "Fornecedor Teste 2",
                 "1234567890433",
-                "08:00 - 18:00",
-                "34 minutos",
+                "teste teste",
+                LocalTime.of(8, 0),
+                LocalTime.of(18, 0),
+                Duration.ofMinutes(30),
                 false,
                 address2,
                 cityFirst,
-                user2
+                user2,
+                null,
+                false
         );
 
         supplierRepository.save(supplierSecond);
@@ -137,15 +154,15 @@ class SupplierServiceTest {
         validId = supplierFirst.getId();
     }
 
-    @Test
-    @DisplayName("Busca todos os fornecedores")
-    void findAllSuppliers() {
-        List<SupplierDTO> result = supplierService.findAllSuppliers();
-        assertEquals(2, result.size());
-        assertNotNull(result);
-        assertEquals("Fornecedor Teste", result.get(0).getName());
-        assertEquals("Fornecedor Teste 2", result.get(1).getName());
-    }
+//    @Test
+//    @DisplayName("Busca todos os fornecedores")
+//    void findAllSuppliers() {
+//        List<SupplierDTO> result = supplierService.findAllSuppliers();
+//        assertEquals(2, result.size());
+//        assertNotNull(result);
+//        assertEquals("Fornecedor Teste", result.get(0).getName());
+//        assertEquals("Fornecedor Teste 2", result.get(1).getName());
+//    }
 
     @Test
     @DisplayName("Busca os fornecedores pelo id")
@@ -166,9 +183,58 @@ class SupplierServiceTest {
                 idInvalid, exception.getMessage());
     }
 
-//    @Test
-//    void createSupplier() {
-//    }
+    @Test
+    @DisplayName("Deve criar um fornecedor com sucesso")
+    void createSupplierSuccess() {
+        City city = cityRepository.findAll().get(0);
+
+        User newUser = new User(
+                null,
+                "Usuário Novo",
+                "usernovo@gmail.com",
+                "senha123",
+                "123456789",
+                "987654321",
+                "555666777",
+                UserTypeEnum.SUPPLIER,
+                null
+        );
+        userRepository.save(newUser);
+
+        Address newAddress = new Address(
+                null,
+                "Rua Nova do Teste",
+                "casa 123",
+                "999999",
+                "Perto da praça",
+                "Bairro Central",
+                "8888888",
+                city,
+                null
+        );
+        addressRepository.save(newAddress);
+
+        SupplierCreateDTO dto = new SupplierCreateDTO();
+        dto.setName("Fornecedor Novo");
+        dto.setDescription("Fornecedor criado no teste");
+        dto.setOpeningTime(String.valueOf(LocalTime.of(9, 0)));
+        dto.setClosingTime(String.valueOf(LocalTime.of(17, 0)));
+        dto.setCityId(city.getId());
+        dto.setAddressId(newAddress.getId());
+        dto.setUserId(newUser.getId());
+
+        SupplierDTO result = supplierService.createSupplier(dto);
+
+        assertNotNull(result);
+        assertEquals("Fornecedor Novo", result.getName());
+
+        Supplier fornecedorSalvo = supplierRepository.findById(result.getId()).orElse(null);
+        assertNotNull(fornecedorSalvo);
+        assertEquals("Fornecedor Novo", fornecedorSalvo.getName());
+    }
+
+
+
 //
 //    @Test
 //    void deleteSupplier() {

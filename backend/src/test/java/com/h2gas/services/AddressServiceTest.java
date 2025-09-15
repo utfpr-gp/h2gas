@@ -6,10 +6,7 @@ import com.h2gas.model.entity.Address;
 import com.h2gas.model.entity.City;
 import com.h2gas.model.repository.AddressRepository;
 import com.h2gas.model.repository.CityRepository;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -42,11 +39,11 @@ class AddressServiceTest {
     private Long validAddressId;
 
 
-    @BeforeAll
+    @BeforeEach
     public void setUp() {
         City cityFirst = new City(
                 null,
-                "Curitiba",
+                "Laranjeiras",
                 "PR"
         );
         cityRepository.save(cityFirst);
@@ -54,6 +51,7 @@ class AddressServiceTest {
         Address address = new Address(
             null,
             "rua teste 2",
+            "casa 2",
             "123412343",
             "perto do lugar teste 3",
             "bairro do testado",
@@ -67,6 +65,7 @@ class AddressServiceTest {
         Address address2 = new Address(
                 null,
                 "rua teste 3",
+                "casa 3",
                 "1234123433333",
                 "perto do lugar teste 33",
                 "bairro do testado2",

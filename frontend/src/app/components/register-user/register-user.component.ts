@@ -50,7 +50,7 @@ export class RegisterUserComponent implements OnInit {
       userType: [''],
     })
   }
-  // , Validators.pattern(/^\+55\s\(\d{2}\)\s\d{5}-\d{4}$/)
+  
   ngOnInit(): void {
     this.user = new User('', '','', '', '', '', '', '');
   }
@@ -76,7 +76,7 @@ export class RegisterUserComponent implements OnInit {
         }, 
         error: (error) => {
           console.error('Erro ao criar usuário:', error);
-          this.toastr.error(`Erro ao criar usuário: ${error}`)
+          this.toastr.error(`Erro ao criar usuário: ${error.error.message}`)
         }
       })
     }    
