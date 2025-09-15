@@ -183,48 +183,62 @@ class SupplierServiceTest {
                 idInvalid, exception.getMessage());
     }
 
-//    @Test
-//    @DisplayName("Deve criar um fornecedor com sucesso")
-//    void createSupplierSuccess() {
-//        // Arrange
-//        User user = userRepository.findAll().get(0); // pega o primeiro usuário salvo no setUp
-//        City city = cityRepository.findAll().get(0); // pega a cidade salva
-//
-//        // Criar um novo endereço para não violar a constraint UNIQUE
-//        Address newAddress = new Address(
-//                null,
-//                "Rua Nova do Teste",
-//                "casa 123",
-//                "999999",
-//                "Perto da praça",
-//                "Bairro Central",
-//                "8888888",
-//                city,
-//                null
-//        );
-//        addressRepository.save(newAddress);
-//
-//        SupplierCreateDTO dto = new SupplierCreateDTO();
-//        dto.setName("Fornecedor Novo");
-//        dto.setDescription("Fornecedor criado no teste");
-//        dto.setOpeningTime(String.valueOf(LocalTime.of(9, 0)));
-//        dto.setClosingTime(String.valueOf(LocalTime.of(17, 0)));
-//        dto.setCityId(city.getId());
-//        dto.setAddressId(newAddress.getId()); // usa endereço novo
-//        dto.setUserId(user.getId());
-//
-//        // Act
-//        SupplierDTO result = supplierService.createSupplier(dto);
-//
-//        // Assert
-//        assertNotNull(result);
-//        assertEquals("Fornecedor Novo", result.getName());
-//
-//        // garante que salvou no banco
-//        Supplier fornecedorSalvo = supplierRepository.findById(result.getId()).orElse(null);
-//        assertNotNull(fornecedorSalvo);
-//        assertEquals("Fornecedor Novo", fornecedorSalvo.getName());
-//    }
+    @Test
+    @DisplayName("Deve criar um fornecedor com sucesso")
+    void createSupplierSuccess() {
+        // Arrange
+        City city = cityRepository.findAll().get(0); // pega a cidade salva
+
+        // Criar novo usuário para não violar UNIQUE USER_ID
+        User newUser = new User(
+                null,
+                "Usuário Novo",
+                "usernovo@gmail.com",
+                "senha123",
+                "123456789",
+                "987654321",
+                "555666777",
+                UserTypeEnum.SUPPLIER,
+                null
+        );
+        userRepository.save(newUser);
+
+        // Criar novo endereço
+        Address newAddress = new Address(
+                null,
+                "Rua Nova do Teste",
+                "casa 123",
+                "999999",
+                "Perto da praça",
+                "Bairro Central",
+                "8888888",
+                city,
+                null
+        );
+        addressRepository.save(newAddress);
+
+        SupplierCreateDTO dto = new SupplierCreateDTO();
+        dto.setName("Fornecedor Novo");
+        dto.setDescription("Fornecedor criado no teste");
+        dto.setOpeningTime(String.valueOf(LocalTime.of(9, 0)));
+        dto.setClosingTime(String.valueOf(LocalTime.of(17, 0)));
+        dto.setCityId(city.getId());
+        dto.setAddressId(newAddress.getId());
+        dto.setUserId(newUser.getId()); // agora usa o novo usuário
+
+        // Act
+        SupplierDTO result = supplierService.createSupplier(dto);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals("Fornecedor Novo", result.getName());
+
+        // garante que salvou no banco
+        Supplier fornecedorSalvo = supplierRepository.findById(result.getId()).orElse(null);
+        assertNotNull(fornecedorSalvo);
+        assertEquals("Fornecedor Novo", fornecedorSalvo.getName());
+    }
+
 
 
 //
