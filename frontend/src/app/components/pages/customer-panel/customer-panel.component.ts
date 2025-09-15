@@ -40,21 +40,31 @@ export class CustomerPanelComponent implements OnInit {
       cityName: ['', [Validators.required]],
       userId: [null],
     })
+
+    this.registerFormUser = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+      name: ['', [Validators.required, Validators.minLength(3)]],
+      phoneNumber: ['', [Validators.required]],
+      cnpj: [''],
+    })
   }
 
 
   ngOnInit(): void {
     this.userLogado = this.userService.getUserLocalStorage()
     console.log(this.userLogado);
+    this.registerFormUser.patchValue(this.userLogado!);
+    console.log(this.registerFormUser.value);
+    
     this.getCities();
     this.buscaAddressIdUser();
-    
   }
 
   userLogado?: User;
   showAddressModal = false;
   modalAberta = false;
   registerFormAddress!: FormGroup;
+  registerFormUser!: FormGroup;
   address?: Address;
   cities?: City[];
 
