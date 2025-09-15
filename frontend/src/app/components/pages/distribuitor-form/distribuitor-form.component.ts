@@ -257,7 +257,6 @@ export class DistribuitorFormComponent implements OnInit {
         this.toastr.error(`Erro ao buscar cidades: ${err.error.message}`)
       }
     })
-
   }
 
   getCities() {
