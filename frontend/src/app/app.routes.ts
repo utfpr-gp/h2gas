@@ -17,6 +17,7 @@ import { ProductListComponent } from './components/pages/product-list/product-li
 import { OrderResumeComponent } from './components/pages/order-resume/order-resume.component';
 import { OrderListComponent } from './components/pages/order-list/order-list.component';
 import { CustomerPanelComponent } from './components/pages/customer-panel/customer-panel.component';
+import { ReceivedOrdersComponent } from './components/pages/received-orders/received-orders.component';
 
 export const routes: Routes = [
     {path: '', component: InitialScreenComponent},
@@ -25,9 +26,7 @@ export const routes: Routes = [
     { path: 'unauthorized', component: UnauthorizedComponent },
     {
         path: 'register-supplier', 
-        component: RegisterSupplierComponent,
-        canActivate: [authGuard],
-        data: {roles: ['ADMIN', 'SUPPLIER']}
+        component: RegisterSupplierComponent
     },
     {
         path: 'management-distributor', 
@@ -112,5 +111,11 @@ export const routes: Routes = [
         component: CustomerPanelComponent,
         canActivate: [authGuard],
         data: {roles: ['ADMIN', 'CUSTOMER']}
+    },
+    {
+        path: 'pedidos-recebidos', 
+        component: ReceivedOrdersComponent,
+        canActivate: [authGuard],
+        data: {roles: ['ADMIN', 'SUPPLIER']}
     },
 ];

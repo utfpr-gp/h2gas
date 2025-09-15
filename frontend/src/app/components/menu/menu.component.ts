@@ -69,7 +69,7 @@ export class MenuComponent implements OnInit {
     this.userMenuOpen = false;
   }
 
-  navigate(route: string) {
+  navigate(route: string) {    
     this.router.navigate([route])
   }
 

@@ -1,4 +1,5 @@
 import { OrderItemRequest, OrderItemResponse } from "./order-item.model";
+import { OrderStatus } from "./order-status.enum";
 
 export interface OrderRequest {
     customerUuid: string;
@@ -22,7 +23,7 @@ export interface OrderResponse {
     customerId: string;
     supplierId: number;
     orderItems: OrderItemResponse[];
-    status: string;
+    status: OrderStatus;
     streetName:string;
     number:string;
     complement:string;

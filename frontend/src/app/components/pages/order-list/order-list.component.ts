@@ -35,7 +35,7 @@ export class OrderListComponent implements OnInit {
   }
 
   getOrders() {
-    this.orderService.findByCustomerName(this.userLogado?.id!).subscribe({
+    this.orderService.findByCustomerId(this.userLogado?.id!).subscribe({
       next: (response) => {
         this.orders = response.data;
         console.log(this.orders);
