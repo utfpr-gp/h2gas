@@ -1,0 +1,19 @@
+name: Teste SSH AWS
+
+on:
+  workflow_dispatch:   # permite rodar manualmente no GitHub
+
+jobs:
+  test-ssh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Teste conexão SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.AWS_HOST }}
+          username: ${{ secrets.AWS_USER }}
+          key: ${{ secrets.AWS_SSH_KEY }}
+          script: |
+            whoami
+            pwd
+
