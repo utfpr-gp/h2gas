@@ -38,7 +38,9 @@ jobs:
           username: ${{ secrets.AWS_USER }}
           key: ${{ secrets.AWS_SSH_KEY }}
           script: |
-            cd /h2gas
+            cd /home/ubuntu/h2gas
+            sed -i "s|image: pabloc5/h2gas-backend:.*|image: pabloc5/h2gas-backend:${GITHUB_REF_NAME#refs/tags/}|" docker-compose.prod.yml
+            sed -i "s|image: pabloc5/h2gas-frontend:.*|image: pabloc5/h2gas-frontend:${GITHUB_REF_NAME#refs/tags/}|" docker-compose.prod.yml
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d
 
