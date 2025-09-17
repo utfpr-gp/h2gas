@@ -59,11 +59,24 @@ export class DistribuitorFormComponent implements OnInit {
       active: [false],
       cityId: [null, [Validators.required]],
       addressId: [null],
-      openingTime: ['', Validators.required],
-      closingTime: ['', Validators.required],
-      averageDeliveryTime: [null, [Validators.required, Validators.min(1)]],
+      openingTime: [''],
+      closingTime: [''],
+      averageDeliveryTime: [null],
       userId: [null]
     })
+
+    // this.registerFormSupplier = this.fb.group({
+    //   name: ['', [Validators.required, Validators.minLength(3)]],
+    //   phone: ['', [Validators.required]],
+    //   description: ['', [Validators.required]],
+    //   active: [false],
+    //   cityId: [null, [Validators.required]],
+    //   addressId: [null],
+    //   openingTime: ['', Validators.required],
+    //   closingTime: ['', Validators.required],
+    //   averageDeliveryTime: [null, [Validators.required, Validators.min(1)]],
+    //   userId: [null]
+    // })
 
 
     this.registerFormAddress = this.fb.group({
@@ -133,6 +146,7 @@ export class DistribuitorFormComponent implements OnInit {
     if (this.registerFormAddress.valid && !this.address) {
       this.registerFormAddress.get('userId')?.setValue(this.userLogado?.id)
       this.address = this.registerFormAddress.value;
+      debugger
       this.addressService.create(this.address!).subscribe({
         next: (response) => {
           console.log(response);
@@ -175,7 +189,7 @@ export class DistribuitorFormComponent implements OnInit {
       },
       error: (err) => {
         console.log(err);
-        this.toastr.error(`Erro ao buscar endereço: ${err.error.message}`);
+        // this.toastr.error(`Erro ao buscar endereço: ${err.error.message}`);
       },
     })
   }
@@ -215,8 +229,8 @@ export class DistribuitorFormComponent implements OnInit {
     debugger
 
     this.supplier = this.registerFormSupplier?.value;
-    this.supplier!!.addressId = this.address?.id
-    this.supplier!!.userId = this.userLogado?.id
+    this.supplier!.addressId = this.address?.id
+    this.supplier!.userId = this.userLogado?.id
     
 
     this.supplierService.create(this.supplier!!).subscribe({
