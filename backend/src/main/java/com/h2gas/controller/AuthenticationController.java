@@ -3,11 +3,11 @@ package com.h2gas.controller;
 import com.h2gas.configuration.security.TokenService;
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.exceptions.BusinessRuleException;
-import com.h2gas.model.dto.AuthenticationDTO;
-import com.h2gas.model.dto.LoginDTO;
-import com.h2gas.model.dto.RegisterDTO;
+import com.h2gas.model.dto.*;
+import com.h2gas.model.entity.Supplier;
 import com.h2gas.model.entity.User;
 import com.h2gas.model.repository.UserRepository;
+import com.h2gas.services.SupplierService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,6 +32,9 @@ public class AuthenticationController {
 
     @Autowired
     private TokenService tokenService;
+
+    @Autowired
+    private SupplierService supplierService;
 
     @PostMapping("/login")
     public ResponseEntity<LoginDTO> login(@RequestBody @Validated AuthenticationDTO data) {
@@ -63,6 +66,23 @@ public class AuthenticationController {
                 data.getCpf(), data.getCnpj(), encryptedPassword, data.getUserType());
 
         this.userRepository.save(user);
+
+        SupplierCreateDTO supplierCreateDTO = new SupplierCreateDTO(
+                null,
+                "Nome em analise",
+                data.getPhoneNumber(),
+                "Fornecedor em analise!!",
+                null,
+                null,
+                null,
+                null,
+                user.getId(),
+                null
+        );
+
+        if (data.getUserType() == UserTypeEnum.SUPPLIER) {
+            this.supplierService.createSupplier(supplierCreateDTO);
+        }
 
         return ResponseEntity.ok().build();
     }
