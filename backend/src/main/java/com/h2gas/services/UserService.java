@@ -3,6 +3,7 @@ package com.h2gas.services;
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ResourceNotFoundException;
+import com.h2gas.model.dto.RegisterDTO;
 import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
 import com.h2gas.model.dto.UserDto;
@@ -11,6 +12,7 @@ import com.h2gas.model.mapper.UserMapper;
 import com.h2gas.model.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -69,5 +71,24 @@ public class UserService {
         User saved = userRepository.save(userEdit);
 
         return userMapper.toDto(saved);
+    }
+
+    public UserDto create(RegisterDTO data) {
+        if (this.userRepository.existsByEmail(data.getEmail())) {
+            throw new BusinessRuleException("Email já cadastrado.");
+        }
+
+        if (data.getUserType() == null || data.getUserType() == UserTypeEnum.ADMIN) {
+            throw new BusinessRuleException("Cadastro de usuário ADMIN não permitido ou tipo vazio");
+        }
+
+        String encryptedPassword = new BCryptPasswordEncoder().encode(data.getPassword());
+
+        User user = new User(data.getName(), data.getEmail(), data.getPhoneNumber(),
+                data.getCpf(), data.getCnpj(), encryptedPassword, data.getUserType());
+
+        this.userRepository.save(user);
+
+        return userMapper.toDto(user);
     }
 }

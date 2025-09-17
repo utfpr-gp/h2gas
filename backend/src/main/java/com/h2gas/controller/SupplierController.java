@@ -133,4 +133,12 @@ public class SupplierController {
         return ResponseEntity.ok(Map.of("message", "Status atualizado com sucesso"));
     }
 
+    @GetMapping("/{id}/active")
+    @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER"})
+    public ResponseEntity<Boolean> getSupplierStatus(@PathVariable Long id) {
+        boolean active = supplierService.findById(id).isActive();
+        return ResponseEntity.ok(active);
+    }
+
 }
