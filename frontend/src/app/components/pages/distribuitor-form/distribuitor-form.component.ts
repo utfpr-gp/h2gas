@@ -97,6 +97,9 @@ export class DistribuitorFormComponent implements OnInit {
 
   openModal() {
     this.modalAberta = true;
+    if (this.address) {
+      this.registerFormAddress.patchValue(this.address)          
+    }
   }
 
 
@@ -127,13 +130,13 @@ export class DistribuitorFormComponent implements OnInit {
 
   salvarAddress() {
     debugger
-    if (this.registerFormAddress.valid) {
+    if (this.registerFormAddress.valid && !this.address) {
       this.registerFormAddress.get('userId')?.setValue(this.userLogado?.id)
       this.address = this.registerFormAddress.value;
-      this.addressService.create(this.address!!).subscribe({
+      this.addressService.create(this.address!).subscribe({
         next: (response) => {
           console.log(response);
-          this.toastr.success('Seu enderelo foi salvo com sucesso');
+          this.toastr.success('Seu endereço foi salvo com sucesso');
           this.closeAddressModal();
         }, 
         error: (err) => {
@@ -141,7 +144,23 @@ export class DistribuitorFormComponent implements OnInit {
           this.toastr.error(`Erro ao salvar endereço: ${err.error.message}`);
         },
       })  
+    } else if (this.registerFormAddress.valid && this.address) {
+      this.editAddress();
     }
+  }
+
+  editAddress() {
+    this.addressService.update(this.address?.id!, this.registerFormAddress.value).subscribe({
+      next: (response) => {
+        console.log(response);
+        this.toastr.success('Seu endereço foi editado com sucesso');
+        this.closeAddressModal();
+      },
+      error: (err) => {
+        console.log(err);
+        this.toastr.error(`Erro ao editar endereço: ${err.error.message}`);
+      },
+    })
   }
 
   buscaAddressIdUser() {
@@ -238,7 +257,6 @@ export class DistribuitorFormComponent implements OnInit {
         this.toastr.error(`Erro ao buscar cidades: ${err.error.message}`)
       }
     })
-
   }
 
   getCities() {

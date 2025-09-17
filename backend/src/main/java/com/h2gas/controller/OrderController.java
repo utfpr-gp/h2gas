@@ -75,6 +75,19 @@ public class OrderController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{supplierId}/active")
+    @ResponseBody
+    public ResponseEntity<PageResponse<OrderResponseDTO>> lisAllOrderItemExcludeStatus(
+            @PathVariable Long supplierId,
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "size", required = false) Integer size
+    ) {
+        Pageable pageable = PaginationUtil.getPageableRequest(page, size);
+        Page<OrderResponseDTO> result = orderService.findBySupplierIdAndStatusNotDeliveryAndCanceled(supplierId, pageable);
+        PageResponse<OrderResponseDTO> response = new PageResponse<>(result);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/by-supplier/{supplierId}")
     @ResponseBody
     public ResponseEntity<PageResponse<OrderResponseDTO>> listAllOrdersBySupplier(

@@ -113,7 +113,7 @@ export const routes: Routes = [
         data: {roles: ['ADMIN', 'CUSTOMER']}
     },
     {
-        path: 'pedidos-recebidos', 
+        path: 'dashboard-fornecedor', 
         component: ReceivedOrdersComponent,
         canActivate: [authGuard],
         data: {roles: ['ADMIN', 'SUPPLIER']}
