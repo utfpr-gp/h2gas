@@ -130,9 +130,11 @@ class AuthenticationControllerTest {
                 UserTypeEnum.CUSTOMER
         );
 
-//        when(userRepository.findByEmail("teste@email.com")).thenReturn(new User());
-        when(userRepository.findByEmail("teste@email.com"))
-                .thenReturn(Optional.of(new User()));
+//        when(userRepository.findByEmail("teste@email.com"))
+//                .thenReturn(Optional.of(new User()));
+        when(userRepository.existsByEmail("teste@email.com"))
+                .thenReturn(true);
+
 
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -48,9 +48,6 @@ public class AuthenticationController {
     @PostMapping("/register")
     public ResponseEntity<AuthenticationDTO> register(@RequestBody @Validated RegisterDTO data) {
         System.out.println(this.userRepository.findByEmail(data.getEmail()));
-//        if (this.userRepository.findByEmail(data.getEmail()) != null) {
-//            throw new BusinessRuleException("Email já cadastrado.");
-//        }
 
         if (this.userRepository.existsByEmail(data.getEmail())) {
             throw new BusinessRuleException("Email já cadastrado.");
