@@ -238,7 +238,7 @@ export class DistribuitorFormComponent implements OnInit {
         debugger
         console.log('Usuário criado com sucesso!', response);
         this.toastr.success('Usuário criado com sucesso!');
-        this.navigateRoute('/management-distributor')
+        this.navigateRoute('/aguardando-aprovacao')
       },
       error: (err) => {
         console.error('Erro ao buscar:', err.error.message);

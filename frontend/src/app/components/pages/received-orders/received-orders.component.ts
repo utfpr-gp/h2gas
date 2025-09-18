@@ -8,6 +8,7 @@ import { OrderResponse } from '../../../models/order.model';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { OrderStatus } from '../../../models/order-status.enum';
+import { SupplierService } from '../../../services/supplier.service';
 
 @Component({
   selector: 'app-received-orders',
@@ -27,11 +28,13 @@ export class ReceivedOrdersComponent implements OnInit {
     private userService: UserService,
     private toastr: ToastrService,
     private router: Router,
+    private supplierService: SupplierService,
   ) { }
 
   userLogado?: User;
   orders?: OrderResponse[];
   orderStatus = OrderStatus;
+  showSupplier = false;
 
   actionsByStatus: Record<OrderStatus, { label: string, icon: string, color: string, action: string }[]> = {
     [OrderStatus.PENDING]: [
@@ -55,6 +58,7 @@ export class ReceivedOrdersComponent implements OnInit {
   ngOnInit() {
     this.userLogado = this.userService.getUserLocalStorage();
     this.getOrders();
+    this.getOpenStatus();
   }
 
   getStatusKeys(): (keyof typeof OrderStatus)[] {
@@ -72,6 +76,29 @@ export class ReceivedOrdersComponent implements OnInit {
     }
   }
 
+  onToggleSupplier(checked: any) {
+    this.showSupplier = checked.target.checked;
+    console.log('Distribuidora aberta?', checked);
+
+    let data = {
+      "status": this.showSupplier
+    }
+
+    this.supplierService.openDistribuidor(data, this.userLogado?.supplierId!).subscribe({
+      next: (value) => {
+        if (this.showSupplier) {
+          this.toastr.success("Distribuidora aberta com sucesso!!");          
+        } else {
+          this.toastr.success("Distribuidora fechada com sucesso!!");          
+        }
+      },
+      error: (err) => {
+        this.toastr.error(`Erro ao abrir distribuidora: ${err.error.message} `);
+      },
+    })
+
+  }
+
 
   getOrders(status?: string) {
     this.orderService.findBySupplierId(this.userLogado?.supplierId!, status).subscribe({
@@ -85,6 +112,21 @@ export class ReceivedOrdersComponent implements OnInit {
         console.error(err)
         this.toastr.error(`Erro ao buscar os pedidos: ${err.error.message}`);
       },
+    })
+  }
+
+  getOpenStatus() {
+    debugger
+    this.supplierService.getOpen(this.userLogado?.supplierId!).subscribe({
+      next: (response) => {
+        console.log('Distribuidora buscada com sucesso!', response);
+        this.showSupplier = response;
+        this.toastr.success('Distribuidora buscada com sucesso!');
+      },
+      error: (err) => {
+        console.error('Erro ao buscar:', err.error.message);
+        // this.toastr.error(`Erro ao buscar distribuidora: ${err.error.message}`)
+      }
     })
   }
 
