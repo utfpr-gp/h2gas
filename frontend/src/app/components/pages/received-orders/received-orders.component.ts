@@ -57,7 +57,8 @@ export class ReceivedOrdersComponent implements OnInit {
 
   ngOnInit() {
     this.userLogado = this.userService.getUserLocalStorage();
-    this.getOrders();
+    // this.getOrders();
+    this.getOrderExcludeStatus();
     this.getOpenStatus();
   }
 
@@ -70,7 +71,8 @@ export class ReceivedOrdersComponent implements OnInit {
     const selectedValue = (event.target as HTMLSelectElement).value;
 
     if (selectedValue == "ALL") {
-      this.getOrders();
+      this.getOrderExcludeStatus();
+      // this.getOrders();
     } else {
       this.getOrders(selectedValue);
     }
@@ -101,7 +103,27 @@ export class ReceivedOrdersComponent implements OnInit {
 
 
   getOrders(status?: string) {
+    debugger
+
     this.orderService.findBySupplierId(this.userLogado?.supplierId!, status).subscribe({
+      next: (response) => {
+        this.orders = response.data;
+        console.log(this.orders);
+
+        this.toastr.success("Pedidos buscado com sucesso");
+      },
+      error: (err) => {
+        console.error(err)
+        this.toastr.error(`Erro ao buscar os pedidos: ${err.error.message}`);
+      },
+    })
+  }
+
+  getOrderExcludeStatus() {
+    debugger
+    let exludeStatus: string[] = ['DELIVERED', 'CANCELED'];
+
+    this.orderService.findByExcludeStatus(this.userLogado?.supplierId!, exludeStatus).subscribe({
       next: (response) => {
         this.orders = response.data;
         console.log(this.orders);
