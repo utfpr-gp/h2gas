@@ -141,4 +141,12 @@ public class SupplierController {
         return ResponseEntity.ok(active);
     }
 
+    @GetMapping("/{id}/open")
+    @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER"})
+    public ResponseEntity<Boolean> getSupplierOpen(@PathVariable Long id) {
+        boolean active = supplierService.findById(id).isOpen();
+        return ResponseEntity.ok(active);
+    }
+
 }
