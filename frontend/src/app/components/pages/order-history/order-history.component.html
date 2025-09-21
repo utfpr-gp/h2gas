@@ -1,1 +1,70 @@
-<p>order-history works!</p>
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<body class="bg-gray-100">
+    <main class="p-8 max-w-7xl mx-auto">
+        <header class="flex items-center justify-between mb-8">
+            <div class="flex justify-between items-center gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">Historico de pedidos finalizados</h1>
+                    <p class="text-sm text-gray-500">Visão geral dos seus pedidos recebidos e finalizados.</p>
+                </div>
+            </div>
+        </header>
+
+
+        <!-- CARDS -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
+            <!-- Receita Total -->
+            <div class="col-span-1 bg-white p-5 rounded-xl shadow-md">
+                <p class="text-sm text-gray-500 mb-1">Receita Total (Entregues)</p>
+                <p class="text-4xl font-bold text-green-600">
+                    R$ {{ getTotalRevenue() | number:'1.2-2' }}
+                </p>
+            </div>
+
+            <!-- Total de Pedidos -->
+            <div class="bg-white p-5 rounded-xl shadow-md flex flex-col items-center text-center">
+                <i class="fa-solid fa-list text-4xl text-blue-500 mb-1"></i>
+                <p class="text-2xl font-bold text-gray-800">{{ orders?.length || 0 }}</p>
+                <p class="text-sm text-gray-500">Total de Pedidos</p>
+            </div>
+            <!-- Pendentes -->
+            <div class="bg-white p-5 rounded-xl shadow-md flex flex-col items-center text-center">
+                <i class="fa-regular fa-x text-4xl text-red-500 mb-1"></i>
+                <p class="text-2xl font-bold text-gray-800">{{ getCountByStatus('Cancelado') }}</p>
+                <p class="text-sm text-gray-500">Cancelados</p>
+            </div>
+
+            <!-- Em Rota -->
+            <!-- <div class="bg-white p-5 rounded-xl shadow-md flex flex-col items-center text-center">
+                <i class="fa-solid fa-truck text-4xl text-indigo-500 mb-1"></i>
+                <p class="text-2xl font-bold text-gray-800">{{ getCountByStatus('Saiu para entrega') }}</p>
+                <p class="text-sm text-gray-500">Em Rota</p>
+            </div> -->
+
+            <!-- Entregues -->
+            <div class="bg-white p-5 rounded-xl shadow-md flex flex-col items-center text-center">
+                <i class="fa-solid fa-circle-check text-4xl text-green-500 mb-1"></i>
+                <p class="text-2xl font-bold text-gray-800">{{ getCountByStatus('Entregue') }}</p>
+                <p class="text-sm text-gray-500">Entregues</p>
+            </div>
+        </div>
+
+
+        <!-- PEDIDOS -->
+        <app-orders-widget
+            [orders]="orders!"
+            [orderStatus]="orderStatus"
+            [actionsByStatus]="actionsByStatus"
+            [showSupplierToggle]="true"
+            [showSupplier]="showSupplier"
+            (statusChange)="onStatusChange($event)"
+            (toggleSupplier)="onToggleSupplier($event)"
+            (changeOrderStatus)="changeStatus($event.order, $event.action)">
+        </app-orders-widget>
+
+    </main>
+</body>
+
+</html>
