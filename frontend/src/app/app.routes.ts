@@ -20,6 +20,7 @@ import { CustomerPanelComponent } from './components/pages/customer-panel/custom
 import { ReceivedOrdersComponent } from './components/pages/received-orders/received-orders.component';
 import { AwaitingApprovalComponent } from './components/pages/awaiting-approval/awaiting-approval.component';
 import { OrderHistoryComponent } from './components/pages/order-history/order-history.component';
+import { ForgotPasswordComponent } from './components/pages/forgot-password/forgot-password.component';
 
 export const routes: Routes = [
     {path: '', component: InitialScreenComponent},
@@ -132,4 +133,9 @@ export const routes: Routes = [
         canActivate: [authGuard],
         data: {roles: ['ADMIN', 'SUPPLIER']}
     },
+    {
+        path: 'recuperar-senha', 
+        component: ForgotPasswordComponent
+    },
+
 ];

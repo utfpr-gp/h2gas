@@ -26,7 +26,8 @@ export class AppComponent {
     '/register-supplier', 
     '/unauthorized', 
     '/aguardando-aprovacao',
-    '/distributor/new'
+    '/distributor/new',
+    '/recuperar-senha'
   ];
 
 
