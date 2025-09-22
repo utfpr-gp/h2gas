@@ -7,14 +7,17 @@ import com.h2gas.model.dto.RegisterDTO;
 import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
 import com.h2gas.model.dto.UserDto;
+import com.h2gas.model.entity.PasswordResetToken;
 import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.UserMapper;
+import com.h2gas.model.repository.PasswordTokenRepository;
 import com.h2gas.model.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -27,6 +30,9 @@ public class UserService {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private PasswordTokenRepository passwordTokenRepository;
 
     public List<UserDto> findAllUsers() {
         return userRepository.findAll()
@@ -50,6 +56,23 @@ public class UserService {
         Optional<User> userEntityOptional = userRepository.findByName(name);
         return userEntityOptional.map(userMapper::toDto).orElseThrow(()
                 -> new ResourceNotFoundException("Não encontrado nenhum usuário com esse nome: " + name));
+    }
+
+    public UserDto findByEmail(String email) {
+        Optional<User> userEntityOptional = userRepository.findByEmail(email);
+        return userEntityOptional.map(userMapper::toDto).orElseThrow(()
+                -> new ResourceNotFoundException("Não encontrado nenhum usuário com esse email: " + email));
+    }
+
+    public void createPasswordResetTokenForUser(User user, String token) {
+//        PasswordResetToken myToken = new PasswordResetToken(token, user);
+        Optional<PasswordResetToken> existingToken = passwordTokenRepository.findByUser(user);
+
+        PasswordResetToken myToken = existingToken.orElse(new PasswordResetToken());
+        myToken.setUser(user);
+        myToken.refreshToken(token);
+
+        passwordTokenRepository.save(myToken);
     }
 
     public UserDto update(String id, UserDto userDto) {
@@ -90,5 +113,20 @@ public class UserService {
         this.userRepository.save(user);
 
         return userMapper.toDto(user);
+    }
+
+    public void resetPassword(String token, String newPassword) {
+        PasswordResetToken tokenEntity = passwordTokenRepository.findByToken(token)
+                .orElseThrow(() -> new BusinessRuleException("Token inválido"));
+
+        if (tokenEntity.getExpiryDate().before(new Date())) {
+            throw new BusinessRuleException("Token expirado");
+        }
+
+        User user = tokenEntity.getUser();
+        String encryptedPassword = new BCryptPasswordEncoder().encode(newPassword);
+        user.setPassword(encryptedPassword);
+        userRepository.save(user);
+        passwordTokenRepository.delete(tokenEntity);
     }
 }

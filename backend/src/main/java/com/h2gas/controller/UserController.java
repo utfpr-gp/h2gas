@@ -1,15 +1,26 @@
 package com.h2gas.controller;
 
+import com.h2gas.enums.UserTypeEnum;
+import com.h2gas.exceptions.BusinessRuleException;
+import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.AddressDTO;
+import com.h2gas.model.dto.ResetPasswordRequestDTO;
 import com.h2gas.model.dto.UserDto;
 import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.UserMapper;
+import com.h2gas.services.MailService;
 import com.h2gas.services.UserService;
+import com.h2gas.util.GenerateTokenPasswordReset;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.mail.MessagingException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
+
+import java.util.Map;
+import java.util.UUID;
 
 
 @RestController
@@ -21,6 +32,9 @@ public class UserController {
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private MailService mailService;
 
     @GetMapping
     @ResponseBody
@@ -42,5 +56,31 @@ public class UserController {
     public ResponseEntity<UserDto> updateUser(@PathVariable String id, @RequestBody UserDto dto) {
         UserDto userDto = userService.update(id, dto);
         return ResponseEntity.ok(userDto);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> request) {
+        String email = request.get("email");
+        User user = userMapper.toEntityUser(userService.findByEmail(email));
+
+        if (user.getUserType() == UserTypeEnum.ADMIN) {
+            throw new BusinessRuleException("Impossivel alterar senha de um administrador");
+        }
+
+        String token = GenerateTokenPasswordReset.generateTokenReset();
+        userService.createPasswordResetTokenForUser(user, token);
+        try {
+            mailService.sendPasswordResetEmail(user, token);
+        } catch (MessagingException e) {
+            throw new BusinessRuleException(e.getMessage());
+        }
+
+        return ResponseEntity.ok("Email de redefinição enviado");
+    }
+
+    @PostMapping("/reset-password/confirm")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequestDTO request) {
+        userService.resetPassword(request.getToken(), request.getNewPassword());
+        return ResponseEntity.ok("Senha redefinida com sucesso");
     }
 }

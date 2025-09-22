@@ -17,7 +17,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PasswordResetToken {
-    private static final int EXPIRATION = 60 * 24;
+    private static final int EXPIRATION = 60 * 60;
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -30,4 +30,15 @@ public class PasswordResetToken {
     private User user;
 
     private Date expiryDate;
+
+    public PasswordResetToken(String token, User user) {
+        this.token = token;
+        this.user = user;
+        this.expiryDate = new Date(System.currentTimeMillis() + EXPIRATION * 1000L);
+    }
+
+    public void refreshToken(String token) {
+        this.token = token;
+        this.expiryDate = new Date(System.currentTimeMillis() + EXPIRATION * 1000L);
+    }
 }
