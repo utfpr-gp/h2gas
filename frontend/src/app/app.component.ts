@@ -27,15 +27,18 @@ export class AppComponent {
     '/unauthorized', 
     '/aguardando-aprovacao',
     '/distributor/new',
-    '/recuperar-senha'
+    '/recuperar-senha',
+    '/checagem-email',
+    '/resetar-senha'
   ];
 
 
   constructor(private router: Router) {
     this.router.events
-      .pipe(filter(event => event instanceof NavigationEnd))
-      .subscribe((event: NavigationEnd) => {
-        this.showMenu = !this.hiddenMenuRoutes.includes(event.urlAfterRedirects);
-      });
+    .pipe(filter(event => event instanceof NavigationEnd))
+    .subscribe((event: NavigationEnd) => {
+      const cleanUrl = event.urlAfterRedirects.split('?')[0];
+      this.showMenu = !this.hiddenMenuRoutes.includes(cleanUrl);
+    });
   }
 }

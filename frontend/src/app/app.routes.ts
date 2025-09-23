@@ -21,6 +21,8 @@ import { ReceivedOrdersComponent } from './components/pages/received-orders/rece
 import { AwaitingApprovalComponent } from './components/pages/awaiting-approval/awaiting-approval.component';
 import { OrderHistoryComponent } from './components/pages/order-history/order-history.component';
 import { ForgotPasswordComponent } from './components/pages/forgot-password/forgot-password.component';
+import { CheckEmailComponent } from './components/pages/check-email/check-email.component';
+import { ResetPasswordComponent } from './components/pages/reset-password/reset-password.component';
 
 export const routes: Routes = [
     {path: '', component: InitialScreenComponent},
@@ -136,6 +138,14 @@ export const routes: Routes = [
     {
         path: 'recuperar-senha', 
         component: ForgotPasswordComponent
+    },
+    {
+        path: 'checagem-email', 
+        component: CheckEmailComponent
+    },
+    {
+        path: 'resetar-senha', 
+        component: ResetPasswordComponent
     },
 
 ];
