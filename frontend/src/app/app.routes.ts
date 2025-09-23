@@ -88,13 +88,13 @@ export const routes: Routes = [
         data: {roles: ['ADMIN']}
     },
     {
-        path: 'fornecedores', 
+        path: 'inicio', 
         component: SupplierListComponent,
         canActivate: [authGuard],
         data: {roles: ['ADMIN', 'SUPPLIER', 'CUSTOMER']}
     },
     {
-        path: 'fornecedores/:id/produtos', 
+        path: 'inicio/:id/produtos', 
         component: ProductListComponent,
         canActivate: [authGuard],
         data: {roles: ['ADMIN', 'SUPPLIER', 'CUSTOMER']}
