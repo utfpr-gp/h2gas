@@ -119,9 +119,9 @@ public class OrderService {
         return order.getStatus().getStatus();
     }
 
-    public Page<OrderResponseDTO> findBySupplierIdAndStatusNotDeliveryAndCanceled(Long id, Pageable pageable) {
-        List<OrderStatusEnum> excludedStatuses = List.of(OrderStatusEnum.DELIVERED, OrderStatusEnum.CANCELED);
-        return orderRepository.findBySupplierIdAndStatusNotInOrderByCreatedAtDesc(id, excludedStatuses, pageable)
+    public Page<OrderResponseDTO> findBySupplierIdAndStatusNotDeliveryAndCanceled(Long id, Pageable pageable, List<OrderStatusEnum> excludeStatuses) {
+//        List<OrderStatusEnum> excludedStatuses = List.of(OrderStatusEnum.DELIVERED, OrderStatusEnum.CANCELED);
+        return orderRepository.findBySupplierIdAndStatusNotInOrderByCreatedAtDesc(id, excludeStatuses, pageable)
                 .map(orderMapper::toResponseDto);
     }
 }

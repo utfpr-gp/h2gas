@@ -48,6 +48,22 @@ export class OrderService extends AbstractService<OrderResponse> {
     );
   }
 
+  findByExcludeStatus(
+    supplierId: number,
+    excludeStatuses?: string[],
+    page: number = 0,
+    size: number = 10
+  ): Observable<PaginatedResponse<OrderResponse>> {
+    let params = `?page=${page}&size=${size}`;
+    if (excludeStatuses && excludeStatuses.length > 0) {
+      params += `&excludeStatuses=${excludeStatuses.join(',')}`;
+    }
+  
+    return this.http.get<PaginatedResponse<OrderResponse>>(
+      `${this.baseUrl}/${supplierId}/exclude-status${params}`
+    );
+  }
+
   updateStatusOrder(data: any, id: string) {
     return this.http.patch(`${this.baseUrl}/${id}/update-order-status`, data);
   }

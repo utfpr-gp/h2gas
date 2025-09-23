@@ -9,6 +9,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { OrderStatus } from '../../../models/order-status.enum';
 import { SupplierService } from '../../../services/supplier.service';
+import { OrdersWidgetComponent } from '../../orders-widget/orders-widget.component';
 
 @Component({
   selector: 'app-received-orders',
@@ -16,6 +17,7 @@ import { SupplierService } from '../../../services/supplier.service';
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
+    OrdersWidgetComponent
   ],
   templateUrl: './received-orders.component.html',
   styleUrl: './received-orders.component.css'
@@ -57,22 +59,20 @@ export class ReceivedOrdersComponent implements OnInit {
 
   ngOnInit() {
     this.userLogado = this.userService.getUserLocalStorage();
-    this.getOrders();
+    // this.getOrders();
+    this.getOrderExcludeStatus();
     this.getOpenStatus();
-  }
-
-  getStatusKeys(): (keyof typeof OrderStatus)[] {
-    return Object.keys(this.orderStatus) as (keyof typeof OrderStatus)[];
   }
   
 
-  onStatusChange(event: Event) {
-    const selectedValue = (event.target as HTMLSelectElement).value;
+  onStatusChange(status: string) {
+    // const selectedValue = (event.target as HTMLSelectElement).value;
 
-    if (selectedValue == "ALL") {
-      this.getOrders();
+    if (status == "ALL") {
+      this.getOrderExcludeStatus();
+      // this.getOrders();
     } else {
-      this.getOrders(selectedValue);
+      this.getOrders(status);
     }
   }
 
@@ -101,7 +101,27 @@ export class ReceivedOrdersComponent implements OnInit {
 
 
   getOrders(status?: string) {
+    debugger
+
     this.orderService.findBySupplierId(this.userLogado?.supplierId!, status).subscribe({
+      next: (response) => {
+        this.orders = response.data;
+        console.log(this.orders);
+
+        this.toastr.success("Pedidos buscado com sucesso");
+      },
+      error: (err) => {
+        console.error(err)
+        this.toastr.error(`Erro ao buscar os pedidos: ${err.error.message}`);
+      },
+    })
+  }
+
+  getOrderExcludeStatus() {
+    debugger
+    let exludeStatus: string[] = ['DELIVERED', 'CANCELED'];
+
+    this.orderService.findByExcludeStatus(this.userLogado?.supplierId!, exludeStatus).subscribe({
       next: (response) => {
         this.orders = response.data;
         console.log(this.orders);
@@ -166,27 +186,5 @@ export class ReceivedOrdersComponent implements OnInit {
       ?.filter(order => order.status === 'Entregue')
       .reduce((sum, order) => sum + order.totalPrice, 0) || 0;
   }
-
-
-  getStatusColor(status: string): string {
-    switch (status) {
-      case 'Pendente':
-        return 'bg-gray-500 text-white';
-      case 'Confirmado':
-        return 'bg-blue-600 text-white';
-      case 'Em preparacao':
-        return 'bg-yellow-600 text-white';
-      case 'Saiu para entrega':
-        return 'bg-indigo-600 text-white';
-      case 'Entregue':
-        return 'bg-green-600 text-white';
-      case 'Cancelado':
-        return 'bg-red-600 text-white';
-      default:
-        return 'bg-gray-300 text-black';
-    }
-  }
-
-
 
 }
