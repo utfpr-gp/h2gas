@@ -8,6 +8,7 @@ import com.h2gas.model.entity.Supplier;
 import com.h2gas.model.entity.User;
 import com.h2gas.model.repository.UserRepository;
 import com.h2gas.services.SupplierService;
+import com.h2gas.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +35,7 @@ public class AuthenticationController {
     private TokenService tokenService;
 
     @Autowired
-    private SupplierService supplierService;
+    private UserService userService;
 
     @PostMapping("/login")
     public ResponseEntity<LoginDTO> login(@RequestBody @Validated AuthenticationDTO data) {
@@ -46,42 +47,12 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthenticationDTO> register(@RequestBody @Validated RegisterDTO data) {
+    public ResponseEntity<UserDto> register(@RequestBody @Validated RegisterDTO data) {
         System.out.println(this.userRepository.findByEmail(data.getEmail()));
+        UserDto registerDTO = userService.create(data);
+        return ResponseEntity.ok(registerDTO);
 
-        if (this.userRepository.existsByEmail(data.getEmail())) {
-            throw new BusinessRuleException("Email já cadastrado.");
-        }
-
-        if (data.getUserType() == null || data.getUserType() == UserTypeEnum.ADMIN) {
-            throw new BusinessRuleException("Cadastro de usuário ADMIN não permitido ou tipo vazio");
-        }
-
-        String encryptedPassword = new BCryptPasswordEncoder().encode(data.getPassword());
-
-        User user = new User(data.getName(), data.getEmail(), data.getPhoneNumber(),
-                data.getCpf(), data.getCnpj(), encryptedPassword, data.getUserType());
-
-        this.userRepository.save(user);
-
-        SupplierCreateDTO supplierCreateDTO = new SupplierCreateDTO(
-                null,
-                "Nome em analise",
-                data.getPhoneNumber(),
-                "Fornecedor em analise!!",
-                null,
-                null,
-                null,
-                null,
-                user.getId(),
-                null
-        );
-
-        if (data.getUserType() == UserTypeEnum.SUPPLIER) {
-            this.supplierService.createSupplier(supplierCreateDTO);
-        }
-
-        return ResponseEntity.ok().build();
+//        return ResponseEntity.ok().build();
     }
 
 }

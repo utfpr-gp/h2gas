@@ -18,6 +18,7 @@ import { OrderResumeComponent } from './components/pages/order-resume/order-resu
 import { OrderListComponent } from './components/pages/order-list/order-list.component';
 import { CustomerPanelComponent } from './components/pages/customer-panel/customer-panel.component';
 import { ReceivedOrdersComponent } from './components/pages/received-orders/received-orders.component';
+import { AwaitingApprovalComponent } from './components/pages/awaiting-approval/awaiting-approval.component';
 
 export const routes: Routes = [
     {path: '', component: InitialScreenComponent},
@@ -115,6 +116,12 @@ export const routes: Routes = [
     {
         path: 'dashboard-fornecedor', 
         component: ReceivedOrdersComponent,
+        canActivate: [authGuard],
+        data: {roles: ['ADMIN', 'SUPPLIER']}
+    },
+    {
+        path: 'aguardando-aprovacao', 
+        component: AwaitingApprovalComponent,
         canActivate: [authGuard],
         data: {roles: ['ADMIN', 'SUPPLIER']}
     },

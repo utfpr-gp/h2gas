@@ -9,31 +9,21 @@ import com.h2gas.model.dto.AuthenticationDTO;
 import com.h2gas.model.dto.RegisterDTO;
 import com.h2gas.model.entity.User;
 import com.h2gas.model.repository.UserRepository;
-import com.h2gas.services.UserService;
-import jakarta.persistence.EntityManager;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -65,8 +55,8 @@ class AuthenticationControllerTest {
     @MockitoBean
     private TokenService tokenService;
 
-    @MockitoBean
-    private UserService userService;
+//    @MockitoBean
+//    private UserService userService;
 
     @MockitoBean
     private AuthenticationManager authenticationManager;
@@ -134,6 +124,7 @@ class AuthenticationControllerTest {
 //                .thenReturn(Optional.of(new User()));
         when(userRepository.existsByEmail("teste@email.com"))
                 .thenReturn(true);
+        System.out.println("Mock existsByEmail: " + userRepository.existsByEmail("teste@email.com"));
 
 
         mockMvc.perform(post("/api/auth/register")
