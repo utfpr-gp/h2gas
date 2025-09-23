@@ -46,6 +46,11 @@ public class ProductItemService {
                 .collect(Collectors.toList());
     }
 
+    public Page<ProductItemDTO> findBySupplierActiveAndSupplierOpen(Pageable pageable) {
+        return productItemRepository.findBySupplierActiveAndSupplierOpen(true,true, pageable)
+                .map(productItemMapper::toDto);
+    }
+
     public Page<ProductItemDTO> findProductsBySupplier(Long supplierId, Pageable pageable) {
         return productItemRepository.findBySupplierId(supplierId, pageable)
                 .map(productItemMapper::toDto);
@@ -65,7 +70,7 @@ public class ProductItemService {
 
     public ProductItemDTO createProductItem(CreateProductItemDTO productItemDto) {
         ProductItem productItem = createProductItemMapper.toEntity(productItemDto);
-        Supplier supplier = supplierService.findEntityById(productItemDto.getDistributorId());
+        Supplier supplier = supplierService.findEntityById(productItemDto.getSupplierId());
         CategoryProduct categoryProduct = categoryProductService.findEntityById(
                 productItemDto.getCategoryProductId()
         );
