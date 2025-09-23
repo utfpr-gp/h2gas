@@ -40,26 +40,39 @@ export class CustomerPanelComponent implements OnInit {
       cityName: ['', [Validators.required]],
       userId: [null],
     })
+
+    this.registerFormUser = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+      name: ['', [Validators.required, Validators.minLength(3)]],
+      phoneNumber: ['', [Validators.required]],
+      cnpj: [''],
+    })
   }
 
 
   ngOnInit(): void {
     this.userLogado = this.userService.getUserLocalStorage()
     console.log(this.userLogado);
+    this.registerFormUser.patchValue(this.userLogado!);
+    console.log(this.registerFormUser.value);
+    
     this.getCities();
     this.buscaAddressIdUser();
-    
   }
 
   userLogado?: User;
   showAddressModal = false;
   modalAberta = false;
   registerFormAddress!: FormGroup;
+  registerFormUser!: FormGroup;
   address?: Address;
   cities?: City[];
 
   openModal() {
     this.modalAberta = true;
+    if (this.address) {
+      this.registerFormAddress.patchValue(this.address)          
+    }
   }
 
   openAddressModal() {
@@ -70,9 +83,34 @@ export class CustomerPanelComponent implements OnInit {
     this.showAddressModal = false;
   }
 
-  salvarAddress() {
+  update() {
     debugger
-    if (this.registerFormAddress.valid) {
+    if (this.registerFormUser.invalid) {
+      this.registerFormUser.markAllAsTouched();
+      this.toastr.warning('Conferir informações!!')
+      return; 
+    }
+
+    // this.userLogado = this.registerFormUser?.value;
+    let userEdit: User = this.registerFormUser?.value
+    // this.userLogado!!.addressId = this.address?.id
+    debugger
+
+    this.userService.updateUser(this.userLogado?.id!, userEdit).subscribe({
+      next: (response) => {
+        console.log(response);
+        localStorage.setItem('user', JSON.stringify(response))
+        this.toastr.success("Informações editadas com sucesso!")
+      },
+      error: (err) => {
+        console.error(err);
+        this.toastr.error(`Erro ao editar informações de Usuário: ${err.error.message}`);
+      },
+    })
+  }
+
+  salvarAddress() {
+    if (this.registerFormAddress.valid && !this.address) {
       this.registerFormAddress.get('userId')?.setValue(this.userLogado?.id)
       this.address = this.registerFormAddress.value;
       this.addressService.create(this.address!!).subscribe({
@@ -86,7 +124,23 @@ export class CustomerPanelComponent implements OnInit {
           this.toastr.error(`Erro ao salvar endereço: ${err.error.message}`);
         },
       })  
+    } else if (this.registerFormAddress.valid && this.address) {
+      this.editAddress();
     }
+  }
+
+  editAddress() {
+    this.addressService.update(this.address?.id!, this.registerFormAddress.value).subscribe({
+      next: (response) => {
+        console.log(response);
+        this.toastr.success('Seu endereço foi editado com sucesso');
+        this.closeAddressModal();
+      },
+      error: (err) => {
+        console.log(err);
+        this.toastr.error(`Erro ao editar endereço: ${err.error.message}`);
+      },
+    })
   }
 
 

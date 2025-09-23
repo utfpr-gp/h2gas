@@ -118,4 +118,10 @@ public class OrderService {
         orderRepository.save(order);
         return order.getStatus().getStatus();
     }
+
+    public Page<OrderResponseDTO> findBySupplierIdAndStatusNotDeliveryAndCanceled(Long id, Pageable pageable) {
+        List<OrderStatusEnum> excludedStatuses = List.of(OrderStatusEnum.DELIVERED, OrderStatusEnum.CANCELED);
+        return orderRepository.findBySupplierIdAndStatusNotInOrderByCreatedAtDesc(id, excludedStatuses, pageable)
+                .map(orderMapper::toResponseDto);
+    }
 }

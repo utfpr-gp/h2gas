@@ -130,21 +130,6 @@ public class OrderMapper {
             supplier.setId(dto.getSupplierRef());
         }
 
-//        if (dto.getItems() != null) {
-//            List<OrderItem> items = new ArrayList<>();
-//
-//            for (OrderItemRequestDTO oderItemRequestDto : dto.getItems()) {
-//                OrderItem orderItem = new OrderItem();
-//                ProductItem productItem = new ProductItem();
-//                productItem.setId(oderItemRequestDto.getProductItemId());
-//                orderItem.setProduct(productItem);
-//                orderItem.setQuantity(oderItemRequestDto.getQuantity());
-//                items.add(orderItem);
-//            }
-//
-//            order.setItems(items);
-//        }
-
         return order;
     }
 }

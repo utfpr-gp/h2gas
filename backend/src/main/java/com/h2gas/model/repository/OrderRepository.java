@@ -6,9 +6,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
+
 public interface OrderRepository extends JpaRepository<Order, String> {
     Page<Order> findByCustomerId(String id, Pageable pageable);
     Page<Order> findBySupplierIdOrderByCreatedAtDesc(Long id, Pageable pageable);
     Page<Order> findByStatus(OrderStatusEnum status, Pageable pageable);
     Page<Order> findBySupplierIdAndStatusOrderByCreatedAtDesc(Long supplierId, OrderStatusEnum status, Pageable pageable);
+    Page<Order> findBySupplierIdAndStatusNotInOrderByCreatedAtDesc(Long supplierId,
+                                                                   List<OrderStatusEnum> statuses,
+                                                                   Pageable pageable);
+
 }
