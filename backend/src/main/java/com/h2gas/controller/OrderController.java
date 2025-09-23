@@ -15,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -75,15 +76,16 @@ public class OrderController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{supplierId}/active")
+    @GetMapping("/{supplierId}/exclude-status")
     @ResponseBody
     public ResponseEntity<PageResponse<OrderResponseDTO>> lisAllOrderItemExcludeStatus(
             @PathVariable Long supplierId,
             @RequestParam(value = "page", required = false) Integer page,
-            @RequestParam(value = "size", required = false) Integer size
+            @RequestParam(value = "size", required = false) Integer size,
+            @RequestParam(value = "excludeStatuses", required = false) List<OrderStatusEnum> excludeStatuses
     ) {
         Pageable pageable = PaginationUtil.getPageableRequest(page, size);
-        Page<OrderResponseDTO> result = orderService.findBySupplierIdAndStatusNotDeliveryAndCanceled(supplierId, pageable);
+        Page<OrderResponseDTO> result = orderService.findBySupplierIdAndStatusNotDeliveryAndCanceled(supplierId, pageable, excludeStatuses);
         PageResponse<OrderResponseDTO> response = new PageResponse<>(result);
         return ResponseEntity.ok(response);
     }

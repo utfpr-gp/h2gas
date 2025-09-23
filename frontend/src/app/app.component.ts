@@ -19,7 +19,15 @@ import { CommonModule } from '@angular/common';
 export class AppComponent {
   title = 'frontend';
   showMenu = true;
-  hiddenMenuRoutes = ['/','/login', '/register', '/register-supplier', '/unauthorized'];
+  hiddenMenuRoutes = [
+    '/',
+    '/login', 
+    '/register', 
+    '/register-supplier', 
+    '/unauthorized', 
+    '/aguardando-aprovacao',
+    '/distributor/new'
+  ];
 
 
   constructor(private router: Router) {

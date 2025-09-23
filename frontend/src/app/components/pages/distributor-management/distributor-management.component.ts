@@ -29,7 +29,7 @@ export class DistributorManagementComponent implements OnInit {
   }
 
   userLogado?: User;
-  showDistribuidora = false;
+  showSupplier = false;
 
   supplierDistribuidor?: Supplier;
 
@@ -47,13 +47,13 @@ export class DistributorManagementComponent implements OnInit {
     this.router.navigate([route])
   }
 
-  onToggleDistribuidora(checked: any) {
+  onToggleSupplier(checked: any) {
     debugger
-    this.showDistribuidora = checked.target.checked;
+    this.showSupplier = checked.target.checked;
     console.log('Distribuidora aberta?', checked);
 
     let data = {
-      "status": this.showDistribuidora
+      "status": this.showSupplier
     }
 
     this.supplierService.openDistribuidor(data, this.supplierDistribuidor?.id!).subscribe({
@@ -73,7 +73,7 @@ export class DistributorManagementComponent implements OnInit {
       next: (response) => {
         console.log('Distribuidora buscada com sucesso!', response);
         this.supplierDistribuidor = response;
-        this.showDistribuidora = this.supplierDistribuidor.open!;
+        this.showSupplier = this.supplierDistribuidor.open!;
         this.toastr.success('Distribuidora buscada com sucesso!');
       },
       error: (err) => {
