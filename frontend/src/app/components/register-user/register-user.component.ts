@@ -56,8 +56,6 @@ export class RegisterUserComponent implements OnInit {
   }
 
   register() {
-    debugger
-    
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
       this.toastr.warning('Conferir informações!!')

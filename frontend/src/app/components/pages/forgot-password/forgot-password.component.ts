@@ -35,8 +35,9 @@ export class ForgotPasswordComponent {
 
     this.loading = true;
     this.errorMessage = '';
+    
 
-    // this.authService.requestPasswordReset(this.form.value.email!).subscribe({
+    // this.authService.requestPasswordReset(this.form.value).subscribe({
     //   next: () => {
     //     this.loading = false;
     //     this.router.navigate(['/check-email']);

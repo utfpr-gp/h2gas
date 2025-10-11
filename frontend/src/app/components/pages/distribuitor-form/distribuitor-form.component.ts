@@ -41,6 +41,7 @@ export class DistribuitorFormComponent implements OnInit {
 
   isEdit: boolean = false;
   idEdit: number = 0;
+  cidadeEncontrada: any;
 
   constructor(
     private fb: FormBuilder, 
@@ -65,19 +66,6 @@ export class DistribuitorFormComponent implements OnInit {
       userId: [null]
     })
 
-    // this.registerFormSupplier = this.fb.group({
-    //   name: ['', [Validators.required, Validators.minLength(3)]],
-    //   phone: ['', [Validators.required]],
-    //   description: ['', [Validators.required]],
-    //   active: [false],
-    //   cityId: [null, [Validators.required]],
-    //   addressId: [null],
-    //   openingTime: ['', Validators.required],
-    //   closingTime: ['', Validators.required],
-    //   averageDeliveryTime: [null, [Validators.required, Validators.min(1)]],
-    //   userId: [null]
-    // })
-
 
     this.registerFormAddress = this.fb.group({
       streetName: ['', [Validators.required]],
@@ -85,7 +73,7 @@ export class DistribuitorFormComponent implements OnInit {
       complement: ['', Validators.required],
       neighborhood: ['', Validators.required],
       zipCode: ['', Validators.required],
-      cityName: ['', [Validators.required]],
+      cityId: [null, [Validators.required]],
       userId: [null],
     })
   }
@@ -127,10 +115,19 @@ export class DistribuitorFormComponent implements OnInit {
   buscarCep() {
     this.addressService.buscaViaCep(this.registerFormAddress.get('zipCode')?.value).subscribe({
       next: (response: any) => {
-        console.log(response);
+        this.cidadeEncontrada = this.cities?.some(c => c.name!.toLowerCase() === response.localidade.toLowerCase());
+
+        if (!this.cidadeEncontrada) {
+          this.toastr.warning(`No momento ainda não atendemos a cidade de ${response.localidade}.`);
+          return; 
+        }
         this.toastr.success('Cep buscado com sucesso');
         this.registerFormAddress.get('streetName')?.setValue(response.logradouro)
-        this.registerFormAddress.get('cityName')?.setValue(response.localidade)
+        console.log("cidades aqui");
+        
+        console.log(this.cities);
+        
+        // this.registerFormAddress.get('cityName')?.setValue(response.localidade)
         this.registerFormAddress.get('neighborhood')?.setValue(response.bairro)
 
       }, 
@@ -142,7 +139,11 @@ export class DistribuitorFormComponent implements OnInit {
   }
 
   salvarAddress() {
-    debugger
+    if (!this.cidadeEncontrada) {
+      this.toastr.warning(`Infelizmente ainda não atendemos sua cidade.`);
+      return;
+    }
+
     if (this.registerFormAddress.valid && !this.address) {
       this.registerFormAddress.get('userId')?.setValue(this.userLogado?.id)
       this.address = this.registerFormAddress.value;
@@ -194,16 +195,7 @@ export class DistribuitorFormComponent implements OnInit {
     })
   }
 
-  onSubmit() {
-    if (this.registerFormSupplier.valid) {
-      console.log('Dados do distribuidor:', this.registerFormSupplier.value);
-      // envie para o backend
-    }
-  }
-
   getSupplierId(id: number) {
-    debugger
-    
     this.supplierService.findById(id).subscribe({
       next: (response) => {
         debugger

@@ -1,8 +1,15 @@
 <section>
   <div class="flex justify-between items-center mb-4">
-    <h2 class="text-xl font-bold text-gray-800">
-      Pedidos Recentes ({{orders.length}})
-    </h2>
+      <!-- <h2 class="text-xl font-bold text-gray-800">
+      </h2> -->
+      <h2 class="text-xl font-bold text-gray-800">
+        @if (rotaAtiva == 'dashboard-fornecedor') {
+          Pedidos em aberto ({{orders.length}})
+        } @else {
+          Pedidos concluídos ({{orders.length}})
+        }
+      </h2>        
+    
 
     <div class="flex items-center gap-4">
       <select

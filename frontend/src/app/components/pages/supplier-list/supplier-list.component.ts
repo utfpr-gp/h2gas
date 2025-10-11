@@ -39,6 +39,7 @@ export class SupplierListComponent implements OnInit {
 
   suppliers?: Supplier[];
   formSearch!: FormGroup;
+  products: ProductItem[] = [];
 
 
 
@@ -70,8 +71,6 @@ export class SupplierListComponent implements OnInit {
     }
   }
 
-  products: ProductItem[] = [];
-
   getProducts() {
     this.productItemService.getProductsFromActiveSuppliers().subscribe({
       next: (response) => {
@@ -88,20 +87,34 @@ export class SupplierListComponent implements OnInit {
   }
 
   navigate(id?: number) {
-    this.router.navigate(['/inicio', id, 'produtos']);
+    this.router.navigate(['/fornecedores', id, 'produtos']);
   }
 
+  searchDone = false;
+
   buscar() {
-    this.supplierService.searchSuppliers(this.formSearch.get('name')?.value).subscribe({
+    const searchValue = this.formSearch.get('name')?.value?.trim();
+
+    if (!searchValue) {
+      this.searchDone = false;
+      this.getSuppliers()
+      return;
+    }
+
+    this.supplierService.searchSuppliers(searchValue).subscribe({
       next: (response) => {
-        this.suppliers = response.data
+        this.suppliers = response.data;
+  
+        this.searchDone = this.suppliers && this.suppliers.length > 0;
+  
         this.toastr.success('Fornecedores buscados com sucesso!');
       },
       error: (err) => {
         console.error('Erro ao buscar:', err.error.message);
-        this.toastr.error(`Erro ao buscar fornecedores: ${err.error.message}`)
+        this.toastr.error(`Erro ao buscar fornecedores: ${err.error.message}`);
+        this.searchDone = false;
       },
-    })
+    });
   }
 
 

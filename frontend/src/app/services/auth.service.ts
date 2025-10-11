@@ -60,4 +60,8 @@ export class AuthService {
     localStorage.removeItem('access_token');
     localStorage.removeItem('user');
   }
+
+  requestPasswordReset(data: any) {
+    return this.http.post(`${this.baseUrl}/reset-password`, data)
+  }
 }

@@ -94,7 +94,7 @@ export const routes: Routes = [
         data: {roles: ['ADMIN', 'SUPPLIER', 'CUSTOMER']}
     },
     {
-        path: 'inicio/:id/produtos', 
+        path: 'fornecedores/:id/produtos', 
         component: ProductListComponent,
         canActivate: [authGuard],
         data: {roles: ['ADMIN', 'SUPPLIER', 'CUSTOMER']}
@@ -115,7 +115,7 @@ export const routes: Routes = [
         path: 'painel-cliente', 
         component: CustomerPanelComponent,
         canActivate: [authGuard],
-        data: {roles: ['ADMIN', 'CUSTOMER']}
+        data: {roles: ['ADMIN', 'CUSTOMER', 'SUPPLIER']}
     },
     {
         path: 'dashboard-fornecedor', 

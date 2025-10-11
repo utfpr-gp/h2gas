@@ -8,6 +8,7 @@ export class Address {
     neighborhood?: string;
     zipCode?: string;
     cityName?: string;
+    cityId?: number;
     user?: User;
     addressName?: string;
 
