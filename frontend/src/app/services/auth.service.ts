@@ -62,6 +62,10 @@ export class AuthService {
   }
 
   requestPasswordReset(data: any) {
-    return this.http.post(`${this.baseUrl}/reset-password`, data)
+    return this.http.post(`${environment.apiUrl}/users/reset-password`, data)
+  }
+
+  resetPassword(data: any) {
+    return this.http.post(`${environment.apiUrl}/users/reset-password/confirm`, data)
   }
 }

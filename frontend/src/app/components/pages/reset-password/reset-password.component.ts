@@ -40,7 +40,7 @@ export class ResetPasswordComponent implements OnInit {
     });
   }
 
-  submit() {
+  enviar() {
     if (this.form.invalid || !this.token) return;
 
     const { password, confirmPassword } = this.form.value;
@@ -53,17 +53,22 @@ export class ResetPasswordComponent implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
 
-    // this.authService.resetPassword(this.token, password!).subscribe({
-    //   next: () => {
-    //     this.loading = false;
-    //     this.successMessage = 'Senha redefinida com sucesso! Redirecionando...';
-    //     setTimeout(() => this.router.navigate(['/login']), 2500);
-    //   },
-    //   error: () => {
-    //     this.loading = false;
-    //     this.errorMessage = 'Erro ao redefinir senha. Tente novamente.';
-    //   }
-    // });
+    let data = {
+      "token": this.token,
+      "newPassword": password
+    }
+
+    this.authService.resetPassword(data).subscribe({
+      next: () => {
+        this.loading = false;
+        this.successMessage = 'Senha redefinida com sucesso! Redirecionando...';
+        setTimeout(() => this.router.navigate(['/login']), 2500);
+      },
+      error: () => {
+        this.loading = false;
+        this.errorMessage = 'Erro ao redefinir senha. Tente novamente.';
+      }
+    });
   }
 
 

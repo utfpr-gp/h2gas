@@ -29,7 +29,8 @@ export class AppComponent {
     '/distributor/new',
     '/recuperar-senha',
     '/checagem-email',
-    '/resetar-senha'
+    '/resetar-senha',
+    '/email-sent'
   ];
 
 

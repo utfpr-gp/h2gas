@@ -3,6 +3,7 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } 
 import { AuthService } from '../../../services/auth.service';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { ToastrService } from 'ngx-toastr';
 
 @Component({
   selector: 'app-forgot-password',
@@ -18,7 +19,8 @@ export class ForgotPasswordComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private toastr: ToastrService,
   ) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]]
@@ -31,21 +33,31 @@ export class ForgotPasswordComponent {
 
 
   submit() {
-    if (this.form.invalid) return;
+    if (this.form.invalid) {
+      this.toastr.warning("Por favor insira um email valido!!");
+      return;
+    }
 
     this.loading = true;
     this.errorMessage = '';
     
+    debugger
+    this.authService.requestPasswordReset(this.form.value).subscribe({
 
-    // this.authService.requestPasswordReset(this.form.value).subscribe({
-    //   next: () => {
-    //     this.loading = false;
-    //     this.router.navigate(['/check-email']);
-    //   },
-    //   error: () => {
-    //     this.loading = false;
-    //     this.errorMessage = 'Erro ao enviar link de recuperação. Tente novamente.';
-    //   }
-    // });
+      next: (response) => {
+        this.loading = false;
+        this.router.navigate(['/email-sent']);       
+      },
+      error: (err) => {
+        this.loading = false;
+        this.errorMessage = 'Erro ao enviar link de recuperação. Tente novamente.';   
+        console.error(err);
+        this.toastr.error(`Erro ao enviar link de recuperação: ${err.error.message}`) 
+      },
+    });
+  }
+
+  navigate(route: string) {
+    this.router.navigate([route])
   }
 }
