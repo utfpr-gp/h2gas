@@ -76,7 +76,7 @@ class CityServiceTest {
     @Test
     @DisplayName("Retorna erro ao passar o id incorreto")
     void findByIdCityError() {
-        Long idInvalid = 4L;
+        Long idInvalid = 999L;
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
             cityService.findByIdCity(idInvalid);
         });
