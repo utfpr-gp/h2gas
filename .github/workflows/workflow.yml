@@ -30,7 +30,6 @@ jobs:
         env:
             SPRING_PROFILES_ACTIVE: test
          run: mvn -f backend/pom.xml clean install -DskipTests=false -Dspring.profiles.active=test -e -X
-
 #        run: mvn -f backend/pom.xml clean test -Dspring.profiles.active=test -e -X
 
 

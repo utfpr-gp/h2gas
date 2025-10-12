@@ -94,7 +94,7 @@ class CityServiceTest {
     @Test
     @DisplayName("Deve lançar exceção ao tentar deletar cidade inexistente")
     void deleteCityNotFound() {
-        Long invalidId = 999L;
+        Long invalidId = 99L;
 
         Exception exception = assertThrows(RuntimeException.class, () -> {
             cityService.deleteCity(invalidId);
