@@ -29,7 +29,9 @@ jobs:
 #        run: mvn -f backend/pom.xml clean test
         env:
             SPRING_PROFILES_ACTIVE: test
-        run: mvn -f backend/pom.xml clean test -Dspring.profiles.active=test -e -X
+        run: mvn -f backend/pom.xml clean test -U -Dspring.profiles.active=test -e -X
+#        run: mvn -f backend/pom.xml clean test -Dspring.profiles.active=test -e -X
+
 
 
       - name: Show test error logs
