@@ -29,7 +29,8 @@ jobs:
 #        run: mvn -f backend/pom.xml clean test
         env:
             SPRING_PROFILES_ACTIVE: test
-        run: mvn -f backend/pom.xml clean install -DskipTests=false -Dspring.profiles.active=test -e -X
+        run: mvn -f backend/pom.xml clean test -Dspring.profiles.active=test -Dtest=com.h2gas.services.OrderServiceTest -e -X
+#        run: mvn -f backend/pom.xml clean install -DskipTests=false -Dspring.profiles.active=test -e -X
 #        run: mvn -f backend/pom.xml clean test -Dspring.profiles.active=test -e -X
 
 
