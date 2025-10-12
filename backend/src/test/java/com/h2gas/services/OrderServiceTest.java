@@ -13,10 +13,6 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 //@TestPropertySource(properties = "jwt.secret=segredoFake123")
-@TestPropertySource(properties = {
-        "jwt.secret=segredoFake123",
-        "frontend.url=http://localhost:4200"
-})
 @Transactional
 class OrderServiceTest {
 
