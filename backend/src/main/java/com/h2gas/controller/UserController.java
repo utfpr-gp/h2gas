@@ -75,12 +75,12 @@ public class UserController {
             throw new BusinessRuleException(e.getMessage());
         }
 
-        return ResponseEntity.ok("Email de redefinição enviado");
+        return ResponseEntity.ok(Map.of("message", "Email de redefinição enviado"));
     }
 
     @PostMapping("/reset-password/confirm")
     public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequestDTO request) {
         userService.resetPassword(request.getToken(), request.getNewPassword());
-        return ResponseEntity.ok("Senha redefinida com sucesso");
+        return ResponseEntity.ok(Map.of("message", "Senha redefinida com sucesso"));
     }
 }
