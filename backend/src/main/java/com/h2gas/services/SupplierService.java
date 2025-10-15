@@ -1,5 +1,6 @@
 package com.h2gas.services;
 
+import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.CityDTO;
 import com.h2gas.model.dto.SupplierCreateDTO;
@@ -31,8 +32,8 @@ public class SupplierService {
     @Autowired
     private UserMapper userMapper;
 
-    @Autowired
-    private UserService userService;
+//    @Autowired
+//    private UserService userService;
 
     @Autowired
     private CityMapper cityMapper;
@@ -78,13 +79,13 @@ public class SupplierService {
                 .collect(Collectors.toList());
     }
 
-    public SupplierDTO findById(Long id) {
+    public SupplierDTO findById(String id) {
         Optional<Supplier> supplierOptional = supplierRepository.findById(id);
         return supplierOptional.map(supplierMapper::toDto).orElseThrow(()
                 -> new ResourceNotFoundException("Não encontrado nenhum Fornecedor com esse id: " + id));
     }
 
-    public Supplier findEntityById(Long id) {
+    public Supplier findEntityById(String id) {
         return supplierRepository.findById(id).orElseThrow(()
                 -> new ResourceNotFoundException("Não encontrado nenhum Fornecedor com esse id: " + id));
     }
@@ -92,39 +93,47 @@ public class SupplierService {
     public SupplierDTO createSupplier(SupplierCreateDTO supplierDTO) {
         Supplier supplier = supplierMapper.toEntitySupplierCreate(supplierDTO);
 
-        City city = cityMapper.toEntity(cityService.findByIdCity(supplierDTO.getCityId()));
-        Address address = new Address();
+        City city = cityService.findByIdEntity(supplierDTO.getCityId());
+        Address address = null;
 
         if (city == null) {
             throw new ResourceNotFoundException("City not found");
         }
         if (supplierDTO.getAddressId() != null) {
-             address = addressMapper.toEntity(addressService.findByIdAddress(
-                    supplierDTO.getAddressId())
-            );
+             address = addressService.findByIdEntity(supplierDTO.getAddressId());
         }
-
-
 //        if (address == null) {
 //            throw new ResourceNotFoundException("Address not found");
 //        }
 
-        User user = userMapper.toEntityUser(userService.findByIdUser(supplierDTO.getUserId()));
+//        User user = userMapper.toEntityUser(userService.findByIdUser(supplierDTO.getUserId()));
 
-        if (user == null) {
-            throw new ResourceNotFoundException("User not found");
-        }
+//        if (user == null) {
+//            throw new ResourceNotFoundException("User not found");
+//        }
 
         supplier.setCity(city);
         supplier.setAddress(address);
         supplier.setActive(false);
-        supplier.setUser(user);
+        supplier.setCnpj(supplierDTO.getCnpj());
+        supplier.setName(supplierDTO.getName());
+//        supplier.setUser(user);
         Supplier savedSupplier = supplierRepository.save(supplier);
 
         return supplierMapper.toDto(savedSupplier);
     }
 
-    public SupplierDTO update(Long id, SupplierCreateDTO supplierDTO) {
+    public Supplier createSupplier(Supplier supplier) {
+//        if (supplier.getCity() == null || supplier.getAddress() == null) {
+//            throw new BusinessRuleException("City e Address devem estar definidos antes de salvar.");
+//        }
+
+        supplier.setActive(false);
+        return supplierRepository.save(supplier);
+    }
+
+
+    public SupplierDTO update(String id, SupplierCreateDTO supplierDTO) {
         Supplier supplier = supplierRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fornecedor com id " + id + " não encontrado"));
 
@@ -135,7 +144,7 @@ public class SupplierService {
         }
 
         supplier.setName(supplierDTO.getName());
-        supplier.setPhone(supplierDTO.getPhone());
+        supplier.setPhoneNumber(supplierDTO.getPhone());
         supplier.setActive(currentStatus);
         supplier.setOpeningTime(LocalTime.parse(supplierDTO.getOpeningTime()));
         supplier.setClosingTime(LocalTime.parse(supplierDTO.getClosingTime()));
@@ -145,14 +154,14 @@ public class SupplierService {
         return supplierMapper.toDto(supplier);
     }
 
-    public void deleteSupplier(Long id) {
+    public void deleteSupplier(String id) {
         Supplier supplier = supplierRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fornecedor com " + id + " não encontrado"));
 
         supplierRepository.delete(supplier);
     }
 
-    public void updateStatusSupplier(Long id, boolean active) {
+    public void updateStatusSupplier(String id, boolean active) {
         Supplier supplier = supplierRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fornecedor com " + id + " não encontrado"));
 
@@ -160,7 +169,7 @@ public class SupplierService {
         supplierRepository.save(supplier);
     }
 
-    public void updateStatusOpenClosed(Long id, boolean openClose) {
+    public void updateStatusOpenClosed(String id, boolean openClose) {
         Supplier supplier = supplierRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fornecedor com " + id + " não encontrado"));
 
@@ -168,9 +177,9 @@ public class SupplierService {
         supplierRepository.save(supplier);
     }
 
-    public SupplierDTO findByUserIdSupplier(String userId) {
-        Optional<Supplier> supplierOptional = supplierRepository.findByUserId(userId);
-        return supplierOptional.map(supplierMapper::toDto).orElseThrow(()
-                -> new ResourceNotFoundException("Não encontrado nenhum Fornecedor com esse id de usuario: " + userId));
-    }
+//    public SupplierDTO findByUserIdSupplier(String userId) {
+//        Optional<Supplier> supplierOptional = supplierRepository.findByUserId(userId);
+//        return supplierOptional.map(supplierMapper::toDto).orElseThrow(()
+//                -> new ResourceNotFoundException("Não encontrado nenhum Fornecedor com esse id de usuario: " + userId));
+//    }
 }

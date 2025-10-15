@@ -11,7 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 public class OrderRequestDTO {
     private String customerUuid;
-    private Long supplierRef;
+    private String supplierRef;
     private String paymentMethod;
     private String note;
     private List<OrderItemRequestDTO> items;

@@ -70,18 +70,6 @@ public class SupplierMapper {
                 averageDeliveryTime
         );
 
-//        if (openingTime != null) {
-//            supplier.setOpeningTime(LocalTime.parse(openingTime));
-//        }
-//
-//        if (closingTime != null) {
-//            supplier.setClosingTime(LocalTime.parse(closingTime));
-//        }
-//
-//        if (averageDeliveryTime != null) {
-//            supplier.setAverageDeliveryTime(Duration.ofMinutes(averageDeliveryTime));
-//        }
-
         return supplier;
     }
 
@@ -101,10 +89,10 @@ public class SupplierMapper {
             supplierDTO.setAddressId(supplier.getAddress().getId());
         }
 
-        if (supplier.getUser() != null) {
-            UserDto userDto = userMapper.toDto(supplier.getUser());
-            supplierDTO.setUser(userDto);
-        }
+//        if (supplier.getUser() != null) {
+//            UserDto userDto = userMapper.toDto(supplier.getUser());
+//            supplierDTO.setUser(userDto);
+//        }
 
         if (supplier.getOpeningTime() != null) {
             supplierDTO.setOpeningTime(supplier.getOpeningTime().toString());
