@@ -79,7 +79,7 @@ public class OrderController {
     @GetMapping("/{supplierId}/exclude-status")
     @ResponseBody
     public ResponseEntity<PageResponse<OrderResponseDTO>> lisAllOrderItemExcludeStatus(
-            @PathVariable Long supplierId,
+            @PathVariable String supplierId,
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(value = "size", required = false) Integer size,
             @RequestParam(value = "excludeStatuses", required = false) List<OrderStatusEnum> excludeStatuses
@@ -93,7 +93,7 @@ public class OrderController {
     @GetMapping("/by-supplier/{supplierId}")
     @ResponseBody
     public ResponseEntity<PageResponse<OrderResponseDTO>> listAllOrdersBySupplier(
-            @PathVariable Long supplierId,
+            @PathVariable String supplierId,
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(value = "size", required = false) Integer size,
             @RequestParam(required = false) OrderStatusEnum status
