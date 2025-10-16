@@ -8,6 +8,9 @@ import { Router } from '@angular/router';
 import { User } from '../../models/user';
 import { UserService } from '../../services/user.service';
 import { NgxMaskDirective } from 'ngx-mask';
+import { AddressService } from '../../services/address.service';
+import { City } from '../../models/city';
+import { Address } from '../../models/address';
 
 @Component({
   selector: 'app-register-user',
@@ -24,8 +27,13 @@ export class RegisterUserComponent implements OnInit {
 
   registerForm!: FormGroup;
   user?: User;
+  registerFormAddress!: FormGroup;
+  address?: Address;
 
   confirmPassword: string =''; 
+
+  cidadeEncontrada: any;
+  cities?: City[];
 
   @Input()
   userType?: string;
@@ -38,7 +46,8 @@ export class RegisterUserComponent implements OnInit {
     private fb: FormBuilder, 
     private userService: UserService,
     private toastr: ToastrService,
-    private router: Router
+    private router: Router,
+    private addressService: AddressService,
   ) {
     this.registerForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -49,10 +58,27 @@ export class RegisterUserComponent implements OnInit {
       password: ['', [Validators.required, Validators.minLength(6)]],
       userType: [''],
     })
+
+    this.registerFormAddress = this.fb.group({
+      streetName: ['', [Validators.required]],
+      number: ['', [Validators.required]],
+      complement: ['', Validators.required],
+      neighborhood: ['', Validators.required],
+      zipCode: ['', Validators.required],
+      cityId: [null, [Validators.required]],
+      userId: [null],
+    })
   }
   
   ngOnInit(): void {
     this.user = new User('', '','', '', '', '', '', '');
+  }
+
+  modalAberta = false;
+
+
+  openModal() {
+    this.modalAberta = true;
   }
 
   register() {
@@ -78,6 +104,62 @@ export class RegisterUserComponent implements OnInit {
         }
       })
     }    
+  }
+
+  buscarCep() {
+    this.addressService.buscaViaCep(this.registerFormAddress.get('zipCode')?.value).subscribe({
+      next: (response: any) => {
+        this.cidadeEncontrada = this.cities?.some(c => c.name!.toLowerCase() === response.localidade.toLowerCase());
+
+        if (!this.cidadeEncontrada) {
+          this.toastr.warning(`No momento ainda não atendemos a cidade de ${response.localidade}.`);
+          return; 
+        }
+        this.toastr.success('Cep buscado com sucesso');
+        this.registerFormAddress.get('streetName')?.setValue(response.logradouro)
+        console.log("cidades aqui");
+        
+        console.log(this.cities);
+        
+        // this.registerFormAddress.get('cityName')?.setValue(response.localidade)
+        this.registerFormAddress.get('neighborhood')?.setValue(response.bairro)
+
+      }, 
+      error: (err) => {
+        console.log(err);
+        this.toastr.error(`Erro ao buscar cep: ${err}`)
+      }
+    })
+  }
+
+  salvarAddress() {
+    if (!this.cidadeEncontrada) {
+      this.toastr.warning(`Infelizmente ainda não atendemos sua cidade.`);
+      return;
+    }
+
+    if (this.registerFormAddress.valid && !this.address) {
+      // this.registerFormAddress.get('userId')?.setValue(this.userLogado?.id)
+      this.address = this.registerFormAddress.value;
+      debugger
+      this.addressService.create(this.address!).subscribe({
+        next: (response) => {
+          console.log(response);
+          this.toastr.success('Seu endereço foi salvo com sucesso');
+          this.closeAddressModal();
+        }, 
+        error: (err) => {
+          console.log(err);
+          this.toastr.error(`Erro ao salvar endereço: ${err.error.message}`);
+        },
+      })  
+    }
+  }
+
+  showAddressModal = false;
+
+  closeAddressModal() {
+    this.showAddressModal = false;
   }
 
 
