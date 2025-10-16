@@ -8,10 +8,12 @@ import com.h2gas.model.entity.Address;
 import com.h2gas.model.entity.City;
 import com.h2gas.model.entity.Supplier;
 import com.h2gas.model.entity.User;
+import com.h2gas.model.mapper.SupplierMapper;
 import com.h2gas.model.repository.AddressRepository;
 import com.h2gas.model.repository.CityRepository;
 import com.h2gas.model.repository.SupplierRepository;
 import com.h2gas.model.repository.UserRepository;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -49,6 +51,9 @@ class SupplierServiceTest {
 
     @Autowired
     private SupplierRepository supplierRepository;
+
+    @Autowired
+    private SupplierMapper supplierMapper;
 
     private String validId;
 
@@ -110,56 +115,82 @@ class SupplierServiceTest {
         );
 
         addressRepository.save(address2);
-        Supplier supplierFirst = new Supplier();
+        Supplier supplierFirst = getSupplier(
+                "Fornecedor Teste",
+                "fornecedor@gmail",
+                "1234567890",
+                "12343445",
+                "senhateste",
+                "12345678901234",
+                "Testando descricao",
+                true,
+                false,
+                address2,
+                cityFirst
+        );
 
-        // Campos da superclasse User
-        supplierFirst.setId(null); // geralmente deixa null para autogeração
-        supplierFirst.setName("Fornecedor Teste");
-        supplierFirst.setEmail("fornecedor@gmail");
-        supplierFirst.setPhoneNumber("1234567890");
-        supplierFirst.setCpf("12343445");
-        supplierFirst.setPassword("senhateste");
-        supplierFirst.setUserType(UserTypeEnum.SUPPLIER);
-
-        // Campos específicos do Supplier
-        supplierFirst.setCnpj("12345678901234");
-        supplierFirst.setDescription("Testando descricao");
-        supplierFirst.setOpeningTime(LocalTime.of(8, 0));
-        supplierFirst.setClosingTime(LocalTime.of(18, 0));
-        supplierFirst.setAverageDeliveryTime(Duration.ofMinutes(30));
-        supplierFirst.setActive(true);
-        supplierFirst.setAddress(address);
-        supplierFirst.setCity(cityFirst);
-        supplierFirst.setProductItems(null); // ou new ArrayList<>()
-        supplierFirst.setOpen(false);
 
         supplierRepository.save(supplierFirst);
 
-        Supplier supplierSecond = new Supplier();
-
-        // Campos da superclasse User (preencha conforme necessário ou deixe null)
-        supplierSecond.setId(null);
-        supplierSecond.setName("Fornecedor Teste 2");
-        supplierSecond.setEmail("1234567890433");
-        supplierSecond.setPhoneNumber("teste teste"); // parecia que você misturou dados, verifique se é telefone
-        supplierSecond.setCpf(null); // se não tiver CPF
-        supplierSecond.setPassword(null); // se não tiver senha
-        supplierSecond.setUserType(UserTypeEnum.SUPPLIER); // assumindo que é fornecedor
-
-        // Campos específicos do Supplier
-        supplierSecond.setOpeningTime(LocalTime.of(8, 0));
-        supplierSecond.setClosingTime(LocalTime.of(18, 0));
-        supplierSecond.setAverageDeliveryTime(Duration.ofMinutes(30));
-        supplierSecond.setActive(false);
-        supplierSecond.setAddress(address2);
-        supplierSecond.setCity(cityFirst);
-        supplierSecond.setProductItems(null); // ou new ArrayList<>()
-        supplierSecond.setOpen(false);
+        Supplier supplierSecond = getSupplier(
+                "Fornecedor Teste 2",
+                "fornecedor2@gmail",
+                "1234567890333",
+                "12343445333",
+                "senhateste2",
+                "12345678901234",
+                "Testando descricao 2",
+                true,
+                false,
+                address,
+                cityFirst
+        );
 
         supplierRepository.save(supplierSecond);
 
         validId = supplierFirst.getId();
     }
+
+    @NotNull
+    private static Supplier getSupplier(
+            String name,
+            String email,
+            String phoneNumber,
+            String cpf,
+            String password,
+            String cnpj,
+            String description,
+            boolean active,
+            boolean open,
+            Address address,
+            City city
+    ) {
+        Supplier supplier = new Supplier();
+
+        // Campos da superclasse User
+        supplier.setId(null);
+        supplier.setName(name);
+        supplier.setEmail(email);
+        supplier.setPhoneNumber(phoneNumber);
+        supplier.setCpf(cpf);
+        supplier.setPassword(password);
+        supplier.setUserType(UserTypeEnum.SUPPLIER);
+
+        // Campos específicos do Supplier
+        supplier.setCnpj(cnpj);
+        supplier.setDescription(description);
+        supplier.setOpeningTime(LocalTime.of(8, 0));
+        supplier.setClosingTime(LocalTime.of(18, 0));
+        supplier.setAverageDeliveryTime(Duration.ofMinutes(30));
+        supplier.setActive(active);
+        supplier.setAddress(address);
+        supplier.setCity(city);
+        supplier.setProductItems(null);
+        supplier.setOpen(open);
+
+        return supplier;
+    }
+
 
 //    @Test
 //    @DisplayName("Busca todos os fornecedores")
@@ -208,7 +239,7 @@ class SupplierServiceTest {
 
         Address newAddress = new Address(
                 null,
-                "Rua Nova do Teste",
+                "Rua Nova do Test333333e",
                 "casa 123",
                 "999999",
                 "Perto da praça",
@@ -218,17 +249,29 @@ class SupplierServiceTest {
                 null
         );
         addressRepository.save(newAddress);
+        Supplier supplierCreate = getSupplier(
+                "Fornecedor Novo",
+                "fornecedorNovo@gmail",
+                "1234567890333",
+                "12343445333",
+                "senhateste2",
+                "12345678901234",
+                "Testando descricao 2",
+                true,
+                false,
+                newAddress,
+                city
+        );
+//        SupplierCreateDTO dto = new SupplierCreateDTO();
+//        dto.setName("Fornecedor Novo");
+//        dto.setDescription("Fornecedor criado no teste");
+//        dto.setOpeningTime(String.valueOf(LocalTime.of(9, 0)));
+//        dto.setClosingTime(String.valueOf(LocalTime.of(17, 0)));
+//        dto.setCityId(city.getId());
+//        dto.setAddressId(newAddress.getId());
+//        dto.setUserId(newUser.getId());
 
-        SupplierCreateDTO dto = new SupplierCreateDTO();
-        dto.setName("Fornecedor Novo");
-        dto.setDescription("Fornecedor criado no teste");
-        dto.setOpeningTime(String.valueOf(LocalTime.of(9, 0)));
-        dto.setClosingTime(String.valueOf(LocalTime.of(17, 0)));
-        dto.setCityId(city.getId());
-        dto.setAddressId(newAddress.getId());
-        dto.setUserId(newUser.getId());
-
-        SupplierDTO result = supplierService.createSupplier(dto);
+        SupplierDTO result = supplierMapper.toDto(supplierService.createSupplier(supplierCreate));
 
         assertNotNull(result);
         assertEquals("Fornecedor Novo", result.getName());
