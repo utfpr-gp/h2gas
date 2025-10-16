@@ -50,7 +50,7 @@ class SupplierServiceTest {
     @Autowired
     private SupplierRepository supplierRepository;
 
-    private Long validId;
+    private String validId;
 
 
     @BeforeEach
@@ -59,11 +59,9 @@ class SupplierServiceTest {
                 "Pablo Teste",
                 "pablo@gmail.com",
                 "1234545",
-                "123435345",
                 "234234234",
                 "4534534",
-                UserTypeEnum.SUPPLIER,
-                null
+                UserTypeEnum.SUPPLIER
         );
 
         userRepository.save(user);
@@ -74,9 +72,7 @@ class SupplierServiceTest {
                 "12dd34545",
                 "123435345dd",
                 "234234234",
-                "453453334",
-                UserTypeEnum.SUPPLIER,
-                null
+                UserTypeEnum.SUPPLIER
         );
 
         userRepository.save(user2);
@@ -114,40 +110,51 @@ class SupplierServiceTest {
         );
 
         addressRepository.save(address2);
+        Supplier supplierFirst = new Supplier();
 
-        Supplier supplierFirst = new Supplier(
-                null,
-                "Fornecedor Teste",
-                "1234567890",
-                "Testando descição",
-                LocalTime.of(8, 0),
-                LocalTime.of(18, 0),
-                Duration.ofMinutes(30),
-                false,
-                address,
-                cityFirst,
-                user,
-                null,
-                false
-        );
+        // Campos da superclasse User
+        supplierFirst.setId(null); // geralmente deixa null para autogeração
+        supplierFirst.setName("Fornecedor Teste");
+        supplierFirst.setEmail("fornecedor@gmail");
+        supplierFirst.setPhoneNumber("1234567890");
+        supplierFirst.setCpf("12343445");
+        supplierFirst.setPassword("senhateste");
+        supplierFirst.setUserType(UserTypeEnum.SUPPLIER);
+
+        // Campos específicos do Supplier
+        supplierFirst.setCnpj("12345678901234");
+        supplierFirst.setDescription("Testando descricao");
+        supplierFirst.setOpeningTime(LocalTime.of(8, 0));
+        supplierFirst.setClosingTime(LocalTime.of(18, 0));
+        supplierFirst.setAverageDeliveryTime(Duration.ofMinutes(30));
+        supplierFirst.setActive(true);
+        supplierFirst.setAddress(address);
+        supplierFirst.setCity(cityFirst);
+        supplierFirst.setProductItems(null); // ou new ArrayList<>()
+        supplierFirst.setOpen(false);
 
         supplierRepository.save(supplierFirst);
 
-        Supplier supplierSecond = new Supplier(
-                null,
-                "Fornecedor Teste 2",
-                "1234567890433",
-                "teste teste",
-                LocalTime.of(8, 0),
-                LocalTime.of(18, 0),
-                Duration.ofMinutes(30),
-                false,
-                address2,
-                cityFirst,
-                user2,
-                null,
-                false
-        );
+        Supplier supplierSecond = new Supplier();
+
+        // Campos da superclasse User (preencha conforme necessário ou deixe null)
+        supplierSecond.setId(null);
+        supplierSecond.setName("Fornecedor Teste 2");
+        supplierSecond.setEmail("1234567890433");
+        supplierSecond.setPhoneNumber("teste teste"); // parecia que você misturou dados, verifique se é telefone
+        supplierSecond.setCpf(null); // se não tiver CPF
+        supplierSecond.setPassword(null); // se não tiver senha
+        supplierSecond.setUserType(UserTypeEnum.SUPPLIER); // assumindo que é fornecedor
+
+        // Campos específicos do Supplier
+        supplierSecond.setOpeningTime(LocalTime.of(8, 0));
+        supplierSecond.setClosingTime(LocalTime.of(18, 0));
+        supplierSecond.setAverageDeliveryTime(Duration.ofMinutes(30));
+        supplierSecond.setActive(false);
+        supplierSecond.setAddress(address2);
+        supplierSecond.setCity(cityFirst);
+        supplierSecond.setProductItems(null); // ou new ArrayList<>()
+        supplierSecond.setOpen(false);
 
         supplierRepository.save(supplierSecond);
 
@@ -175,7 +182,7 @@ class SupplierServiceTest {
     @Test
     @DisplayName("Retorna erro ao informa id invalido")
     void findByIdError() {
-        Long idInvalid = 400L;
+        String idInvalid = "7fb34e6f-6c77-453f-8915-b814483f65bd";
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             supplierService.findById(idInvalid);
         });
@@ -194,10 +201,8 @@ class SupplierServiceTest {
                 "usernovo@gmail.com",
                 "senha123",
                 "123456789",
-                "987654321",
                 "555666777",
-                UserTypeEnum.SUPPLIER,
-                null
+                UserTypeEnum.SUPPLIER
         );
         userRepository.save(newUser);
 

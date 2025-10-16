@@ -102,7 +102,8 @@ class AuthenticationControllerTest {
                 "12345678901",
                 "12345678000199",
                 "123456",
-                UserTypeEnum.CUSTOMER
+                UserTypeEnum.CUSTOMER,
+                null
         );
 
         mockMvc.perform(post("/api/auth/register")
@@ -120,7 +121,8 @@ class AuthenticationControllerTest {
                 "12345678901",
                 "12345678000199",
                 "123456",
-                UserTypeEnum.CUSTOMER
+                UserTypeEnum.CUSTOMER,
+                null
         );
 
 //        when(userRepository.findByEmail("teste@email.com"))

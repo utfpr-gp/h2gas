@@ -61,7 +61,7 @@ class ProductItemServiceTest {
     @Autowired
     private ProductItemService productItemService;
 
-    private Long validIdSupplier;
+    private String validIdSupplier;
 
     private Long validIdItemProduct;
 
@@ -184,32 +184,6 @@ class ProductItemServiceTest {
     }
 
     Supplier createSupplierForTest(Integer whatsReturnSupplier) {
-        User user = new User(null,
-                "Pablo Teste",
-                "pablo@gmail.com",
-                "1234545",
-                "123435345",
-                "234234234",
-                "4534534",
-                UserTypeEnum.SUPPLIER,
-                null
-        );
-
-        userRepository.save(user);
-
-        User user2 = new User(null,
-                "Teste novo",
-                "pablodddd@gmail.com",
-                "12dd34545",
-                "123435345dd",
-                "234234234",
-                "453453334",
-                UserTypeEnum.CUSTOMER,
-                null
-        );
-
-        userRepository.save(user2);
-
         City cityFirst = new City(
                 null,
                 "Curitiba",
@@ -244,46 +218,57 @@ class ProductItemServiceTest {
 
         addressRepository.save(address2);
 
-        Supplier supplier = new Supplier(
-                null,
-                "Fornecedor Teste",
-                "descricao teste",
-                "1234567890",
-                LocalTime.of(8, 0),
-                LocalTime.of(18, 0),
-                Duration.ofMinutes(30),
-                false,
-                address,
-                cityFirst,
-                user,
-                null,
-                false
-        );
+        Supplier supplierFirst = new Supplier();
 
-        supplierRepository.save(supplier);
+        // Campos da superclasse User
+        supplierFirst.setId(null); // geralmente deixa null para autogeração
+        supplierFirst.setName("Fornecedor Teste");
+        supplierFirst.setEmail("fornecedor@gmail");
+        supplierFirst.setPhoneNumber("1234567890");
+        supplierFirst.setCpf("12343445");
+        supplierFirst.setPassword("senhateste");
+        supplierFirst.setUserType(UserTypeEnum.SUPPLIER);
 
-        validIdSupplier = supplier.getId();
+        // Campos específicos do Supplier
+        supplierFirst.setCnpj("12345678901234");
+        supplierFirst.setDescription("Testando descricao");
+        supplierFirst.setOpeningTime(LocalTime.of(8, 0));
+        supplierFirst.setClosingTime(LocalTime.of(18, 0));
+        supplierFirst.setAverageDeliveryTime(Duration.ofMinutes(30));
+        supplierFirst.setActive(true);
+        supplierFirst.setAddress(address);
+        supplierFirst.setCity(cityFirst);
+        supplierFirst.setProductItems(null); // ou new ArrayList<>()
+        supplierFirst.setOpen(false);
 
-        Supplier supplierSecond = new Supplier(
-                null,
-                "Fornecedor Teste 2",
-                "1234567890433",
-                "descricao teste2",
-                LocalTime.of(8, 0),
-                LocalTime.of(18, 0),
-                Duration.ofMinutes(30),
-                false,
-                address2,
-                cityFirst,
-                user2,
-                null,
-                false
-        );
+        supplierRepository.save(supplierFirst);
+
+        validIdSupplier = supplierFirst.getId();
+
+        Supplier supplierSecond = new Supplier();
+        // Campos da superclasse User (preencha conforme necessário ou deixe null)
+        supplierSecond.setId(null);
+        supplierSecond.setName("Fornecedor Teste 2");
+        supplierSecond.setEmail("1234567890433");
+        supplierSecond.setPhoneNumber("teste teste"); // parecia que você misturou dados, verifique se é telefone
+        supplierSecond.setCpf(null); // se não tiver CPF
+        supplierSecond.setPassword(null); // se não tiver senha
+        supplierSecond.setUserType(UserTypeEnum.SUPPLIER); // assumindo que é fornecedor
+
+        // Campos específicos do Supplier
+        supplierSecond.setOpeningTime(LocalTime.of(8, 0));
+        supplierSecond.setClosingTime(LocalTime.of(18, 0));
+        supplierSecond.setAverageDeliveryTime(Duration.ofMinutes(30));
+        supplierSecond.setActive(false);
+        supplierSecond.setAddress(address2);
+        supplierSecond.setCity(cityFirst);
+        supplierSecond.setProductItems(null); // ou new ArrayList<>()
+        supplierSecond.setOpen(false);
 
         supplierRepository.save(supplierSecond);
 
         if (whatsReturnSupplier == 1) {
-            return supplier;
+            return supplierFirst;
         } else {
             return supplierSecond;
         }
