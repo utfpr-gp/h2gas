@@ -11,6 +11,7 @@ import { NgxMaskDirective } from 'ngx-mask';
 import { AddressService } from '../../services/address.service';
 import { City } from '../../models/city';
 import { Address } from '../../models/address';
+import { CityService } from '../../services/city.service';
 
 @Component({
   selector: 'app-register-user',
@@ -34,6 +35,7 @@ export class RegisterUserComponent implements OnInit {
 
   cidadeEncontrada: any;
   cities?: City[];
+  isLoadingCep = false;
 
   @Input()
   userType?: string;
@@ -48,6 +50,7 @@ export class RegisterUserComponent implements OnInit {
     private toastr: ToastrService,
     private router: Router,
     private addressService: AddressService,
+    private cityService: CityService,
   ) {
     this.registerForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -66,12 +69,16 @@ export class RegisterUserComponent implements OnInit {
       neighborhood: ['', Validators.required],
       zipCode: ['', Validators.required],
       cityId: [null, [Validators.required]],
-      userId: [null],
     })
   }
   
   ngOnInit(): void {
     this.user = new User('', '','', '', '', '', '', '');
+    this.address = undefined;
+    this.getCities();
+
+    console.log(this.address);
+    
   }
 
   modalAberta = false;
@@ -87,12 +94,24 @@ export class RegisterUserComponent implements OnInit {
       this.toastr.warning('Conferir informações!!')
       return; 
     }
+    debugger
+    if (!this.address) {
+      this.toastr.warning('Por favor adicione seu endereço!!')
+      return; 
+    }
 
+    debugger
     if (this.registerForm.get('password')?.value == this.confirmPassword) {
       this.registerForm.get('userType')?.setValue(this.userType);
 
       this.user = this.registerForm?.value
-      this.userService.create(this.user!!).subscribe({
+      let objRegister = {
+        ...this.user,
+        "address": this.address
+      }
+      console.log(objRegister);
+      
+      this.userService.createUser(objRegister).subscribe({
         next: (response) => {
           console.log('Usuário criado com sucesso!', response);
           this.toastr.success('Usuário criado com sucesso!');
@@ -107,6 +126,7 @@ export class RegisterUserComponent implements OnInit {
   }
 
   buscarCep() {
+    this.isLoadingCep = true;
     this.addressService.buscaViaCep(this.registerFormAddress.get('zipCode')?.value).subscribe({
       next: (response: any) => {
         this.cidadeEncontrada = this.cities?.some(c => c.name!.toLowerCase() === response.localidade.toLowerCase());
@@ -120,19 +140,23 @@ export class RegisterUserComponent implements OnInit {
         console.log("cidades aqui");
         
         console.log(this.cities);
-        
+        this.isLoadingCep = false;
         // this.registerFormAddress.get('cityName')?.setValue(response.localidade)
         this.registerFormAddress.get('neighborhood')?.setValue(response.bairro)
 
       }, 
       error: (err) => {
         console.log(err);
+        this.isLoadingCep = false;
         this.toastr.error(`Erro ao buscar cep: ${err}`)
       }
     })
   }
 
+  addresSave: boolean = false;
+
   salvarAddress() {
+    debugger
     if (!this.cidadeEncontrada) {
       this.toastr.warning(`Infelizmente ainda não atendemos sua cidade.`);
       return;
@@ -141,25 +165,42 @@ export class RegisterUserComponent implements OnInit {
     if (this.registerFormAddress.valid && !this.address) {
       // this.registerFormAddress.get('userId')?.setValue(this.userLogado?.id)
       this.address = this.registerFormAddress.value;
+      this.closeAddressModal();
+      this.addresSave = true;
+
       debugger
-      this.addressService.create(this.address!).subscribe({
-        next: (response) => {
-          console.log(response);
-          this.toastr.success('Seu endereço foi salvo com sucesso');
-          this.closeAddressModal();
-        }, 
-        error: (err) => {
-          console.log(err);
-          this.toastr.error(`Erro ao salvar endereço: ${err.error.message}`);
-        },
-      })  
+      // this.addressService.create(this.address!).subscribe({
+      //   next: (response) => {
+      //     console.log(response);
+      //     this.toastr.success('Seu endereço foi salvo com sucesso');
+      //     this.closeAddressModal();
+      //   }, 
+      //   error: (err) => {
+      //     console.log(err);
+      //     this.toastr.error(`Erro ao salvar endereço: ${err.error.message}`);
+      //   },
+      // })  
     }
+  }
+
+  getCities() {
+    this.cityService.findAll().subscribe({
+      next: (response) => {
+        console.log('Buscado com sucesso', response);
+        this.cities = response;
+        console.log(response);
+        
+      },
+      error: (err) => {
+        console.error('Erro ao buscar:', err.error.message);
+      }
+    })
   }
 
   showAddressModal = false;
 
   closeAddressModal() {
-    this.showAddressModal = false;
+    this.modalAberta = false;
   }
 
 

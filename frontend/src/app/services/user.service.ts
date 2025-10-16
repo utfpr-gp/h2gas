@@ -3,6 +3,7 @@ import { AbstractService } from './abstract.service';
 import { HttpClient } from '@angular/common/http';
 import { User } from '../models/user';
 import { environment } from '../../environments/environment';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -25,5 +26,9 @@ export class UserService extends AbstractService<User> {
 
   updateUser(id: string, data: User) {
     return this.http.put(`${environment.apiUrl}/users/${id}`, data);
+  }
+
+  createUser(user: any): Observable<User> {
+    return this.http.post<User>(`${this.baseUrl}`, user);
   }
 }

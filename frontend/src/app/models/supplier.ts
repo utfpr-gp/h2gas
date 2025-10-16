@@ -17,6 +17,8 @@ export class Supplier {
     addressStreetName?: string;
     addressNumber?: string;
     open?: boolean;
+    email?: string;
+    cnpj?: string;
 
     constructor(
         id?: number,
