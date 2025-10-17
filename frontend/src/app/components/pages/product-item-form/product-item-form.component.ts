@@ -51,6 +51,7 @@ export class ProductItemFormComponent implements OnInit {
       brand: ['', [Validators.required]],
       price: [0.0, [Validators.required]],
       stockQuantity: [0, [Validators.required]],
+      description: ['', [Validators.required]],
       categoryProductId: [null, [Validators.required]]
     })
   }
@@ -73,6 +74,7 @@ export class ProductItemFormComponent implements OnInit {
         console.log('Produto buscado com sucesso!', response);
         this.formProductItem.patchValue(response);
         this.toastr.success('Produto buscado com sucesso!');
+        this.selectedImage = response.imageUrl!
       },
       error: (err) => {
         console.error('Erro ao buscar:', err.error.message);
@@ -81,8 +83,27 @@ export class ProductItemFormComponent implements OnInit {
     })
   }
 
-  onFileSelected(event: any) {
-    this.selectedFile = event.target.files[0];
+  selectedImage: string | ArrayBuffer | null = null;
+  file: any;
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+
+    this.file = input.files[0];
+
+    // Para mostrar a imagem na tela
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.selectedImage = reader.result;
+    };
+    reader.readAsDataURL(this.file);
+
+    console.log(this.file);
+  }
+
+  removeImage() {
+    this.selectedImage = null;
   }
 
   updateProduct() {
@@ -131,7 +152,7 @@ export class ProductItemFormComponent implements OnInit {
       this.productItemSave.supplierId = this.user?.supplierId ?? '';
     }
     
-    this.productItemService.create(this.productItemSave!!).subscribe({
+    this.productItemService.createWithFile(this.productItemSave!!, this.file).subscribe({
       next: (value) => {
         console.log("salvo com sucesso!!");
         this.toastr.success("Produto salvo com sucesso!!");

@@ -173,7 +173,7 @@ export class ReceivedOrdersComponent implements OnInit {
     // aqui você chama o serviço para atualizar no backend
   }
 
-  navigateEdit(id?: number) {
+  navigateEdit(id?: string) {
     this.router.navigate(['/distributor/edit', id])
   }
 

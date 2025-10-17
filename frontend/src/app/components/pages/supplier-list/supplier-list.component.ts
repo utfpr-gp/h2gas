@@ -86,7 +86,7 @@ export class SupplierListComponent implements OnInit {
     });
   }
 
-  navigate(id?: number) {
+  navigate(id?: string) {
     this.router.navigate(['/fornecedores', id, 'produtos']);
   }
 

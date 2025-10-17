@@ -98,15 +98,6 @@ export class ProductItemComponent implements OnInit {
         this.toastr.error(`Erro ao buscar produtos: ${err.error.message}`)
       },
     })
-    // try {
-    //   debugger
-    //   this.itemProducts = await firstValueFrom(this.productItemService.findAll());
-    //   console.log(this.itemProducts);
-    //   this.toastr.success("Buscado com sucesso os produtos!!");
-    // } catch (err: any) {
-    //   this.toastr.error(`Erro ao buscar os produtos!! ${err.error?.message}`);
-    //   console.error(err);
-    // }
   }
 
   navigateEdit(id?: number) {

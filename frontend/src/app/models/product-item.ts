@@ -10,5 +10,7 @@ export class ProductItem {
     stockQuantity?: number;
     updatedAt?: Date;
     quantitySelect?: number;
-    supllierName?: string
+    supllierName?: string;
+    imageUrl?: string;
+    description?: string;
 }
