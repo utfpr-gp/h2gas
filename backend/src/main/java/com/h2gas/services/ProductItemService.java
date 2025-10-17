@@ -51,7 +51,7 @@ public class ProductItemService {
                 .map(productItemMapper::toDto);
     }
 
-    public Page<ProductItemDTO> findProductsBySupplier(Long supplierId, Pageable pageable) {
+    public Page<ProductItemDTO> findProductsBySupplier(String supplierId, Pageable pageable) {
         return productItemRepository.findBySupplierId(supplierId, pageable)
                 .map(productItemMapper::toDto);
     }

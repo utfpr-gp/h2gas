@@ -26,6 +26,9 @@ public class SupplierDTO {
     private boolean open;
     private String cityName;
     private Long cityId;
+    private String email;
+    private String cnpj;
+    private List<ProductItemDTO> products;
 //    private UserDto user;
 
     //    address relacionamento

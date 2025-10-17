@@ -69,7 +69,7 @@ public class ProductItemController {
     @GetMapping("/by-supplier/{supplierId}")
     @ResponseBody
     public ResponseEntity<PageResponse<ProductItemDTO>> getProductBySupplier(
-            @PathVariable Long supplierId,
+            @PathVariable String supplierId,
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(value = "size", required = false) Integer size
     ) {
