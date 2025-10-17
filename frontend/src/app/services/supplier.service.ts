@@ -16,7 +16,7 @@ export class SupplierService extends AbstractService<Supplier> {
     super(http);
   }
 
-  activeSuppliers(data: any, id: number) {
+  activeSuppliers(data: any, id: string) {
     return this.http.patch(`${this.baseUrl}/${id}/update-active`, data);
   }
 
@@ -24,7 +24,7 @@ export class SupplierService extends AbstractService<Supplier> {
     return this.http.get(`${this.baseUrl}/by-user/${userId}`);
   }
 
-  openDistribuidor(data: any, id: number) {
+  openDistribuidor(data: any, id: string) {
     return this.http.patch(`${this.baseUrl}/${id}/status`, data);
   }
 
@@ -36,11 +36,11 @@ export class SupplierService extends AbstractService<Supplier> {
     return this.http.get<PaginatedResponse<Supplier>>(`${this.baseUrl}/search?name=${name}`);
   }
 
-  getActiveSupplier(supplierId: number): Observable<boolean> {
+  getActiveSupplier(supplierId: string): Observable<boolean> {
     return this.http.get<boolean>(`${this.baseUrl}/${supplierId}/active`);
   }
 
-  getOpen(supplierId: number): Observable<boolean> {
+  getOpen(supplierId: string): Observable<boolean> {
     return this.http.get<boolean>(`${this.baseUrl}/${supplierId}/open`);
   }
   

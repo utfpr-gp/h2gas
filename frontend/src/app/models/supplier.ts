@@ -1,7 +1,7 @@
 import { User } from "./user";
 
 export class Supplier {
-    id?: number;
+    id?: string;
     name?: string;
     phone?: string;
     description?: string;
@@ -21,7 +21,7 @@ export class Supplier {
     cnpj?: string;
 
     constructor(
-        id?: number,
+        id?: string,
         name?: string,
         phone?: string,
         description?: string,

@@ -6,7 +6,7 @@ export class ProductItem {
     price?: number;
     category?: string;
     type?: string;
-    supplierId: number = 0;
+    supplierId: string = '';
     stockQuantity?: number;
     updatedAt?: Date;
     quantitySelect?: number;

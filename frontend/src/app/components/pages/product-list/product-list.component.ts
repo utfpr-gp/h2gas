@@ -26,20 +26,20 @@ export class ProductListComponent implements OnInit {
   ) {}
 
   @ViewChild('productModal') productModal!: ElementRef<HTMLDialogElement>;
-  idSupplier?: number;
+  idSupplier?: string;
   products?: ProductItem[];
   productSelect?: ProductItem = new ProductItem();
   quantity: number = 1;
   cartProduct?: ProductItem[] = [];
 
   ngOnInit(): void {
-    this.idSupplier = parseInt(this.routeActive.snapshot.paramMap.get('id') || '', 10);
+    this.idSupplier = this.routeActive.snapshot.paramMap.get('id') ?? '';
     console.log(this.idSupplier);
     this.getProducts(this.idSupplier);
     // localStorage.setItem('cart-product', JSON.stringify(null))
   }
 
-  getProducts(supplierId: number) {
+  getProducts(supplierId: string) {
     this.productItemService.getProductsBySupllierId(supplierId).subscribe({
       next: (response) => {
         console.log('Buscado com sucesso', response);

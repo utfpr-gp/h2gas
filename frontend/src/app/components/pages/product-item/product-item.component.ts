@@ -88,8 +88,9 @@ export class ProductItemComponent implements OnInit {
         console.log('Buscado com sucesso', response);
         this.itemProducts = response.data
         console.log(this.itemProducts);
-        
-        this.toastr.success('Produtos encontrado com sucesso!');
+        if (this.itemProducts.length > 0) {
+          this.toastr.success('Produtos buscado com sucesso!');          
+        }
       },
       error: (err) => {
         debugger
