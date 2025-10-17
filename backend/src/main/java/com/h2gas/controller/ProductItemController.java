@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -38,8 +39,11 @@ public class ProductItemController {
     @PostMapping
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER"})
-    public ResponseEntity<ProductItemDTO> createCategoryProduct(@RequestBody CreateProductItemDTO productItemDTO) {
-        ProductItemDTO productItemCreate = productItemService.createProductItem(productItemDTO);
+    public ResponseEntity<ProductItemDTO> createCategoryProduct(
+            @RequestBody CreateProductItemDTO productItemDTO,
+            @RequestParam("file") MultipartFile file
+    ) {
+        ProductItemDTO productItemCreate = productItemService.createProductItem(productItemDTO, file);
         return ResponseEntity.ok(productItemCreate);
     }
 

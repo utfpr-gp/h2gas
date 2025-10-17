@@ -1,6 +1,5 @@
 package com.h2gas.controller;
 
-import com.cloudinary.http44.api.Response;
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.dto.CityDTO;
 import com.h2gas.model.entity.City;
