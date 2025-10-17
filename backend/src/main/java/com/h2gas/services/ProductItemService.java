@@ -115,6 +115,7 @@ public class ProductItemService {
 
         productItemUpdate.setBrand(productItemDto.getBrand());
         productItemUpdate.setPrice(productItemDto.getPrice());
+        productItemUpdate.setDescription(productItemDto.getDescription());
         productItemUpdate.setStockQuantity(productItemDto.getStockQuantity());
         productItemRepository.save(productItemUpdate);
 

@@ -17,4 +17,5 @@ public class CreateProductItemDTO {
     private String supplierId;
     private String imageUrl;
     private Integer stockQuantity;
+    private String description;
 }

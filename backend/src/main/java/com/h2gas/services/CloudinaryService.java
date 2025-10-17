@@ -15,12 +15,6 @@ public class CloudinaryService {
     private Cloudinary cloudinary;
 
     public Map upload(MultipartFile file) throws IOException {
-        Map responseCloudNary = cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
-        String teste = saveAndReturnUrl(responseCloudNary.get("url").toString());
         return cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
-    }
-
-    private String saveAndReturnUrl(String url) {
-
     }
 }

@@ -40,12 +40,19 @@ public class ProductItemController {
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER"})
     public ResponseEntity<ProductItemDTO> createCategoryProduct(
-            @RequestBody CreateProductItemDTO productItemDTO,
-            @RequestParam("file") MultipartFile file
+            @RequestPart("product") CreateProductItemDTO productItemDTO,
+            @RequestPart("file") MultipartFile file
     ) {
         ProductItemDTO productItemCreate = productItemService.createProductItem(productItemDTO, file);
         return ResponseEntity.ok(productItemCreate);
     }
+//    public ResponseEntity<ProductItemDTO> createCategoryProduct(
+//            @RequestBody CreateProductItemDTO productItemDTO,
+//            @RequestParam("file") MultipartFile file
+//    ) {
+//        ProductItemDTO productItemCreate = productItemService.createProductItem(productItemDTO, file);
+//        return ResponseEntity.ok(productItemCreate);
+//    }
 
     @GetMapping("/{id}")
     @ResponseBody

@@ -23,4 +23,5 @@ public class ProductItemDTO {
     private Integer stockQuantity;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String description;
 }
