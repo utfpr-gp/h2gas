@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import { SupplierService } from '../../../services/supplier.service';
 import { Supplier } from '../../../models/supplier';
 import { ToastrService } from 'ngx-toastr';
@@ -7,6 +7,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ProductItemService } from '../../../services/product-item.service';
 import { ProductItem } from '../../../models/product-item';
+import { CartService } from '../../../services/cart.service';
 
 @Component({
   selector: 'app-supplier-list',
@@ -25,6 +26,7 @@ export class SupplierListComponent implements OnInit {
     private toastr: ToastrService,
     private router: Router,
     private fb: FormBuilder,
+    private cartService: CartService,
     private productItemService: ProductItemService,
   ) {
     this.formSearch = this.fb.group({
@@ -40,7 +42,10 @@ export class SupplierListComponent implements OnInit {
   suppliers?: Supplier[];
   formSearch!: FormGroup;
   products: ProductItem[] = [];
-
+  productSelect?: ProductItem = new ProductItem();
+  @ViewChild('productModal') productModal!: ElementRef<HTMLDialogElement>;
+  quantity: number = 1;
+  cartProduct?: ProductItem[] = [];
 
 
   getSuppliers() {
@@ -117,5 +122,35 @@ export class SupplierListComponent implements OnInit {
     });
   }
 
+  openModal(product: any) {
+    this.productSelect = product;
+    this.productModal.nativeElement.showModal();
+  }
+
+  closeModal() {
+    this.productModal.nativeElement.close();
+  }
+
+  confirmRequest() {
+    if (this.quantity < 1) {
+      this.toastr.warning("Selecionar pelo menos 1 produto!!!")
+      this.closeModal();
+      return
+    }
+
+    let cart: any[] = JSON.parse(localStorage.getItem('cart-product') || '[]');
+    let existing = cart.find(p => p.id === this.productSelect!!.id);
+
+    if (existing) {
+      existing.quantitySelect += 1;
+    } else {
+      cart.push({ ...this.productSelect, quantitySelect: this.quantity });
+    }
+
+    console.log(this.cartProduct);
+    this.cartService.setCart(cart);
+
+    this.closeModal();
+  }
 
 }

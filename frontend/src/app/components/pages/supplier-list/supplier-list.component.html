@@ -106,7 +106,7 @@
                     <div class="bg-gray-50 p-4 flex items-center justify-center h-48 overflow-hidden">
                         <img alt="{{product.brand}} {{product.category}}" 
                              class="object-contain h-full w-auto transition-transform duration-500 ease-in-out hover:scale-110"
-                             [src]="'https://nvconstrutora.com.br/wp-content/uploads/2023/05/em_breve.jpg'" />
+                             [src]="product.imageUrl" />
                     </div>
                     
                     <!-- Conteúdo do Card -->
@@ -130,7 +130,7 @@
           
                         <!-- Descrição -->
                         <p class="text-gray-600 text-sm mb-4 flex-grow">
-                            {{'Descrição em breve'}}
+                            {{product.description}}
                         </p>
           
                         <!-- Preço e Botão -->
@@ -139,16 +139,30 @@
                                 <p class="text-2xl font-bold text-gray-900">{{product.price | currency:'BRL':'symbol':'1.2-2'}}</p>
                                 <p class="text-sm text-gray-500 text-center sm:text-left">por produto</p>
                             </div>
-                            <!-- <button (click)="openModal(product)"
+                            <button (click)="openModal(product)"
                                 class="w-full sm:w-auto cursor-pointer bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-all duration-300 font-semibold transform hover:scale-105">
                                 Solicitar
-                            </button> -->
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
-          </div>
-          
+        </div>
+          <!-- Modal -->
+    <dialog #productModal class="modal">
+        <div class="modal-box">
+            <h3 class="font-bold text-lg">Solicitar Produto</h3>
+            <p class="py-2">Selecione a quantidade desejada para {{productSelect!!.type}} {{productSelect!!.brand}} {{productSelect!!.category}}</p>
+
+            <input type="number" min="1" [(ngModel)]="quantity"  class="input input-bordered w-full"
+                placeholder="Quantidade" />
+
+            <div class="modal-action">
+                <button class="btn" (click)="closeModal()">Cancelar</button>
+                <button class="btn btn-primary" (click)="confirmRequest()">Confirmar</button>
+            </div>
+        </div>
+    </dialog>
     </div>
 </body>
 
