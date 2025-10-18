@@ -177,6 +177,7 @@ class ProductItemServiceTest {
                 null,
                 "20L",
                 productTypeAgua,
+                null,
                 null
         );
 

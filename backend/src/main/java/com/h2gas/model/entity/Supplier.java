@@ -9,7 +9,9 @@ import lombok.Setter;
 
 import java.time.Duration;
 import java.time.LocalTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "suppliers")
@@ -57,5 +59,8 @@ public class Supplier extends User{
     private List<ProductItem> productItems;
 
     private boolean open = false;
+
+    @OneToMany(mappedBy = "supplier", cascade = CascadeType.ALL)
+    private Set<CategoryProduct> categoryProducts = new HashSet<>();
 
 }

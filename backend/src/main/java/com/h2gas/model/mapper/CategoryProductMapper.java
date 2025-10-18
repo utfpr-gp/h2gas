@@ -18,6 +18,10 @@ public class CategoryProductMapper {
             categoryProductDTO.setProductTypeId(data.getProductType().getId());
         }
 
+        if (data.getSupplier() != null) {
+            categoryProductDTO.setSupplierId(data.getSupplier().getId());
+        }
+
         return categoryProductDTO;
     }
 

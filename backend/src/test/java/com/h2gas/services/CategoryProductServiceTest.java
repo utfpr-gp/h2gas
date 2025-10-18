@@ -70,6 +70,7 @@ class CategoryProductServiceTest {
                 null,
                 "20L",
                 productTypeAgua,
+                null,
                 null
         );
 
@@ -79,6 +80,7 @@ class CategoryProductServiceTest {
                 null,
                 "P13",
                 productTypeGas,
+                null,
                 null
         );
 
@@ -126,7 +128,8 @@ class CategoryProductServiceTest {
             null,
             "Teste categoria criada",
             null,
-            typeIdAux
+            typeIdAux,
+            null
         );
 
         CategoryProductDTO categoriaCriada = categoryProductService.createCategory(novaCategoria);
@@ -167,7 +170,8 @@ class CategoryProductServiceTest {
                 null,
                 "Teste update",
                 null,
-                typeIdAux
+                typeIdAux,
+                null
         );
         CategoryProductDTO result = categoryProductService.update(validCategotyIdSecond, categoryProductDTO);
         assertEquals("Teste update", result.getName());
