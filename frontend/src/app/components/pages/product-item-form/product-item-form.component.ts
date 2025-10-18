@@ -32,6 +32,8 @@ export class ProductItemFormComponent implements OnInit {
   selectedFile: File | null = null;
 
   user?: User;
+  isLoading = false;
+
 
   productItemSave?: ProductItem;
   isEdit: boolean = false;
@@ -117,11 +119,13 @@ export class ProductItemFormComponent implements OnInit {
     this.productItemService.update(this.idEdit, this.productItemSave!).subscribe({
       next: (response) => {
         console.log("Atulizado com sucesso!!");
+        this.isLoading = false;
         this.toastr.success("Produto atualizado com sucesso!!");
         this.navigateRoute('/product-items')
       },
       error: (err) => {
         console.error("Erros ao atualizar!!");
+        this.isLoading = false;
         this.toastr.error("Erros ao atualizar produtos!!");
       },
     }) 
@@ -141,6 +145,7 @@ export class ProductItemFormComponent implements OnInit {
   }
 
   saveItemProduct() {
+    this.isLoading = true;
     if (!this.formProductItem.valid) {
       this.toastr.warning("Confira os campos vazios")
       return;
@@ -155,11 +160,13 @@ export class ProductItemFormComponent implements OnInit {
     this.productItemService.createWithFile(this.productItemSave!!, this.file).subscribe({
       next: (value) => {
         console.log("salvo com sucesso!!");
+        this.isLoading = false;
         this.toastr.success("Produto salvo com sucesso!!");
         this.navigateRoute('/product-items')
       },
       error: (err) => {
         console.error("Erros ao salvar!!");
+        this.isLoading = false;
         this.toastr.error("Erros ao salvar produtos!!");
       },
     })
