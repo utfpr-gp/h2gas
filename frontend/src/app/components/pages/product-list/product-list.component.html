@@ -73,6 +73,12 @@
                 </div>
             </div>
         </div>
+
+        <app-pagination
+        [currentPage]="currentPageProducts"
+        [totalPages]="totalPagesProducts"
+        (pageChange)="getProducts(idSupplier!, $event)">
+        </app-pagination>
     </div>
 
     <!-- Modal -->

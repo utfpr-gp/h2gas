@@ -16,9 +16,16 @@ export class ProductItemService extends AbstractService<ProductItem> {
     super(http);
   }
 
-  getProductsBySupllierId(supplierId: string): Observable<PaginatedResponse<ProductItem>> {
-    return this.http.get<PaginatedResponse<ProductItem>>(`${this.baseUrl}/by-supplier/${supplierId}`);
-  }  
+  // getProductsBySupllierId(supplierId: string): Observable<PaginatedResponse<ProductItem>> {
+  //   return this.http.get<PaginatedResponse<ProductItem>>(`${this.baseUrl}/by-supplier/${supplierId}`);
+  // }  
+
+  getProductsBySupllierId(supplierId: string, page: number = 0, size: number = 10): Observable<PaginatedResponse<ProductItem>> {
+    return this.http.get<PaginatedResponse<ProductItem>>(
+      `${this.baseUrl}/by-supplier/${supplierId}?page=${page}&size=${size}`
+    );
+  }
+  
 
   getProductsFromActiveSuppliers(page: number = 0, size: number = 20): Observable<PaginatedResponse<ProductItem>> {
     const params = { page: page.toString(), size: size.toString() };

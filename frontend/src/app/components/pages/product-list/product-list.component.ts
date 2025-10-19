@@ -6,12 +6,15 @@ import { ToastrService } from 'ngx-toastr';
 import { ProductItemService } from '../../../services/product-item.service';
 import { ProductItem } from '../../../models/product-item';
 import { CartService } from '../../../services/cart.service';
+import { PaginatedResponse } from '../../../models/paginated-response';
+import { PaginationComponent } from '../../pagination/pagination.component';
 
 @Component({
   selector: 'app-product-list',
   imports: [
     FormsModule,
-    CommonModule
+    CommonModule,
+    PaginationComponent
   ],
   templateUrl: './product-list.component.html',
   styleUrl: './product-list.component.css'
@@ -26,34 +29,45 @@ export class ProductListComponent implements OnInit {
   ) {}
 
   @ViewChild('productModal') productModal!: ElementRef<HTMLDialogElement>;
-  idSupplier?: string;
+  idSupplier?: string = '';
   products?: ProductItem[];
   productSelect?: ProductItem = new ProductItem();
   quantity: number = 1;
   cartProduct?: ProductItem[] = [];
 
   ngOnInit(): void {
-    this.idSupplier = this.routeActive.snapshot.paramMap.get('id') ?? '';
+    const idParam = this.routeActive.snapshot.paramMap.get('id');
+    if (!idParam) {
+      console.error('ID do fornecedor não encontrado!');
+      return;
+    }
+    this.idSupplier = idParam;
     console.log(this.idSupplier);
     this.getProducts(this.idSupplier);
     // localStorage.setItem('cart-product', JSON.stringify(null))
   }
 
-  getProducts(supplierId: string) {
-    this.productItemService.getProductsBySupllierId(supplierId).subscribe({
-      next: (response) => {
-        console.log('Buscado com sucesso', response);
-        this.products = response.data
-        console.log(this.products);
-        
-        this.toastr.success('Produtos encontrado com sucesso!');
+  currentPageProducts: number = 0;
+  pageSizeProducts: number = 10;
+  totalPagesProducts: number = 0;
+  totalElementsProducts: number = 0;
+
+  getProducts(supplierId: string, page: number = 0) {
+    this.productItemService.getProductsBySupllierId(supplierId, page, this.pageSizeProducts).subscribe({
+      next: (response: PaginatedResponse<ProductItem>) => {
+        this.products = response.data;
+        this.currentPageProducts = response.page;
+        this.pageSizeProducts = response.size;
+        this.totalPagesProducts = response.totalPages;
+        this.totalElementsProducts = response.totalElements;
+  
+        this.toastr.success('Produtos encontrados com sucesso!');
       },
       error: (err) => {
-        debugger
-        console.error('Erro ao buscar:', err.error.message);
-        this.toastr.error(`Erro ao buscar produtos: ${err.error.message}`)
+        console.error('Erro ao buscar:', err.error?.message || err.message);
+        this.toastr.error(`Erro ao buscar produtos: ${err.error?.message || err.message}`);
       },
-    })
+    });
   }
 
   openModal(product: any) {

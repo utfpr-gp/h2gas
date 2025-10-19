@@ -153,48 +153,12 @@
         </div>
 
         <!-- Paginação -->
-        <div class="flex justify-center mt-8 items-center space-x-2 text-sm">
-            <!-- Primeira página -->
-            <button (click)="getSuppliers(0)" 
-                    [disabled]="currentPage === 0"
-                    class="px-3 py-1 rounded hover:bg-gray-300 disabled:opacity-50">
-              «
-            </button>
-          
-            <!-- Anterior -->
-            <button (click)="getSuppliers(currentPage - 1)" 
-                    [disabled]="currentPage === 0"
-                    class="px-3 py-1 rounded hover:bg-gray-300 disabled:opacity-50">
-              ‹
-            </button>
-          
-            <!-- Páginas dinâmicas -->
-            <ng-container *ngFor="let page of getPageNumbers()">
-              <span *ngIf="page === -1" class="px-2">...</span>
-              <button *ngIf="page !== -1"
-                      (click)="getSuppliers(page)"
-                      [class.bg-blue-500]="page === currentPage"
-                      [class.text-white]="page === currentPage"
-                      class="px-3 py-1 rounded hover:bg-gray-300">
-                {{ page + 1 }}
-              </button>
-            </ng-container>
-          
-            <!-- Próximo -->
-            <button (click)="getSuppliers(currentPage + 1)" 
-                    [disabled]="currentPage === totalPages - 1"
-                    class="px-3 py-1 rounded hover:bg-gray-300 disabled:opacity-50">
-              ›
-            </button>
-          
-            <!-- Última página -->
-            <button (click)="getSuppliers(totalPages - 1)" 
-                    [disabled]="currentPage === totalPages - 1"
-                    class="px-3 py-1 rounded hover:bg-gray-300 disabled:opacity-50">
-              »
-            </button>
-          </div>
-          
+        <app-pagination 
+        [currentPage]="currentPage" 
+        [totalPages]="totalPages" 
+        (pageChange)="getSuppliers($event)">
+        </app-pagination>
+
 
 
         <!-- Modal -->

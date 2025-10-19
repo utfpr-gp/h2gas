@@ -9,6 +9,7 @@ import { ProductItemService } from '../../../services/product-item.service';
 import { ProductItem } from '../../../models/product-item';
 import { CartService } from '../../../services/cart.service';
 import { PaginatedResponse } from '../../../models/paginated-response';
+import { PaginationComponent } from '../../pagination/pagination.component';
 
 @Component({
   selector: 'app-supplier-list',
@@ -16,6 +17,7 @@ import { PaginatedResponse } from '../../../models/paginated-response';
     FormsModule,
     CommonModule,
     ReactiveFormsModule,
+    PaginationComponent
   ],
   templateUrl: './supplier-list.component.html',
   styleUrl: './supplier-list.component.css'
@@ -68,35 +70,10 @@ export class SupplierListComponent implements OnInit {
   //     },
   //   })
   // }
-
-  hasNext: boolean = false;
-  hasPrevious: boolean = false;
-
-  getPageNumbers(): number[] {
-    const totalNumbers = 5; // quantas páginas mostrar ao redor da atual
-    const pages: number[] = [];
-  
-    if (this.totalPages <= totalNumbers) {
-      // Mostra todas as páginas se poucas
-      for (let i = 0; i < this.totalPages; i++) pages.push(i);
-    } else {
-      let start = Math.max(0, this.currentPage - 2);
-      let end = Math.min(this.totalPages - 1, this.currentPage + 2);
-  
-      if (start > 0) pages.push(0); // primeira página
-      if (start > 1) pages.push(-1); // elipse inicial
-  
-      for (let i = start; i <= end; i++) pages.push(i);
-  
-      if (end < this.totalPages - 2) pages.push(-1); // elipse final
-      if (end < this.totalPages - 1) pages.push(this.totalPages - 1); // última página
-    }
-  
-    return pages;
-  }
   
 
   getSuppliers(page: number = 0) {
+    debugger
     this.supplierService.getAllSupplierOpenAndActive(page, this.pageSize).subscribe({
       next: (response: PaginatedResponse<Supplier>) => {
         this.suppliers = response.data;
@@ -104,8 +81,6 @@ export class SupplierListComponent implements OnInit {
         this.pageSize = response.size;
         this.totalPages = response.totalPages;
         this.totalElements = response.totalElements;
-        this.hasNext = response.hasNext;
-        this.hasPrevious = response.hasPrevious;
   
         this.toastr.success('Fornecedores buscados com sucesso!');
       },
