@@ -5,6 +5,8 @@ import { ToastrService } from 'ngx-toastr';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { ProductItemService } from '../../../services/product-item.service';
+import { ProductItem } from '../../../models/product-item';
 
 @Component({
   selector: 'app-supplier-list',
@@ -17,12 +19,13 @@ import { Router } from '@angular/router';
   styleUrl: './supplier-list.component.css'
 })
 export class SupplierListComponent implements OnInit {
-  
+
   constructor(
     private supplierService: SupplierService,
     private toastr: ToastrService,
     private router: Router,
-    private fb: FormBuilder, 
+    private fb: FormBuilder,
+    private productItemService: ProductItemService,
   ) {
     this.formSearch = this.fb.group({
       name: ['']
@@ -36,6 +39,7 @@ export class SupplierListComponent implements OnInit {
 
   suppliers?: Supplier[];
   formSearch!: FormGroup;
+  products: ProductItem[] = [];
 
 
 
@@ -55,21 +59,62 @@ export class SupplierListComponent implements OnInit {
     })
   }
 
+  viewMode: 'suppliers' | 'products' = 'suppliers';
+
+  toggleView() {
+    if (this.viewMode === 'suppliers') {
+      this.viewMode = 'products';
+      this.getProducts(); // busca só quando alterna
+    } else {
+      this.viewMode = 'suppliers';
+      this.getSuppliers(); // volta a carregar fornecedores
+    }
+  }
+
+  getProducts() {
+    this.productItemService.getProductsFromActiveSuppliers().subscribe({
+      next: (response) => {
+        this.products = response.data
+        console.log("salve deu boa");
+        
+        console.log(this.products);
+        
+      },
+      error: (err) => {
+        this.toastr.error('Erro ao buscar produtos')
+      }
+    });
+  }
+
   navigate(id?: number) {
     this.router.navigate(['/fornecedores', id, 'produtos']);
   }
 
+  searchDone = false;
+
   buscar() {
-    this.supplierService.searchSuppliers(this.formSearch.get('name')?.value).subscribe({
+    const searchValue = this.formSearch.get('name')?.value?.trim();
+
+    if (!searchValue) {
+      this.searchDone = false;
+      this.getSuppliers()
+      return;
+    }
+
+    this.supplierService.searchSuppliers(searchValue).subscribe({
       next: (response) => {
-        this.suppliers = response.data
+        this.suppliers = response.data;
+  
+        this.searchDone = this.suppliers && this.suppliers.length > 0;
+  
         this.toastr.success('Fornecedores buscados com sucesso!');
       },
       error: (err) => {
         console.error('Erro ao buscar:', err.error.message);
-        this.toastr.error(`Erro ao buscar fornecedores: ${err.error.message}`)
+        this.toastr.error(`Erro ao buscar fornecedores: ${err.error.message}`);
+        this.searchDone = false;
       },
-    })
+    });
   }
 
 

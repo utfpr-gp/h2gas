@@ -6,10 +6,12 @@ import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.mapper.UserMapper;
 import com.h2gas.model.repository.UserRepository;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
@@ -25,6 +27,9 @@ public class UserServiceDBTest {
 
     @Autowired
     private UserRepository userRepository;
+
+//    @Autowired
+//    private MailService mailService;
 
     @Autowired
     private UserMapper userMapper;
@@ -50,6 +55,7 @@ public class UserServiceDBTest {
     }
 
     @Test
+    @DisplayName("Deve retornar usuário existente ao buscar por ID válido")
     public void testFindByIdUserWithExistingUser() {
         UserDto result = userService.findByIdUser(validUserId);
 
@@ -59,6 +65,7 @@ public class UserServiceDBTest {
     }
 
     @Test
+    @DisplayName("Deve lançar exceção ao buscar usuário com ID inexistente")
     public void testFindByIdUserWithNonExistingUser() {
         String invalidId = "94c4c7ca-6dca-4bc5-80ee-5f564918ca05";
 

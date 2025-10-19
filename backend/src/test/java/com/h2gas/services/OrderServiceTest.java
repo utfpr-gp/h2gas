@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest
 @ActiveProfiles("test")
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@TestPropertySource(properties = "jwt.secret=segredoFake123")
+//@TestPropertySource(properties = "jwt.secret=segredoFake123")
 @Transactional
 class OrderServiceTest {
 

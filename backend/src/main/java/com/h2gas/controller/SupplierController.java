@@ -148,5 +148,4 @@ public class SupplierController {
         boolean active = supplierService.findById(id).isOpen();
         return ResponseEntity.ok(active);
     }
-
 }

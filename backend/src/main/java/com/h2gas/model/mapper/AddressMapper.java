@@ -17,6 +17,7 @@ public class AddressMapper {
         AddressDTO addressDTO = modelMapper.map(data, AddressDTO.class);
         if (data.getCity() != null) {
             addressDTO.setCityName(data.getCity().getName());
+            addressDTO.setCityId(data.getCity().getId());
         }
 
         if (data.getUser() != null) {

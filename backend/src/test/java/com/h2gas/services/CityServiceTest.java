@@ -1,6 +1,7 @@
 package com.h2gas.services;
 
 import com.h2gas.enums.UserTypeEnum;
+import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.CityDTO;
 import com.h2gas.model.dto.UserDto;
 import com.h2gas.model.entity.City;
@@ -75,8 +76,8 @@ class CityServiceTest {
     @Test
     @DisplayName("Retorna erro ao passar o id incorreto")
     void findByIdCityError() {
-        Long idInvalid = 4L;
-        RuntimeException exception = assertThrows(RuntimeException.class, () -> {
+        Long idInvalid = 999L;
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
             cityService.findByIdCity(idInvalid);
         });
         assertEquals("Cidade não encontra com esse id: " + idInvalid, exception.getMessage());
@@ -93,7 +94,7 @@ class CityServiceTest {
     @Test
     @DisplayName("Deve lançar exceção ao tentar deletar cidade inexistente")
     void deleteCityNotFound() {
-        Long invalidId = 999L;
+        Long invalidId = 99L;
 
         Exception exception = assertThrows(RuntimeException.class, () -> {
             cityService.deleteCity(invalidId);

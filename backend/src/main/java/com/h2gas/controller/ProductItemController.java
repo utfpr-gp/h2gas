@@ -80,4 +80,17 @@ public class ProductItemController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/by-supplier-open")
+    @ResponseBody
+    public ResponseEntity<PageResponse<ProductItemDTO>> getAllProductsBySupplierOpen(
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "size", required = false) Integer size
+    ) {
+        Pageable pageable = PaginationUtil.getPageableRequest(page, size);
+        Page<ProductItemDTO> result = productItemService.findBySupplierActiveAndSupplierOpen(pageable);
+        PageResponse<ProductItemDTO> response = new PageResponse<>(result);
+
+        return ResponseEntity.ok(response);
+    }
+
 }

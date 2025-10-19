@@ -62,7 +62,7 @@ export class LoginComponent {
         if (response.userType == "SUPPLIER" && response.supplierId == null) {
           this.navigate('/distributor/new') 
         } else {
-          this.navigate('/fornecedores')
+          this.navigate('/inicio')
         }        
       }, 
       error: (err) => {

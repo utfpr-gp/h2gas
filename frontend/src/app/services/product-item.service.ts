@@ -19,4 +19,9 @@ export class ProductItemService extends AbstractService<ProductItem> {
   getProductsBySupllierId(supplierId: number): Observable<PaginatedResponse<ProductItem>> {
     return this.http.get<PaginatedResponse<ProductItem>>(`${this.baseUrl}/by-supplier/${supplierId}`);
   }  
+
+  getProductsFromActiveSuppliers(page: number = 0, size: number = 20): Observable<PaginatedResponse<ProductItem>> {
+    const params = { page: page.toString(), size: size.toString() };
+    return this.http.get<PaginatedResponse<ProductItem>>(`${this.baseUrl}/by-supplier-open`, { params });
+  }
 }

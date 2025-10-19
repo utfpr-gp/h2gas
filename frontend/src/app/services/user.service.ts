@@ -26,5 +26,4 @@ export class UserService extends AbstractService<User> {
   updateUser(id: string, data: User) {
     return this.http.put(`${environment.apiUrl}/users/${id}`, data);
   }
-
 }

@@ -17,6 +17,7 @@ public class AddressDTO {
     private String neighborhood;
     private String zipCode;
     private String cityName;
+    private Long cityId;
     private String userId;
     private String addressName;
 }

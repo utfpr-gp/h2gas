@@ -93,16 +93,21 @@ public class SupplierService {
         Supplier supplier = supplierMapper.toEntitySupplierCreate(supplierDTO);
 
         City city = cityMapper.toEntity(cityService.findByIdCity(supplierDTO.getCityId()));
+        Address address = new Address();
+
         if (city == null) {
             throw new ResourceNotFoundException("City not found");
         }
-        Address address = addressMapper.toEntity(addressService.findByIdAddress(
-                supplierDTO.getAddressId())
-        );
-
-        if (address == null) {
-            throw new ResourceNotFoundException("Address not found");
+        if (supplierDTO.getAddressId() != null) {
+             address = addressMapper.toEntity(addressService.findByIdAddress(
+                    supplierDTO.getAddressId())
+            );
         }
+
+
+//        if (address == null) {
+//            throw new ResourceNotFoundException("Address not found");
+//        }
 
         User user = userMapper.toEntityUser(userService.findByIdUser(supplierDTO.getUserId()));
 

@@ -1,8 +1,9 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { OrderResponse } from '../../models/order.model';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OrderStatus } from '../../models/order-status.enum';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-orders-widget',
@@ -13,7 +14,7 @@ import { OrderStatus } from '../../models/order-status.enum';
   templateUrl: './orders-widget.component.html',
   styleUrl: './orders-widget.component.css'
 })
-export class OrdersWidgetComponent {
+export class OrdersWidgetComponent implements OnInit {
   @Input() orders: OrderResponse[] = [];
   @Input() orderStatus = OrderStatus;
   @Input() actionsByStatus: Record<string, { label: string, icon: string, color: string, action: string }[]> = {};
@@ -23,6 +24,16 @@ export class OrdersWidgetComponent {
   @Output() statusChange = new EventEmitter<string>();
   @Output() toggleSupplier = new EventEmitter<boolean>();
   @Output() changeOrderStatus = new EventEmitter<{ order: OrderResponse, action: string }>();
+
+  constructor(private route: ActivatedRoute) {}
+
+  rotaAtiva: string = '';
+
+  ngOnInit(): void {
+    debugger
+    this.rotaAtiva = this.route.snapshot.url.map(segment => segment.path).join('/')
+  }
+
 
   getStatusKeys(): (keyof typeof OrderStatus)[] {
     return Object.keys(this.orderStatus) as (keyof typeof OrderStatus)[];

@@ -10,4 +10,5 @@ export class ProductItem {
     stockQuantity?: number;
     updatedAt?: Date;
     quantitySelect?: number;
+    supllierName?: string
 }
