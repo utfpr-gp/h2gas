@@ -183,7 +183,7 @@ export class ReceivedOrdersComponent implements OnInit {
 
   getTotalRevenue(): number {
     return this.orders
-      ?.filter(order => order.status === 'Entregue')
+      ?.filter(order => order.status !== 'Entregue')
       .reduce((sum, order) => sum + order.totalPrice, 0) || 0;
   }
 

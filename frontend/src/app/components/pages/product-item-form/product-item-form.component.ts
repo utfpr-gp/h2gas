@@ -65,8 +65,8 @@ export class ProductItemFormComponent implements OnInit {
       this.isEdit = true;
       this.finProductId(this.idEdit);
     } 
-    this.findAllCategoryProducts();
     this.user = this.userService.getUserLocalStorage();
+    this.findAllCategoryProducts();
   }
 
 
@@ -133,13 +133,17 @@ export class ProductItemFormComponent implements OnInit {
 
 
   findAllCategoryProducts() {
-    this.categoryService.findAll().subscribe({
+    console.log(this.user?.supplierId);
+    
+    this.categoryService.findBySupplierId(this.user?.supplierId!).subscribe({
       next: (response) => {
-        this.categoryProduct = response
-        console.log("Buscado com sucesso");
+        this.categoryProduct = response.data;
+        console.log(this.categoryProduct);
+        
+        this.toastr.success("Encontrado todas as categorias de produtos")        
       },
       error: (err) => {
-        this.toastr.error("Erro ao buscar as categorias!!")
+        this.toastr.error(`Erro ao encontrar as categorias de produtos: ${err.error.message}`)        
       },
     })
   }
