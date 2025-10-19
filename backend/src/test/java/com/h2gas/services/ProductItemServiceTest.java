@@ -43,8 +43,8 @@ class ProductItemServiceTest {
     @Autowired
     private CityRepository cityRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+//    @Autowired
+//    private UserRepository userRepository;
 
     @Autowired
     private CategoryProductService categoryProductService;
@@ -73,7 +73,8 @@ class ProductItemServiceTest {
         Supplier supplierFirst = createSupplierForTest(1);
         Supplier supplierSecond = createSupplierForTest(2);
 
-        CategoryProduct categoryProduct = createCategoryForTest();
+        CategoryProduct categoryProductFirst = createCategoryForTest("20L", supplierFirst);
+        CategoryProduct categoryProductSecond = createCategoryForTest("50L", supplierSecond);
 
         ProductItem productItemFirst = new ProductItem(
                 null,
@@ -84,7 +85,7 @@ class ProductItemServiceTest {
                 5,
                 null,
                 null,
-                categoryProduct,
+                categoryProductFirst,
                 supplierFirst
         );
 
@@ -100,7 +101,7 @@ class ProductItemServiceTest {
                 5,
                 null,
                 null,
-                categoryProduct,
+                categoryProductSecond,
                 supplierSecond
         );
 
@@ -165,7 +166,7 @@ class ProductItemServiceTest {
 
 
 
-    CategoryProduct createCategoryForTest() {
+    CategoryProduct createCategoryForTest(String name, Supplier supplier) {
         ProductType productTypeAgua = new ProductType(
                 null,
                 "Água Mineral",
@@ -175,10 +176,10 @@ class ProductItemServiceTest {
 
         CategoryProduct categoryProduct = new CategoryProduct(
                 null,
-                "20L",
+                name,
                 productTypeAgua,
                 null,
-                null
+                supplier
         );
 
         categoryProductRepository.save(categoryProduct);
