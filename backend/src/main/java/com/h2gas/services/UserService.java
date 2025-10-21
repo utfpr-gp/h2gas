@@ -135,6 +135,7 @@ public class UserService {
             supplier.setCity(city);
 
             // Agora salva usando o service
+//            TODO FALTA SALVAR O ADDRES PARA CLIENTE TAMBÉM
             Supplier savedSupplier = supplierService.createSupplier(supplier);
             Address address = addressService.createAddress(data.getAddress(), savedSupplier, city);
             supplier.setAddress(address);
