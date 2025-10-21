@@ -36,6 +36,24 @@ export class MenuComponent implements OnInit {
   min: number = 1;
   max: number = 10;
 
+  mobileMenuOpen = false;
+  submenuOpen = false;
+
+  productsMenuOpen = false;
+  toggleProductsMenu() {
+    this.productsMenuOpen = !this.productsMenuOpen;
+  }
+
+
+  toggleMobileMenu() {
+    this.mobileMenuOpen = !this.mobileMenuOpen;
+    if (!this.mobileMenuOpen) this.submenuOpen = false;
+  }
+
+  toggleSubmenu() {
+    this.submenuOpen = !this.submenuOpen;
+  }
+
   onQuantityInput(cartProduct?: ProductItem) {
     if (cartProduct!.quantitySelect! < this.min) {
       cartProduct!.quantitySelect = this.min;
