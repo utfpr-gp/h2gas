@@ -59,11 +59,12 @@ export class LoginComponent {
       next: (response: any) => {
         console.log('Usuario buscado sucesso!', response);
         localStorage.setItem('user', JSON.stringify(response))
-        if (response.userType == "SUPPLIER" && response.supplierId == null) {
-          this.navigate('/distributor/new') 
-        } else {
-          this.navigate('/fornecedores')
-        }        
+        this.navigate('/inicio')
+        // if (response.userType == "SUPPLIER" && response.supplierId == null) {
+        //   this.navigate('/distributor/new') 
+        // } else {
+        //   this.navigate('/inicio')
+        // }        
       }, 
       error: (err) => {
         console.error('Erro ao buscar o usuario logado:', err);

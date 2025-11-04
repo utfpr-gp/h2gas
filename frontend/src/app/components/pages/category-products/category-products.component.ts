@@ -8,6 +8,8 @@ import { ToastrService } from 'ngx-toastr';
 import { CategoryProductService } from '../../../services/category-product.service';
 import { CategoryProduct } from '../../../models/category-product';
 import { DeleteConfirmationModalComponent } from '../../delete-confirmation-modal/delete-confirmation-modal.component';
+import { User } from '../../../models/user';
+import { UserService } from '../../../services/user.service';
 
 @Component({
   selector: 'app-category-products',
@@ -35,6 +37,7 @@ export class CategoryProductsComponent implements OnInit {
 
   deleteNameCategory?: string;
   idCategoryRow?: number;
+  userLogado?: User;
 
   isEdit: boolean = false;
 
@@ -42,17 +45,20 @@ export class CategoryProductsComponent implements OnInit {
     private productTypeService: ProductTypeService,
     private toastr: ToastrService,
     private fb: FormBuilder, 
-    private categoryService: CategoryProductService
+    private categoryService: CategoryProductService,
+    private userService: UserService
   ) {
     this.formCategory = this.fb.group({
       name: ['', [Validators.required]],
       type: [''],
-      productTypeId: [null, [Validators.required]]
+      productTypeId: [null, [Validators.required]],
+      supplierId: ['']
     })
   }
 
 
   ngOnInit(): void {
+    this.userLogado = this.userService.getUserLocalStorage()
     this.getProuctTypes();
     this.getAllCategories()
   }
@@ -95,9 +101,9 @@ export class CategoryProductsComponent implements OnInit {
   }
 
   getAllCategories() {
-    this.categoryService.findAll().subscribe({
+    this.categoryService.findBySupplierId(this.userLogado?.supplierId!).subscribe({
       next: (response) => {
-        this.categories = response;
+        this.categories = response.data;
         this.toastr.success("Encontrado todas as categorias de produtos")        
       },
       error: (err) => {
@@ -111,8 +117,12 @@ export class CategoryProductsComponent implements OnInit {
       this.formCategory.markAllAsTouched();
       return;
     }
+    this.formCategory.get('supplierId')?.setValue(this.userLogado?.supplierId)
 
     this.category = this.formCategory.value; 
+
+    console.log(this.category);
+    
 
     this.categoryService.create(this.category!!).subscribe({
       next: (value) => {

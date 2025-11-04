@@ -1,6 +1,5 @@
 package com.h2gas.model.dto;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,7 +8,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SupplierCreateDTO {
-    private Long id;
+//    private Long id;
+    private String userId;
     private String name;
     private String phone;
     private String description;
@@ -18,6 +18,7 @@ public class SupplierCreateDTO {
     private Long averageDeliveryTime;
 //    private boolean active;
     private Long cityId;
-    private String userId;
+//    private String userId;
     private Long addressId;
+    private String cnpj;
 }

@@ -43,6 +43,12 @@ public class CityService {
                 -> new ResourceNotFoundException("Cidade não encontra com esse id: " + id));
     }
 
+    public City findByIdEntity(Long id) {
+        return cityRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("City not found"));
+    }
+
+
     public CityDTO createCity(CityDTO cityDTO) {
         City city = cityMapper.toEntity(cityDTO);
         if (cityRepository.findByName(cityDTO.getName()).isPresent()) {

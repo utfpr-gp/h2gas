@@ -16,4 +16,5 @@ public class RegisterDTO {
     private String cpf;
     private String cnpj;
     private UserTypeEnum userType;
+    private AddressDTO address;
 }

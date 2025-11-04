@@ -29,7 +29,9 @@ jobs:
 #        run: mvn -f backend/pom.xml clean test
         env:
             SPRING_PROFILES_ACTIVE: test
+            CLOUDINARY_URL: cloudinary://fake_key:fake_secret@fake_cloud
         run: mvn -f backend/pom.xml clean test -Dspring.profiles.active=test -e -X
+
 
 
       - name: Show test error logs

@@ -16,11 +16,12 @@ public class ProductItemDTO {
     private String category;
     private String type;
     private String supllierName;
-    private Long supplierId;
+    private String supplierId;
     private Long categoryProductId;
 //    private SupplierDTO supplier;
     private String imageUrl;
     private Integer stockQuantity;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String description;
 }

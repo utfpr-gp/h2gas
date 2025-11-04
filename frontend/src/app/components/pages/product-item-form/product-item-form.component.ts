@@ -32,6 +32,8 @@ export class ProductItemFormComponent implements OnInit {
   selectedFile: File | null = null;
 
   user?: User;
+  isLoading = false;
+
 
   productItemSave?: ProductItem;
   isEdit: boolean = false;
@@ -51,6 +53,7 @@ export class ProductItemFormComponent implements OnInit {
       brand: ['', [Validators.required]],
       price: [0.0, [Validators.required]],
       stockQuantity: [0, [Validators.required]],
+      description: ['', [Validators.required]],
       categoryProductId: [null, [Validators.required]]
     })
   }
@@ -62,8 +65,8 @@ export class ProductItemFormComponent implements OnInit {
       this.isEdit = true;
       this.finProductId(this.idEdit);
     } 
-    this.findAllCategoryProducts();
     this.user = this.userService.getUserLocalStorage();
+    this.findAllCategoryProducts();
   }
 
 
@@ -73,6 +76,7 @@ export class ProductItemFormComponent implements OnInit {
         console.log('Produto buscado com sucesso!', response);
         this.formProductItem.patchValue(response);
         this.toastr.success('Produto buscado com sucesso!');
+        this.selectedImage = response.imageUrl!
       },
       error: (err) => {
         console.error('Erro ao buscar:', err.error.message);
@@ -81,8 +85,27 @@ export class ProductItemFormComponent implements OnInit {
     })
   }
 
-  onFileSelected(event: any) {
-    this.selectedFile = event.target.files[0];
+  selectedImage: string | ArrayBuffer | null = null;
+  file: any;
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+
+    this.file = input.files[0];
+
+    // Para mostrar a imagem na tela
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.selectedImage = reader.result;
+    };
+    reader.readAsDataURL(this.file);
+
+    console.log(this.file);
+  }
+
+  removeImage() {
+    this.selectedImage = null;
   }
 
   updateProduct() {
@@ -96,11 +119,13 @@ export class ProductItemFormComponent implements OnInit {
     this.productItemService.update(this.idEdit, this.productItemSave!).subscribe({
       next: (response) => {
         console.log("Atulizado com sucesso!!");
+        this.isLoading = false;
         this.toastr.success("Produto atualizado com sucesso!!");
         this.navigateRoute('/product-items')
       },
       error: (err) => {
         console.error("Erros ao atualizar!!");
+        this.isLoading = false;
         this.toastr.error("Erros ao atualizar produtos!!");
       },
     }) 
@@ -108,37 +133,44 @@ export class ProductItemFormComponent implements OnInit {
 
 
   findAllCategoryProducts() {
-    this.categoryService.findAll().subscribe({
+    console.log(this.user?.supplierId);
+    
+    this.categoryService.findBySupplierId(this.user?.supplierId!).subscribe({
       next: (response) => {
-        this.categoryProduct = response
-        console.log("Buscado com sucesso");
+        this.categoryProduct = response.data;
+        console.log(this.categoryProduct);
+        
+        this.toastr.success("Encontrado todas as categorias de produtos")        
       },
       error: (err) => {
-        this.toastr.error("Erro ao buscar as categorias!!")
+        this.toastr.error(`Erro ao encontrar as categorias de produtos: ${err.error.message}`)        
       },
     })
   }
 
   saveItemProduct() {
+    this.isLoading = true;
     if (!this.formProductItem.valid) {
       this.toastr.warning("Confira os campos vazios")
       return;
     }
-
+    debugger
     this.productItemSave = this.formProductItem.value;
 
     if (this.productItemSave) {
-      this.productItemSave.supplierId = this.user?.supplierId ?? 0;
+      this.productItemSave.supplierId = this.user?.supplierId ?? '';
     }
     
-    this.productItemService.create(this.productItemSave!!).subscribe({
+    this.productItemService.createWithFile(this.productItemSave!!, this.file).subscribe({
       next: (value) => {
         console.log("salvo com sucesso!!");
+        this.isLoading = false;
         this.toastr.success("Produto salvo com sucesso!!");
         this.navigateRoute('/product-items')
       },
       error: (err) => {
         console.error("Erros ao salvar!!");
+        this.isLoading = false;
         this.toastr.error("Erros ao salvar produtos!!");
       },
     })

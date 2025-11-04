@@ -18,7 +18,7 @@
         <!-- Desktop Navigation -->
         <div class="flex items-center gap-3">
             <nav class="hidden lg:flex items-center">
-                <a href="/fornecedores"
+                <a href="/inicio"
                     class="flex items-center cursor-pointer px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
                     <i class="fas fa-home h-5 w-5"></i>
                     <span class="ml-2">Início</span>
@@ -52,7 +52,7 @@
                 <a *ngIf="user?.userType === 'ADMIN'" href="/supplier-approval"
                     class="flex cursor-pointer items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md mx-1 transition-colors">
                     <i class="fas fa-store h-5 w-5"></i>
-                    <span class="ml-2">Distribuidores</span>
+                    <span class="ml-2">Fornecedores</span>
                 </a>
                 <div class="drawer drawer-end">
                     <input id="cart-drawer" type="checkbox" class="drawer-toggle" />
@@ -85,7 +85,7 @@
                                     class="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200">
                                     <div class="flex items-center space-x-4">
                                         <img alt="Botijão de Gás GLP 13kg" class="w-16 h-16 object-contain"
-                                            src="https://lh3.googleusercontent.com/aida-public/AB6AXuDSkF5OjFxchm7Cy07MpZ_Mxpkh09wroonK-4Twf-WMGeuVS4XNu_5okndwMFuQGDiVfFYEqCKEcIctOqGQVCwrnvVxBaeU646SUknTEoinGbjW6h7RA6oqmdcfkTFxfjo7qN57QPbCYy0NJPwZeqw2gE8ZyWIM5J7RDgqYU6CuH7y-k5PrWHzM_nE4UB2gZAbglUQimL5jVJmZ-C9wAYCfv56sv61Kg8UC_NG3pH4vzrU1nlgrN1tiuniBUTOhZ3AzQtLX_I_nfozc" />
+                                            src="{{cartProduct.imageUrl}}" />
                                         <div>
                                             <h3 class="font-semibold text-gray-800">
                                                 {{cartProduct!!.type}} {{cartProduct!!.brand}}

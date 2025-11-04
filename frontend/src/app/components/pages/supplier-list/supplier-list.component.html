@@ -3,100 +3,180 @@
 
 <body class="p-8">
     <div class="max-w-7xl mx-auto">
-        <div class="mb-12 text-center">
-            <h1 class="text-4xl font-bold text-gray-800 mb-2">Qualidade e Confiança na sua Porta</h1>
-            <p class="text-lg text-gray-600">Encontre os melhores fornecedores de água e gás com agilidade e segurança.
+        <div class="mb-12 text-center" *ngIf="viewMode === 'suppliers'">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Fornecedores de Água e Gás</h1>
+            <!-- <p class="text-lg text-gray-600">
+                Encontre os melhores fornecedores de água e gás com agilidade e segurança.
+            </p> -->
+        </div>
+        <div class="mb-12 text-center" *ngIf="viewMode !== 'suppliers'">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Produtos</h1>
+            <p class="text-lg text-gray-600">
+                Encontre os melhores produtos.
             </p>
         </div>
+
+        <!-- Barra de pesquisa e filtros -->
         <div class="flex flex-col md:flex-row gap-4 mb-8">
+            <!-- Pesquisa -->
             <div class="relative flex-grow">
                 <form [formGroup]="formSearch">
-                        <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
-                        <input
-                            formControlName="name"
-                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Pesquise por nome" type="text" />
+                    <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                    <input formControlName="name"
+                        class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Filtre por nome" type="text" />
                 </form>
             </div>
-            
-            <div class="relative">
-                <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">location_on</span>
-                <select
-                    class="w-full md:w-auto pl-10 pr-4 py-3 border border-gray-300 rounded-lg appearance-none focus:ring-blue-500 focus:border-blue-500">
-                    <option>Localização</option>
-                    <option>São Paulo, SP</option>
-                    <option>Rio de Janeiro, RJ</option>
-                    <option>Belo Horizonte, MG</option>
-                    <option>Curitiba, PR</option>
-                </select>
-            </div>
-            <div class="relative">
-                <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">category</span>
-                <select
-                    class="w-full md:w-auto pl-10 pr-4 py-3 border border-gray-300 rounded-lg appearance-none focus:ring-blue-500 focus:border-blue-500">
-                    <option>Tipo de Serviço</option>
-                    <option>Água</option>
-                    <option>Gás</option>
-                </select>
-            </div>
-            <button
-                (click)="buscar()"
+
+            <!-- Botão filtrar -->
+            <button (click)="buscar()"
                 class="bg-blue-500 cursor-pointer hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300 flex items-center justify-center">
-                <!-- <span class="material-icons mr-2">filter_list</span> -->
                 <i class="fa-solid fa-filter mr-2"></i>
                 Filtrar
             </button>
+
+            <!-- Botão de alternância -->
+            <div class="relative">
+                <button (click)="toggleView()"
+                    class="w-full md:w-auto bg-blue-500 cursor-pointer hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300 flex items-center justify-center">
+                    <i class="fa-solid fa-box mr-2"></i>
+                    {{ viewMode === 'suppliers' ? 'Ver Produtos' : 'Ver Fornecedores' }}
+                </button>
+            </div>
         </div>
-        <span class="inline-block bg-gray-200 text-gray-700 text-sm font-semibold px-4 py-2 rounded-full mb-8">
-            {{suppliers?.length}} fornecedores encontrados
-        </span>
-        <div *ngIf="suppliers?.length == 0" class="p-4 text-center text-gray-600 italic">
-            Nenhum fornecedor encontrado.
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="bg-white rounded-xl shadow-md overflow-hidden p-6 border border-gray-200"
-                *ngFor="let supplier of suppliers"
-            >
-                <div class="flex justify-between items-center mb-4">
-                    <div class="flex items-center">
-                        <span class="material-icons text-blue-500 mr-2">local_fire_department</span>
-                        <span class="text-sm font-semibold text-blue-500">Gás</span>
+
+        <!-- ================== LISTA DE FORNECEDORES ================== -->
+        <div *ngIf="viewMode === 'suppliers'">
+
+            <!-- <h3 class="text-2xl font-bold text-gray-800 mb-6 text-center">
+                Rede de Fornecedores H2Gas
+            </h3> -->
+
+            <span *ngIf="searchDone"
+                class="inline-block bg-gray-200 text-gray-700 text-sm font-semibold px-4 py-2 rounded-full mb-8">
+                {{suppliers?.length}} fornecedores encontrados
+            </span>
+            <div *ngIf="suppliers?.length == 0" class="p-4 text-center text-gray-600 italic">
+                Nenhum fornecedor encontrado.
+            </div>
+
+            <div class="flex flex-wrap gap-8">
+                <div class="bg-white rounded-xl shadow-md overflow-hidden p-6 border border-gray-200 max-w-md w-full"
+                    *ngFor="let supplier of suppliers">
+
+
+                    <h2 class="text-2xl font-bold text-gray-800 mb-1">
+                        <i class="fa-solid text-blue-500 fa-building"></i>
+                        {{supplier.name}}
+                    </h2>
+                    <div class="flex items-center text-gray-500 text-sm mb-4">
+                        <span class="material-icons text-base mr-1">location_on</span>
+                        <span>
+                            {{supplier.addressStreetName}}, {{supplier.cityName}}
+                        </span>
                     </div>
-                    <!-- <div class="flex items-center bg-blue-50 text-blue-600 px-3 py-1 rounded-full">
-                        <span class="material-icons text-sm">star</span>
-                        <span class="ml-1 text-sm font-bold">4.7</span>
-                    </div> -->
-                </div>
-                <h2 class="text-2xl font-bold text-gray-800 mb-1">
-                    {{supplier.name}}
-                </h2>
-                <div class="flex items-center text-gray-500 text-sm mb-4">
-                    <span class="material-icons text-base mr-1">location_on</span>
-                    <span>
-                        {{supplier.addressStreetName}}, {{supplier.cityName}}
-                    </span>
-                </div>
-                <p class="text-gray-600 mb-6">
-                    {{supplier.description}}
-                </p>
-                <div class="flex flex-wrap gap-2 mb-6">
-                    <span class="bg-gray-100 text-gray-700 text-xs font-medium px-3 py-1 rounded-full">GLP
-                        Residencial</span>
-                    <span class="bg-gray-100 text-gray-700 text-xs font-medium px-3 py-1 rounded-full">GLP
-                        Industrial</span>
-                    <span class="bg-gray-100 text-gray-700 text-xs font-medium px-3 py-1 rounded-full">Recarga</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <!-- <div>
-                        <span class="text-3xl font-bold text-gray-800">R$ 115</span>
-                        <span class="text-gray-500">/mês</span>
-                    </div> -->
-                    <button (click)="navigate(supplier.id)" class="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg transition duration-300">
-                        Ver Produtos
-                    </button>
+                    <p class="text-gray-600 mb-6">
+                        {{supplier.description}}
+                    </p>
+
+                    <div class="flex justify-between items-center">
+                        <button (click)="navigate(supplier.id)"
+                            class="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg transition duration-300">
+                            Ver Produtos
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
+
+        <!-- ================== LISTA DE PRODUTOS ================== -->
+        <div *ngIf="viewMode === 'products'">
+            <span class="inline-block bg-gray-200 text-gray-700 text-sm font-semibold px-4 py-2 rounded-full mb-8">
+                {{products.length}} produtos encontrados
+            </span>
+
+            <div *ngIf="products?.length == 0" class="p-4 text-center text-gray-600 italic">
+                Nenhum produto encontrado.
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div *ngFor="let product of products"
+                    class="product-card bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 flex flex-col">
+
+                    <!-- Imagem do Produto -->
+                    <div class="bg-gray-50 p-4 flex items-center justify-center h-48 overflow-hidden">
+                        <img alt="{{product.brand}} {{product.category}}"
+                            class="object-contain h-full w-auto transition-transform duration-500 ease-in-out hover:scale-110"
+                            [src]="product.imageUrl" />
+                    </div>
+
+                    <!-- Conteúdo do Card -->
+                    <div class="p-6 flex flex-col flex-grow">
+
+                        <!-- Marca, Categoria e Fornecedor -->
+                        <div class="flex flex-col mb-2">
+                            <h3 class="font-bold text-lg text-gray-800 flex items-center">
+                                <span class="material-icons text-blue-500 mr-2">inventory_2</span>
+                                {{product.brand}} {{product.category}}
+                            </h3>
+                            <span class="text-sm text-gray-500 mt-1">Fornecedor: <span
+                                    class="font-semibold text-gray-800">{{product.supllierName}}</span></span>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="mb-2">
+                            <span class="text-xs font-semibold bg-green-100 text-green-800 px-2 py-1 rounded-full">
+                                Disponível
+                            </span>
+                        </div>
+
+                        <!-- Descrição -->
+                        <p class="text-gray-600 text-sm mb-4 flex-grow">
+                            {{product.description}}
+                        </p>
+
+                        <!-- Preço e Botão -->
+                        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mt-auto">
+                            <div>
+                                <p class="text-2xl font-bold text-gray-900">{{product.price |
+                                    currency:'BRL':'symbol':'1.2-2'}}</p>
+                                <p class="text-sm text-gray-500 text-center sm:text-left">por produto</p>
+                            </div>
+                            <button (click)="openModal(product)"
+                                class="w-full sm:w-auto cursor-pointer bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-all duration-300 font-semibold transform hover:scale-105">
+                                Solicitar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Paginação -->
+        <app-pagination 
+        [currentPage]="currentPage" 
+        [totalPages]="totalPages" 
+        (pageChange)="getSuppliers($event)">
+        </app-pagination>
+
+
+
+        <!-- Modal -->
+        <dialog #productModal class="modal">
+            <div class="modal-box">
+                <h3 class="font-bold text-lg">Solicitar Produto</h3>
+                <p class="py-2">Selecione a quantidade desejada para {{productSelect!!.type}} {{productSelect!!.brand}}
+                    {{productSelect!!.category}}</p>
+
+                <input type="number" min="1" [(ngModel)]="quantity" class="input input-bordered w-full"
+                    placeholder="Quantidade" />
+
+                <div class="modal-action">
+                    <button class="btn" (click)="closeModal()">Cancelar</button>
+                    <button class="btn btn-primary" (click)="confirmRequest()">Confirmar</button>
+                </div>
+            </div>
+        </dialog>
     </div>
 </body>
 

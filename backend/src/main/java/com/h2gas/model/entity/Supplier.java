@@ -9,22 +9,26 @@ import lombok.Setter;
 
 import java.time.Duration;
 import java.time.LocalTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "suppliers")
+@PrimaryKeyJoinColumn(name = "user_id")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Supplier {
-    @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
-    private Long id;
-
-    private String name;
-
-    private String phone;
+public class Supplier extends User{
+//    @Id
+//    @GeneratedValue(strategy= GenerationType.IDENTITY)
+//    private Long id;
+//
+//    private String name;
+//
+//    private String phone;
+    private String cnpj;
 
     private String description;
 
@@ -47,13 +51,16 @@ public class Supplier {
     @JoinColumn(name = "city_id")
     private City city;
 
-    @OneToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+//    @OneToOne
+//    @JoinColumn(name = "user_id")
+//    private User user;
 
     @OneToMany(mappedBy = "supplier")
     private List<ProductItem> productItems;
 
     private boolean open = false;
+
+    @OneToMany(mappedBy = "supplier", cascade = CascadeType.ALL)
+    private Set<CategoryProduct> categoryProducts = new HashSet<>();
 
 }

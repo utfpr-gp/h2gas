@@ -8,6 +8,8 @@ import { ProductItemService } from '../../../services/product-item.service';
 import { ProductItem } from '../../../models/product-item';
 import { ToastrService } from 'ngx-toastr';
 import { firstValueFrom } from 'rxjs';
+import { User } from '../../../models/user';
+import { UserService } from '../../../services/user.service';
 
 @Component({
   selector: 'app-product-item',
@@ -34,54 +36,22 @@ export class ProductItemComponent implements OnInit {
   deleteNameProduct?: string;
   idProductRow?: number;
 
-  produtos = [
-    {
-      nome: 'Botijão P13 - Ultragaz',
-      fornecedor: 'Ultragaz',
-      preco: 85.9,
-      estoque: 45,
-      ultimaAtualizacao: '14/01/2024',
-      status: 'Disponível',
-      imagem: 'https://example.com/p13.jpg'
-    },
-    {
-      nome: 'Botijão P20 - Copagaz',
-      fornecedor: 'Copagaz',
-      preco: 125.5,
-      estoque: 12,
-      ultimaAtualizacao: '13/01/2024',
-      status: 'Baixo Estoque',
-      imagem: 'https://example.com/p20.jpg'
-    },
-    {
-      nome: 'Botijão P45 - Liquigás',
-      fornecedor: 'Liquigás',
-      preco: 280.0,
-      estoque: 0,
-      ultimaAtualizacao: '09/01/2024',
-      status: 'Esgotado',
-      imagem: ''
-    }
-  ];
+  produtos: ProductItem[] = []
 
   constructor(
     private router: Router,
     private productItemService: ProductItemService,
     private toastr: ToastrService,
+    private userService: UserService,
   ) {}
+  userLogado?: User;
 
 
   async ngOnInit() {
     debugger
+    this.userLogado = this.userService.getUserLocalStorage()
     await this.findProdutos();
     this.countingDisponivel();
-  }
-
-  produtosFiltrados() {
-    if (!this.busca) return this.produtos;
-    return this.produtos.filter(p =>
-      p.nome.toLowerCase().includes(this.busca.toLowerCase())
-    );
   }
 
   openModalDelete(productItem: ProductItem) {
@@ -92,10 +62,6 @@ export class ProductItemComponent implements OnInit {
       const checkbox: any = document.getElementById('delete-modal');
       if (checkbox) checkbox.checked = true;
     });
-  }
-
-  contarPorStatus(status: string): number {
-    return this.produtos.filter(p => p.status === status).length;
   }
 
   badgeClass(status: string): string {
@@ -117,15 +83,21 @@ export class ProductItemComponent implements OnInit {
 
   async findProdutos() {
     debugger
-    try {
-      debugger
-      this.itemProducts = await firstValueFrom(this.productItemService.findAll());
-      console.log(this.itemProducts);
-      this.toastr.success("Buscado com sucesso os produtos!!");
-    } catch (err: any) {
-      this.toastr.error(`Erro ao buscar os produtos!! ${err.error?.message}`);
-      console.error(err);
-    }
+    this.productItemService.getProductsBySupllierId(this.userLogado?.supplierId!).subscribe({
+      next: (response) => {
+        console.log('Buscado com sucesso', response);
+        this.itemProducts = response.data
+        console.log(this.itemProducts);
+        if (this.itemProducts.length > 0) {
+          this.toastr.success('Produtos buscado com sucesso!');          
+        }
+      },
+      error: (err) => {
+        debugger
+        console.error('Erro ao buscar:', err.error.message);
+        this.toastr.error(`Erro ao buscar produtos: ${err.error.message}`)
+      },
+    })
   }
 
   navigateEdit(id?: number) {

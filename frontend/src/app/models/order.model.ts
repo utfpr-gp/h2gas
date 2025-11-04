@@ -3,7 +3,7 @@ import { OrderStatus } from "./order-status.enum";
 
 export interface OrderRequest {
     customerUuid: string;
-    supplierRef: number;
+    supplierRef: string;
     paymentMethod: string;
     note: string;
     items: OrderItemRequest[]

@@ -51,8 +51,6 @@ public class AuthenticationController {
         System.out.println(this.userRepository.findByEmail(data.getEmail()));
         UserDto registerDTO = userService.create(data);
         return ResponseEntity.ok(registerDTO);
-
-//        return ResponseEntity.ok().build();
     }
 
 }

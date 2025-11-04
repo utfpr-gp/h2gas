@@ -95,12 +95,12 @@ public class OrderService {
                 .map(orderMapper::toResponseDto);
     }
 
-    public Page<OrderResponseDTO> findBySupplierId(Long id, Pageable pageable) {
+    public Page<OrderResponseDTO> findBySupplierId(String id, Pageable pageable) {
         return orderRepository.findBySupplierIdOrderByCreatedAtDesc(id, pageable)
                 .map(orderMapper::toResponseDto);
     }
 
-    public Page<OrderResponseDTO> findBySupplierIdAndStatus(Long id, OrderStatusEnum status, Pageable pageable) {
+    public Page<OrderResponseDTO> findBySupplierIdAndStatus(String id, OrderStatusEnum status, Pageable pageable) {
         return orderRepository.findBySupplierIdAndStatusOrderByCreatedAtDesc(id, status, pageable)
                 .map(orderMapper::toResponseDto);
     }
@@ -119,7 +119,7 @@ public class OrderService {
         return order.getStatus().getStatus();
     }
 
-    public Page<OrderResponseDTO> findBySupplierIdAndStatusNotDeliveryAndCanceled(Long id, Pageable pageable, List<OrderStatusEnum> excludeStatuses) {
+    public Page<OrderResponseDTO> findBySupplierIdAndStatusNotDeliveryAndCanceled(String id, Pageable pageable, List<OrderStatusEnum> excludeStatuses) {
 //        List<OrderStatusEnum> excludedStatuses = List.of(OrderStatusEnum.DELIVERED, OrderStatusEnum.CANCELED);
         return orderRepository.findBySupplierIdAndStatusNotInOrderByCreatedAtDesc(id, excludeStatuses, pageable)
                 .map(orderMapper::toResponseDto);

@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -38,10 +39,20 @@ public class ProductItemController {
     @PostMapping
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER"})
-    public ResponseEntity<ProductItemDTO> createCategoryProduct(@RequestBody CreateProductItemDTO productItemDTO) {
-        ProductItemDTO productItemCreate = productItemService.createProductItem(productItemDTO);
+    public ResponseEntity<ProductItemDTO> createCategoryProduct(
+            @RequestPart("product") CreateProductItemDTO productItemDTO,
+            @RequestPart("file") MultipartFile file
+    ) {
+        ProductItemDTO productItemCreate = productItemService.createProductItem(productItemDTO, file);
         return ResponseEntity.ok(productItemCreate);
     }
+//    public ResponseEntity<ProductItemDTO> createCategoryProduct(
+//            @RequestBody CreateProductItemDTO productItemDTO,
+//            @RequestParam("file") MultipartFile file
+//    ) {
+//        ProductItemDTO productItemCreate = productItemService.createProductItem(productItemDTO, file);
+//        return ResponseEntity.ok(productItemCreate);
+//    }
 
     @GetMapping("/{id}")
     @ResponseBody
@@ -69,12 +80,25 @@ public class ProductItemController {
     @GetMapping("/by-supplier/{supplierId}")
     @ResponseBody
     public ResponseEntity<PageResponse<ProductItemDTO>> getProductBySupplier(
-            @PathVariable Long supplierId,
+            @PathVariable String supplierId,
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(value = "size", required = false) Integer size
     ) {
         Pageable pageable = PaginationUtil.getPageableRequest(page, size);
         Page<ProductItemDTO> result = productItemService.findProductsBySupplier(supplierId, pageable);
+        PageResponse<ProductItemDTO> response = new PageResponse<>(result);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/by-supplier-open")
+    @ResponseBody
+    public ResponseEntity<PageResponse<ProductItemDTO>> getAllProductsBySupplierOpen(
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "size", required = false) Integer size
+    ) {
+        Pageable pageable = PaginationUtil.getPageableRequest(page, size);
+        Page<ProductItemDTO> result = productItemService.findBySupplierActiveAndSupplierOpen(pageable);
         PageResponse<ProductItemDTO> response = new PageResponse<>(result);
 
         return ResponseEntity.ok(response);

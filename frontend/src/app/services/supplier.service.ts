@@ -12,11 +12,11 @@ import { PaginatedResponse } from '../models/paginated-response';
 export class SupplierService extends AbstractService<Supplier> {
   override baseUrl: string = `${environment.apiUrl}/suppliers`
 
-  constructor(protected override http: HttpClient) { 
+  constructor(protected override http: HttpClient) {
     super(http);
   }
 
-  activeSuppliers(data: any, id: number) {
+  activeSuppliers(data: any, id: string) {
     return this.http.patch(`${this.baseUrl}/${id}/update-active`, data);
   }
 
@@ -24,24 +24,33 @@ export class SupplierService extends AbstractService<Supplier> {
     return this.http.get(`${this.baseUrl}/by-user/${userId}`);
   }
 
-  openDistribuidor(data: any, id: number) {
+  openDistribuidor(data: any, id: string) {
     return this.http.patch(`${this.baseUrl}/${id}/status`, data);
   }
 
-  getAllSupplierOpenAndActive(): Observable<PaginatedResponse<Supplier>> {
-    return this.http.get<PaginatedResponse<Supplier>>(`${this.baseUrl}/actives/open`);
+  // getAllSupplierOpenAndActive(): Observable<PaginatedResponse<Supplier>> {
+  //   return this.http.get<PaginatedResponse<Supplier>>(`${this.baseUrl}/actives/open`);
+  // }
+
+
+  getAllSupplierOpenAndActive(page: number = 0, size: number = 10): Observable<PaginatedResponse<Supplier>> {
+    return this.http.get<PaginatedResponse<Supplier>>(
+      `${this.baseUrl}/actives/open?page=${page}&size=${size}`
+    );
   }
+
+
 
   searchSuppliers(name: string): Observable<PaginatedResponse<Supplier>> {
     return this.http.get<PaginatedResponse<Supplier>>(`${this.baseUrl}/search?name=${name}`);
   }
 
-  getActiveSupplier(supplierId: number): Observable<boolean> {
+  getActiveSupplier(supplierId: string): Observable<boolean> {
     return this.http.get<boolean>(`${this.baseUrl}/${supplierId}/active`);
   }
 
-  getOpen(supplierId: number): Observable<boolean> {
+  getOpen(supplierId: string): Observable<boolean> {
     return this.http.get<boolean>(`${this.baseUrl}/${supplierId}/open`);
   }
-  
+
 }

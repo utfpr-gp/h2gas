@@ -98,8 +98,6 @@ export class OrderHistoryComponent {
 
 
   getOrders(status?: string) {
-    debugger
-
     this.orderService.findBySupplierId(this.userLogado?.supplierId!, status).subscribe({
       next: (response) => {
         this.orders = response.data;

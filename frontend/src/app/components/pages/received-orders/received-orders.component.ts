@@ -173,7 +173,7 @@ export class ReceivedOrdersComponent implements OnInit {
     // aqui você chama o serviço para atualizar no backend
   }
 
-  navigateEdit(id?: number) {
+  navigateEdit(id?: string) {
     this.router.navigate(['/distributor/edit', id])
   }
 
@@ -183,7 +183,7 @@ export class ReceivedOrdersComponent implements OnInit {
 
   getTotalRevenue(): number {
     return this.orders
-      ?.filter(order => order.status === 'Entregue')
+      ?.filter(order => order.status !== 'Entregue')
       .reduce((sum, order) => sum + order.totalPrice, 0) || 0;
   }
 
