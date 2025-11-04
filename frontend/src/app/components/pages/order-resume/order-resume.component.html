@@ -18,8 +18,7 @@
                     <div *ngFor="let product of productsCarts" class="flex items-center justify-between pb-4 border-b">
                         <div class="flex items-center">
                             <img alt="{{product!!.type}} {{product!!.brand}} {{product!!.category}}"
-                                class="w-16 h-16 object-cover rounded-md mr-4"
-                                src="https://lh3.googleusercontent.com/aida-public/AB6AXuAi_kB_zs5VrzHKf9T-a4bcO2UxzeD4u4IAHdKMn6BHnobKNNUE_0gb22_2GC4_CLMaKrq_fljcNLnoJhihU2TutiGO_zIXpalARWSiIj23HwoO0mYCs379jJ2jkaNhz64bIhtxojfyIZghha1szP3P8hfr1guGCRyDXrgJn90SPhajk7ZFZKYPbNXW8tyUvxt-0c7sA3Q7TURgWvYL38yUyYGwWbWU0iZ9GvARM7_voxMtE5JWZOlGtvdSdh1fH9Z2KvD6ll4J7dOv" />
+                                class="w-16 h-16 object-cover rounded-md mr-4" src="{{product.imageUrl}}" />
                             <div>
                                 <p class="font-semibold">
                                     {{product!!.type}} {{product!!.brand}} {{product!!.category}}
@@ -44,12 +43,12 @@
                 </div>
             </div>
             <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg">
-                <h1 class="text-2xl font-bold text-gray-800 mb-6">Método de Pagamento</h1>
+                <h1 class="text-2xl font-bold text-gray-800 mb-6">Método de Pagamento na Entrega</h1>
 
                 <div class="space-y-4">
                     <form [formGroup]="formOrder">
                         <!-- Mercado Pago (ativo) -->
-                        <label
+                        <!-- <label
                             class="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors duration-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 relative">
                             <input type="radio" formControlName="paymentMethod" value="MERCADO_PAGO"
                                 class="form-radio h-5 w-5 text-blue-600 peer" checked />
@@ -62,15 +61,13 @@
                                     <p class="text-gray-600 text-sm">Cartão, PIX ou conta Mercado Pago</p>
                                 </div>
                             </div>
-                        </label>
+                        </label> -->
 
                         <!-- Dinheiro (ativo) -->
                         <label
                             class="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors duration-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 relative">
-                            <input 
-                                formControlName="paymentMethod"
-                                value="DINHEIRO"
-                                type="radio"  class="form-radio h-5 w-5 text-blue-600 peer" />
+                            <input formControlName="paymentMethod" value="DINHEIRO" type="radio"
+                                class="form-radio h-5 w-5 text-blue-600 peer" />
                             <div class="ml-4 flex items-center w-full">
                                 <div class="bg-orange-500 text-white rounded-md p-2">
                                     <span class="material-icons">payments</span>
@@ -84,9 +81,9 @@
 
                         <!-- PIX (desabilitado) -->
                         <label
-                            class="flex items-center p-4 border border-gray-200 rounded-lg opacity-50 cursor-not-allowed relative">
-                            <input type="radio" name="payment-method" class="form-radio h-5 w-5 text-blue-600 peer"
-                                disabled />
+                            class="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors duration-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 relative">
+                            <input formControlName="paymentMethod" value="PIX" type="radio"
+                                class="form-radio h-5 w-5 text-blue-600 peer" />
                             <div class="ml-4 flex items-center w-full">
                                 <div class="bg-green-500 text-white rounded-md p-2">
                                     <span class="material-icons">pix</span>
@@ -94,19 +91,17 @@
                                 <div class="ml-4 flex flex-col">
                                     <span class="font-semibold text-gray-800 flex items-center">
                                         PIX
-                                        <span class="ml-2 text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">Em
-                                            breve</span>
                                     </span>
-                                    <p class="text-gray-600 text-sm">Pagamento instantâneo</p>
+                                    <p class="text-gray-600 text-sm">Pagamento instantâneo na entrega</p>
                                 </div>
                             </div>
                         </label>
 
                         <!-- Cartão de Crédito (desabilitado) -->
                         <label
-                            class="flex items-center p-4 border border-gray-200 rounded-lg opacity-50 cursor-not-allowed relative">
-                            <input type="radio" name="payment-method" class="form-radio h-5 w-5 text-blue-600 peer"
-                                disabled />
+                            class="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors duration-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 relative">
+                            <input formControlName="paymentMethod" value="CREDIT_CARD" type="radio"
+                                class="form-radio h-5 w-5 text-blue-600 peer" />
                             <div class="ml-4 flex items-center w-full">
                                 <div class="bg-purple-500 text-white rounded-md p-2">
                                     <span class="material-icons">credit_card</span>
@@ -114,13 +109,12 @@
                                 <div class="ml-4 flex flex-col">
                                     <span class="font-semibold text-gray-800 flex items-center">
                                         Cartão de Crédito
-                                        <span class="ml-2 text-xs text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">Em
-                                            breve</span>
                                     </span>
                                     <p class="text-gray-600 text-sm">Visa, Mastercard, Elo</p>
                                 </div>
                             </div>
                         </label>
+
                     </form>
 
 
@@ -163,13 +157,19 @@
                             id="observations" placeholder="Instruções especiais, ponto de referência..."
                             rows="3"></textarea>
                     </div>
-                    <button
-                        (click)="createOrder()"
+                    <button (click)="createOrder()"
                         class="w-full bg-blue-600 cursor-pointer text-white font-bold py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                         type="submit">
                         Confirmar Pedido
                     </button>
                 </form>
+            </div>
+        </div>
+
+        <div *ngIf="isLoading" class="fixed inset-0 bg-gray-900/20 backdrop-blur-md flex items-center justify-center z-50">
+            <div class="flex flex-col items-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500 border-solid"></div>
+            <p class="text-white mt-4 font-medium">Criando pedido...</p>
             </div>
         </div>
     </div>

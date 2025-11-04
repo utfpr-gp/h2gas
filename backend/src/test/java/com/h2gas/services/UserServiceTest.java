@@ -55,16 +55,14 @@ class UserServiceTest {
     @DisplayName("Procura users pelo id do Banco de dados")
     void findByIdUserCase1() {
         String idTest = "94c4c7ca-6dca-4bc5-80ee-5f564918ca07";
-        User dataMock = new User(
-                idTest,
+
+        User dataMock = new User(null,
                 "Pablo Teste",
                 "pablo@gmail.com",
                 "1234545",
-                "123435345",
                 "234234234",
                 "4534534",
-                UserTypeEnum.CUSTOMER,
-                null
+                UserTypeEnum.CUSTOMER
         );
 
         UserDto userDtoMock = new UserDto();
@@ -81,6 +79,7 @@ class UserServiceTest {
     }
 
     @Test
+    @DisplayName("Retorna erro ao passar id incorreto")
     public void findByIdUserCase2Exception() {
         String idTest = "94c4c7ca-6dca-4bc5-80ee-5f564918ca07";
         String idErrado = "94c4c7ca-6dca-4bc5-80ee-5f564918ca05";

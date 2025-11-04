@@ -23,16 +23,16 @@ export class SupplierApprovalComponent implements OnInit {
   columns = [
     {key: 'name', label: 'Nome'},
     {key: 'phone', label: 'Telefone'},
-    {key: 'workingHours', label: 'Tempo de funcionamento'},
+    // {key: 'workingHours', label: 'Tempo de funcionamento'},
     // {key: 'averageDeliveryTime', label: 'Tempo de entrega'},
     {key: 'active', label: 'Ativo', type: 'switch'},
     {key: 'cityName', label: 'Cidade de atuação'},
     {key: 'addressNeighborhood', label: 'Bairro de atuação'},
     {key: 'addressStreetName', label: 'Rua'},
     {key: 'addressNumber', label: 'Numero endereço'},
-    {key: 'user.name', label: 'Usuário Proprietário'},
-    {key: 'user.email', label: 'Email'},
-    {key: 'user.phoneNumber', label: 'Telefone Proprietário'},
+    {key: 'cnpj', label: 'CNPJ'},
+    {key: 'email', label: 'Email'},
+    // {key: 'user.phoneNumber', label: 'Telefone Proprietário'},
   ]
   
   constructor(

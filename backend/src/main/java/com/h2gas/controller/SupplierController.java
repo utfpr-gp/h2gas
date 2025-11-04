@@ -86,7 +86,7 @@ public class SupplierController {
     @DeleteMapping("/{id}")
     @ResponseBody
     @RolesAllowed("ADMIN")
-    public ResponseEntity<Long> deleteSupplier(@PathVariable("id") Long id) {
+    public ResponseEntity<String> deleteSupplier(@PathVariable("id") String id) {
         supplierService.deleteSupplier(id);
         return ResponseEntity.ok(id);
     }
@@ -94,23 +94,23 @@ public class SupplierController {
     @PatchMapping("/{id}/update-active")
     @ResponseBody
     @RolesAllowed("ADMIN")
-    public ResponseEntity<Map<String, String>> updateSupplierStatus(@PathVariable Long id,
+    public ResponseEntity<Map<String, String>> updateSupplierStatus(@PathVariable String id,
                                                      @RequestBody Map<String, Boolean> status) {
         boolean novoStatus = status.get("active");
         supplierService.updateStatusSupplier(id, novoStatus);
         return ResponseEntity.ok(Map.of("message", "Status atualizado com sucesso"));
     }
 
-    @GetMapping("/by-user/{userId}")
-    @ResponseBody
-    public ResponseEntity<SupplierDTO> getAddressByUserId(@PathVariable String userId) {
-        SupplierDTO supplierDTO = supplierService.findByUserIdSupplier(userId);
-        return ResponseEntity.ok(supplierDTO);
-    }
+//    @GetMapping("/by-user/{userId}")
+//    @ResponseBody
+//    public ResponseEntity<SupplierDTO> getAddressByUserId(@PathVariable String userId) {
+//        SupplierDTO supplierDTO = supplierService.findByUserIdSupplier(userId);
+//        return ResponseEntity.ok(supplierDTO);
+//    }
 
     @GetMapping("/{id}")
     @ResponseBody
-    public ResponseEntity<SupplierDTO> getAddressById(@PathVariable Long id) {
+    public ResponseEntity<SupplierDTO> getAddressById(@PathVariable String id) {
         SupplierDTO supplierDTO = supplierService.findById(id);
         return ResponseEntity.ok(supplierDTO);
     }
@@ -118,7 +118,7 @@ public class SupplierController {
     @PutMapping("/{id}")
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER"})
-    public ResponseEntity<SupplierDTO> update(@PathVariable Long id, @RequestBody SupplierCreateDTO dto) {
+    public ResponseEntity<SupplierDTO> update(@PathVariable String id, @RequestBody SupplierCreateDTO dto) {
         SupplierDTO updated = supplierService.update(id, dto);
         return ResponseEntity.ok(updated);
     }
@@ -126,7 +126,7 @@ public class SupplierController {
     @PatchMapping("/{id}/status")
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER"})
-    public ResponseEntity<Map<String, String>> changeStatusOpenClosed(@PathVariable Long id,
+    public ResponseEntity<Map<String, String>> changeStatusOpenClosed(@PathVariable String id,
                                                               @RequestBody Map<String, Boolean> status) {
         boolean novoStatus = status.get("status");
         supplierService.updateStatusOpenClosed(id, novoStatus);
@@ -136,7 +136,7 @@ public class SupplierController {
     @GetMapping("/{id}/active")
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER"})
-    public ResponseEntity<Boolean> getSupplierStatus(@PathVariable Long id) {
+    public ResponseEntity<Boolean> getSupplierStatus(@PathVariable String id) {
         boolean active = supplierService.findById(id).isActive();
         return ResponseEntity.ok(active);
     }
@@ -144,7 +144,7 @@ public class SupplierController {
     @GetMapping("/{id}/open")
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER"})
-    public ResponseEntity<Boolean> getSupplierOpen(@PathVariable Long id) {
+    public ResponseEntity<Boolean> getSupplierOpen(@PathVariable String id) {
         boolean active = supplierService.findById(id).isOpen();
         return ResponseEntity.ok(active);
     }

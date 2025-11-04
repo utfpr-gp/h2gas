@@ -1,7 +1,7 @@
 import { User } from "./user";
 
 export class Supplier {
-    id?: number;
+    id?: string;
     name?: string;
     phone?: string;
     description?: string;
@@ -17,9 +17,11 @@ export class Supplier {
     addressStreetName?: string;
     addressNumber?: string;
     open?: boolean;
+    email?: string;
+    cnpj?: string;
 
     constructor(
-        id?: number,
+        id?: string,
         name?: string,
         phone?: string,
         description?: string,

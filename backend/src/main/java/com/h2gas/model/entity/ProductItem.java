@@ -24,6 +24,7 @@ public class ProductItem {
 
     private String brand;
     private BigDecimal price;
+    private String description;
     private String imageUrl;
     private Integer stockQuantity;
     @CreationTimestamp

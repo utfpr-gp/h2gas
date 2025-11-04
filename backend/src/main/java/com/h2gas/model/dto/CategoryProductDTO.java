@@ -13,4 +13,5 @@ public class CategoryProductDTO {
     private String name;
     private String type;
     private Long productTypeId;
+    private String supplierId;
 }

@@ -14,7 +14,7 @@ public class UserDto {
     private String email;
     private String phoneNumber;
     private String cpf;
-    private String cnpj;
+//    private String cnpj;
     private UserTypeEnum userType;
-    private Long supplierId;
+    private String supplierId;
 }

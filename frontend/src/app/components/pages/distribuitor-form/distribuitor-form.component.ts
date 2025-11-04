@@ -40,7 +40,7 @@ export class DistribuitorFormComponent implements OnInit {
   userLogado?: User;
 
   isEdit: boolean = false;
-  idEdit: number = 0;
+  idEdit: string = '';
   cidadeEncontrada: any;
 
   constructor(
@@ -83,7 +83,7 @@ export class DistribuitorFormComponent implements OnInit {
   showAddressModal = false;
 
   ngOnInit(): void {
-    this.idEdit = parseInt(this.routeActive.snapshot.paramMap.get('id') || '', 10);
+    this.idEdit = this.routeActive.snapshot.paramMap.get('id') || '';
 
     if (this.idEdit) {
       this.isEdit = true;
@@ -195,7 +195,7 @@ export class DistribuitorFormComponent implements OnInit {
     })
   }
 
-  getSupplierId(id: number) {
+  getSupplierId(id: string) {
     this.supplierService.findById(id).subscribe({
       next: (response) => {
         debugger

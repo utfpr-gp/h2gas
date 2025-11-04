@@ -1,15 +1,16 @@
 package com.h2gas.services;
 
 import com.h2gas.exceptions.ResourceNotFoundException;
+import com.h2gas.model.dto.AddressDTO;
 import com.h2gas.model.dto.CategoryProductDTO;
 import com.h2gas.model.dto.CityDTO;
-import com.h2gas.model.entity.CategoryProduct;
-import com.h2gas.model.entity.City;
-import com.h2gas.model.entity.ProductType;
+import com.h2gas.model.entity.*;
 import com.h2gas.model.mapper.CategoryProductMapper;
 import com.h2gas.model.mapper.ProductTypeMapper;
 import com.h2gas.model.repository.CategoryProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -26,8 +27,12 @@ public class CategoryProductService {
 
     @Autowired
     private ProductTypeService productTypeService;
+
     @Autowired
     private ProductTypeMapper productTypeMapper;
+
+    @Autowired
+    private SupplierService supplierService;
 
 
     public List<CategoryProductDTO> findAllCategoryProducts() {
@@ -51,10 +56,12 @@ public class CategoryProductService {
     public CategoryProductDTO createCategory(CategoryProductDTO categoryDto) {
         CategoryProduct categoryProduct = categoryProductMapper.toEntity(categoryDto);
         ProductType productType = productTypeService.findEntityById(categoryDto.getProductTypeId());
+        Supplier supplier = supplierService.findEntityById(categoryDto.getSupplierId());
 
         if (productType != null) {
             categoryProduct.setProductType(productType);
         }
+        categoryProduct.setSupplier(supplier);
 
         CategoryProduct savedCategoryProduct = categoryProductRepository.save(categoryProduct);
         return categoryProductMapper.toDto(savedCategoryProduct);
@@ -65,6 +72,11 @@ public class CategoryProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada com ID: " + id));
 
         categoryProductRepository.delete(category);
+    }
+
+    public Page<CategoryProductDTO> findAllBySupplierId(String supplierId, Pageable pageable) {
+        return categoryProductRepository.findBySupplierId(supplierId, pageable)
+                .map(categoryProductMapper::toDto);
     }
 
     public CategoryProductDTO update(Long id, CategoryProductDTO categoryDto) {

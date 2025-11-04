@@ -25,4 +25,7 @@ public class ProductType {
     @OneToMany(mappedBy = "productType", cascade = CascadeType.ALL)
     private Set<CategoryProduct> categories = new HashSet<>();
 
+//    @ManyToOne
+//    @JoinColumn(name = "supplier_id", nullable = false)
+//    private Supplier supplier;
 }

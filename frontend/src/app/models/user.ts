@@ -7,11 +7,11 @@ export class User {
     cnpj?: string;
     password?: string;
     userType?: string;
-    supplierId?: number;
+    supplierId?: string;
 
     constructor(id: string, name: string, email: string, phoneNumber: string, 
                 cpf: string, cnpj: string, password: string, userType: string, 
-                supplierId?: number) {
+                supplierId?: string) {
         this.id = id;
         this.name = name;
         this.email = email;

@@ -88,8 +88,9 @@ export class ProductItemComponent implements OnInit {
         console.log('Buscado com sucesso', response);
         this.itemProducts = response.data
         console.log(this.itemProducts);
-        
-        this.toastr.success('Produtos encontrado com sucesso!');
+        if (this.itemProducts.length > 0) {
+          this.toastr.success('Produtos buscado com sucesso!');          
+        }
       },
       error: (err) => {
         debugger
@@ -97,15 +98,6 @@ export class ProductItemComponent implements OnInit {
         this.toastr.error(`Erro ao buscar produtos: ${err.error.message}`)
       },
     })
-    // try {
-    //   debugger
-    //   this.itemProducts = await firstValueFrom(this.productItemService.findAll());
-    //   console.log(this.itemProducts);
-    //   this.toastr.success("Buscado com sucesso os produtos!!");
-    // } catch (err: any) {
-    //   this.toastr.error(`Erro ao buscar os produtos!! ${err.error?.message}`);
-    //   console.error(err);
-    // }
   }
 
   navigateEdit(id?: number) {

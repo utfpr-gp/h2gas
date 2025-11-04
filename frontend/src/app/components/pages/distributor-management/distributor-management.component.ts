@@ -38,7 +38,7 @@ export class DistributorManagementComponent implements OnInit {
     this.buscaDistribuidoraFornecedor(this.userLogado?.id!!);
   }
 
-  navigateEdit(id?: number) {
+  navigateEdit(id?: string) {
     this.router.navigate(['/distributor/edit', id])
   }
 

@@ -1,4 +1,4 @@
-package com.h2gas.configuration;
+package com.h2gas.configuration.mapperConfig;
 
 import com.h2gas.model.dto.SupplierDTO;
 import com.h2gas.model.dto.SupplierSummaryDTO;

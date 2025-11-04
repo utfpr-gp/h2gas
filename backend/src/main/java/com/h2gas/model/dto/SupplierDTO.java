@@ -13,7 +13,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SupplierDTO {
-    private Long id;
+    private String id;
     private String name;
     private String phone;
     private String description;
@@ -26,7 +26,10 @@ public class SupplierDTO {
     private boolean open;
     private String cityName;
     private Long cityId;
-    private UserDto user;
+    private String email;
+    private String cnpj;
+    private List<ProductItemDTO> products;
+//    private UserDto user;
 
     //    address relacionamento
     private String addressNeighborhood;

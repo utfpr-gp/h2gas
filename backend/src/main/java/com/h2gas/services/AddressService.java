@@ -2,7 +2,6 @@ package com.h2gas.services;
 
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.AddressDTO;
-import com.h2gas.model.dto.CategoryProductDTO;
 import com.h2gas.model.entity.Address;
 import com.h2gas.model.entity.City;
 import com.h2gas.model.entity.User;
@@ -10,6 +9,7 @@ import com.h2gas.model.mapper.AddressMapper;
 import com.h2gas.model.mapper.CityMapper;
 import com.h2gas.model.mapper.UserMapper;
 import com.h2gas.model.repository.AddressRepository;
+import com.h2gas.model.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -35,7 +35,7 @@ public class AddressService {
     private UserMapper userMapper;
 
     @Autowired
-    private UserService userService;
+    private UserRepository userRepository;
 
     public List<AddressDTO> findAllAddresses() {
         return addressRepository.findAll()
@@ -50,14 +50,33 @@ public class AddressService {
                 -> new ResourceNotFoundException("Endereço não encontrado com esse id: " + id));
     }
 
+    public Address findByIdEntity(Long id) {
+        return addressRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Endereço não encontrado com esse id: " + id));
+    }
+
     public AddressDTO createAddress(AddressDTO addressDTO) {
         Address address = addressMapper.toEntity(addressDTO);
         City city = cityMapper.toEntity(cityService.findByName(addressDTO.getCityName()));
-        User user = userMapper.toEntityUser(userService.findByIdUser(addressDTO.getUserId()));
+//        User user = userMapper.toEntityUser(userService.findByIdUser(addressDTO.getUserId()));
+        User user = userRepository.findById(addressDTO.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com id: " + addressDTO.getUserId()));
         address.setCity(city);
         address.setUser(user);
         addressRepository.save(address);
         return addressMapper.toDto(address);
+    }
+
+    public Address createAddress(AddressDTO addressDTO, User user, City city) {
+        Address address = addressMapper.toEntity(addressDTO);
+
+        if (city == null) {
+            throw new ResourceNotFoundException("City not found");
+        }
+
+        address.setUser(user);
+        address.setCity(city);
+        return addressRepository.save(address);
     }
 
     public AddressDTO findByStreetName(String streetName) {

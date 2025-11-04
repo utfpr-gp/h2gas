@@ -1,0 +1,35 @@
+<div class="flex justify-center mt-8 items-center space-x-2 text-sm">
+    <!-- Primeira página -->
+    <button (click)="goToPage(0)" [disabled]="!hasPrevious()"
+        class="px-3 py-1 rounded hover:bg-gray-300 disabled:bg-gray-200 disabled:cursor-not-allowed disabled:text-gray-400">
+        «
+    </button>
+
+    <!-- Anterior -->
+    <button (click)="goToPage(currentPage - 1)" [disabled]="!hasPrevious()"
+        class="px-3 py-1 rounded hover:bg-gray-300 disabled:bg-gray-200 disabled:cursor-not-allowed disabled:text-gray-400">
+        ‹
+    </button>
+
+    <!-- Números de página -->
+    <ng-container *ngFor="let page of getPageNumbers()">
+        <span *ngIf="page === -1" class="px-2">...</span>
+        <button *ngIf="page !== -1" (click)="goToPage(page)" [disabled]="page === currentPage"
+            [class.bg-blue-500]="page === currentPage" [class.text-white]="page === currentPage"
+            class="px-3 py-1 rounded hover:bg-gray-300 disabled:bg-gray-200 disabled:cursor-not-allowed disabled:text-gray-400">
+            {{ page + 1 }}
+        </button>
+    </ng-container>
+
+    <!-- Próximo -->
+    <button (click)="goToPage(currentPage + 1)" [disabled]="!hasNext()"
+        class="px-3 py-1 rounded hover:bg-gray-300 disabled:bg-gray-200 disabled:cursor-not-allowed disabled:text-gray-400">
+        ›
+    </button>
+
+    <!-- Última página -->
+    <button (click)="goToPage(totalPages - 1)" [disabled]="!hasNext()"
+        class="px-3 py-1 rounded hover:bg-gray-300 disabled:bg-gray-200 disabled:cursor-not-allowed disabled:text-gray-400">
+        »
+    </button>
+</div>

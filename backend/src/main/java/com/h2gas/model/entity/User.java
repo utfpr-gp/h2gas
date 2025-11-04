@@ -16,6 +16,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "users")
+@Inheritance(strategy = InheritanceType.JOINED)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -33,15 +34,15 @@ public class User implements UserDetails {
 
     private String cpf;
 
-    private String cnpj;
+//    private String cnpj;
 
     private String password;
 
     private UserTypeEnum userType;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    @JsonManagedReference
-    private Supplier supplier;
+//    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+//    @JsonManagedReference
+//    private Supplier supplier;
 
 
 //    TODO AJUSTAR AQUI MAIS TARDE
@@ -53,13 +54,13 @@ public class User implements UserDetails {
 //    private Address address;
 
     public User(String name, String email, String phoneNumber,
-                String cpf, String cnpj, String password,
+                String cpf, String password,
                 UserTypeEnum userType) {
         this.name = name;
         this.email = email;
         this.phoneNumber = phoneNumber;
         this.cpf = cpf;
-        this.cnpj = cnpj;
+//        this.cnpj = cnpj;
         this.password = password;
         this.userType = userType;
     }

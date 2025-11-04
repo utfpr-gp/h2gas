@@ -33,7 +33,7 @@ export class OrderService extends AbstractService<OrderResponse> {
   // }
 
   findBySupplierId(
-    supplierId: number,
+    supplierId: string,
     status?: string,
     page: number = 0,
     size: number = 10
@@ -49,7 +49,7 @@ export class OrderService extends AbstractService<OrderResponse> {
   }
 
   findByExcludeStatus(
-    supplierId: number,
+    supplierId: string,
     excludeStatuses?: string[],
     page: number = 0,
     size: number = 10
