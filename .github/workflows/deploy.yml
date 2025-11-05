@@ -40,11 +40,9 @@ jobs:
           script: |
             TAG=${{ github.ref_name }}
             cd /home/ubuntu/h2gas
-            sudo mkdir -p /etc/letsencrypt/live/h2gas.net.br
-            sudo chmod -R 755 /etc/letsencrypt
             sed -i "s|image: pabloc5/h2gas-backend:.*|image: pabloc5/h2gas-backend:$TAG|" docker-compose.prod.yml
             sed -i "s|image: pabloc5/h2gas-frontend:.*|image: pabloc5/h2gas-frontend:$TAG|" docker-compose.prod.yml
             docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d --no-deps --build backend frontend
+            docker compose -f docker-compose.prod.yml up -d --build
             docker image prune -f
 
