@@ -39,8 +39,6 @@ export class SupplierService extends AbstractService<Supplier> {
     );
   }
 
-
-
   searchSuppliers(name: string): Observable<PaginatedResponse<Supplier>> {
     return this.http.get<PaginatedResponse<Supplier>>(`${this.baseUrl}/search?name=${name}`);
   }
@@ -51,6 +49,10 @@ export class SupplierService extends AbstractService<Supplier> {
 
   getOpen(supplierId: string): Observable<boolean> {
     return this.http.get<boolean>(`${this.baseUrl}/${supplierId}/open`);
+  }
+
+  updateTimesOperation(data: any, id: string) {
+    return this.http.patch(`${this.baseUrl}/${id}/update-times`, data);
   }
 
 }

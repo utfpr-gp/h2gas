@@ -101,6 +101,15 @@ public class SupplierController {
         return ResponseEntity.ok(Map.of("message", "Status atualizado com sucesso"));
     }
 
+    @PatchMapping("/{id}/update-times")
+    @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER"})
+    public ResponseEntity<Map<String, String>> updateSupplierTimes(@PathVariable String id,
+                                                                    @RequestBody Map<String, String> times) {
+        supplierService.updateTimesSupplier(id, times);
+        return ResponseEntity.ok(Map.of("message", "Horario de funcionamento atualizado com sucesso"));
+    }
+
 //    @GetMapping("/by-user/{userId}")
 //    @ResponseBody
 //    public ResponseEntity<SupplierDTO> getAddressByUserId(@PathVariable String userId) {
