@@ -133,6 +133,7 @@ export class RegisterUserComponent implements OnInit {
 
         if (!this.cidadeEncontrada) {
           this.toastr.warning(`No momento ainda não atendemos a cidade de ${response.localidade}.`);
+          this.isLoadingCep = false;
           return; 
         }
         this.toastr.success('Cep buscado com sucesso');

@@ -24,6 +24,7 @@ import { ForgotPasswordComponent } from './components/pages/forgot-password/forg
 import { CheckEmailComponent } from './components/pages/check-email/check-email.component';
 import { ResetPasswordComponent } from './components/pages/reset-password/reset-password.component';
 import { EmailSentComponent } from './components/pages/email-sent/email-sent.component';
+import { ConfigurationComponent } from './components/pages/configuration/configuration.component';
 
 export const routes: Routes = [
     {path: '', component: InitialScreenComponent},
@@ -151,6 +152,12 @@ export const routes: Routes = [
     {
         path: 'email-sent', 
         component: EmailSentComponent
+    },
+    {
+        path: 'configuracao', 
+        component: ConfigurationComponent,
+        canActivate: [authGuard],
+        data: {roles: ['ADMIN', 'SUPPLIER']}
     },
 
 ];

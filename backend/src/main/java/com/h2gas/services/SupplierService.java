@@ -1,8 +1,6 @@
 package com.h2gas.services;
 
-import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ResourceNotFoundException;
-import com.h2gas.model.dto.CityDTO;
 import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
 import com.h2gas.model.dto.SupplierSummaryDTO;
@@ -17,6 +15,7 @@ import org.springframework.stereotype.Component;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -166,6 +165,15 @@ public class SupplierService {
                 .orElseThrow(() -> new ResourceNotFoundException("Fornecedor com " + id + " não encontrado"));
 
         supplier.setActive(active);
+        supplierRepository.save(supplier);
+    }
+
+    public void updateTimesSupplier(String id, Map<String, String> times) {
+        Supplier supplier = supplierRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Fornecedor com " + id + " não encontrado"));
+
+        supplier.setOpeningTime(LocalTime.parse(times.get("openingTime")));
+        supplier.setClosingTime(LocalTime.parse(times.get("closingTime")));
         supplierRepository.save(supplier);
     }
 
