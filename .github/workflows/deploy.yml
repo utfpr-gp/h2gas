@@ -43,5 +43,6 @@ jobs:
             sed -i "s|image: pabloc5/h2gas-backend:.*|image: pabloc5/h2gas-backend:$TAG|" docker-compose.prod.yml
             sed -i "s|image: pabloc5/h2gas-frontend:.*|image: pabloc5/h2gas-frontend:$TAG|" docker-compose.prod.yml
             docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.prod.yml up -d --build
+            docker image prune -f
 
