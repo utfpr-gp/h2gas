@@ -69,6 +69,7 @@ export class CityRegisterComponent implements OnInit {
   modalAberta = false;
 
   openModal() {
+    this.cityForm.reset();
     this.modalAberta = true;
   }
 

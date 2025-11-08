@@ -10,6 +10,7 @@ import { ToastrService } from 'ngx-toastr';
 import { firstValueFrom } from 'rxjs';
 import { User } from '../../../models/user';
 import { UserService } from '../../../services/user.service';
+import { ConfigurationService } from '../../../services/configuration.service';
 
 @Component({
   selector: 'app-product-item',
@@ -43,15 +44,18 @@ export class ProductItemComponent implements OnInit {
     private productItemService: ProductItemService,
     private toastr: ToastrService,
     private userService: UserService,
+    private configurationService: ConfigurationService
   ) {}
   userLogado?: User;
 
 
   async ngOnInit() {
-    debugger
     this.userLogado = this.userService.getUserLocalStorage()
+    const settings = this.configurationService.getSettings();
+    if (settings?.estoqueMin) {
+      this.estoqueMinimoConfig = settings.estoqueMin;
+    }
     await this.findProdutos();
-    this.countingDisponivel();
   }
 
   openModalDelete(productItem: ProductItem) {
@@ -91,6 +95,7 @@ export class ProductItemComponent implements OnInit {
         if (this.itemProducts.length > 0) {
           this.toastr.success('Produtos buscado com sucesso!');          
         }
+        this.countingDisponivel();
       },
       error: (err) => {
         debugger
@@ -118,34 +123,31 @@ export class ProductItemComponent implements OnInit {
       },
     })
   }
-
+  estoqueMinimoConfig: number = 8;
+  
   countingDisponivel() {
     debugger
-    this.availableProduct = 0
-    this.esgotadoProducts = 0
-    this.lowProducts = 0
+    this.availableProduct = 0;
+    this.esgotadoProducts = 0;
+    this.lowProducts = 0;
 
-    for (let index = 0; index < this.itemProducts!.length; index++) {
-      const element = this.itemProducts![index];
-      debugger
+    for (let element of this.itemProducts ?? []) {
+      const qtd = element.stockQuantity ?? 0;
 
-      if (element.stockQuantity! > 0) {
-        this.availableProduct++
-      } 
-
-      if (element.stockQuantity! == 0 || element.stockQuantity == null) {
-        this.esgotadoProducts++
-      }
-
-      if (element.stockQuantity! <= 8) {
-        this.lowProducts++
-      }
-
+      if (qtd > 0) this.availableProduct++;
+      if (qtd === 0) this.esgotadoProducts++;
+      if (qtd > 0 && qtd <= this.estoqueMinimoConfig) this.lowProducts++;
     }
 
-    console.log(this.availableProduct);
-    
+    console.log({
+      disponiveis: this.availableProduct,
+      baixoEstoque: this.lowProducts,
+      esgotado: this.esgotadoProducts,
+      limiteConfig: this.estoqueMinimoConfig
+    });
   }
+
+  
 
 
 }

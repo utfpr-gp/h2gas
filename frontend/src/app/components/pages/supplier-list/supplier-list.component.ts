@@ -81,7 +81,7 @@ export class SupplierListComponent implements OnInit {
         this.pageSize = response.size;
         this.totalPages = response.totalPages;
         this.totalElements = response.totalElements;
-  
+        console.log(this.suppliers);
         this.toastr.success('Fornecedores buscados com sucesso!');
       },
       error: (err) => {
@@ -151,6 +151,7 @@ export class SupplierListComponent implements OnInit {
 
   openModal(product: any) {
     this.productSelect = product;
+    this.quantity = 1;
     this.productModal.nativeElement.showModal();
   }
 
@@ -160,23 +161,19 @@ export class SupplierListComponent implements OnInit {
 
   confirmRequest() {
     if (this.quantity < 1) {
-      this.toastr.warning("Selecionar pelo menos 1 produto!!!")
+      this.toastr.warning("Selecione pelo menos 1 produto!");
       this.closeModal();
-      return
+      return;
     }
-
-    let cart: any[] = JSON.parse(localStorage.getItem('cart-product') || '[]');
-    let existing = cart.find(p => p.id === this.productSelect!!.id);
-
-    if (existing) {
-      existing.quantitySelect += 1;
-    } else {
-      cart.push({ ...this.productSelect, quantitySelect: this.quantity });
-    }
-
-    console.log(this.cartProduct);
-    this.cartService.setCart(cart);
-
+  
+    const productToAdd = {
+      ...this.productSelect,
+      quantitySelect: this.quantity
+    };
+  
+    this.cartService.addProduct(productToAdd);
+  
+    this.toastr.success("Produto adicionado ao carrinho!");
     this.closeModal();
   }
 
