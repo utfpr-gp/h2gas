@@ -32,6 +32,7 @@ export class ConfigurationComponent {
     this.formHours = this.fb.group({
       openingTime:[''],
       closingTime: [''],
+      averageDeliveryTime: [null, [Validators.min(1)]],
     })
   }
 
@@ -44,7 +45,8 @@ export class ConfigurationComponent {
 
   timeOpeningAndClose = {
     openingTime: '',
-    closingTime: ''
+    closingTime: '',
+    averageDeliveryTime: 1
   }
 
   userLogado?: User;
@@ -66,7 +68,12 @@ export class ConfigurationComponent {
       next: (response) => {
         debugger
         console.log('Distribuidor buscado com sucesso!', response);
-        this.formHours.patchValue(response);
+        // this.formHours.patchValue(response);
+        this.formHours.patchValue({
+          openingTime: response.openingTime,
+          closingTime: response.closingTime,
+          averageDeliveryTime: response.averageDeliveryTime
+        });
         this.toastr.success('Distribuidor buscado com sucesso!');
       },
       error: (err) => {
@@ -86,8 +93,13 @@ export class ConfigurationComponent {
       console.error("Formulário inválido!");
     }
 
-    this.timeOpeningAndClose.closingTime = this.formHours.value.closingTime;
-    this.timeOpeningAndClose.openingTime = this.formHours.value.openingTime;
+    // this.timeOpeningAndClose.closingTime = this.formHours.value.closingTime;
+    // this.timeOpeningAndClose.openingTime = this.formHours.value.openingTime;
+    this.timeOpeningAndClose = {
+      openingTime: this.formHours.value.openingTime,
+      closingTime: this.formHours.value.closingTime,
+      averageDeliveryTime: this.formHours.value.averageDeliveryTime
+    };
 
 
     this.supplierService.updateTimesOperation(this.timeOpeningAndClose, this.userLogado?.supplierId!).subscribe({

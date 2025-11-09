@@ -34,6 +34,7 @@ export class OrderService extends AbstractService<OrderResponse> {
     );
   }
   
+  
 
   // findBySupplierId(supplierId: number): Observable<PaginatedResponse<OrderResponse>> {
   //   return this.http.get<PaginatedResponse<OrderResponse>>(
