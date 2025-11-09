@@ -65,6 +65,7 @@ export class CategoryProductsComponent implements OnInit {
 
 
   toggleFormulario() {
+    this.formCategory.reset();
     this.modalAberta = !this.modalAberta;
     this.isEdit = false;
   }

@@ -20,11 +20,20 @@ export class OrderService extends AbstractService<OrderResponse> {
     return this.http.post<OrderResponse>(this.baseUrl, data);
   }
 
-  findByCustomerId(customerId: string): Observable<PaginatedResponse<OrderResponse>> {
+  // findByCustomerId(customerId: string): Observable<PaginatedResponse<OrderResponse>> {
+  //   return this.http.get<PaginatedResponse<OrderResponse>>(
+  //     `${this.baseUrl}/by-customer/${customerId}`
+  //   );
+  // }
+
+  findByCustomerId(customerId: string, page: number = 0, size: number = 5): Observable<PaginatedResponse<OrderResponse>> {
+    const params = { page, size };
     return this.http.get<PaginatedResponse<OrderResponse>>(
-      `${this.baseUrl}/by-customer/${customerId}`
+      `${this.baseUrl}/by-customer/${customerId}`,
+      { params }
     );
   }
+  
 
   // findBySupplierId(supplierId: number): Observable<PaginatedResponse<OrderResponse>> {
   //   return this.http.get<PaginatedResponse<OrderResponse>>(

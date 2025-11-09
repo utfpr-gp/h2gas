@@ -10,8 +10,7 @@
                     <p class="text-sm text-gray-500 mt-1">Acompanhe seus pedidos de forma simples e rápida.</p>
                 </div>
                 <div class="hidden md:flex items-center space-x-2">
-                    <button
-                        (click)="navigate('/inicio')"
+                    <button (click)="navigate('/inicio')"
                         class="bg-blue-600 cursor-pointer text-white px-4 py-2 rounded-lg shadow-sm hover:bg-blue-700 transition-colors flex items-center">
                         <i class="fa-solid fa-plus mr-2"></i>
                         Fazer novo pedido
@@ -86,7 +85,8 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <!-- Cabeçalho do acordeon -->
-                                <button class="flex cursor-pointer items-center text-sm font-medium text-gray-900 focus:outline-none"
+                                <button
+                                    class="flex cursor-pointer items-center text-sm font-medium text-gray-900 focus:outline-none"
                                     (click)="toggleAccordion(i)">
                                     Produtos ({{ order.orderItems.length }})
                                     <span class="material-icons ml-2 text-gray-500 transform transition-transform"
@@ -128,6 +128,40 @@
                 </table>
             </div>
         </div>
+        <!-- Paginação compacta -->
+<div class="flex justify-center items-center mt-6 flex-wrap gap-2">
+    <!-- Botão Anterior -->
+    <button
+      (click)="previousPage()"
+      [disabled]="!hasPrevious"
+      class="flex items-center px-3 py-1.5 text-sm border rounded-md text-gray-700 hover:bg-gray-100 disabled:opacity-40">
+      <i class="fa-solid fa-chevron-left text-xs mr-1"></i>
+      Anterior
+    </button>
+  
+    <!-- Números de páginas -->
+    <ng-container *ngFor="let page of [].constructor(totalPages); let i = index">
+      <button
+        (click)="getOrders(i)"
+        [ngClass]="{
+          'bg-blue-600 text-white border-blue-600': i === currentPage,
+          'bg-white text-gray-700 hover:bg-gray-100 border-gray-300': i !== currentPage
+        }"
+        class="px-3 py-1.5 text-sm font-medium border rounded-md transition-colors">
+        {{ i + 1 }}
+      </button>
+    </ng-container>
+  
+    <!-- Botão Próxima -->
+    <button
+      (click)="nextPage()"
+      [disabled]="!hasNext"
+      class="flex items-center px-3 py-1.5 text-sm border rounded-md text-gray-700 hover:bg-gray-100 disabled:opacity-40">
+      Próxima
+      <i class="fa-solid fa-chevron-right text-xs ml-1"></i>
+    </button>
+  </div>
+  
     </main>
     <button
         class="fixed bottom-6 right-6 md:hidden bg-blue-600 text-white p-4 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-700 transition-transform transform active:scale-95">

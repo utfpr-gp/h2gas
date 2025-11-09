@@ -28,25 +28,60 @@ export class OrderListComponent implements OnInit {
   orders?: OrderResponse[];
   expandedIndex: number | null = null;
 
+  currentPage: number = 0;
+  totalPages: number = 0;
+  pageSize: number = 5;
+  hasNext: boolean = false;
+  hasPrevious: boolean = false;
+
   ngOnInit(): void {
     this.userLogado = this.userService.getUserLocalStorage();
 
     this.getOrders();
   }
 
-  getOrders() {
-    this.orderService.findByCustomerId(this.userLogado?.id!).subscribe({
+  // getOrders() {
+  //   this.orderService.findByCustomerId(this.userLogado?.id!).subscribe({
+  //     next: (response) => {
+  //       this.orders = response.data;
+  //       console.log(this.orders);
+        
+  //       this.toastr.success("Pedidos buscado com sucesso");
+  //     },
+  //     error: (err) => {
+  //       console.error(err)
+  //       this.toastr.error(`Erro ao buscar os pedidos: ${err.error.message}`);
+  //     },
+  //   })
+  // }
+
+  getOrders(page: number = 0) {
+    this.orderService.findByCustomerId(this.userLogado?.id!, page, this.pageSize).subscribe({
       next: (response) => {
         this.orders = response.data;
-        console.log(this.orders);
-        
-        this.toastr.success("Pedidos buscado com sucesso");
+        this.currentPage = response.page;
+        this.totalPages = response.totalPages;
+        this.hasNext = response.hasNext;
+        this.hasPrevious = response.hasPrevious;
+        this.toastr.success("Pedidos buscados com sucesso");
       },
       error: (err) => {
-        console.error(err)
+        console.error(err);
         this.toastr.error(`Erro ao buscar os pedidos: ${err.error.message}`);
       },
-    })
+    });
+  }
+  
+  nextPage() {
+    if (this.hasNext) {
+      this.getOrders(this.currentPage + 1);
+    }
+  }
+  
+  previousPage() {
+    if (this.hasPrevious) {
+      this.getOrders(this.currentPage - 1);
+    }
   }
 
   toggleAccordion(index: number) {

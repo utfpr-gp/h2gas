@@ -52,7 +52,7 @@ export class ForgotPasswordComponent {
         this.loading = false;
         this.errorMessage = 'Erro ao enviar link de recuperação. Tente novamente.';   
         console.error(err);
-        this.toastr.error(`Erro ao enviar link de recuperação: ${err.error.message}`) 
+        this.toastr.error(`Erro ao enviar link de recuperação: ${err.error.error}`) 
       },
     });
   }
