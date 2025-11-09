@@ -8,6 +8,7 @@ import com.h2gas.model.mapper.CategoryProductMapper;
 import com.h2gas.model.mapper.CreateProductItemMapper;
 import com.h2gas.model.mapper.ProductItemMapper;
 import com.h2gas.model.repository.ProductItemRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -72,6 +73,11 @@ public class ProductItemService {
                 .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado com esse id: " + id));
     }
 
+    @Transactional
+    public ProductItem findEntityByIdWithLock(Long id) {
+        return productItemRepository.findByIdWithLock(id);
+    }
+
     public ProductItemDTO createProductItem(CreateProductItemDTO productItemDto, MultipartFile file) {
         ProductItem productItem = createProductItemMapper.toEntity(productItemDto);
         Supplier supplier = supplierService.findEntityById(productItemDto.getSupplierId());
@@ -120,5 +126,10 @@ public class ProductItemService {
         productItemRepository.save(productItemUpdate);
 
         return productItemMapper.toDto(productItemUpdate);
+    }
+
+    @Transactional
+    public ProductItem save(ProductItem productItem) {
+        return productItemRepository.save(productItem);
     }
 }

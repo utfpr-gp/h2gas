@@ -3,10 +3,7 @@ package com.h2gas.services;
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ResourceNotFoundException;
-import com.h2gas.model.dto.RegisterDTO;
-import com.h2gas.model.dto.SupplierCreateDTO;
-import com.h2gas.model.dto.SupplierDTO;
-import com.h2gas.model.dto.UserDto;
+import com.h2gas.model.dto.*;
 import com.h2gas.model.entity.*;
 import com.h2gas.model.mapper.UserMapper;
 import com.h2gas.model.repository.CityRepository;
@@ -152,6 +149,9 @@ public class UserService {
                     data.getUserType()
             );
             userRepository.save(user);
+            City city = cityRepository.findById(data.getAddress().getCityId())
+                    .orElseThrow(() -> new ResourceNotFoundException("City not found"));
+            Address address = addressService.createAddress(data.getAddress(), user, city);
             return userMapper.toDto(user);
         }
 //        if (this.userRepository.existsByEmail(data.getEmail())) {

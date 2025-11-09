@@ -1,5 +1,6 @@
 package com.h2gas.services;
 
+import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.OrderItemRequestDTO;
 import com.h2gas.model.dto.OrderItemResponseDTO;
@@ -26,12 +27,28 @@ public class OrderItemService {
 
     @Autowired
     private ProductItemService productItemService;
+
     @Autowired
     private OrderItemRepository orderItemRepository;
 
+
+
     public OrderItem createOrderItem(OrderItemRequestDTO orderItemRequestDTO, Order order) {
-        ProductItem productItem = productItemService.findEntityById(orderItemRequestDTO.getProductItemRef());
+//        ProductItem productItem = productItemService.findEntityById(orderItemRequestDTO.getProductItemRef());
+        ProductItem productItem = productItemService.findEntityByIdWithLock(orderItemRequestDTO.getProductItemRef());
         OrderItem orderItem = orderItemMapper.toRequestEntity(orderItemRequestDTO);
+
+        int quantityRequested = orderItem.getQuantity();
+        int currentStock = productItem.getStockQuantity();
+
+        if (quantityRequested > currentStock) {
+            throw new BusinessRuleException(
+                    "Estoque insuficiente para o produto: " + productItem.getDescription()
+            );
+        }
+
+        productItem.setStockQuantity(currentStock - quantityRequested);
+        productItemService.save(productItem);
 
         BigDecimal totalPrice = calculateTotalPrice(orderItem.getQuantity(), productItem.getPrice());
         orderItem.setTotalPrice(totalPrice);
