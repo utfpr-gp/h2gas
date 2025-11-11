@@ -35,19 +35,23 @@ export class LoginComponent {
 
   loginform!: FormGroup;
 
+  loading = false;
 
   login() {
     localStorage.removeItem('access_token');
     localStorage.removeItem('user');
+    this.loading = true;
     this.cartService.setCart([]);
     this.authService.loginUser(this.loginform.value).subscribe({
       next: (response: any) => {
+        this.loading = false;
         console.log('Usuario logado com sucesso!', response);
         this.toastr.success('Usuario logado com sucesso!');
         localStorage.setItem('access_token', response.token)
         this.getAndSaveMe();
       }, 
       error: (err) => {
+        this.loading = false;
         console.error('Erro ao logar:', err);
         this.toastr.error(`Erro ao efetuar o login: ${err.error.message}`)
       }

@@ -25,6 +25,22 @@ export class ProductItemService extends AbstractService<ProductItem> {
       `${this.baseUrl}/by-supplier/${supplierId}?page=${page}&size=${size}`
     );
   }
+
+  getProductsBySupplierId(
+    supplierId: string,
+    page: number = 0,
+    size: number = 10,
+    search?: string,
+    category?: string
+  ): Observable<PaginatedResponse<ProductItem>> {
+    let params = `?page=${page}&size=${size}`;
+    if (search) params += `&search=${encodeURIComponent(search)}`;
+    if (category) params += `&category=${encodeURIComponent(category)}`;
+  
+    return this.http.get<PaginatedResponse<ProductItem>>(
+      `${this.baseUrl}/by-supplier/${supplierId}${params}`
+    );
+  }
   
 
   getProductsFromActiveSuppliers(page: number = 0, size: number = 20): Observable<PaginatedResponse<ProductItem>> {

@@ -112,7 +112,7 @@ export const routes: Routes = [
         path: 'painel-cliente', 
         component: CustomerPanelComponent,
         canActivate: [authGuard],
-        data: {roles: ['ADMIN', 'CUSTOMER', 'SUPPLIER']}
+        data: {roles: ['ADMIN', 'CUSTOMER']}
     },
     {
         path: 'dashboard-fornecedor', 

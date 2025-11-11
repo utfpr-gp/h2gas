@@ -61,6 +61,20 @@ public class ProductItemService {
                 .map(productItemMapper::toDto);
     }
 
+    public Page<ProductItemDTO> findProductsFiltered(String supplierId, String search, String category, Pageable pageable) {
+        Page<ProductItem> page;
+
+        if (category != null && !category.isBlank()) {
+            page = productItemRepository.findBySupplierIdAndCategoryProduct_ProductType_NameIgnoreCase(supplierId, category, pageable);
+        } else if (search != null && !search.isBlank()) {
+            page = productItemRepository.findBySupplierIdAndBrandContainingIgnoreCase(supplierId, search, pageable);
+        } else {
+            page = productItemRepository.findBySupplierId(supplierId, pageable);
+        }
+
+        return page.map(productItemMapper::toDto);
+    }
+
 
     public ProductItemDTO findById(Long id) {
         Optional<ProductItem> cityEntityOptional = productItemRepository.findById(id);

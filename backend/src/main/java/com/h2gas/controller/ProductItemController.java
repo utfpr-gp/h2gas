@@ -77,12 +77,13 @@ public class ProductItemController {
     public ResponseEntity<PageResponse<ProductItemDTO>> getProductBySupplier(
             @PathVariable String supplierId,
             @RequestParam(value = "page", required = false) Integer page,
-            @RequestParam(value = "size", required = false) Integer size
+            @RequestParam(value = "size", required = false) Integer size,
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "category", required = false) String category
     ) {
         Pageable pageable = PaginationUtil.getPageableRequest(page, size);
-        Page<ProductItemDTO> result = productItemService.findProductsBySupplier(supplierId, pageable);
+        Page<ProductItemDTO> result = productItemService.findProductsFiltered(supplierId, search, category, pageable);
         PageResponse<ProductItemDTO> response = new PageResponse<>(result);
-
         return ResponseEntity.ok(response);
     }
 
