@@ -81,54 +81,6 @@ export class OrderResumeComponent implements OnInit {
     })
   }
 
-  // createOrder() {
-  //   if (!this.formOrder.valid) {
-  //     this.toastr.error("Por favor selecione um meio de pagamento!!");
-  //     return;
-  //   }
-    
-  //   this.isLoading = true;
-
-  //   // Agrupar produtos por fornecedor
-  //   const productsBySupplier = new Map<string, typeof this.productsCarts>();
-  //   this.productsCarts!.forEach(p => {
-  //     if (!productsBySupplier.has(p.supplierId)) {
-  //       productsBySupplier.set(p.supplierId, []);
-  //     }
-  //     productsBySupplier.get(p.supplierId)!.push(p);
-  //   });
-  
-  //   // Criar pedido para cada fornecedor
-  //   productsBySupplier.forEach((products, supplierId) => {
-  //     const orderItemRequests: OrderItemRequest[] = products!.map(p => ({
-  //       productItemRef: p.id ?? 0,
-  //       quantity: p.quantitySelect ?? 0
-  //     }));
-  
-  //     const order = {
-  //       customerUuid: this.userLogado!.id,
-  //       supplierRef: supplierId,
-  //       paymentMethod: this.formOrder.get('paymentMethod')?.value,
-  //       note: this.formOrder.get('observation')?.value,
-  //       items: orderItemRequests
-  //     };
-  
-  //     this.orderService.createOrder(order).subscribe({
-  //       next: value => {
-  //         console.log("Pedido criado:", value);
-  //       },
-  //       error: err => {
-  //         this.toastr.error(`Falha ao realizar o pedido: ${err.error.message}`);
-  //       }
-  //     });
-  //   });
-  
-  //   this.cartService.setCart([]);
-  //   this.toastr.success("Pedidos realizados com sucesso");
-  //   this.isLoading = false;
-  //   this.navigate('/meus-pedidos');
-  // }
-
   createOrder() {
     if (!this.formOrder.valid) {
       this.toastr.error("Por favor selecione um meio de pagamento!!");
@@ -137,7 +89,6 @@ export class OrderResumeComponent implements OnInit {
   
     this.isLoading = true;
   
-    // Agrupar produtos por fornecedor
     const productsBySupplier = new Map<string, typeof this.productsCarts>();
     this.productsCarts!.forEach(p => {
       if (!productsBySupplier.has(p.supplierId)) {
@@ -146,7 +97,6 @@ export class OrderResumeComponent implements OnInit {
       productsBySupplier.get(p.supplierId)!.push(p);
     });
   
-    // Criar pedidos para cada fornecedor
     const pedidosObservables = Array.from(productsBySupplier.entries()).map(
       ([supplierId, products]) => {
         const orderItemRequests: OrderItemRequest[] = products!.map(p => ({
@@ -166,18 +116,16 @@ export class OrderResumeComponent implements OnInit {
       }
     );
   
-    // Espera todos os pedidos terminarem
     forkJoin(pedidosObservables).subscribe({
       next: results => {
         console.log("Todos os pedidos criados:", results);
         this.cartService.setCart([]);
   
-        // Mostra um loading mínimo antes de navegar
         setTimeout(() => {
           this.toastr.success("Pedidos realizados com sucesso");
           this.isLoading = false;
           this.navigate('/meus-pedidos');
-        }, 800); // 800ms de delay para o visual do loading
+        }, 800); 
       },
       error: err => {
         this.toastr.error(`Falha ao realizar o pedido: ${err.error.message}`);
@@ -185,45 +133,6 @@ export class OrderResumeComponent implements OnInit {
       }
     });
   }
-  
-  
-
-  // createOrder() {
-  //   if (!this.formOrder.valid) {
-  //     this.toastr.error("Por favor selecione um meio de pagamento!!")
-  //     return
-  //   }
-  //   let orderItemRequests: OrderItemRequest[] = [];
-
-  //   this.productsCarts!.forEach(element => {
-  //     orderItemRequests.push({
-  //       productItemRef: element.id ?? 0, 
-  //       quantity: element.quantitySelect ?? 0
-  //     })
-  //   });
-
-  //   this.order = {
-  //     customerUuid: this.userLogado!.id,
-  //     supplierRef: this.productsCarts![0].supplierId,
-  //     paymentMethod: this.formOrder.get('paymentMethod')?.value, 
-  //     note: this.formOrder.get('observation')?.value,
-  //     items: orderItemRequests
-  //   }
-
-  //   this.orderService.createOrder(this.order).subscribe({
-  //     next: (value) => {
-  //       debugger
-  //       console.log(value);
-  //       this.cartService.setCart([]);
-  //       this.toastr.success("Pedido realizado com sucesso");
-  //       this.navigate('/meus-pedidos');
-  //     },
-  //     error: (err) => {
-  //       this.toastr.error(`Falha ao realizar o pedido: ${err.error.message}`)
-  //     },
-  //   })
-    
-  // }
 
   navigate(route: string) {
     this.router.navigate([route])

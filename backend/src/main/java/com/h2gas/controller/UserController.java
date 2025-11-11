@@ -2,8 +2,6 @@ package com.h2gas.controller;
 
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.exceptions.BusinessRuleException;
-import com.h2gas.exceptions.ResourceNotFoundException;
-import com.h2gas.model.dto.AddressDTO;
 import com.h2gas.model.dto.ResetPasswordRequestDTO;
 import com.h2gas.model.dto.UserDto;
 import com.h2gas.model.entity.User;
@@ -13,7 +11,6 @@ import com.h2gas.services.UserService;
 import com.h2gas.util.GenerateTokenPasswordReset;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.mail.MessagingException;
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

@@ -145,6 +145,7 @@ public class SupplierService {
         supplier.setName(supplierDTO.getName());
         supplier.setPhoneNumber(supplierDTO.getPhone());
         supplier.setActive(currentStatus);
+        supplier.setDescription(supplierDTO.getDescription());
         supplier.setOpeningTime(LocalTime.parse(supplierDTO.getOpeningTime()));
         supplier.setClosingTime(LocalTime.parse(supplierDTO.getClosingTime()));
         supplier.setAverageDeliveryTime(Duration.ofMinutes(supplierDTO.getAverageDeliveryTime()));
@@ -168,14 +169,39 @@ public class SupplierService {
         supplierRepository.save(supplier);
     }
 
+//    public void updateTimesSupplier(String id, Map<String, String> times) {
+//        Supplier supplier = supplierRepository.findById(id)
+//                .orElseThrow(() -> new ResourceNotFoundException("Fornecedor com " + id + " não encontrado"));
+//
+//        supplier.setOpeningTime(LocalTime.parse(times.get("openingTime")));
+//        supplier.setClosingTime(LocalTime.parse(times.get("closingTime")));
+//        supplierRepository.save(supplier);
+//    }
+
     public void updateTimesSupplier(String id, Map<String, String> times) {
         Supplier supplier = supplierRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Fornecedor com " + id + " não encontrado"));
 
-        supplier.setOpeningTime(LocalTime.parse(times.get("openingTime")));
-        supplier.setClosingTime(LocalTime.parse(times.get("closingTime")));
+        if (times.containsKey("openingTime") && times.get("openingTime") != null && !times.get("openingTime").isEmpty()) {
+            supplier.setOpeningTime(LocalTime.parse(times.get("openingTime")));
+        }
+
+        if (times.containsKey("closingTime") && times.get("closingTime") != null && !times.get("closingTime").isEmpty()) {
+            supplier.setClosingTime(LocalTime.parse(times.get("closingTime")));
+        }
+
+        if (times.containsKey("averageDeliveryTime") && times.get("averageDeliveryTime") != null && !times.get("averageDeliveryTime").isEmpty()) {
+            try {
+                long minutes = Long.parseLong(times.get("averageDeliveryTime"));
+                supplier.setAverageDeliveryTime(Duration.ofMinutes(minutes));
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Valor inválido para averageDeliveryTime: " + times.get("averageDeliveryTime"));
+            }
+        }
         supplierRepository.save(supplier);
     }
+
+
 
     public void updateStatusOpenClosed(String id, boolean openClose) {
         Supplier supplier = supplierRepository.findById(id)

@@ -5,6 +5,7 @@ import com.h2gas.model.mapper.OrderItemMapper;
 import com.h2gas.response.PageResponse;
 import com.h2gas.services.OrderItemService;
 import com.h2gas.util.PaginationUtil;
+import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,15 +21,9 @@ public class OrderItemController {
     @Autowired
     private OrderItemMapper orderItemMapper;
 
-//    @GetMapping
-//    @ResponseBody
-//    public ResponseEntity<List<OrderItemResponseDTO>> getAllCities() {
-//        List<OrderItemResponseDTO> orderItemResponseDTO = orderItemService.findAllOrdersItems();
-//        return ResponseEntity.ok(orderItemResponseDTO);
-//    }
-
     @GetMapping
     @ResponseBody
+    @RolesAllowed({"ADMIN"})
     public ResponseEntity<PageResponse<OrderItemResponseDTO>> listAllOrderItems(
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(value = "size", required = false) Integer size
@@ -42,16 +37,9 @@ public class OrderItemController {
 
     @GetMapping("/{id}")
     @ResponseBody
+    @RolesAllowed({"ADMIN"})
     public ResponseEntity<OrderItemResponseDTO> getProductById(@PathVariable Long id) {
         OrderItemResponseDTO orderItemResponseDTO = orderItemService.findByIdOrderItem(id);
         return ResponseEntity.ok(orderItemResponseDTO);
     }
-
-//    @PostMapping
-//    @ResponseBody
-//    public ResponseEntity<OrderItemResponseDTO> createCity(@RequestBody OrderItemRequestDTO orderItemRequestDTO) {
-//        orderItemService.createOrderItem()
-//        return ResponseEntity.ok(cityDTO);
-//    }
-
 }

@@ -94,13 +94,13 @@ export class RegisterUserComponent implements OnInit {
       this.toastr.warning('Conferir informações!!')
       return; 
     }
-    debugger
+    
     if (!this.address) {
       this.toastr.warning('Por favor adicione seu endereço!!')
       return; 
     }
 
-    debugger
+    
     if (this.registerForm.get('password')?.value == this.confirmPassword) {
       this.registerForm.get('userType')?.setValue(this.userType);
 
@@ -157,7 +157,7 @@ export class RegisterUserComponent implements OnInit {
   addresSave: boolean = false;
 
   salvarAddress() {
-    debugger
+    
     if (!this.cidadeEncontrada) {
       this.toastr.warning(`Infelizmente ainda não atendemos sua cidade.`);
       return;
@@ -168,19 +168,6 @@ export class RegisterUserComponent implements OnInit {
       this.address = this.registerFormAddress.value;
       this.closeAddressModal();
       this.addresSave = true;
-
-      debugger
-      // this.addressService.create(this.address!).subscribe({
-      //   next: (response) => {
-      //     console.log(response);
-      //     this.toastr.success('Seu endereço foi salvo com sucesso');
-      //     this.closeAddressModal();
-      //   }, 
-      //   error: (err) => {
-      //     console.log(err);
-      //     this.toastr.error(`Erro ao salvar endereço: ${err.error.message}`);
-      //   },
-      // })  
     }
   }
 

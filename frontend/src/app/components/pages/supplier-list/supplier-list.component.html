@@ -59,8 +59,56 @@
             <div *ngIf="suppliers?.length == 0" class="p-4 text-center text-gray-600 italic">
                 Nenhum fornecedor encontrado.
             </div>
-
             <div class="flex flex-wrap gap-8">
+                <div
+                  class="bg-white rounded-xl shadow-md overflow-hidden p-6 border border-gray-200 max-w-md w-full"
+                  *ngFor="let supplier of suppliers"
+                >
+                  <h2 class="text-2xl font-bold text-gray-800 mb-1">
+                    <i class="fa-solid text-blue-500 fa-building"></i>
+                    {{ supplier.name }}
+                  </h2>
+              
+                  <div class="flex items-center text-gray-500 text-sm mb-4">
+                    <span class="material-icons text-base mr-1">location_on</span>
+                    <span>
+                      {{ supplier.addressStreetName }}, {{ supplier.cityName }}
+                    </span>
+                  </div>
+              
+                  <p class="text-gray-600 mb-4">
+                    {{ supplier.description }}
+                  </p>
+              
+                  <!-- Horários de funcionamento -->
+                  <div class="flex items-center text-gray-600 text-sm mb-2">
+                    <span class="material-icons text-base mr-2 text-blue-500">schedule</span>
+                    <span>
+                      <strong>Horário:</strong> {{ supplier.openingTime }} - {{ supplier.closingTime }}
+                    </span>
+                  </div>
+              
+                  <!-- Tempo médio de entrega -->
+                  <div class="flex items-center text-gray-600 text-sm mb-6">
+                    <span class="material-icons text-base mr-2 text-green-500">local_shipping</span>
+                    <span>
+                      <strong>Entrega média:</strong> {{ supplier.averageDeliveryTime }} min
+                    </span>
+                  </div>
+              
+                  <div class="flex justify-between items-center">
+                    <button
+                      (click)="navigate(supplier.id)"
+                      class="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg transition duration-300"
+                    >
+                      Ver Produtos
+                    </button>
+                  </div>
+                </div>
+              </div>
+              
+
+            <!-- <div class="flex flex-wrap gap-8">
                 <div class="bg-white rounded-xl shadow-md overflow-hidden p-6 border border-gray-200 max-w-md w-full"
                     *ngFor="let supplier of suppliers">
 
@@ -86,7 +134,7 @@
                         </button>
                     </div>
                 </div>
-            </div>
+            </div> -->
         </div>
 
         <!-- ================== LISTA DE PRODUTOS ================== -->

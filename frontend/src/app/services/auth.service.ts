@@ -19,16 +19,6 @@ export class AuthService {
     private http: HttpClient
   ) { }
 
-  // isLogged() {
-  //   let token = this.getToken();
-
-  //   if (!token) {
-  //     return false;
-  //   } else {
-  //     return true;
-  //   }
-  // }
-
   isLogged(): boolean {
     const token = this.getToken();
     return !!token && !this.isTokenExpired();

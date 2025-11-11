@@ -23,6 +23,7 @@ public class ProductTypeController {
 
     @GetMapping
     @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER"})
     public ResponseEntity<List<ProductTypeDTO>> getAllTypesProducts() {
         List<ProductTypeDTO> productTypeDTO = productTypeService.findAllProductTypes();
         return ResponseEntity.ok(productTypeDTO);

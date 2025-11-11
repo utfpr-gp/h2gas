@@ -89,7 +89,7 @@ public class AddressService {
         Address addressExisting = addressRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Endereço não encontrado"));
 
-        City city = cityMapper.toEntity(cityService.findByName(addressDTO.getCityName()));
+        City city = cityMapper.toEntity(cityService.findByIdCity(addressDTO.getCityId()));
         addressExisting.setStreetName(addressDTO.getStreetName());
         addressExisting.setNumber(addressDTO.getNumber());
         addressExisting.setComplement(addressDTO.getComplement());

@@ -36,6 +36,7 @@ public class OrderController {
 
     @GetMapping
     @ResponseBody
+    @RolesAllowed({"ADMIN"})
     public ResponseEntity<PageResponse<OrderResponseDTO>> listAllOrderItems(
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(value = "size", required = false) Integer size,
@@ -57,6 +58,7 @@ public class OrderController {
 
     @PostMapping
     @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER", "CUSTOMER"})
     public ResponseEntity<OrderResponseDTO> createOrder(@RequestBody OrderRequestDTO orderRequestDTO) {
         OrderResponseDTO orderResponseDTO = orderService.createOrder(orderRequestDTO);
         return ResponseEntity.ok(orderResponseDTO);
@@ -64,20 +66,24 @@ public class OrderController {
 
     @GetMapping("/by-customer/{customerId}")
     @ResponseBody
+    @RolesAllowed({"ADMIN", "CUSTOMER"})
     public ResponseEntity<PageResponse<OrderResponseDTO>> listAllOrderItems(
             @PathVariable String customerId,
+            @RequestParam(value = "status", required = false) String status,
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(value = "size", required = false) Integer size
     ) {
         Pageable pageable = PaginationUtil.getPageableRequest(page, size);
-        Page<OrderResponseDTO> result = orderService.findByCustomerId(customerId, pageable);
+        Page<OrderResponseDTO> result = orderService.findByCustomerId(customerId, status, pageable);
         PageResponse<OrderResponseDTO> response = new PageResponse<>(result);
 
         return ResponseEntity.ok(response);
     }
 
+
     @GetMapping("/{supplierId}/exclude-status")
     @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER"})
     public ResponseEntity<PageResponse<OrderResponseDTO>> lisAllOrderItemExcludeStatus(
             @PathVariable String supplierId,
             @RequestParam(value = "page", required = false) Integer page,
@@ -92,6 +98,7 @@ public class OrderController {
 
     @GetMapping("/by-supplier/{supplierId}")
     @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER"})
     public ResponseEntity<PageResponse<OrderResponseDTO>> listAllOrdersBySupplier(
             @PathVariable String supplierId,
             @RequestParam(value = "page", required = false) Integer page,
@@ -108,7 +115,6 @@ public class OrderController {
             result = orderService.findBySupplierId(supplierId, pageable);
         }
 
-//        Page<OrderResponseDTO> result = orderService.findBySupplierId(supplierId, pageable);
         PageResponse<OrderResponseDTO> response = new PageResponse<>(result);
 
         return ResponseEntity.ok(response);
@@ -116,26 +122,11 @@ public class OrderController {
 
     @PatchMapping("/{id}/update-order-status")
     @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER"})
     public ResponseEntity<Map<String, String>> updateOrderStatus(
             @PathVariable String id,
             @RequestBody Map<String, String> status) {
         String novoStatus = orderService.updateOrderStatus(id, status.get("orderStatus"));
         return ResponseEntity.ok(Map.of("status", novoStatus));
     }
-
-//    @GetMapping("/search/by-customer")
-//    @ResponseBody
-//    @RolesAllowed({"ADMIN", "SUPPLIER", "CUSTOMER"})
-//    public ResponseEntity<PageResponse<SupplierDTO>> searchOrdersByCustomer(
-//            @RequestParam String name,
-//            @RequestParam(value = "page", required = false) Integer page,
-//            @RequestParam(value = "size", required = false) Integer size
-//    ) {
-//        Pageable pageable = PaginationUtil.getPageableRequest(page, size);
-//        Page<SupplierDTO> result = orderService.searchSuppliers(name, pageable);
-//        PageResponse<SupplierDTO> response = new PageResponse<>(result);
-//
-//        return ResponseEntity.ok(response);
-//    }
-
 }

@@ -35,7 +35,21 @@
           </td>
           
           <!-- Ações -->
-          <td *ngIf="actions.length" class="px-4 py-2 text-center">
+          <td *ngIf="actions.length" class="px-4 py-2 text-center align-middle">
+            <div class="flex justify-center items-center gap-2">
+              <button
+                *ngFor="let action of actions"
+                class="btn btn-sm text-white p-2 rounded transition-all duration-200 flex items-center justify-center"
+                [ngClass]="action.class"
+                (click)="action.onClick(row)"
+                [title]="action.label"
+              >
+                <i *ngIf="action.icon" class="{{ action.icon }}"></i>
+                <span *ngIf="!action.icon">{{ action.label }}</span>
+              </button>
+            </div>
+          </td>
+          <!-- <td *ngIf="actions.length" class="px-4 py-2 text-center">
             <button
               *ngFor="let action of actions"
               class="btn btn-sm text-white p-2 mx-1 rounded transition-all duration-200"
@@ -46,28 +60,9 @@
               <i *ngIf="action.icon" class="{{ action.icon }}"></i>
               <span *ngIf="!action.icon">{{ action.label }}</span>
             </button>
-          </td>
+          </td> -->
         </tr>
       </tbody>
-      <!-- <tbody class="divide-y divide-gray-100 bg-white">
-        <tr *ngFor="let row of data" class="hover:bg-gray-50 transition">
-          <td *ngFor="let column of columns" class="px-4 py-2 text-gray-900">
-            {{ getNestedValue(row, column.key) }}
-          </td>
-          <td *ngIf="actions.length" class="px-4 py-2 text-center">
-            <button
-              *ngFor="let action of actions"
-              class="btn btn-sm text-white p-2 mx-1 rounded transition-all duration-200"
-              [ngClass]="action.class"
-              (click)="action.onClick(row)"
-              [title]="action.label"
-            >
-              <i *ngIf="action.icon" class="{{ action.icon }}"></i>
-              <span *ngIf="!action.icon">{{ action.label }}</span>
-            </button>
-          </td>
-        </tr>
-      </tbody> -->
     </table>
   </div>
   

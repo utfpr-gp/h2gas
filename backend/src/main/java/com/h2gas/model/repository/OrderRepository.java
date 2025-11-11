@@ -16,5 +16,10 @@ public interface OrderRepository extends JpaRepository<Order, String> {
     Page<Order> findBySupplierIdAndStatusNotInOrderByCreatedAtDesc(String supplierId,
                                                                    List<OrderStatusEnum> statuses,
                                                                    Pageable pageable);
+    Page<Order> findByCustomerIdOrderByCreatedAtDesc(String customerId, Pageable pageable);
+    Page<Order> findByCustomerIdAndStatusOrderByCreatedAtDesc(String customerId,
+                                                              OrderStatusEnum status,
+                                                              Pageable pageable);
+
 
 }

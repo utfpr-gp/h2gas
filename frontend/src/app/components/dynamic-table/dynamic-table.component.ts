@@ -36,19 +36,8 @@ export class DynamicTableComponent {
   }
 
   onSwitchToggle(row: any, key: string, value: any): void {
-    // Atualiza o valor na linha
-    debugger
     const checked = value.target.checked;
     this.switchChanged.emit({ row, key, value: checked });
-    // const keys = key.split('.');
-    // let target = row;
-    // for (let i = 0; i < keys.length - 1; i++) {
-    //   target = target[keys[i]];
-    // }
-    // target[keys[keys.length - 1]] = value.target.checked;
-  
-    // // // Opcional: emita um evento, salve no backend, etc.
-    // console.log('Switch changed:', key, value.target.checked);
   }
 
   
