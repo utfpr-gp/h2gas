@@ -24,19 +24,45 @@
                 <div class="relative flex-grow">
                     <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
                     <input
-                        class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Filtre por nome ou palavra-chave" type="text" />
-                </div>
+                      class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Filtre por marcar do produto"
+                      type="text"
+                      [(ngModel)]="searchTerm"
+                      (keyup.enter)="getProducts(idSupplier!)"
+                    />
+                  </div>
+                  
                 <div class="flex items-center space-x-2 w-full sm:w-auto">
+                    <!-- Botão Todos -->
                     <button
-                        class="flex-grow sm:flex-grow-0 flex items-center justify-center bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-all duration-300 transform hover:scale-105">
-                        <span class="material-icons text-sm mr-2">filter_list</span>
-                        Todos
+                      class="flex-grow sm:flex-grow-0 flex items-center justify-center px-4 py-2 rounded-md transition-all duration-300 transform hover:scale-105"
+                      [ngClass]="selectedCategory === null
+                        ? 'bg-blue-500 text-white hover:bg-blue-600'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'"
+                      (click)="selectedCategory = null; getProducts(idSupplier!)">
+                      <span class="material-icons text-sm mr-2">filter_list</span>
+                      Todos
                     </button>
+                  
+                    <!-- Botão Gás -->
                     <button
-                        class="flex-grow sm:flex-grow-0 bg-white text-gray-700 px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-100 transition-all duration-300 transform hover:scale-105">Gás</button>
+                      class="flex-grow sm:flex-grow-0 px-4 py-2 rounded-md transition-all duration-300 transform hover:scale-105"
+                      [ngClass]="selectedCategory === 'Gás'
+                        ? 'bg-blue-500 text-white hover:bg-blue-600'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'"
+                      (click)="selectedCategory = 'Gás'; getProducts(idSupplier!)">
+                      Gás
+                    </button>
+                  
+                    <!-- Botão Água -->
                     <button
-                        class="flex-grow sm:flex-grow-0 bg-white text-gray-700 px-4 py-2 rounded-md border border-gray-300 hover:bg-gray-100 transition-all duration-300 transform hover:scale-105">Água</button>
+                      class="flex-grow sm:flex-grow-0 px-4 py-2 rounded-md transition-all duration-300 transform hover:scale-105"
+                      [ngClass]="selectedCategory === 'Água mineral'
+                        ? 'bg-blue-500 text-white hover:bg-blue-600'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'"
+                      (click)="selectedCategory = 'Água mineral'; getProducts(idSupplier!)">
+                      Água
+                    </button>
                 </div>
             </div>
         </div>
