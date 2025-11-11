@@ -256,7 +256,7 @@ export class DistribuitorFormComponent implements OnInit {
         debugger
         console.log('Dsitriuidora editada com sucesso!', response);
         this.toastr.success('Distriuidora editada com sucesso!!');
-        this.navigateRoute('/management-distributor')
+        this.navigateRoute('/dashboard-fornecedor')
       },
       error: (err) => {
         console.error('Erro ao buscar:', err.error.message);

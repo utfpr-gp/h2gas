@@ -64,6 +64,20 @@ export class OrdersWidgetComponent implements OnInit {
     }
   }
 
+  formatPaymentMethod(method: string): string {
+    switch (method) {
+      case 'DINHEIRO':
+        return 'Dinheiro';
+      case 'PIX':
+        return 'PIX';
+      case 'CREDIT_CARD':
+        return 'Cartão de Crédito';
+      default:
+        return '—';
+    }
+  }
+  
+
   confirmCancel() {
     if (this.orderToCancel) {
       this.changeOrderStatus.emit({ order: this.orderToCancel, action: 'CANCELED' });
