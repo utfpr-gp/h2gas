@@ -40,19 +40,6 @@ public class User implements UserDetails {
 
     private UserTypeEnum userType;
 
-//    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-//    @JsonManagedReference
-//    private Supplier supplier;
-
-
-//    TODO AJUSTAR AQUI MAIS TARDE
-//    @OneToOne(mappedBy = "user")
-//    private Address address;
-
-//    @OneToOne
-//    @JoinColumn(name = "address_id")
-//    private Address address;
-
     public User(String name, String email, String phoneNumber,
                 String cpf, String password,
                 UserTypeEnum userType) {

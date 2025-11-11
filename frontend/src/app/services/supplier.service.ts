@@ -28,10 +28,6 @@ export class SupplierService extends AbstractService<Supplier> {
     return this.http.patch(`${this.baseUrl}/${id}/status`, data);
   }
 
-  // getAllSupplierOpenAndActive(): Observable<PaginatedResponse<Supplier>> {
-  //   return this.http.get<PaginatedResponse<Supplier>>(`${this.baseUrl}/actives/open`);
-  // }
-
 
   getAllSupplierOpenAndActive(page: number = 0, size: number = 10): Observable<PaginatedResponse<Supplier>> {
     return this.http.get<PaginatedResponse<Supplier>>(

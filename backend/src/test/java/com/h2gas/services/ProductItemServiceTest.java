@@ -85,6 +85,7 @@ class ProductItemServiceTest {
                 5,
                 null,
                 null,
+                null,
                 categoryProductFirst,
                 supplierFirst
         );
@@ -99,6 +100,7 @@ class ProductItemServiceTest {
                 "teste descricao 2",
                 "urlImageTest2//",
                 5,
+                null,
                 null,
                 null,
                 categoryProductSecond,

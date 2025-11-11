@@ -44,7 +44,6 @@ export class ProductListComponent implements OnInit {
     this.idSupplier = idParam;
     console.log(this.idSupplier);
     this.getProducts(this.idSupplier);
-    // localStorage.setItem('cart-product', JSON.stringify(null))
   }
 
   currentPageProducts: number = 0;
@@ -72,6 +71,7 @@ export class ProductListComponent implements OnInit {
 
   openModal(product: any) {
     this.productSelect = product;
+    this.quantity = 1;
     this.productModal.nativeElement.showModal();
   }
 
@@ -81,23 +81,19 @@ export class ProductListComponent implements OnInit {
 
   confirmRequest() {
     if (this.quantity < 1) {
-      this.toastr.warning("Selecionar pelo menos 1 produto!!!")
+      this.toastr.warning("Selecione pelo menos 1 produto!");
       this.closeModal();
-      return
+      return;
     }
-
-    let cart: any[] = JSON.parse(localStorage.getItem('cart-product') || '[]');
-    let existing = cart.find(p => p.id === this.productSelect!!.id);
-
-    if (existing) {
-      existing.quantitySelect += 1;
-    } else {
-      cart.push({ ...this.productSelect, quantitySelect: this.quantity });
-    }
-
-    console.log(this.cartProduct);
-    this.cartService.setCart(cart);
-
+  
+    const productToAdd = {
+      ...this.productSelect,
+      quantitySelect: this.quantity
+    };
+  
+    this.cartService.addProduct(productToAdd);
+  
+    this.toastr.success("Produto adicionado ao carrinho!");
     this.closeModal();
   }
 

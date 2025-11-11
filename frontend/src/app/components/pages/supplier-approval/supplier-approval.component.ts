@@ -55,7 +55,7 @@ export class SupplierApprovalComponent implements OnInit {
         this.toastr.success('Fornecedores buscados com sucesso!');
       },
       error: (err) => {
-        debugger
+        
         console.error('Erro ao buscar:', err.error.message);
         this.toastr.error(`Erro ao buscar fornecedores: ${err.error.message}`)
       },
@@ -83,7 +83,7 @@ export class SupplierApprovalComponent implements OnInit {
         this.toastr.success(response.message);
       },
       error: (err) => {
-        debugger
+        
         console.error('Erro ao atualizar:', err.error.message);
         this.toastr.error(`Erro ao buscar fornecedores: ${err.error.message}`)
       },

@@ -46,16 +46,10 @@ public class ProductItemController {
         ProductItemDTO productItemCreate = productItemService.createProductItem(productItemDTO, file);
         return ResponseEntity.ok(productItemCreate);
     }
-//    public ResponseEntity<ProductItemDTO> createCategoryProduct(
-//            @RequestBody CreateProductItemDTO productItemDTO,
-//            @RequestParam("file") MultipartFile file
-//    ) {
-//        ProductItemDTO productItemCreate = productItemService.createProductItem(productItemDTO, file);
-//        return ResponseEntity.ok(productItemCreate);
-//    }
 
     @GetMapping("/{id}")
     @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER"})
     public ResponseEntity<ProductItemDTO> getProductById(@PathVariable Long id) {
         ProductItemDTO productItem = productItemService.findById(id);
         return ResponseEntity.ok(productItem);
@@ -79,6 +73,7 @@ public class ProductItemController {
 
     @GetMapping("/by-supplier/{supplierId}")
     @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER", "CUSTOMER"})
     public ResponseEntity<PageResponse<ProductItemDTO>> getProductBySupplier(
             @PathVariable String supplierId,
             @RequestParam(value = "page", required = false) Integer page,
@@ -93,6 +88,7 @@ public class ProductItemController {
 
     @GetMapping("/by-supplier-open")
     @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER", "CUSTOMER"})
     public ResponseEntity<PageResponse<ProductItemDTO>> getAllProductsBySupplierOpen(
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(value = "size", required = false) Integer size

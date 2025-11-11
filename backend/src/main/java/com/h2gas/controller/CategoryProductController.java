@@ -25,6 +25,7 @@ public class CategoryProductController {
 
     @GetMapping
     @ResponseBody
+    @RolesAllowed({"ADMIN"})
     public ResponseEntity<List<CategoryProductDTO>> getAllCategoriesProducts() {
         List<CategoryProductDTO> categoryProductDTO = categoryProductService.findAllCategoryProducts();
         return ResponseEntity.ok(categoryProductDTO);
@@ -32,6 +33,7 @@ public class CategoryProductController {
 
     @GetMapping("/by-supplier/{supplierId}")
     @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER"})
     public ResponseEntity<PageResponse<CategoryProductDTO>> findAllCategoriesBySupplier(
             @PathVariable String supplierId,
             @RequestParam(value = "page", required = false) Integer page,

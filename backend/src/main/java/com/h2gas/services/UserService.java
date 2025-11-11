@@ -3,10 +3,7 @@ package com.h2gas.services;
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ResourceNotFoundException;
-import com.h2gas.model.dto.RegisterDTO;
-import com.h2gas.model.dto.SupplierCreateDTO;
-import com.h2gas.model.dto.SupplierDTO;
-import com.h2gas.model.dto.UserDto;
+import com.h2gas.model.dto.*;
 import com.h2gas.model.entity.*;
 import com.h2gas.model.mapper.UserMapper;
 import com.h2gas.model.repository.CityRepository;
@@ -117,7 +114,11 @@ public class UserService {
 
         String encryptedPassword = new BCryptPasswordEncoder().encode(data.getPassword());
 
-        if (data.getUserType() == UserTypeEnum.SUPPLIER || data.getUserType() == UserTypeEnum.ADMIN) {
+        if (data.getUserType() == null || data.getUserType() == UserTypeEnum.ADMIN) {
+            throw new BusinessRuleException("Cadastro de usuário ADMIN não permitido ou tipo vazio");
+        }
+
+        if (data.getUserType() == UserTypeEnum.SUPPLIER) {
             Supplier supplier = new Supplier();
             supplier.setName(data.getName());
             supplier.setEmail(data.getEmail());
@@ -134,8 +135,6 @@ public class UserService {
                     .orElseThrow(() -> new ResourceNotFoundException("City not found"));
             supplier.setCity(city);
 
-            // Agora salva usando o service
-//            TODO FALTA SALVAR O ADDRES PARA CLIENTE TAMBÉM
             Supplier savedSupplier = supplierService.createSupplier(supplier);
             Address address = addressService.createAddress(data.getAddress(), savedSupplier, city);
             supplier.setAddress(address);
@@ -152,30 +151,11 @@ public class UserService {
                     data.getUserType()
             );
             userRepository.save(user);
+            City city = cityRepository.findById(data.getAddress().getCityId())
+                    .orElseThrow(() -> new ResourceNotFoundException("City not found"));
+            Address address = addressService.createAddress(data.getAddress(), user, city);
             return userMapper.toDto(user);
         }
-//        if (this.userRepository.existsByEmail(data.getEmail())) {
-//            throw new BusinessRuleException("Email já cadastrado.");
-//        }
-//
-////        if (data.getUserType() == null || data.getUserType() == UserTypeEnum.ADMIN) {
-////            throw new BusinessRuleException("Cadastro de usuário ADMIN não permitido ou tipo vazio");
-////        }
-//
-//        String encryptedPassword = new BCryptPasswordEncoder().encode(data.getPassword());
-//
-//        User user = new User(data.getName(), data.getEmail(), data.getPhoneNumber(),
-//                data.getCpf(), encryptedPassword, data.getUserType());
-//
-//        this.userRepository.save(user);
-//
-//        if (data.getUserType() == UserTypeEnum.SUPPLIER || data.getUserType() == UserTypeEnum.ADMIN) {
-//            Address address = addressService.createAddressWithUserId(data.getAddress(), user.getId());
-//            SupplierCreateDTO supplierDTO = getSupplierCreateDTO(data, user, address);
-//            supplierService.createSupplier(supplierDTO);
-//        }
-//
-//        return userMapper.toDto(user);
     }
 
     private static SupplierCreateDTO getSupplierCreateDTO(RegisterDTO data, User user, Address address) {

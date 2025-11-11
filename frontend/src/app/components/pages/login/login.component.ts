@@ -59,12 +59,7 @@ export class LoginComponent {
       next: (response: any) => {
         console.log('Usuario buscado sucesso!', response);
         localStorage.setItem('user', JSON.stringify(response))
-        this.navigate('/inicio')
-        // if (response.userType == "SUPPLIER" && response.supplierId == null) {
-        //   this.navigate('/distributor/new') 
-        // } else {
-        //   this.navigate('/inicio')
-        // }        
+        this.navigate('/inicio')  
       }, 
       error: (err) => {
         console.error('Erro ao buscar o usuario logado:', err);

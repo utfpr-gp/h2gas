@@ -30,6 +30,10 @@ public class ProductItem {
     @CreationTimestamp
     private LocalDateTime createdAt;
 
+    @Version
+    @Column(nullable = false)
+    private Long version = 0L;
+
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 

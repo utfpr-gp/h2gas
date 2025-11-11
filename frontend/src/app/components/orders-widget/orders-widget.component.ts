@@ -24,13 +24,14 @@ export class OrdersWidgetComponent implements OnInit {
   @Output() statusChange = new EventEmitter<string>();
   @Output() toggleSupplier = new EventEmitter<boolean>();
   @Output() changeOrderStatus = new EventEmitter<{ order: OrderResponse, action: string }>();
+  orderToCancel?: OrderResponse;
 
   constructor(private route: ActivatedRoute) {}
 
   rotaAtiva: string = '';
 
   ngOnInit(): void {
-    debugger
+    
     this.rotaAtiva = this.route.snapshot.url.map(segment => segment.path).join('/')
   }
 
@@ -49,8 +50,44 @@ export class OrdersWidgetComponent implements OnInit {
     this.toggleSupplier.emit(checked);
   }
 
+  showCancelModal = false;
+
+
   onChangeOrderStatus(order: OrderResponse, action: string) {
-    this.changeOrderStatus.emit({ order, action });
+    if (action === 'CANCELED') {
+      // abre o modal de confirmação
+      this.orderToCancel = order;
+      this.showCancelModal = true;
+    } else {
+      // emite normalmente
+      this.changeOrderStatus.emit({ order, action });
+    }
+  }
+
+  formatPaymentMethod(method: string): string {
+    switch (method) {
+      case 'DINHEIRO':
+        return 'Dinheiro';
+      case 'PIX':
+        return 'PIX';
+      case 'CREDIT_CARD':
+        return 'Cartão de Crédito';
+      default:
+        return '—';
+    }
+  }
+  
+
+  confirmCancel() {
+    if (this.orderToCancel) {
+      this.changeOrderStatus.emit({ order: this.orderToCancel, action: 'CANCELED' });
+      this.closeModal();
+    }
+  }
+
+  closeModal() {
+    this.showCancelModal = false;
+    this.orderToCancel = undefined;
   }
 
   getStatusColor(status: string): string {

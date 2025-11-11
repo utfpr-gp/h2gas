@@ -94,7 +94,6 @@ export class ProductItemFormComponent implements OnInit {
 
     this.file = input.files[0];
 
-    // Para mostrar a imagem na tela
     const reader = new FileReader();
     reader.onload = () => {
       this.selectedImage = reader.result;
@@ -154,7 +153,7 @@ export class ProductItemFormComponent implements OnInit {
       this.toastr.warning("Confira os campos vazios")
       return;
     }
-    debugger
+    
     this.productItemSave = this.formProductItem.value;
 
     if (this.productItemSave) {

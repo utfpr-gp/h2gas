@@ -6,7 +6,6 @@ import { RegisterSupplierComponent } from './components/pages/register-supplier/
 import { CityRegisterComponent } from './components/pages/city-register/city-register.component';
 import { authGuard } from './guards/auth.guard';
 import { SupplierApprovalComponent } from './components/pages/supplier-approval/supplier-approval.component';
-import { DistributorManagementComponent } from './components/pages/distributor-management/distributor-management.component';
 import { DistribuitorFormComponent } from './components/pages/distribuitor-form/distribuitor-form.component';
 import { CategoryProductsComponent } from './components/pages/category-products/category-products.component';
 import { ProductItemComponent } from './components/pages/product-item/product-item.component';
@@ -25,6 +24,8 @@ import { CheckEmailComponent } from './components/pages/check-email/check-email.
 import { ResetPasswordComponent } from './components/pages/reset-password/reset-password.component';
 import { EmailSentComponent } from './components/pages/email-sent/email-sent.component';
 import { ConfigurationComponent } from './components/pages/configuration/configuration.component';
+import { AboutComponent } from './components/pages/about/about.component';
+import { ContactComponent } from './components/pages/contact/contact.component';
 
 export const routes: Routes = [
     {path: '', component: InitialScreenComponent},
@@ -34,12 +35,6 @@ export const routes: Routes = [
     {
         path: 'register-supplier', 
         component: RegisterSupplierComponent
-    },
-    {
-        path: 'management-distributor', 
-        component: DistributorManagementComponent,
-        canActivate: [authGuard],
-        data: {roles: ['ADMIN', 'SUPPLIER']}
     },
     {
         path: 'distributor/new', 
@@ -152,6 +147,14 @@ export const routes: Routes = [
     {
         path: 'email-sent', 
         component: EmailSentComponent
+    },
+    {
+        path: 'sobre', 
+        component: AboutComponent
+    },
+    {
+        path: 'contato', 
+        component: ContactComponent
     },
     {
         path: 'configuracao', 

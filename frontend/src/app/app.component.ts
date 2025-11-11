@@ -30,7 +30,9 @@ export class AppComponent {
     '/recuperar-senha',
     '/checagem-email',
     '/resetar-senha',
-    '/email-sent'
+    '/email-sent',
+    '/contato',
+    '/sobre'
   ];
 
 

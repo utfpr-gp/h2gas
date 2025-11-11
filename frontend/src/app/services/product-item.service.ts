@@ -34,7 +34,7 @@ export class ProductItemService extends AbstractService<ProductItem> {
 
   createWithFile(product: ProductItem, file: File): Observable<ProductItem> {
     const formData = new FormData();
-    debugger
+    
     formData.append('product', new Blob([JSON.stringify(product)], { type: 'application/json' }));
     formData.append('file', file);
     return this.http.post<ProductItem>(`${this.baseUrl}`, formData);

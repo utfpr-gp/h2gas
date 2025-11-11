@@ -48,7 +48,7 @@ export class DistributorManagementComponent implements OnInit {
   }
 
   onToggleSupplier(checked: any) {
-    debugger
+    
     this.showSupplier = checked.target.checked;
     console.log('Distribuidora aberta?', checked);
 
@@ -68,7 +68,7 @@ export class DistributorManagementComponent implements OnInit {
   }
 
   buscaDistribuidoraFornecedor(userId: string) {
-    debugger
+    
     this.supplierService.findByUserId(userId).subscribe({
       next: (response) => {
         console.log('Distribuidora buscada com sucesso!', response);

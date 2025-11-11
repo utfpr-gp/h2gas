@@ -12,7 +12,6 @@ public class MapperConfig {
 
     @Bean
     public ModelMapper modelMapper() {
-//        return new ModelMapper();
         ModelMapper modelMapper = new ModelMapper();
 
         modelMapper.typeMap(Supplier.class, SupplierDTO.class)

@@ -24,9 +24,4 @@ public class City {
     private String name;
 
     private String state;
-
-//    TODO IMPLEMENTAR ISSO QUANDO TERMINAR O SUPPLIER
-//    @JsonManagedReference
-//    @OneToMany(mappedBy = "city")
-//    private List<Supplier> suppliers = new ArrayList<>();
 }

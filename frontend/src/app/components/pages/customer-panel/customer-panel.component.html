@@ -63,7 +63,7 @@
           <div class="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-md mx-4">
             <div class="p-6">
               <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold">Endereço Fornecedora</h2>
+                <h2 class="text-xl font-bold">Seu endereço</h2>
                 <button class="text-gray-500 hover:text-gray-700" (click)="modalAberta = false">
                   <i class="fas fa-times h-5 w-5"></i>
                 </button>
@@ -86,10 +86,21 @@
 
                 <div class="space-y-2">
                   <label class="block text-sm font-medium text-gray-700">Cidade</label>
+                  <select formControlName="cityId"
+                    class="mt-1 block w-full rounded-lg border-2 border-blue-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option *ngFor="let city of cities" 
+                      [ngValue]="city.id">
+                      {{ city.name }}
+                    </option>
+                  </select>
+                </div>
+
+                <!-- <div class="space-y-2">
+                  <label class="block text-sm font-medium text-gray-700">Cidade</label>
                   <input type="text" placeholder="Digite o nome de sua Cidade"
                     class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
                     required formControlName="cityName" />
-                </div>
+                </div> -->
 
                 <div class="space-y-2">
                   <label class="block text-sm font-medium text-gray-700">Rua</label>

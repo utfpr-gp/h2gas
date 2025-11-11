@@ -97,10 +97,17 @@ export class DistribuitorFormComponent implements OnInit {
   modalAberta = false;
 
   openModal() {
-    this.modalAberta = true;
     if (this.address) {
       this.registerFormAddress.patchValue(this.address)          
     }
+
+    if (this.address!.cityName) {
+      this.cidadeEncontrada = this.cities?.some(
+        c => c.name!.toLowerCase() === this.address!.cityName!.toLowerCase()
+      );
+    }
+
+    this.modalAberta = true;
   }
 
 
@@ -123,9 +130,6 @@ export class DistribuitorFormComponent implements OnInit {
         }
         this.toastr.success('Cep buscado com sucesso');
         this.registerFormAddress.get('streetName')?.setValue(response.logradouro)
-        console.log("cidades aqui");
-        
-        console.log(this.cities);
         
         // this.registerFormAddress.get('cityName')?.setValue(response.localidade)
         this.registerFormAddress.get('neighborhood')?.setValue(response.bairro)
@@ -139,6 +143,7 @@ export class DistribuitorFormComponent implements OnInit {
   }
 
   salvarAddress() {
+    debugger
     if (!this.cidadeEncontrada) {
       this.toastr.warning(`Infelizmente ainda não atendemos sua cidade.`);
       return;
@@ -147,7 +152,7 @@ export class DistribuitorFormComponent implements OnInit {
     if (this.registerFormAddress.valid && !this.address) {
       this.registerFormAddress.get('userId')?.setValue(this.userLogado?.id)
       this.address = this.registerFormAddress.value;
-      debugger
+      
       this.addressService.create(this.address!).subscribe({
         next: (response) => {
           console.log(response);
@@ -183,10 +188,6 @@ export class DistribuitorFormComponent implements OnInit {
       next: (response) => {
         console.log(response);
         this.address = response;
-        console.log("aeee");
-        
-        console.log(this.address);
-        
       },
       error: (err) => {
         console.log(err);
@@ -198,7 +199,7 @@ export class DistribuitorFormComponent implements OnInit {
   getSupplierId(id: string) {
     this.supplierService.findById(id).subscribe({
       next: (response) => {
-        debugger
+        
         console.log('Distribuidor buscado com sucesso!', response);
         this.registerFormSupplier.patchValue(response);
         this.toastr.success('Distribuidor buscado com sucesso!');
@@ -212,13 +213,13 @@ export class DistribuitorFormComponent implements OnInit {
 
 
   register() {
-    debugger
+    
     if (this.registerFormSupplier.invalid) {
       this.registerFormSupplier.markAllAsTouched();
       this.toastr.warning('Conferir informações!!')
       return; 
     }
-    debugger
+    
 
     this.supplier = this.registerFormSupplier?.value;
     this.supplier!.addressId = this.address?.id
@@ -227,7 +228,7 @@ export class DistribuitorFormComponent implements OnInit {
 
     this.supplierService.create(this.supplier!!).subscribe({
       next: (response) => {
-        debugger
+        
         console.log('Usuário criado com sucesso!', response);
         this.toastr.success('Usuário criado com sucesso!');
         this.navigateRoute('/aguardando-aprovacao')
@@ -240,7 +241,7 @@ export class DistribuitorFormComponent implements OnInit {
   }
 
   update() {
-    debugger
+    
     if (this.registerFormSupplier.invalid) {
       this.registerFormSupplier.markAllAsTouched();
       this.toastr.warning('Conferir informações!!')
@@ -249,14 +250,14 @@ export class DistribuitorFormComponent implements OnInit {
 
     this.supplier = this.registerFormSupplier?.value;
     this.supplier!!.addressId = this.address?.id
-    debugger
+    
 
     this.supplierService.update(this.idEdit, this.supplier!!).subscribe({
       next: (response) => {
-        debugger
+        
         console.log('Dsitriuidora editada com sucesso!', response);
         this.toastr.success('Distriuidora editada com sucesso!!');
-        this.navigateRoute('/management-distributor')
+        this.navigateRoute('/dashboard-fornecedor')
       },
       error: (err) => {
         console.error('Erro ao buscar:', err.error.message);
