@@ -24,6 +24,8 @@ import { CheckEmailComponent } from './components/pages/check-email/check-email.
 import { ResetPasswordComponent } from './components/pages/reset-password/reset-password.component';
 import { EmailSentComponent } from './components/pages/email-sent/email-sent.component';
 import { ConfigurationComponent } from './components/pages/configuration/configuration.component';
+import { AboutComponent } from './components/pages/about/about.component';
+import { ContactComponent } from './components/pages/contact/contact.component';
 
 export const routes: Routes = [
     {path: '', component: InitialScreenComponent},
@@ -145,6 +147,14 @@ export const routes: Routes = [
     {
         path: 'email-sent', 
         component: EmailSentComponent
+    },
+    {
+        path: 'sobre', 
+        component: AboutComponent
+    },
+    {
+        path: 'contato', 
+        component: ContactComponent
     },
     {
         path: 'configuracao', 
