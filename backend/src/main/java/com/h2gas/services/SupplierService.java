@@ -145,6 +145,7 @@ public class SupplierService {
         supplier.setName(supplierDTO.getName());
         supplier.setPhoneNumber(supplierDTO.getPhone());
         supplier.setActive(currentStatus);
+        supplier.setDescription(supplierDTO.getDescription());
         supplier.setOpeningTime(LocalTime.parse(supplierDTO.getOpeningTime()));
         supplier.setClosingTime(LocalTime.parse(supplierDTO.getClosingTime()));
         supplier.setAverageDeliveryTime(Duration.ofMinutes(supplierDTO.getAverageDeliveryTime()));

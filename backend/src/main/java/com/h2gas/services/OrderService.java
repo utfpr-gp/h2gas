@@ -90,10 +90,19 @@ public class OrderService {
                 -> new ResourceNotFoundException("Pedido não encontrado com esse id: " + id));
     }
 
-    public Page<OrderResponseDTO> findByCustomerId(String id, Pageable pageable) {
-        return orderRepository.findByCustomerId(id, pageable)
-                .map(orderMapper::toResponseDto);
+    public Page<OrderResponseDTO> findByCustomerId(String customerId, String status, Pageable pageable) {
+        Page<Order> page;
+
+        if (status != null && !status.isEmpty() && !status.equalsIgnoreCase("TODOS")) {
+            OrderStatusEnum statusEnum = OrderStatusEnum.valueOf(status.toUpperCase());
+            page = orderRepository.findByCustomerIdAndStatusOrderByCreatedAtDesc(customerId, statusEnum, pageable);
+        } else {
+            page = orderRepository.findByCustomerIdOrderByCreatedAtDesc(customerId, pageable);
+        }
+
+        return page.map(orderMapper::toResponseDto);
     }
+
 
     public Page<OrderResponseDTO> findBySupplierId(String id, Pageable pageable) {
         return orderRepository.findBySupplierIdOrderByCreatedAtDesc(id, pageable)

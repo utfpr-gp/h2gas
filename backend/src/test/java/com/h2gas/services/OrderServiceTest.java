@@ -247,7 +247,7 @@ class OrderServiceTest {
         Pageable pageable = PageRequest.of(0, 10);
 
         // Act
-        Page<OrderResponseDTO> result = orderService.findByCustomerId(validCustomerId, pageable);
+        Page<OrderResponseDTO> result = orderService.findByCustomerId(validCustomerId, null, pageable);
 
         // Assert
         assertNotNull(result);

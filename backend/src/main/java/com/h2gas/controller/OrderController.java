@@ -66,15 +66,17 @@ public class OrderController {
     @ResponseBody
     public ResponseEntity<PageResponse<OrderResponseDTO>> listAllOrderItems(
             @PathVariable String customerId,
+            @RequestParam(value = "status", required = false) String status,
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(value = "size", required = false) Integer size
     ) {
         Pageable pageable = PaginationUtil.getPageableRequest(page, size);
-        Page<OrderResponseDTO> result = orderService.findByCustomerId(customerId, pageable);
+        Page<OrderResponseDTO> result = orderService.findByCustomerId(customerId, status, pageable);
         PageResponse<OrderResponseDTO> response = new PageResponse<>(result);
 
         return ResponseEntity.ok(response);
     }
+
 
     @GetMapping("/{supplierId}/exclude-status")
     @ResponseBody
