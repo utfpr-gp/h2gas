@@ -110,13 +110,6 @@ public class SupplierController {
         return ResponseEntity.ok(Map.of("message", "Horario de funcionamento atualizado com sucesso"));
     }
 
-//    @GetMapping("/by-user/{userId}")
-//    @ResponseBody
-//    public ResponseEntity<SupplierDTO> getAddressByUserId(@PathVariable String userId) {
-//        SupplierDTO supplierDTO = supplierService.findByUserIdSupplier(userId);
-//        return ResponseEntity.ok(supplierDTO);
-//    }
-
     @GetMapping("/{id}")
     @ResponseBody
     public ResponseEntity<SupplierDTO> getAddressById(@PathVariable String id) {

@@ -115,7 +115,6 @@ public class OrderController {
             result = orderService.findBySupplierId(supplierId, pageable);
         }
 
-//        Page<OrderResponseDTO> result = orderService.findBySupplierId(supplierId, pageable);
         PageResponse<OrderResponseDTO> response = new PageResponse<>(result);
 
         return ResponseEntity.ok(response);
