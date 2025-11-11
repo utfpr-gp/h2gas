@@ -54,24 +54,6 @@ export class ProductListComponent implements OnInit {
   searchTerm = '';
   selectedCategory: string | null = null;
 
-  // getProducts(supplierId: string, page: number = 0) {
-  //   this.productItemService.getProductsBySupllierId(supplierId, page, this.pageSizeProducts).subscribe({
-  //     next: (response: PaginatedResponse<ProductItem>) => {
-  //       this.products = response.data;
-  //       this.currentPageProducts = response.page;
-  //       this.pageSizeProducts = response.size;
-  //       this.totalPagesProducts = response.totalPages;
-  //       this.totalElementsProducts = response.totalElements;
-  
-  //       this.toastr.success('Produtos encontrados com sucesso!');
-  //     },
-  //     error: (err) => {
-  //       console.error('Erro ao buscar:', err.error?.message || err.message);
-  //       this.toastr.error(`Erro ao buscar produtos: ${err.error?.message || err.message}`);
-  //     },
-  //   });
-  // }
-
   getProducts(supplierId: string, page: number = 0) {
     this.productItemService
       .getProductsBySupplierId(
