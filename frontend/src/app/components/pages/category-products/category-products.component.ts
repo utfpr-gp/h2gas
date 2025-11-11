@@ -91,7 +91,7 @@ export class CategoryProductsComponent implements OnInit {
   }
 
   openModalDelete(category: CategoryProduct) {
-    debugger
+    
     this.deleteNameCategory = `${category.type} de ${category.name}`
     this.idCategoryRow = category.id
     
@@ -132,29 +132,29 @@ export class CategoryProductsComponent implements OnInit {
         this.toggleFormulario();
       },
       error: (err) => {
-        debugger
+        
         this.toastr.error(`Erro ao salvar categoria: ${err.error.message}`)        
       }
     })
   }
 
   deleteConfirmed() {
-    debugger
+    
     this.categoryService.delete(this.idCategoryRow!!).subscribe({
       next: (value) => {
-        debugger
+        
         this.toastr.success("Categoria deletada com sucesso")        
         this.getAllCategories();
       },
       error: (err) => {
-        debugger
+        
         this.toastr.error(`Erro ao deletar categoria: ${err.error.message}`)        
       }
     })
   }
 
   update() {
-    debugger
+    
     if (this.formCategory.invalid) {
       this.formCategory.markAllAsTouched();
       return;
@@ -167,13 +167,13 @@ export class CategoryProductsComponent implements OnInit {
 
     this.categoryService.update(this.idCategoryRow!!, this.category!!).subscribe({
       next: (value) => {
-        debugger
+        
         this.toastr.success("Categoria atualizada com sucesso")        
         this.getAllCategories();
         this.toggleFormulario();
       },
       error: (err) => {
-        debugger
+        
         this.toastr.error(`Erro ao atualizar categoria: ${err.error.message}`)        
       }
     })

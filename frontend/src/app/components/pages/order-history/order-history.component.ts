@@ -58,7 +58,6 @@ export class OrderHistoryComponent {
 
   ngOnInit() {
     this.userLogado = this.userService.getUserLocalStorage();
-    // this.getOrders();
     this.getOrderExcludeStatus();
     this.getOpenStatus();
   }
@@ -67,7 +66,6 @@ export class OrderHistoryComponent {
   onStatusChange(status: string) {
     if (status == "ALL") {
       this.getOrderExcludeStatus();
-      // this.getOrders();
     } else {
       this.getOrders(status);
     }
@@ -130,7 +128,7 @@ export class OrderHistoryComponent {
   }
 
   getOpenStatus() {
-    debugger
+    
     this.supplierService.getOpen(this.userLogado?.supplierId!).subscribe({
       next: (response) => {
         console.log('Distribuidora buscada com sucesso!', response);
@@ -139,7 +137,6 @@ export class OrderHistoryComponent {
       },
       error: (err) => {
         console.error('Erro ao buscar:', err.error.message);
-        // this.toastr.error(`Erro ao buscar distribuidora: ${err.error.message}`)
       }
     })
   }

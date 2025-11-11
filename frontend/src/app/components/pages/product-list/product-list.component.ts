@@ -44,7 +44,6 @@ export class ProductListComponent implements OnInit {
     this.idSupplier = idParam;
     console.log(this.idSupplier);
     this.getProducts(this.idSupplier);
-    // localStorage.setItem('cart-product', JSON.stringify(null))
   }
 
   currentPageProducts: number = 0;

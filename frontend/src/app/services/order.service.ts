@@ -20,12 +20,6 @@ export class OrderService extends AbstractService<OrderResponse> {
     return this.http.post<OrderResponse>(this.baseUrl, data);
   }
 
-  // findByCustomerId(customerId: string): Observable<PaginatedResponse<OrderResponse>> {
-  //   return this.http.get<PaginatedResponse<OrderResponse>>(
-  //     `${this.baseUrl}/by-customer/${customerId}`
-  //   );
-  // }
-
   findByCustomerId(customerId: string, page: number = 0, size: number = 5, status?: string): Observable<PaginatedResponse<OrderResponse>> {
     const params: any = { page, size };
     if (status && status !== 'TODOS') {
@@ -37,15 +31,6 @@ export class OrderService extends AbstractService<OrderResponse> {
       { params }
     );
   }
-  
-  
-  
-
-  // findBySupplierId(supplierId: number): Observable<PaginatedResponse<OrderResponse>> {
-  //   return this.http.get<PaginatedResponse<OrderResponse>>(
-  //     `${this.baseUrl}/by-supplier/${supplierId}`
-  //   );
-  // }
 
   findBySupplierId(
     supplierId: string,

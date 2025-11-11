@@ -17,13 +17,6 @@ export class CartService {
     return data ? JSON.parse(data) : [];
   }
 
-  // addProduct(product: any) {
-  //   const currentCart = this.cartProductsSubject.value;
-  //   const newCart = [...currentCart, product];
-  //   localStorage.setItem('cart-product', JSON.stringify(newCart));
-  //   this.cartProductsSubject.next(newCart);
-  // }
-
   setCart(cart: any[]) {
     localStorage.setItem('cart-product', JSON.stringify(cart));
     this.cartProductsSubject.next(cart);
@@ -43,10 +36,8 @@ export class CartService {
     const existing = currentCart.find(p => p.id === product.id);
 
     if (existing) {
-      // soma a quantidade
       existing.quantitySelect = (existing.quantitySelect ?? 0) + (product.quantitySelect ?? 1);
     } else {
-      // adiciona novo item
       currentCart.push({ ...product });
     }
 

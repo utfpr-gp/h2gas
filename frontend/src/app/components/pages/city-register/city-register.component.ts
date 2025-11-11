@@ -78,7 +78,7 @@ export class CityRegisterComponent implements OnInit {
   }
 
   getCities() {
-    debugger
+    
     this.cityService.findAll().subscribe({
       next: (response) => {
         console.log('Buscado com sucesso', response);
@@ -89,7 +89,7 @@ export class CityRegisterComponent implements OnInit {
         this.toastr.success('Busca de cidades completas!');
       },
       error: (error) => {
-        debugger
+        
         console.error('Erro ao buscar:', error.error.message);
         this.toastr.error(`Erro ao buscar cidades: ${error.error.message}`)
       },
@@ -113,7 +113,7 @@ export class CityRegisterComponent implements OnInit {
   }
 
   openModalDelete(city: City) {
-    debugger
+    
     this.idSelectCity = city.id;
     this.cityDeleteName = `Cidade ${city.name!}`;
     
@@ -124,7 +124,7 @@ export class CityRegisterComponent implements OnInit {
   }
   
   deleteConfirmed() {
-    debugger
+    
     if (this.idSelectCity) {
       this.cityService.delete(this.idSelectCity).subscribe({
         next: (response) => {

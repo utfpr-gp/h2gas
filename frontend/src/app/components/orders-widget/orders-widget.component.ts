@@ -31,7 +31,7 @@ export class OrdersWidgetComponent implements OnInit {
   rotaAtiva: string = '';
 
   ngOnInit(): void {
-    debugger
+    
     this.rotaAtiva = this.route.snapshot.url.map(segment => segment.path).join('/')
   }
 

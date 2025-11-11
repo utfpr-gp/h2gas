@@ -40,21 +40,6 @@ export class OrderListComponent implements OnInit {
     this.getOrders();
   }
 
-  // getOrders() {
-  //   this.orderService.findByCustomerId(this.userLogado?.id!).subscribe({
-  //     next: (response) => {
-  //       this.orders = response.data;
-  //       console.log(this.orders);
-        
-  //       this.toastr.success("Pedidos buscado com sucesso");
-  //     },
-  //     error: (err) => {
-  //       console.error(err)
-  //       this.toastr.error(`Erro ao buscar os pedidos: ${err.error.message}`);
-  //     },
-  //   })
-  // }
-
   statuses = [
     { key: 'TODOS', label: 'Todos' },
     { key: 'PENDING', label: 'Pendentes' },

@@ -66,7 +66,7 @@ export class ConfigurationComponent {
   getSupplierId() {
     this.supplierService.findById(this.userLogado?.supplierId!).subscribe({
       next: (response) => {
-        debugger
+        
         console.log('Distribuidor buscado com sucesso!', response);
         // this.formHours.patchValue(response);
         this.formHours.patchValue({
@@ -92,9 +92,7 @@ export class ConfigurationComponent {
       this.toastr.warning("Digite um valor maior que 0")
       console.error("Formulário inválido!");
     }
-
-    // this.timeOpeningAndClose.closingTime = this.formHours.value.closingTime;
-    // this.timeOpeningAndClose.openingTime = this.formHours.value.openingTime;
+    
     this.timeOpeningAndClose = {
       openingTime: this.formHours.value.openingTime,
       closingTime: this.formHours.value.closingTime,
@@ -109,7 +107,7 @@ export class ConfigurationComponent {
         this.toastr.success(response.message);
       },
       error: (err) => {
-        debugger
+        
         console.error('Erro ao atualizar:', err.error.message);
         this.toastr.error(`Erro ao atualizar: ${err.error.message}`)
       },

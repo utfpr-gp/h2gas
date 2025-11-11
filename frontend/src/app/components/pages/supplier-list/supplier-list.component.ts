@@ -54,26 +54,10 @@ export class SupplierListComponent implements OnInit {
   pageSize: number = 10; 
   totalPages: number = 0;
   totalElements: number = 0;
-
-  // getSuppliers() {
-  //   this.supplierService.getAllSupplierOpenAndActive().subscribe({
-  //     next: (response) => {
-  //       console.log('Buscado com sucesso', response);
-  //       this.suppliers = response.data
-  //       console.log(this.suppliers!.length);
-        
-  //       this.toastr.success('Fornecedores buscados com sucesso!');
-  //     },
-  //     error: (err) => {
-  //       console.error('Erro ao buscar:', err.error.message);
-  //       this.toastr.error(`Erro ao buscar fornecedores: ${err.error.message}`)
-  //     },
-  //   })
-  // }
   
 
   getSuppliers(page: number = 0) {
-    debugger
+    
     this.supplierService.getAllSupplierOpenAndActive(page, this.pageSize).subscribe({
       next: (response: PaginatedResponse<Supplier>) => {
         this.suppliers = response.data;

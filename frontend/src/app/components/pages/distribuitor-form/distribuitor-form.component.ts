@@ -147,7 +147,7 @@ export class DistribuitorFormComponent implements OnInit {
     if (this.registerFormAddress.valid && !this.address) {
       this.registerFormAddress.get('userId')?.setValue(this.userLogado?.id)
       this.address = this.registerFormAddress.value;
-      debugger
+      
       this.addressService.create(this.address!).subscribe({
         next: (response) => {
           console.log(response);
@@ -198,7 +198,7 @@ export class DistribuitorFormComponent implements OnInit {
   getSupplierId(id: string) {
     this.supplierService.findById(id).subscribe({
       next: (response) => {
-        debugger
+        
         console.log('Distribuidor buscado com sucesso!', response);
         this.registerFormSupplier.patchValue(response);
         this.toastr.success('Distribuidor buscado com sucesso!');
@@ -212,13 +212,13 @@ export class DistribuitorFormComponent implements OnInit {
 
 
   register() {
-    debugger
+    
     if (this.registerFormSupplier.invalid) {
       this.registerFormSupplier.markAllAsTouched();
       this.toastr.warning('Conferir informações!!')
       return; 
     }
-    debugger
+    
 
     this.supplier = this.registerFormSupplier?.value;
     this.supplier!.addressId = this.address?.id
@@ -227,7 +227,7 @@ export class DistribuitorFormComponent implements OnInit {
 
     this.supplierService.create(this.supplier!!).subscribe({
       next: (response) => {
-        debugger
+        
         console.log('Usuário criado com sucesso!', response);
         this.toastr.success('Usuário criado com sucesso!');
         this.navigateRoute('/aguardando-aprovacao')
@@ -240,7 +240,7 @@ export class DistribuitorFormComponent implements OnInit {
   }
 
   update() {
-    debugger
+    
     if (this.registerFormSupplier.invalid) {
       this.registerFormSupplier.markAllAsTouched();
       this.toastr.warning('Conferir informações!!')
@@ -249,11 +249,11 @@ export class DistribuitorFormComponent implements OnInit {
 
     this.supplier = this.registerFormSupplier?.value;
     this.supplier!!.addressId = this.address?.id
-    debugger
+    
 
     this.supplierService.update(this.idEdit, this.supplier!!).subscribe({
       next: (response) => {
-        debugger
+        
         console.log('Dsitriuidora editada com sucesso!', response);
         this.toastr.success('Distriuidora editada com sucesso!!');
         this.navigateRoute('/dashboard-fornecedor')

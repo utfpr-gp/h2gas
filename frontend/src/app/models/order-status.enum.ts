@@ -1,4 +1,3 @@
-// order-status.enum.ts
 export enum OrderStatus {
     PENDING = 'Pendente',
     CONFIRMED = 'Confirmado',

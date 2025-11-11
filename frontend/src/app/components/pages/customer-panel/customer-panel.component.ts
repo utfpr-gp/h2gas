@@ -84,7 +84,7 @@ export class CustomerPanelComponent implements OnInit {
   }
 
   update() {
-    debugger
+    
     if (this.registerFormUser.invalid) {
       this.registerFormUser.markAllAsTouched();
       this.toastr.warning('Conferir informações!!')
@@ -94,7 +94,7 @@ export class CustomerPanelComponent implements OnInit {
     // this.userLogado = this.registerFormUser?.value;
     let userEdit: User = this.registerFormUser?.value
     // this.userLogado!!.addressId = this.address?.id
-    debugger
+    
 
     this.userService.updateUser(this.userLogado?.id!, userEdit).subscribe({
       next: (response) => {

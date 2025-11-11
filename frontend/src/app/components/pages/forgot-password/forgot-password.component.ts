@@ -41,7 +41,7 @@ export class ForgotPasswordComponent {
     this.loading = true;
     this.errorMessage = '';
     
-    debugger
+    
     this.authService.requestPasswordReset(this.form.value).subscribe({
 
       next: (response) => {

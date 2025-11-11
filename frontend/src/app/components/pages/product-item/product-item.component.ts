@@ -86,7 +86,7 @@ export class ProductItemComponent implements OnInit {
   }
 
   async findProdutos() {
-    debugger
+    
     this.productItemService.getProductsBySupllierId(this.userLogado?.supplierId!).subscribe({
       next: (response) => {
         console.log('Buscado com sucesso', response);
@@ -98,7 +98,7 @@ export class ProductItemComponent implements OnInit {
         this.countingDisponivel();
       },
       error: (err) => {
-        debugger
+        
         console.error('Erro ao buscar:', err.error.message);
         this.toastr.error(`Erro ao buscar produtos: ${err.error.message}`)
       },
@@ -110,7 +110,7 @@ export class ProductItemComponent implements OnInit {
   }
 
   deleteConfirmed() {
-    debugger
+    
     this.productItemService.delete(this.idProductRow!).subscribe({
       next: async (response) => {
         this.toastr.success("Produto deletado com sucesso!!");
@@ -126,7 +126,7 @@ export class ProductItemComponent implements OnInit {
   estoqueMinimoConfig: number = 8;
   
   countingDisponivel() {
-    debugger
+    
     this.availableProduct = 0;
     this.esgotadoProducts = 0;
     this.lowProducts = 0;

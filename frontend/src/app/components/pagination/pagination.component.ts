@@ -15,7 +15,6 @@ export class PaginationComponent {
 
   @Output() pageChange: EventEmitter<number> = new EventEmitter<number>();
 
-  // Gera os números de página com elipses
   getPageNumbers(): number[] {
     const totalNumbers = 5;
     const pages: number[] = [];
@@ -39,7 +38,7 @@ export class PaginationComponent {
   }
 
   goToPage(page: number) {
-    debugger
+    
     if (page !== this.currentPage) {
       this.pageChange.emit(page);
     }

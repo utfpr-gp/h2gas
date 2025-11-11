@@ -59,18 +59,14 @@ export class ReceivedOrdersComponent implements OnInit {
 
   ngOnInit() {
     this.userLogado = this.userService.getUserLocalStorage();
-    // this.getOrders();
     this.getOrderExcludeStatus();
     this.getOpenStatus();
   }
   
 
   onStatusChange(status: string) {
-    // const selectedValue = (event.target as HTMLSelectElement).value;
-
     if (status == "ALL") {
       this.getOrderExcludeStatus();
-      // this.getOrders();
     } else {
       this.getOrders(status);
     }
@@ -101,7 +97,7 @@ export class ReceivedOrdersComponent implements OnInit {
 
 
   getOrders(status?: string) {
-    debugger
+    
 
     this.orderService.findBySupplierId(this.userLogado?.supplierId!, status).subscribe({
       next: (response) => {
@@ -118,7 +114,7 @@ export class ReceivedOrdersComponent implements OnInit {
   }
 
   getOrderExcludeStatus() {
-    debugger
+    
     let exludeStatus: string[] = ['DELIVERED', 'CANCELED'];
 
     this.orderService.findByExcludeStatus(this.userLogado?.supplierId!, exludeStatus).subscribe({
@@ -136,7 +132,7 @@ export class ReceivedOrdersComponent implements OnInit {
   }
 
   getOpenStatus() {
-    debugger
+    
     this.supplierService.getOpen(this.userLogado?.supplierId!).subscribe({
       next: (response) => {
         console.log('Distribuidora buscada com sucesso!', response);
@@ -145,7 +141,6 @@ export class ReceivedOrdersComponent implements OnInit {
       },
       error: (err) => {
         console.error('Erro ao buscar:', err.error.message);
-        // this.toastr.error(`Erro ao buscar distribuidora: ${err.error.message}`)
       }
     })
   }
@@ -171,7 +166,6 @@ export class ReceivedOrdersComponent implements OnInit {
         console.error(err);
       },
     })
-    // aqui você chama o serviço para atualizar no backend
   }
 
   navigateEdit(id?: string) {
