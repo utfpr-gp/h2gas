@@ -6,7 +6,6 @@ import { RegisterSupplierComponent } from './components/pages/register-supplier/
 import { CityRegisterComponent } from './components/pages/city-register/city-register.component';
 import { authGuard } from './guards/auth.guard';
 import { SupplierApprovalComponent } from './components/pages/supplier-approval/supplier-approval.component';
-import { DistributorManagementComponent } from './components/pages/distributor-management/distributor-management.component';
 import { DistribuitorFormComponent } from './components/pages/distribuitor-form/distribuitor-form.component';
 import { CategoryProductsComponent } from './components/pages/category-products/category-products.component';
 import { ProductItemComponent } from './components/pages/product-item/product-item.component';
@@ -34,12 +33,6 @@ export const routes: Routes = [
     {
         path: 'register-supplier', 
         component: RegisterSupplierComponent
-    },
-    {
-        path: 'management-distributor', 
-        component: DistributorManagementComponent,
-        canActivate: [authGuard],
-        data: {roles: ['ADMIN', 'SUPPLIER']}
     },
     {
         path: 'distributor/new', 
