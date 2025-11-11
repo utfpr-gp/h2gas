@@ -156,28 +156,6 @@ public class UserService {
             Address address = addressService.createAddress(data.getAddress(), user, city);
             return userMapper.toDto(user);
         }
-//        if (this.userRepository.existsByEmail(data.getEmail())) {
-//            throw new BusinessRuleException("Email já cadastrado.");
-//        }
-//
-////        if (data.getUserType() == null || data.getUserType() == UserTypeEnum.ADMIN) {
-////            throw new BusinessRuleException("Cadastro de usuário ADMIN não permitido ou tipo vazio");
-////        }
-//
-//        String encryptedPassword = new BCryptPasswordEncoder().encode(data.getPassword());
-//
-//        User user = new User(data.getName(), data.getEmail(), data.getPhoneNumber(),
-//                data.getCpf(), encryptedPassword, data.getUserType());
-//
-//        this.userRepository.save(user);
-//
-//        if (data.getUserType() == UserTypeEnum.SUPPLIER || data.getUserType() == UserTypeEnum.ADMIN) {
-//            Address address = addressService.createAddressWithUserId(data.getAddress(), user.getId());
-//            SupplierCreateDTO supplierDTO = getSupplierCreateDTO(data, user, address);
-//            supplierService.createSupplier(supplierDTO);
-//        }
-//
-//        return userMapper.toDto(user);
     }
 
     private static SupplierCreateDTO getSupplierCreateDTO(RegisterDTO data, User user, Address address) {

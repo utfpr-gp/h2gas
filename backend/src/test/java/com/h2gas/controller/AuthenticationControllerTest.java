@@ -5,9 +5,14 @@ import com.h2gas.configuration.security.SecurityConfigurations;
 import com.h2gas.configuration.security.SecurityFilter;
 import com.h2gas.configuration.security.TokenService;
 import com.h2gas.enums.UserTypeEnum;
+import com.h2gas.model.dto.AddressDTO;
 import com.h2gas.model.dto.AuthenticationDTO;
 import com.h2gas.model.dto.RegisterDTO;
+import com.h2gas.model.entity.Address;
+import com.h2gas.model.entity.City;
 import com.h2gas.model.entity.User;
+import com.h2gas.model.repository.AddressRepository;
+import com.h2gas.model.repository.CityRepository;
 import com.h2gas.model.repository.UserRepository;
 import com.h2gas.services.MailService;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,7 +46,7 @@ import java.util.Optional;
 @ActiveProfiles("test")
 @TestPropertySource(properties = "jwt.secret=segredoFake123")
 class AuthenticationControllerTest {
-    @MockBean
+    @MockitoBean
     private MailService mailService;
 
     @Autowired
@@ -59,11 +64,20 @@ class AuthenticationControllerTest {
     @MockitoBean
     private TokenService tokenService;
 
+    @MockitoBean
+    private AddressRepository addressRepository;
+
+
 //    @MockitoBean
 //    private UserService userService;
 
     @MockitoBean
     private AuthenticationManager authenticationManager;
+
+    @Autowired
+    private CityRepository cityRepository;
+
+    private Long validCityId;
 
     @BeforeEach
     void setup() {
@@ -73,6 +87,15 @@ class AuthenticationControllerTest {
         user.setUserType(UserTypeEnum.CUSTOMER);
         user.setPassword(passwordEncoder.encode("123456"));
         userRepository.save(user);
+
+        City cityFirst = new City(
+                null,
+                "Pato Branco",
+                "PR"
+        );
+        cityRepository.save(cityFirst);
+        validCityId = cityFirst.getId();
+
         var authToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(authToken);
@@ -95,6 +118,26 @@ class AuthenticationControllerTest {
 
     @Test
     void deveRegistrarUsuarioComSucesso() throws Exception {
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            user.setId("d4154c80-c616-4471-a0d8-04b29d30345f");
+            return user;
+        });
+
+        when(addressRepository.save(any(Address.class))).thenAnswer(invocation -> {
+            Address address = invocation.getArgument(0);
+            address.setId(1L);
+            return address;
+        });
+
+
+        AddressDTO addressDTO = new AddressDTO();
+        addressDTO.setStreetName("Rua Teste");
+        addressDTO.setNumber("123");
+        addressDTO.setNeighborhood("Centro");
+        addressDTO.setZipCode("80000-000");
+        addressDTO.setCityId(validCityId);
+
         RegisterDTO registerDTO = new RegisterDTO(
                 "teste",
                 "teste@teste.com",
@@ -103,7 +146,7 @@ class AuthenticationControllerTest {
                 "12345678000199",
                 "123456",
                 UserTypeEnum.CUSTOMER,
-                null
+                addressDTO
         );
 
         mockMvc.perform(post("/api/auth/register")

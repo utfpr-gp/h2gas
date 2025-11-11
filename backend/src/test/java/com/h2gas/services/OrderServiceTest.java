@@ -157,7 +157,11 @@ class OrderServiceTest {
         productItem.setCategoryProduct(category);
         productItem.setSupplier(supplier);
         productItemRepository.save(productItem);
+//        validProductItemId = productItem.getId();
+        productItem = productItemRepository.saveAndFlush(productItem);
+
         validProductItemId = productItem.getId();
+        System.out.println(">>> ProductItem salvo com ID: " + validProductItemId);
 
         // Criar pedido de teste
         Order order = new Order();
