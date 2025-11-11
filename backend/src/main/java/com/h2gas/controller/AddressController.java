@@ -36,14 +36,6 @@ public class AddressController {
         return ResponseEntity.ok(addressDTO);
     }
 
-//    @DeleteMapping
-//    @ResponseBody
-//    @RolesAllowed("ADMIN")
-//    public ResponseEntity<AddressDTO> deleteCity(@RequestBody AddressDTO addressDTO) {
-//        addressService.createAddress(addressDTO);
-//        return ResponseEntity.ok(addressDTO);
-//    }
-
     @GetMapping("/by-user/{userId}")
     @ResponseBody
     public ResponseEntity<AddressDTO> getAddressByUserId(@PathVariable String userId) {

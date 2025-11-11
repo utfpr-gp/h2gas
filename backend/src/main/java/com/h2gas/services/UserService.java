@@ -114,7 +114,11 @@ public class UserService {
 
         String encryptedPassword = new BCryptPasswordEncoder().encode(data.getPassword());
 
-        if (data.getUserType() == UserTypeEnum.SUPPLIER || data.getUserType() == UserTypeEnum.ADMIN) {
+        if (data.getUserType() == null || data.getUserType() == UserTypeEnum.ADMIN) {
+            throw new BusinessRuleException("Cadastro de usuário ADMIN não permitido ou tipo vazio");
+        }
+
+        if (data.getUserType() == UserTypeEnum.SUPPLIER) {
             Supplier supplier = new Supplier();
             supplier.setName(data.getName());
             supplier.setEmail(data.getEmail());
@@ -131,8 +135,6 @@ public class UserService {
                     .orElseThrow(() -> new ResourceNotFoundException("City not found"));
             supplier.setCity(city);
 
-            // Agora salva usando o service
-//            TODO FALTA SALVAR O ADDRES PARA CLIENTE TAMBÉM
             Supplier savedSupplier = supplierService.createSupplier(supplier);
             Address address = addressService.createAddress(data.getAddress(), savedSupplier, city);
             supplier.setAddress(address);
