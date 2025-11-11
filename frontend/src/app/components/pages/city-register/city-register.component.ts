@@ -81,11 +81,7 @@ export class CityRegisterComponent implements OnInit {
     
     this.cityService.findAll().subscribe({
       next: (response) => {
-        console.log('Buscado com sucesso', response);
         this.cityTabble = response
-        console.log("cidade braba table");
-        console.log(this.cityTabble);
-        
         this.toastr.success('Busca de cidades completas!');
       },
       error: (error) => {

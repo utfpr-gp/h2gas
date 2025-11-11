@@ -91,7 +91,6 @@ export class ProductItemComponent implements OnInit {
       next: (response) => {
         console.log('Buscado com sucesso', response);
         this.itemProducts = response.data
-        console.log(this.itemProducts);
         if (this.itemProducts.length > 0) {
           this.toastr.success('Produtos buscado com sucesso!');          
         }

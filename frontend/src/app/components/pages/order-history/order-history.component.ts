@@ -73,7 +73,6 @@ export class OrderHistoryComponent {
 
   onToggleSupplier(checked: any) {
     this.showSupplier = checked.target.checked;
-    console.log('Distribuidora aberta?', checked);
 
     let data = {
       "status": this.showSupplier

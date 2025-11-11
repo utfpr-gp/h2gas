@@ -66,9 +66,6 @@ export class ConfigurationComponent {
   getSupplierId() {
     this.supplierService.findById(this.userLogado?.supplierId!).subscribe({
       next: (response) => {
-        
-        console.log('Distribuidor buscado com sucesso!', response);
-        // this.formHours.patchValue(response);
         this.formHours.patchValue({
           openingTime: response.openingTime,
           closingTime: response.closingTime,

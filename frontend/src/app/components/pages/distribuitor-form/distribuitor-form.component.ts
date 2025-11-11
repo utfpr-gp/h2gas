@@ -97,10 +97,17 @@ export class DistribuitorFormComponent implements OnInit {
   modalAberta = false;
 
   openModal() {
-    this.modalAberta = true;
     if (this.address) {
       this.registerFormAddress.patchValue(this.address)          
     }
+
+    if (this.address!.cityName) {
+      this.cidadeEncontrada = this.cities?.some(
+        c => c.name!.toLowerCase() === this.address!.cityName!.toLowerCase()
+      );
+    }
+
+    this.modalAberta = true;
   }
 
 
@@ -123,9 +130,6 @@ export class DistribuitorFormComponent implements OnInit {
         }
         this.toastr.success('Cep buscado com sucesso');
         this.registerFormAddress.get('streetName')?.setValue(response.logradouro)
-        console.log("cidades aqui");
-        
-        console.log(this.cities);
         
         // this.registerFormAddress.get('cityName')?.setValue(response.localidade)
         this.registerFormAddress.get('neighborhood')?.setValue(response.bairro)
@@ -139,6 +143,7 @@ export class DistribuitorFormComponent implements OnInit {
   }
 
   salvarAddress() {
+    debugger
     if (!this.cidadeEncontrada) {
       this.toastr.warning(`Infelizmente ainda não atendemos sua cidade.`);
       return;
@@ -183,10 +188,6 @@ export class DistribuitorFormComponent implements OnInit {
       next: (response) => {
         console.log(response);
         this.address = response;
-        console.log("aeee");
-        
-        console.log(this.address);
-        
       },
       error: (err) => {
         console.log(err);

@@ -91,10 +91,6 @@ export class SupplierListComponent implements OnInit {
     this.productItemService.getProductsFromActiveSuppliers().subscribe({
       next: (response) => {
         this.products = response.data
-        console.log("salve deu boa");
-        
-        console.log(this.products);
-        
       },
       error: (err) => {
         this.toastr.error('Erro ao buscar produtos')

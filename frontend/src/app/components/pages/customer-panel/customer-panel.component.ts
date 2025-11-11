@@ -37,7 +37,7 @@ export class CustomerPanelComponent implements OnInit {
       complement: ['', Validators.required],
       neighborhood: ['', Validators.required],
       zipCode: ['', Validators.required],
-      cityName: ['', [Validators.required]],
+      cityId: ['', [Validators.required]],
       userId: [null],
     })
 
