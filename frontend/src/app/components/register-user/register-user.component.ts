@@ -88,6 +88,8 @@ export class RegisterUserComponent implements OnInit {
     this.modalAberta = true;
   }
 
+  isLoadingRegister = false;
+
   register() {
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
@@ -100,6 +102,7 @@ export class RegisterUserComponent implements OnInit {
       return; 
     }
 
+    this.isLoadingRegister = true;
     
     if (this.registerForm.get('password')?.value == this.confirmPassword) {
       this.registerForm.get('userType')?.setValue(this.userType);
@@ -113,16 +116,21 @@ export class RegisterUserComponent implements OnInit {
       
       this.userService.createUser(objRegister).subscribe({
         next: (response) => {
+          this.isLoadingRegister = false;
           console.log('Usuário criado com sucesso!', response);
           this.toastr.success('Usuário criado com sucesso!');
           this.navigateRoute('/login')
         }, 
         error: (error) => {
+          this.isLoadingRegister = false;
           console.error('Erro ao criar usuário:', error);
           this.toastr.error(`Erro ao criar usuário: ${error.error.message}`)
         }
       })
-    }    
+    } else {
+      this.toastr.warning('Confira as suas senhas!')
+      return; 
+    }
   }
 
   buscarCep() {
