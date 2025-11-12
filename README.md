@@ -136,15 +136,8 @@ Parar e remover:
 
 ## 📚 Documentação da API
 
-- TODO: Adicionar/confirmar integração com Swagger/OpenAPI (springdoc). No momento não há dependência explícita no pom.xml.
+[//]: # (- TODO: Adicionar/confirmar integração com Swagger/OpenAPI &#40;springdoc&#41;. No momento não há dependência explícita no pom.xml.)
 
-## 🌄 Layout
-
-Protótipos no Figma: https://www.figma.com/design/pCcfhdubJ69xdHNtVqj32B/tcc2?node-id=0-1&p=f
-
-## 📒 Monografia
-
-Link do Overleaf: TODO (atualizar com URL definitivo)
 
 ## 🔧 Ferramentas recomendadas
 
@@ -156,7 +149,3 @@ Link do Overleaf: TODO (atualizar com URL definitivo)
 
 - O projeto pode rodar localmente ou via Docker. Em produção, revise CORS, variáveis sensíveis e HTTPS/SSL conforme infraestrutura.
 - O backend usa context-path /h2gas; o frontend aponta para /h2gas/api. Ajuste se mudar o proxy/host.
-
-## 🪪 Licença
-
-- Nenhum arquivo de licença foi encontrado neste repositório. TODO: Definir e adicionar LICENSE (ex.: MIT/Apache-2.0) e atualizar esta seção.
