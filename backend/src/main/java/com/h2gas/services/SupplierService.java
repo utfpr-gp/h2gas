@@ -89,6 +89,11 @@ public class SupplierService {
                 -> new ResourceNotFoundException("Não encontrado nenhum Fornecedor com esse id: " + id));
     }
 
+    public Supplier findEntityByName(String name) {
+        return supplierRepository.findByName(name).orElseThrow(()
+                -> new ResourceNotFoundException("Não encontrado nenhum Fornecedor com esse nome: " + name));
+    }
+
     public SupplierDTO createSupplier(SupplierCreateDTO supplierDTO) {
         Supplier supplier = supplierMapper.toEntitySupplierCreate(supplierDTO);
 

@@ -92,12 +92,36 @@ public class ProductItemService {
         return productItemRepository.findByIdWithLock(id);
     }
 
-    public ProductItemDTO createProductItem(CreateProductItemDTO productItemDto, MultipartFile file) {
-        ProductItem productItem = createProductItemMapper.toEntity(productItemDto);
-        Supplier supplier = supplierService.findEntityById(productItemDto.getSupplierId());
-        CategoryProduct categoryProduct = categoryProductService.findEntityById(
-                productItemDto.getCategoryProductId()
-        );
+//    public ProductItemDTO createProductItem(CreateProductItemDTO productItemDto, MultipartFile file) {
+//        ProductItem productItem = createProductItemMapper.toEntity(productItemDto);
+//        Supplier supplier = supplierService.findEntityById(productItemDto.getSupplierId());
+//        CategoryProduct categoryProduct = categoryProductService.findEntityById(
+//                productItemDto.getCategoryProductId()
+//        );
+//
+//        if (file != null) {
+//            try {
+//                Map cloudnaryResponse = cloudinaryService.upload(file);
+//                productItem.setImageUrl(cloudnaryResponse.get("url").toString());
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
+//        }
+//
+//        productItem.setCategoryProduct(categoryProduct);
+//        productItem.setSupplier(supplier);
+//
+//        return productItemMapper.toDto(productItemRepository.save(productItem));
+//    }
+
+    public ProductItemDTO createProductItem(CreateProductItemDTO dto, MultipartFile file, String nameUser) {
+        ProductItem productItem = createProductItemMapper.toEntity(dto);
+        Supplier supplier = supplierService.findEntityByName(nameUser);
+        CategoryProduct categoryProduct = categoryProductService.findEntityById(dto.getCategoryProductId());
+
+        if (!categoryProduct.getSupplier().getId().equals(supplier.getId())) {
+            throw new RuntimeException("Categoria informada não pertence ao fornecedor logado");
+        }
 
         if (file != null) {
             try {
@@ -113,6 +137,7 @@ public class ProductItemService {
 
         return productItemMapper.toDto(productItemRepository.save(productItem));
     }
+
 
     public void deleteProductItem(Long id) {
         ProductItem productItem = productItemRepository.findById(id)
