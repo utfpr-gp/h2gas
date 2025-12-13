@@ -14,7 +14,6 @@ public class CreateProductItemDTO {
     private String brand;
     private BigDecimal price;
     private Long categoryProductId;
-//    private String supplierId;
     private String imageUrl;
     private Integer stockQuantity;
     private String description;

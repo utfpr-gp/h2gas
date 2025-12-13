@@ -92,28 +92,6 @@ public class ProductItemService {
         return productItemRepository.findByIdWithLock(id);
     }
 
-//    public ProductItemDTO createProductItem(CreateProductItemDTO productItemDto, MultipartFile file) {
-//        ProductItem productItem = createProductItemMapper.toEntity(productItemDto);
-//        Supplier supplier = supplierService.findEntityById(productItemDto.getSupplierId());
-//        CategoryProduct categoryProduct = categoryProductService.findEntityById(
-//                productItemDto.getCategoryProductId()
-//        );
-//
-//        if (file != null) {
-//            try {
-//                Map cloudnaryResponse = cloudinaryService.upload(file);
-//                productItem.setImageUrl(cloudnaryResponse.get("url").toString());
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//        }
-//
-//        productItem.setCategoryProduct(categoryProduct);
-//        productItem.setSupplier(supplier);
-//
-//        return productItemMapper.toDto(productItemRepository.save(productItem));
-//    }
-
     public ProductItemDTO createProductItem(CreateProductItemDTO dto, MultipartFile file, String nameUser) {
         ProductItem productItem = createProductItemMapper.toEntity(dto);
         Supplier supplier = supplierService.findEntityByName(nameUser);
