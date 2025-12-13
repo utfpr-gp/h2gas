@@ -2,6 +2,7 @@ package com.h2gas.controller;
 
 
 import com.h2gas.model.dto.*;
+import com.h2gas.model.entity.Supplier;
 import com.h2gas.model.mapper.CreateProductItemMapper;
 import com.h2gas.model.mapper.ProductItemMapper;
 import com.h2gas.response.PageResponse;
@@ -14,6 +15,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+
 
 import java.util.List;
 
@@ -43,7 +47,9 @@ public class ProductItemController {
             @RequestPart("product") CreateProductItemDTO productItemDTO,
             @RequestPart("file") MultipartFile file
     ) {
-        ProductItemDTO productItemCreate = productItemService.createProductItem(productItemDTO, file);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userName = authentication.getName();
+        ProductItemDTO productItemCreate = productItemService.createProductItem(productItemDTO, file, userName);
         return ResponseEntity.ok(productItemCreate);
     }
 
