@@ -59,9 +59,9 @@
             <div *ngIf="suppliers?.length == 0" class="p-4 text-center text-gray-600 italic">
                 Nenhum fornecedor encontrado.
             </div>
-            <div class="flex flex-wrap gap-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                 <div
-                  class="bg-white rounded-xl shadow-md overflow-hidden p-6 border border-gray-200 max-w-md w-full"
+                  class="bg-white rounded-xl shadow-md overflow-hidden p-6 border border-gray-200 w-full"
                   *ngFor="let supplier of suppliers"
                 >
                   <h2 class="text-2xl font-bold text-gray-800 mb-1">
