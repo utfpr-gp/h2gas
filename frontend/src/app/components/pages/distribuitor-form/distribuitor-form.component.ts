@@ -31,7 +31,7 @@ export class DistribuitorFormComponent implements OnInit {
   registerFormAddress!: FormGroup;
 
 
-  supplier?: Supplier; 
+  supplier?: Supplier;
 
   cities?: City[];
 
@@ -44,7 +44,7 @@ export class DistribuitorFormComponent implements OnInit {
   cidadeEncontrada: any;
 
   constructor(
-    private fb: FormBuilder, 
+    private fb: FormBuilder,
     private toastr: ToastrService,
     private router: Router,
     private supplierService: SupplierService,
@@ -88,7 +88,7 @@ export class DistribuitorFormComponent implements OnInit {
     if (this.idEdit) {
       this.isEdit = true;
       this.getSupplierId(this.idEdit);
-    } 
+    }
     this.getCities();
     this.userLogado = this.userService.getUserLocalStorage();
     this.buscaAddressIdUser();
@@ -98,13 +98,12 @@ export class DistribuitorFormComponent implements OnInit {
 
   openModal() {
     if (this.address) {
-      this.registerFormAddress.patchValue(this.address)          
-    }
-
-    if (this.address!.cityName) {
-      this.cidadeEncontrada = this.cities?.some(
-        c => c.name!.toLowerCase() === this.address!.cityName!.toLowerCase()
-      );
+      this.registerFormAddress.patchValue(this.address);
+      if (this.address.cityName) {
+        this.cidadeEncontrada = this.cities?.some(
+          (c) => c.name!.toLowerCase() === this.address!.cityName!.toLowerCase()
+        );
+      }
     }
 
     this.modalAberta = true;
@@ -126,15 +125,15 @@ export class DistribuitorFormComponent implements OnInit {
 
         if (!this.cidadeEncontrada) {
           this.toastr.warning(`No momento ainda não atendemos a cidade de ${response.localidade}.`);
-          return; 
+          return;
         }
         this.toastr.success('Cep buscado com sucesso');
         this.registerFormAddress.get('streetName')?.setValue(response.logradouro)
-        
+
         // this.registerFormAddress.get('cityName')?.setValue(response.localidade)
         this.registerFormAddress.get('neighborhood')?.setValue(response.bairro)
 
-      }, 
+      },
       error: (err) => {
         console.log(err);
         this.toastr.error(`Erro ao buscar cep: ${err}`)
@@ -143,34 +142,38 @@ export class DistribuitorFormComponent implements OnInit {
   }
 
   salvarAddress() {
-    debugger
     if (!this.cidadeEncontrada) {
       this.toastr.warning(`Infelizmente ainda não atendemos sua cidade.`);
       return;
     }
 
     if (this.registerFormAddress.valid && !this.address) {
-      this.registerFormAddress.get('userId')?.setValue(this.userLogado?.id)
-      this.address = this.registerFormAddress.value;
-      
-      this.addressService.create(this.address!).subscribe({
+      this.registerFormAddress.get('userId')?.setValue(this.userLogado?.id);
+      const payload = { ...this.registerFormAddress.value };
+      this.addressService.create(payload as Address).subscribe({
         next: (response) => {
           console.log(response);
+          this.address = response;
           this.toastr.success('Seu endereço foi salvo com sucesso');
           this.closeAddressModal();
-        }, 
+        },
         error: (err) => {
           console.log(err);
           this.toastr.error(`Erro ao salvar endereço: ${err.error.message}`);
         },
-      })  
+      });
     } else if (this.registerFormAddress.valid && this.address) {
       this.editAddress();
     }
   }
 
   editAddress() {
-    this.addressService.update(this.address?.id!, this.registerFormAddress.value).subscribe({
+    const id = this.address?.id;
+    if (id == null) {
+      this.toastr.error('Endereço sem identificador; salve como novo ou recarregue a página.');
+      return;
+    }
+    this.addressService.update(id, this.registerFormAddress.value).subscribe({
       next: (response) => {
         console.log(response);
         this.toastr.success('Seu endereço foi editado com sucesso');
@@ -199,7 +202,7 @@ export class DistribuitorFormComponent implements OnInit {
   getSupplierId(id: string) {
     this.supplierService.findById(id).subscribe({
       next: (response) => {
-        
+
         console.log('Distribuidor buscado com sucesso!', response);
         this.registerFormSupplier.patchValue(response);
         this.toastr.success('Distribuidor buscado com sucesso!');
@@ -213,22 +216,22 @@ export class DistribuitorFormComponent implements OnInit {
 
 
   register() {
-    
+
     if (this.registerFormSupplier.invalid) {
       this.registerFormSupplier.markAllAsTouched();
       this.toastr.warning('Conferir informações!!')
-      return; 
+      return;
     }
-    
+
 
     this.supplier = this.registerFormSupplier?.value;
     this.supplier!.addressId = this.address?.id
     this.supplier!.userId = this.userLogado?.id
-    
+
 
     this.supplierService.create(this.supplier!!).subscribe({
       next: (response) => {
-        
+
         console.log('Usuário criado com sucesso!', response);
         this.toastr.success('Usuário criado com sucesso!');
         this.navigateRoute('/aguardando-aprovacao')
@@ -241,20 +244,20 @@ export class DistribuitorFormComponent implements OnInit {
   }
 
   update() {
-    
+
     if (this.registerFormSupplier.invalid) {
       this.registerFormSupplier.markAllAsTouched();
       this.toastr.warning('Conferir informações!!')
-      return; 
+      return;
     }
 
     this.supplier = this.registerFormSupplier?.value;
     this.supplier!!.addressId = this.address?.id
-    
+
 
     this.supplierService.update(this.idEdit, this.supplier!!).subscribe({
       next: (response) => {
-        
+
         console.log('Dsitriuidora editada com sucesso!', response);
         this.toastr.success('Distriuidora editada com sucesso!!');
         this.navigateRoute('/dashboard-fornecedor')
@@ -272,7 +275,7 @@ export class DistribuitorFormComponent implements OnInit {
         console.log('Buscado com sucesso', response);
         this.cities = response;
         console.log(response);
-        
+
       },
       error: (err) => {
         console.error('Erro ao buscar:', err.error.message);
