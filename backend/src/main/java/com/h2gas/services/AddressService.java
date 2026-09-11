@@ -57,7 +57,14 @@ public class AddressService {
 
     public AddressDTO createAddress(AddressDTO addressDTO) {
         Address address = addressMapper.toEntity(addressDTO);
-        City city = cityMapper.toEntity(cityService.findByName(addressDTO.getCityName()));
+        City city;
+        if (addressDTO.getCityId() != null) {
+            city = cityService.findByIdEntity(addressDTO.getCityId());
+        } else if (addressDTO.getCityName() != null && !addressDTO.getCityName().isBlank()) {
+            city = cityMapper.toEntity(cityService.findByName(addressDTO.getCityName()));
+        } else {
+            throw new ResourceNotFoundException("Cidade é obrigatória: informe cityId ou cityName.");
+        }
 //        User user = userMapper.toEntityUser(userService.findByIdUser(addressDTO.getUserId()));
         User user = userRepository.findById(addressDTO.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com id: " + addressDTO.getUserId()));

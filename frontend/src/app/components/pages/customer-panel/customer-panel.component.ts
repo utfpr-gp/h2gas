@@ -26,7 +26,7 @@ export class CustomerPanelComponent implements OnInit {
 
   constructor(
     private userService: UserService,
-    private fb: FormBuilder, 
+    private fb: FormBuilder,
     private cityService: CityService,
     private addressService: AddressService,
     private toastr: ToastrService,
@@ -55,7 +55,7 @@ export class CustomerPanelComponent implements OnInit {
     console.log(this.userLogado);
     this.registerFormUser.patchValue(this.userLogado!);
     console.log(this.registerFormUser.value);
-    
+
     this.getCities();
     this.buscaAddressIdUser();
   }
@@ -71,7 +71,7 @@ export class CustomerPanelComponent implements OnInit {
   openModal() {
     this.modalAberta = true;
     if (this.address) {
-      this.registerFormAddress.patchValue(this.address)          
+      this.registerFormAddress.patchValue(this.address)
     }
   }
 
@@ -84,17 +84,17 @@ export class CustomerPanelComponent implements OnInit {
   }
 
   update() {
-    
+
     if (this.registerFormUser.invalid) {
       this.registerFormUser.markAllAsTouched();
       this.toastr.warning('Conferir informações!!')
-      return; 
+      return;
     }
 
     // this.userLogado = this.registerFormUser?.value;
     let userEdit: User = this.registerFormUser?.value
     // this.userLogado!!.addressId = this.address?.id
-    
+
 
     this.userService.updateUser(this.userLogado?.id!, userEdit).subscribe({
       next: (response) => {
@@ -111,26 +111,32 @@ export class CustomerPanelComponent implements OnInit {
 
   salvarAddress() {
     if (this.registerFormAddress.valid && !this.address) {
-      this.registerFormAddress.get('userId')?.setValue(this.userLogado?.id)
-      this.address = this.registerFormAddress.value;
-      this.addressService.create(this.address!!).subscribe({
+      this.registerFormAddress.get('userId')?.setValue(this.userLogado?.id);
+      const payload = { ...this.registerFormAddress.value };
+      this.addressService.create(payload as Address).subscribe({
         next: (response) => {
           console.log(response);
+          this.address = response;
           this.toastr.success('Seu enderelo foi salvo com sucesso');
           this.closeAddressModal();
-        }, 
+        },
         error: (err) => {
           console.log(err);
           this.toastr.error(`Erro ao salvar endereço: ${err.error.message}`);
         },
-      })  
+      });
     } else if (this.registerFormAddress.valid && this.address) {
       this.editAddress();
     }
   }
 
   editAddress() {
-    this.addressService.update(this.address?.id!, this.registerFormAddress.value).subscribe({
+    const id = this.address?.id;
+    if (id == null) {
+      this.toastr.error('Endereço sem identificador; salve como novo ou recarregue a página.');
+      return;
+    }
+    this.addressService.update(id, this.registerFormAddress.value).subscribe({
       next: (response) => {
         console.log(response);
         this.toastr.success('Seu endereço foi editado com sucesso');
@@ -162,11 +168,16 @@ export class CustomerPanelComponent implements OnInit {
       next: (response: any) => {
         console.log(response);
         this.toastr.success('Cep buscado com sucesso');
-        this.registerFormAddress.get('streetName')?.setValue(response.logradouro)
-        this.registerFormAddress.get('cityName')?.setValue(response.localidade)
-        this.registerFormAddress.get('neighborhood')?.setValue(response.bairro)
+        this.registerFormAddress.get('streetName')?.setValue(response.logradouro);
+        const found = this.cities?.find(
+          (c) => c.name?.toLowerCase() === String(response.localidade).toLowerCase()
+        );
+        if (found?.id != null) {
+          this.registerFormAddress.get('cityId')?.setValue(found.id);
+        }
+        this.registerFormAddress.get('neighborhood')?.setValue(response.bairro);
 
-      }, 
+      },
       error: (err) => {
         console.log(err);
         this.toastr.error(`Erro ao buscar cep: ${err}`)
@@ -181,9 +192,9 @@ export class CustomerPanelComponent implements OnInit {
         console.log(response);
         this.address = response;
         console.log("aeee");
-        
+
         console.log(this.address);
-        
+
       },
       error: (err) => {
         console.log(err);
