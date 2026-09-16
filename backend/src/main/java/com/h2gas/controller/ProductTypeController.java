@@ -5,6 +5,7 @@ import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
 import com.h2gas.model.mapper.ProductTypeMapper;
 import com.h2gas.services.ProductTypeService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Tipos de Produto")
 @RestController
 @RequestMapping("/api/product-types")
 public class ProductTypeController {

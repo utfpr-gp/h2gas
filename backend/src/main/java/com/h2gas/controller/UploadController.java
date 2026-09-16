@@ -2,6 +2,7 @@ package com.h2gas.controller;
 
 import com.cloudinary.Cloudinary;
 import com.h2gas.services.CloudinaryService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.Map;
 
+@Tag(name = "Upload")
 @RestController
 @RequestMapping("/api/upload")
 public class UploadController {

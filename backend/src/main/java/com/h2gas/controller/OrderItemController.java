@@ -5,6 +5,7 @@ import com.h2gas.model.mapper.OrderItemMapper;
 import com.h2gas.response.PageResponse;
 import com.h2gas.services.OrderItemService;
 import com.h2gas.util.PaginationUtil;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -12,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "Itens de Pedido")
 @RestController
 @RequestMapping("/api/order-items")
 public class OrderItemController {

@@ -5,6 +5,7 @@ import com.h2gas.model.dto.CategoryProductDTO;
 import com.h2gas.model.dto.CityDTO;
 import com.h2gas.model.mapper.AddressMapper;
 import com.h2gas.services.AddressService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Endereços")
 @RestController
 @RequestMapping("/api/addresses")
 public class AddressController {
