@@ -1,7 +1,21 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-    themes: light --default, dark --prefersdark, cupcake;
-  }
+  themes: h2gas --default;
+}
+
+@plugin "daisyui/theme" {
+  name: "h2gas";
+  default: true;
+  color-scheme: light;
+  --color-primary: #0e2068;
+  --color-primary-content: #ffffff;
+  --color-secondary: #0017bf;
+  --color-secondary-content: #ffffff;
+  --color-base-100: #ffffff;
+  --color-base-200: #f7f8fc;
+  --color-base-content: #1c1c1e;
+  --color-neutral: #6b7280;
+}
 
 @tailwind base;
 @tailwind components;
@@ -48,13 +62,24 @@
 
 :root {
   --background-color: #f7f8fc;
-  --primary-color: #6c63ff;
+  --primary-color: #0e2068;
+  --action-color: #0017bf;
   --secondary-color: #f0f2f5;
   --text-color: #1c1c1e;
   --subtext-color: #6b7280;
   --white-color: #ffffff;
   --accent-color: #e0e7ff;
 }
+
+body {
+  font-family: 'Roboto', sans-serif;
+}
+
+.text-h1 { font-size: 48px; line-height: 60px; font-weight: 700; }
+.text-h2 { font-size: 34px; line-height: 50px; font-weight: 700; }
+.text-h3 { font-size: 28px; line-height: 38px; font-weight: 600; }
+.text-h4 { font-size: 18px; line-height: 22px; font-weight: 600; }
+.text-paragraph { font-size: 14px; line-height: 24px; font-weight: 400; }
 
 .card {
   @apply bg-[var(--white-color)] rounded-2xl shadow-sm transition-all duration-300 hover:shadow-lg;
@@ -97,12 +122,6 @@
 }
 .order-card {
   @apply card mb-4;
-}
-.btn {
-  @apply font-bold py-2 px-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2;
-}
-.btn-primary {
-  @apply bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md;
 }
 .btn-danger {
   @apply bg-red-600 hover:bg-red-700 text-white shadow-sm hover:shadow-md;

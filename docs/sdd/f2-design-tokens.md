@@ -190,11 +190,54 @@ uma lacuna escondida:
 
 ## 8. Definição de Pronto
 
-- [ ] `:root` em `styles.css` atualizado com `--primary-color: #0e2068` e
+- [x] `:root` em `styles.css` atualizado com `--primary-color: #0e2068` e
       novo `--action-color: #0017bf`.
-- [ ] Tema DaisyUI customizado `h2gas` substituindo `light/dark/cupcake`.
-- [ ] `font-family: 'Roboto'` definido no `body`; classes `.text-h1`…
+- [x] Tema DaisyUI customizado `h2gas` substituindo `light/dark/cupcake`.
+- [x] `font-family: 'Roboto'` definido no `body`; classes `.text-h1`…
       `.text-paragraph` criadas.
-- [ ] `grep -ril "6c63ff" frontend/src` retorna vazio.
-- [ ] `ng build` roda sem erros.
+- [x] `grep -ril "6c63ff" frontend/src` retorna vazio.
+- [x] `ng build` roda sem erros.
 - [ ] Revisado e aprovado antes de F3 começar.
+
+## 9. Divergência encontrada durante a implementação
+
+Os 20 arquivos listados em §5.4 **não continham mais `#6c63ff`** no
+momento da implementação — o código já havia migrado esses templates para
+consumir `var(--primary-color)`/classes DaisyUI em algum ponto entre a
+escrita do script e agora, sem que a cor em `:root` tivesse sido corrigida.
+Nenhuma edição nesses 20 arquivos foi necessária além de
+`login.component.html` (remoção do `hover:bg-blue-600`, conforme §5.4).
+
+**Conflito encontrado e resolvido**: `styles.css` definia um `.btn`/
+`.btn-primary` próprio (bloco "css do pedidos recebidos",
+`@apply bg-blue-600 hover:bg-blue-700 ...`) que vinha depois do plugin
+DaisyUI no arquivo. Por ordem de cascata CSS, esse `.btn-primary` sobrepunha
+a cor do tema DaisyUI (`#0e2068`) em **qualquer** elemento `btn btn-primary`
+da aplicação (confirmado no botão de login), quebrando o Cenário 3.
+Confirmado via grep que `.stat-card`, `.order-card`, `.btn-danger` e
+`.btn-outline` desse mesmo bloco não são referenciados em nenhum template
+— o bloco inteiro era resquício de uma tela que não existe mais no código
+atual. Removidas apenas as regras `.btn`/`.btn-primary` desse bloco (as
+únicas que colidiam com classes de componente reais do DaisyUI e afetavam
+telas em uso); `.btn-danger`/`.btn-outline` (não usadas, sem colisão) foram
+deixadas como estão, fora do escopo desta correção. Há também uma segunda
+definição duplicada de `.card` no mesmo arquivo (linhas ~59 e ~82) que
+também poderia colidir com o componente `card` do DaisyUI — essa **não**
+foi tocada porque está em uso real (`reset-password`, `check-email`) e
+mudar qual das duas vence alteraria a aparência dessas telas; fica
+registrado como pendência conhecida, não como bug corrigido.
+Rebuild (`ng build`) confirmado sem erros após a remoção.
+
+**Segundo bug encontrado (verificação visual manual, item 4 do Plano de
+Testes) e corrigido**: o bloco `@plugin "daisyui/theme"` do §5.2, copiado
+literalmente do contrato técnico, definia `name: "h2gas"` mas não
+`default: true`. Sem essa flag, o DaisyUI 5.0.11 só gera o seletor
+`:root:has(input.theme-controller[value=h2gas]:checked), [data-theme=h2gas]`
+— como `index.html` não tem `data-theme="h2gas"` em lugar nenhum, nenhuma
+variável de cor do tema chegava a ser aplicada em nenhum elemento, e todo
+botão `btn-primary` renderizava cinza claro (cor de fallback do DaisyUI),
+não o token. Adicionado `default: true;` e `color-scheme: light;` ao bloco
+do tema — isso faz o DaisyUI gerar também `:where(:root)` na lista de
+seletores, aplicando o tema globalmente sem precisar de atributo. Validado
+visualmente: screenshot de `/login` via Chromium headless confirma botão
+`btn-primary` em `#0e2068`/texto branco.
