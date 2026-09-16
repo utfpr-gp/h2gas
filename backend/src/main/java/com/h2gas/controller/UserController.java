@@ -9,6 +9,7 @@ import com.h2gas.model.mapper.UserMapper;
 import com.h2gas.services.MailService;
 import com.h2gas.services.UserService;
 import com.h2gas.util.GenerateTokenPasswordReset;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import java.util.Map;
 import java.util.UUID;
 
 
+@Tag(name = "Usuários")
 @RestController
 @RequestMapping("/api/users")
 public class UserController {

@@ -8,6 +8,7 @@ import com.h2gas.model.mapper.OrderMapper;
 import com.h2gas.response.PageResponse;
 import com.h2gas.services.OrderService;
 import com.h2gas.util.PaginationUtil;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+@Tag(name = "Pedidos")
 @RestController
 @RequestMapping("/api/orders")
 public class OrderController {

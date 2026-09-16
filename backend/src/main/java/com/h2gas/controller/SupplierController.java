@@ -5,6 +5,7 @@ import com.h2gas.model.mapper.SupplierMapper;
 import com.h2gas.response.PageResponse;
 import com.h2gas.services.SupplierService;
 import com.h2gas.util.PaginationUtil;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -16,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 
 
+@Tag(name = "Fornecedores")
 @RestController
 @RequestMapping("/api/suppliers")
 public class SupplierController {

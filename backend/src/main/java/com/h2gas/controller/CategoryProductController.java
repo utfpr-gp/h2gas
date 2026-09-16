@@ -5,6 +5,7 @@ import com.h2gas.model.mapper.CategoryProductMapper;
 import com.h2gas.response.PageResponse;
 import com.h2gas.services.CategoryProductService;
 import com.h2gas.util.PaginationUtil;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Categorias de Produto")
 @RestController
 @RequestMapping("/api/category-products")
 public class CategoryProductController {
