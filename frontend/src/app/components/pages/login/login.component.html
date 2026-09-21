@@ -43,7 +43,7 @@
           Login
         </button> -->
       <button
-        class="btn btn-primary w-full mt-6 rounded-lg text-white font-medium tracking-wide transition-all duration-200 hover:bg-blue-600 flex items-center justify-center"
+        class="btn btn-primary w-full mt-6 rounded-lg text-white font-medium tracking-wide transition-all duration-200 flex items-center justify-center"
         [disabled]="loading" (click)="login()">
         <ng-container *ngIf="!loading; else loadingTemplate">
           Login
