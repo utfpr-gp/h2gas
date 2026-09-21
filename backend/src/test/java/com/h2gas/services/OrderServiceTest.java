@@ -151,7 +151,8 @@ class OrderServiceTest {
         // Criar produto
         ProductItem productItem = new ProductItem();
         productItem.setBrand("Marca Teste");
-        productItem.setPrice(new BigDecimal("89.90"));
+        productItem.setPriceDelivery(new BigDecimal("89.90"));
+        productItem.setPricePickup(new BigDecimal("89.90"));
         productItem.setStockQuantity(100);
         productItem.setImageUrl("example.com/image.jpg");
         productItem.setCategoryProduct(category);

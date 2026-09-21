@@ -50,9 +50,9 @@ public class OrderItemService {
         productItem.setStockQuantity(currentStock - quantityRequested);
         productItemService.save(productItem);
 
-        BigDecimal totalPrice = calculateTotalPrice(orderItem.getQuantity(), productItem.getPrice());
+        BigDecimal totalPrice = calculateTotalPrice(orderItem.getQuantity(), productItem.getPriceDelivery());
         orderItem.setTotalPrice(totalPrice);
-        orderItem.setUnitPrice(productItem.getPrice());
+        orderItem.setUnitPrice(productItem.getPriceDelivery());
         orderItem.setProduct(productItem);
         orderItem.setOrder(order);
 

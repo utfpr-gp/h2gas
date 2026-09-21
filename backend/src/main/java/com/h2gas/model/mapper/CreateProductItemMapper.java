@@ -1,10 +1,7 @@
 package com.h2gas.model.mapper;
 
 import com.h2gas.model.dto.CreateProductItemDTO;
-import com.h2gas.model.dto.ProductItemDTO;
-import com.h2gas.model.dto.UserDto;
 import com.h2gas.model.entity.ProductItem;
-import com.h2gas.model.entity.User;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -15,10 +12,15 @@ public class CreateProductItemMapper {
     private ModelMapper modelMapper;
 
     public CreateProductItemDTO toDto(ProductItem data) {
-        return modelMapper.map(data, CreateProductItemDTO.class);
+        CreateProductItemDTO dto = modelMapper.map(data, CreateProductItemDTO.class);
+        dto.setPrice(data.getPriceDelivery());
+        return dto;
     }
 
     public ProductItem toEntity(CreateProductItemDTO dto) {
-        return modelMapper.map(dto, ProductItem.class);
+        ProductItem productItem = modelMapper.map(dto, ProductItem.class);
+        productItem.setPriceDelivery(dto.getPrice());
+        productItem.setPricePickup(dto.getPrice());
+        return productItem;
     }
 }

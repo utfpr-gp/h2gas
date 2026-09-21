@@ -49,6 +49,17 @@ public class Order {
 
     private LocalDateTime deliveryDate;
 
+    @ManyToOne
+    @JoinColumn(name = "deliverer_id")
+    private Deliverer deliverer;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal changeFor;
+
+    private LocalDateTime dispatchedAt;
+
+    private LocalDateTime deliveredAt;
+
     @CreationTimestamp
     private LocalDateTime createdAt;
 

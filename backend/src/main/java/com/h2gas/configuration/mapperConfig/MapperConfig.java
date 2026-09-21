@@ -13,6 +13,7 @@ public class MapperConfig {
     @Bean
     public ModelMapper modelMapper() {
         ModelMapper modelMapper = new ModelMapper();
+        modelMapper.getConfiguration().setAmbiguityIgnored(true);
 
         modelMapper.typeMap(Supplier.class, SupplierDTO.class)
                 .addMappings(mapper -> mapper.skip(SupplierDTO::setAverageDeliveryTime));

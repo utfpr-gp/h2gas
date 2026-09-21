@@ -3,7 +3,8 @@ package com.h2gas.enums;
 public enum UserTypeEnum {
     ADMIN("admin"),
     CUSTOMER("customer"),
-    SUPPLIER("supplier");
+    SUPPLIER("supplier"),
+    DELIVERER("deliverer");
 
     private String type;
 
