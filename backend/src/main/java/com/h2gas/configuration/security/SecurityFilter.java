@@ -57,8 +57,14 @@ public class SecurityFilter extends OncePerRequestFilter {
 
     private String recoverToken(HttpServletRequest request) {
         var authHeader = request.getHeader("Authorization");
-        if (authHeader == null) return null;
-
-        return authHeader.replace("Bearer ", "");
+        if (authHeader != null) {
+            return authHeader.replace("Bearer ", "");
+        }
+        // EventSource nativo não envia headers customizados — fallback por query param,
+        // restrito às rotas de SSE.
+        if (request.getRequestURI().startsWith("/h2gas/api/sse/")) {
+            return request.getParameter("token");
+        }
+        return null;
     }
 }

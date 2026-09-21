@@ -35,7 +35,8 @@ class OpenApiDocsTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("/api/orders")))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("/api/users")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("/api/auth")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("/api/auth")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("/api/sse/subscribe/{channel}")));
     }
 
     @Test
