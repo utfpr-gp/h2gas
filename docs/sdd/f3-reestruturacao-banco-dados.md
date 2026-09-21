@@ -317,14 +317,14 @@ Escrever **antes** da implementação (Red), seguindo o padrão de
 
 ## 8. Definição de Pronto
 
-- [ ] Flyway configurado (`pom.xml`, `application-dev.properties`),
+- [x] Flyway configurado (`pom.xml`, `application-dev.properties`),
       `ddl-auto=validate`.
-- [ ] `V1__baseline.sql` e `V2__h2gas_2_0_schema.sql` criados e aplicados
+- [x] `V1__baseline.sql` e `V2__h2gas_2_0_schema.sql` criados e aplicados
       com sucesso em banco de dev local (índice único de `addresses`
       validado manualmente, não apenas assumido).
-- [ ] Entidades `Address`, `ProductItem`, `Order`, `UserTypeEnum`
+- [x] Entidades `Address`, `ProductItem`, `Order`, `UserTypeEnum`
       atualizadas; `Deliverer` e `Review` criadas.
-- [ ] `DelivererRepository` e `ReviewRepository` criados.
-- [ ] Todos os testes da seção 6 passando; suíte completa
+- [x] `DelivererRepository` e `ReviewRepository` criados.
+- [x] Todos os testes da seção 6 passando; suíte completa
       (`mvn -f backend/pom.xml test`) verde.
-- [ ] Revisado e aprovado antes de F4 começar.
+- [x] Revisado e aprovado antes de F4 começar.

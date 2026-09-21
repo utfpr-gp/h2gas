@@ -76,36 +76,30 @@ class ProductItemServiceTest {
         CategoryProduct categoryProductFirst = createCategoryForTest("20L", supplierFirst);
         CategoryProduct categoryProductSecond = createCategoryForTest("50L", supplierSecond);
 
-        ProductItem productItemFirst = new ProductItem(
-                null,
-                "Agua azul",
-                new BigDecimal("150.00"),
-                "teste descrição",
-                "urlImageTest//",
-                5,
-                null,
-                null,
-                null,
-                categoryProductFirst,
-                supplierFirst
-        );
+        ProductItem productItemFirst = new ProductItem();
+        productItemFirst.setBrand("Agua azul");
+        productItemFirst.setPriceDelivery(new BigDecimal("150.00"));
+        productItemFirst.setPricePickup(new BigDecimal("150.00"));
+        productItemFirst.setDescription("teste descrição");
+        productItemFirst.setImageUrl("urlImageTest//");
+        productItemFirst.setStockQuantity(5);
+        productItemFirst.setCategoryProduct(categoryProductFirst);
+        productItemFirst.setSupplier(supplierFirst);
+        productItemFirst.setVersion(null);
 
         productItemRepository.save(productItemFirst);
         validIdItemProduct = productItemFirst.getId();
 
-        ProductItem productItemSecond = new ProductItem(
-                null,
-                "Agua vermelho",
-                new BigDecimal("150.00"),
-                "teste descricao 2",
-                "urlImageTest2//",
-                5,
-                null,
-                null,
-                null,
-                categoryProductSecond,
-                supplierSecond
-        );
+        ProductItem productItemSecond = new ProductItem();
+        productItemSecond.setBrand("Agua vermelho");
+        productItemSecond.setPriceDelivery(new BigDecimal("150.00"));
+        productItemSecond.setPricePickup(new BigDecimal("150.00"));
+        productItemSecond.setDescription("teste descricao 2");
+        productItemSecond.setImageUrl("urlImageTest2//");
+        productItemSecond.setStockQuantity(5);
+        productItemSecond.setCategoryProduct(categoryProductSecond);
+        productItemSecond.setSupplier(supplierSecond);
+        productItemSecond.setVersion(null);
 
         productItemRepository.save(productItemSecond);
     }

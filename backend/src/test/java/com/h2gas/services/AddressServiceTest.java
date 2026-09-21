@@ -1,11 +1,14 @@
 package com.h2gas.services;
 
+import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.dto.AddressDTO;
 import com.h2gas.model.dto.CityDTO;
 import com.h2gas.model.entity.Address;
 import com.h2gas.model.entity.City;
+import com.h2gas.model.entity.User;
 import com.h2gas.model.repository.AddressRepository;
 import com.h2gas.model.repository.CityRepository;
+import com.h2gas.model.repository.UserRepository;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -35,6 +38,9 @@ class AddressServiceTest {
 
     @Autowired
     private CityRepository cityRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     private Long validAddressId;
 
@@ -110,6 +116,52 @@ class AddressServiceTest {
 //    @Test
 //    void createAddress() {
 //    }
+
+    @Test
+    @DisplayName("Deve aceitar dois endereços para o mesmo usuário")
+    void deveAceitarDoisEnderecosParaMesmoUsuario() {
+        City city = cityRepository.save(new City(null, "Curitiba", "PR"));
+        User user = userRepository.save(new User(
+                "Cliente Multi Endereco",
+                "cliente.multi@h2gas.test",
+                "41988887777",
+                "12345678901",
+                "senha",
+                UserTypeEnum.CUSTOMER
+        ));
+
+        Address primeiro = new Address(
+                null,
+                "Rua Um",
+                "Casa",
+                "10",
+                null,
+                "Centro",
+                "80000-000",
+                city,
+                user
+        );
+        Address segundo = new Address(
+                null,
+                "Rua Dois",
+                "Trabalho",
+                "20",
+                null,
+                "Batel",
+                "80420-000",
+                city,
+                user
+        );
+
+        addressRepository.saveAndFlush(primeiro);
+        Address salvo = addressRepository.saveAndFlush(segundo);
+
+        assertNotNull(salvo.getId());
+        long enderecosDoUsuario = addressRepository.findAll().stream()
+                .filter(address -> address.getUser() != null && user.getId().equals(address.getUser().getId()))
+                .count();
+        assertEquals(2, enderecosDoUsuario);
+    }
 
     @Test
     @DisplayName("Deve encontrar o endereço com sucesso")

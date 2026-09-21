@@ -23,7 +23,10 @@ public class ProductItem {
     private Long id;
 
     private String brand;
-    private BigDecimal price;
+    @Column(precision = 10, scale = 2)
+    private BigDecimal priceDelivery;
+    @Column(precision = 10, scale = 2)
+    private BigDecimal pricePickup;
     private String description;
     private String imageUrl;
     private Integer stockQuantity;
