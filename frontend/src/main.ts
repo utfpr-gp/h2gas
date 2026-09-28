@@ -6,7 +6,7 @@ import { ToastrModule } from 'ngx-toastr';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { authInterceptor } from './app/interceptors/auth.interceptor';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import {provideNgxMask } from 'ngx-mask'
+import {provideNgxMask } from 'ngx-mask';
 
 
 // bootstrapApplication(AppComponent, appConfig)
