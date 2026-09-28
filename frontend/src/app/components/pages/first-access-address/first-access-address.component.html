@@ -27,7 +27,7 @@
             <span class="label-text">CEP</span>
           </label>
           <div class="flex gap-2">
-            <input type="text" placeholder="00000-000" class="input input-bordered w-full"
+            <input type="text" mask="00000-000" placeholder="00000-000" class="input input-bordered w-full"
               formControlName="zipCode" (blur)="buscarCep()" />
             <button type="button" class="btn btn-outline" (click)="buscarCep()" [disabled]="isLoadingCep">
               Buscar

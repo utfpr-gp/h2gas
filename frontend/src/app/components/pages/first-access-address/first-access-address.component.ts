@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { NgxMaskDirective } from 'ngx-mask';
 import { AddressService } from '../../../services/address.service';
 import { CityService } from '../../../services/city.service';
 import { UserService } from '../../../services/user.service';
@@ -11,7 +12,7 @@ import { City } from '../../../models/city';
 
 @Component({
   selector: 'app-first-access-address',
-  imports: [ReactiveFormsModule, CommonModule, FormsModule],
+  imports: [ReactiveFormsModule, CommonModule, FormsModule, NgxMaskDirective],
   templateUrl: './first-access-address.component.html',
   styleUrl: './first-access-address.component.css',
 })

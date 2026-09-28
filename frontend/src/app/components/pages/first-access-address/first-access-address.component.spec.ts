@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
+import { provideNgxMask } from 'ngx-mask';
 
 import { FirstAccessAddressComponent } from './first-access-address.component';
 import { AddressService } from '../../../services/address.service';
@@ -40,6 +41,7 @@ describe('FirstAccessAddressComponent', () => {
         { provide: UserService, useValue: userServiceSpy },
         { provide: Router, useValue: routerSpy },
         { provide: ToastrService, useValue: toastrSpy },
+        provideNgxMask(),
       ],
     }).compileComponents();
 
