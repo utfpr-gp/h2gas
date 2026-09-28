@@ -69,6 +69,18 @@ describe('FirstAccessAddressComponent', () => {
     expect(component.form.get('cityId')?.value).toBe(1);
   });
 
+  it('deveExibirErroParaCepInexistente', () => {
+    addressServiceSpy.buscaViaCep.and.returnValue(of({ erro: true }));
+
+    component.form.get('zipCode')?.setValue('80000-001');
+
+    expect(() => component.buscarCep()).not.toThrow();
+
+    expect(component.cidadeEncontrada).toBeFalse();
+    expect(component.isLoadingCep).toBeFalse();
+    expect(toastrSpy.error).toHaveBeenCalledWith('CEP não encontrado. Confira e tente novamente.');
+  });
+
   it('deveSalvarEnderecoEAtualizarLocationContext', () => {
     addressServiceSpy.create.and.returnValue(of({ id: 10 } as any));
 

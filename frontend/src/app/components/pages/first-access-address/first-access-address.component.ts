@@ -62,6 +62,13 @@ export class FirstAccessAddressComponent implements OnInit {
     this.isLoadingCep = true;
     this.addressService.buscaViaCep(cep).subscribe({
       next: (response: any) => {
+        if (!response || response.erro || !response.localidade) {
+          this.cidadeEncontrada = false;
+          this.isLoadingCep = false;
+          this.toastr.error('CEP não encontrado. Confira e tente novamente.');
+          return;
+        }
+
         const cidade = this.cities?.find(
           (c) => c.name!.toLowerCase() === response.localidade.toLowerCase()
         );
