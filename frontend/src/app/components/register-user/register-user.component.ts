@@ -64,9 +64,8 @@ export class RegisterUserComponent implements OnInit {
       return;
     }
 
-    this.isLoadingRegister = true;
-
     if (this.registerForm.get('password')?.value == this.confirmPassword) {
+      this.isLoadingRegister = true;
       this.registerForm.get('userType')?.setValue(this.userType);
 
       this.user = this.registerForm?.value
