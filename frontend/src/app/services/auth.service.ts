@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import {jwtDecode} from 'jwt-decode';
+import { LocationContextService } from './location-context.service';
 
 interface JwtPayload {
   exp: number;
@@ -16,7 +17,8 @@ export class AuthService {
 
 
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    private locationContext: LocationContextService,
   ) { }
 
   isLogged(): boolean {
@@ -49,6 +51,7 @@ export class AuthService {
   logout() {
     localStorage.removeItem('access_token');
     localStorage.removeItem('user');
+    this.locationContext.clear();
   }
 
   requestPasswordReset(data: any) {

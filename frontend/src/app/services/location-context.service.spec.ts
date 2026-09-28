@@ -42,4 +42,13 @@ describe('LocationContextService', () => {
       label: 'Rua XV, 7951 · Guarapuava',
     });
   });
+
+  it('deveLimparEnderecoAtivoAoChamarClear', () => {
+    service.setAddress({ cityId: 1, cityName: 'Pato Branco', label: 'Rua XV, 100 · Pato Branco' });
+
+    service.clear();
+
+    expect(service.current()).toBeNull();
+    expect(localStorage.getItem('h2gas.activeAddress')).toBeNull();
+  });
 });

@@ -17,6 +17,11 @@ export class LocationContextService {
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(address));
   }
 
+  clear() {
+    this.addressSignal.set(null);
+    localStorage.removeItem(this.STORAGE_KEY);
+  }
+
   private readFromStorage(): ActiveAddress | null {
     const raw = localStorage.getItem(this.STORAGE_KEY);
     return raw ? JSON.parse(raw) : null;
