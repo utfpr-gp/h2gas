@@ -110,14 +110,14 @@ public class AddressService {
     }
 
     public AddressDTO findByUserIdAddress(String userId) {
-        Optional<Address> addressOptional = addressRepository.findByUserId(userId);
+        Optional<Address> addressOptional = addressRepository.findFirstByUserIdOrderByIdDesc(userId);
         return addressOptional.map(addressMapper::toDto).orElseThrow(()
                 -> new ResourceNotFoundException("Endereço não encontrada para esse usuario com esse id: " + userId));
 
     }
 
     public Address findEntityByUserId(String userId) {
-        return addressRepository.findByUserId(userId)
+        return addressRepository.findFirstByUserIdOrderByIdDesc(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Endereço não encontrado para esse usuário com id: " + userId));
     }
 

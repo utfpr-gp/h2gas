@@ -164,6 +164,35 @@ class AddressServiceTest {
     }
 
     @Test
+    @DisplayName("Não deve quebrar ao buscar por usuário com múltiplos endereços")
+    void naoDeveQuebrarAoBuscarPorUsuarioComMultiplosEnderecos() {
+        City city = cityRepository.save(new City(null, "Curitiba", "PR"));
+        User user = userRepository.save(new User(
+                "Cliente Multi Endereco 2",
+                "cliente.multi2@h2gas.test",
+                "41988887778",
+                "12345678902",
+                "senha",
+                UserTypeEnum.CUSTOMER
+        ));
+
+        Address primeiro = new Address(
+                null, "Rua Um", "Casa", "10", null, "Centro", "80000-000", city, user
+        );
+        Address segundo = new Address(
+                null, "Rua Dois", "Trabalho", "20", null, "Batel", "80420-000", city, user
+        );
+
+        addressRepository.saveAndFlush(primeiro);
+        Address maisRecente = addressRepository.saveAndFlush(segundo);
+
+        AddressDTO result = assertDoesNotThrow(() -> addressService.findByUserIdAddress(user.getId()));
+
+        assertNotNull(result);
+        assertEquals(maisRecente.getId(), result.getId());
+    }
+
+    @Test
     @DisplayName("Deve encontrar o endereço com sucesso")
     void findByStreetNameSuccess() {
         AddressDTO result = addressService.findByStreetName("rua teste 2");
