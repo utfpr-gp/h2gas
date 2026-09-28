@@ -131,17 +131,23 @@ public class UserService {
             supplier.setOpeningTime(LocalTime.parse("08:00"));
             supplier.setClosingTime(LocalTime.parse("18:00"));
             supplier.setAverageDeliveryTime(Duration.ofMinutes(60));
-            City city = cityRepository.findById(data.getAddress().getCityId())
-                    .orElseThrow(() -> new ResourceNotFoundException("City not found"));
-            supplier.setCity(city);
+
+            if (data.getAddress() != null) {
+                City city = cityRepository.findById(data.getAddress().getCityId())
+                        .orElseThrow(() -> new ResourceNotFoundException("City not found"));
+                supplier.setCity(city);
+
+                Supplier savedSupplier = supplierService.createSupplier(supplier);
+                Address address = addressService.createAddress(data.getAddress(), savedSupplier, city);
+                savedSupplier.setAddress(address);
+                supplierService.createSupplier(savedSupplier);
+                return userMapper.toDto(savedSupplier);
+            }
 
             Supplier savedSupplier = supplierService.createSupplier(supplier);
-            Address address = addressService.createAddress(data.getAddress(), savedSupplier, city);
-            supplier.setAddress(address);
-            supplierService.createSupplier(savedSupplier);
             return userMapper.toDto(savedSupplier);
         } else {
-            // Cria usuário normal
+            // Cria usuário normal — endereço é definido depois do login (HU01)
             User user = new User(
                     data.getName(),
                     data.getEmail(),
@@ -151,9 +157,13 @@ public class UserService {
                     data.getUserType()
             );
             userRepository.save(user);
-            City city = cityRepository.findById(data.getAddress().getCityId())
-                    .orElseThrow(() -> new ResourceNotFoundException("City not found"));
-            Address address = addressService.createAddress(data.getAddress(), user, city);
+
+            if (data.getAddress() != null) {
+                City city = cityRepository.findById(data.getAddress().getCityId())
+                        .orElseThrow(() -> new ResourceNotFoundException("City not found"));
+                addressService.createAddress(data.getAddress(), user, city);
+            }
+
             return userMapper.toDto(user);
         }
     }

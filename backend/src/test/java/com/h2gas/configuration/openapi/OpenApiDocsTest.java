@@ -44,4 +44,11 @@ class OpenApiDocsTest {
         mockMvc.perform(get("/swagger-ui/index.html"))
                 .andExpect(status().is2xxSuccessful());
     }
+
+    @Test
+    void deveDocumentarParametroCityIdNaRotaDeFornecedoresAtivosEAbertos() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("\"cityId\"")));
+    }
 }

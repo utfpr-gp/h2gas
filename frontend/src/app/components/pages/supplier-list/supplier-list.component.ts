@@ -10,6 +10,7 @@ import { ProductItem } from '../../../models/product-item';
 import { CartService } from '../../../services/cart.service';
 import { PaginatedResponse } from '../../../models/paginated-response';
 import { PaginationComponent } from '../../pagination/pagination.component';
+import { LocationContextService } from '../../../services/location-context.service';
 
 @Component({
   selector: 'app-supplier-list',
@@ -31,6 +32,7 @@ export class SupplierListComponent implements OnInit {
     private fb: FormBuilder,
     private cartService: CartService,
     private productItemService: ProductItemService,
+    private locationContext: LocationContextService,
   ) {
     this.formSearch = this.fb.group({
       name: ['']
@@ -57,8 +59,9 @@ export class SupplierListComponent implements OnInit {
   
 
   getSuppliers(page: number = 0) {
-    
-    this.supplierService.getAllSupplierOpenAndActive(page, this.pageSize).subscribe({
+    const cityId = this.locationContext.current()?.cityId;
+
+    this.supplierService.getAllSupplierOpenAndActive(page, this.pageSize, cityId).subscribe({
       next: (response: PaginatedResponse<Supplier>) => {
         this.suppliers = response.data;
         this.currentPage = response.page;

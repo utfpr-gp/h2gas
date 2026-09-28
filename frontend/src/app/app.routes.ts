@@ -5,6 +5,8 @@ import { RegisterComponent } from './components/pages/register/register.componen
 import { RegisterSupplierComponent } from './components/pages/register-supplier/register-supplier.component';
 import { CityRegisterComponent } from './components/pages/city-register/city-register.component';
 import { authGuard } from './guards/auth.guard';
+import { addressDefinedGuard } from './guards/address-defined.guard';
+import { FirstAccessAddressComponent } from './components/pages/first-access-address/first-access-address.component';
 import { SupplierApprovalComponent } from './components/pages/supplier-approval/supplier-approval.component';
 import { DistribuitorFormComponent } from './components/pages/distribuitor-form/distribuitor-form.component';
 import { CategoryProductsComponent } from './components/pages/category-products/category-products.component';
@@ -85,10 +87,15 @@ export const routes: Routes = [
         data: {roles: ['ADMIN']}
     },
     {
-        path: 'inicio', 
+        path: 'inicio',
         component: SupplierListComponent,
-        canActivate: [authGuard],
+        canActivate: [authGuard, addressDefinedGuard],
         data: {roles: ['ADMIN', 'SUPPLIER', 'CUSTOMER']}
+    },
+    {
+        path: 'primeiro-acesso-endereco',
+        component: FirstAccessAddressComponent,
+        canActivate: [authGuard]
     },
     {
         path: 'fornecedores/:id/produtos', 

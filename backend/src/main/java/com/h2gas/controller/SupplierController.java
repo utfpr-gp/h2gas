@@ -5,6 +5,10 @@ import com.h2gas.model.mapper.SupplierMapper;
 import com.h2gas.response.PageResponse;
 import com.h2gas.services.SupplierService;
 import com.h2gas.util.PaginationUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,14 +60,20 @@ public class SupplierController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Lista fornecedores ativos e abertos",
+            description = "Retorna fornecedores ativos e abertos, opcionalmente filtrados por cidade do endereço ativo do cliente (RN05)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista paginada de fornecedores ativos e abertos")
+    })
     @GetMapping("/actives/open")
     @ResponseBody
     public ResponseEntity<PageResponse<SupplierDTO>> getAllSuppliersOpenAndActive(
-            @RequestParam(value = "page", required = false) Integer page,
-            @RequestParam(value = "size", required = false) Integer size
+            @Parameter(description = "Número da página (0-based)") @RequestParam(value = "page", required = false) Integer page,
+            @Parameter(description = "Tamanho da página") @RequestParam(value = "size", required = false) Integer size,
+            @Parameter(description = "Filtra por cidade do endereço ativo do cliente (RN05)") @RequestParam(value = "cityId", required = false) Long cityId
     ) {
         Pageable pageable = PaginationUtil.getPageableRequest(page, size);
-        Page<SupplierDTO> result = supplierService.findAllSuppliersOpenAndActive(pageable);
+        Page<SupplierDTO> result = supplierService.findAllSuppliersOpenAndActive(cityId, pageable);
         PageResponse<SupplierDTO> response = new PageResponse<>(result);
 
         return ResponseEntity.ok(response);

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Definir endereço</title>
+</head>
+
+<body class="bg-[#0E2068] bg-gradient-to-r from-[#0E2068] to-[#3B82F6] min-h-screen flex items-center justify-center px-4 py-12">
+
+  <div class="flex flex-col md:flex-row items-center justify-center w-full max-w-5xl bg-transparent">
+
+    <div class="mb-10 md:mb-0 md:mr-10 flex justify-center">
+      <img src="../assets/logo-h2.png" alt="logo" class="w-40 md:w-56 lg:w-64">
+    </div>
+
+    <div class="w-full max-w-md bg-white shadow-xl p-8 rounded-2xl">
+      <h2 class="text-2xl font-semibold text-center mb-2">Onde você está?</h2>
+      <p class="text-gray-500 text-center mb-6 text-sm">
+        Informe seu endereço para vermos os fornecedores que atendem sua região.
+      </p>
+
+      <form [formGroup]="form" class="space-y-4">
+        <div class="form-control">
+          <label class="label">
+            <span class="label-text">CEP</span>
+          </label>
+          <div class="flex gap-2">
+            <input type="text" placeholder="00000-000" class="input input-bordered w-full"
+              formControlName="zipCode" (blur)="buscarCep()" />
+            <button type="button" class="btn btn-outline" (click)="buscarCep()" [disabled]="isLoadingCep">
+              Buscar
+            </button>
+          </div>
+        </div>
+
+        <div class="form-control" *ngIf="cidadeEncontrada">
+          <label class="label">
+            <span class="label-text">Rua</span>
+          </label>
+          <input type="text" class="input input-bordered w-full" formControlName="streetName" readonly />
+        </div>
+
+        <div class="form-control" *ngIf="cidadeEncontrada">
+          <label class="label">
+            <span class="label-text">Bairro</span>
+          </label>
+          <input type="text" class="input input-bordered w-full" formControlName="neighborhood" readonly />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3" *ngIf="cidadeEncontrada">
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Número</span>
+            </label>
+            <input type="text" class="input input-bordered w-full" formControlName="number" />
+          </div>
+          <div class="form-control">
+            <label class="label">
+              <span class="label-text">Complemento</span>
+            </label>
+            <input type="text" class="input input-bordered w-full" formControlName="complement" />
+          </div>
+        </div>
+
+        <button type="button" (click)="salvar()" class="btn btn-primary w-full mt-2 rounded-lg"
+          [disabled]="isSaving || !cidadeEncontrada">
+          <ng-container *ngIf="!isSaving">Salvar endereço</ng-container>
+          <ng-container *ngIf="isSaving">Salvando...</ng-container>
+        </button>
+      </form>
+    </div>
+  </div>
+</body>
+
+</html>

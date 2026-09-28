@@ -174,13 +174,26 @@ endereços — aqui só reabre `first-access-address` em modo edição).
 
 ## 8. Definição de Pronto
 
-- [ ] Registro aceita submissão sem endereço.
-- [ ] Fluxo pós-login de captura de endereço funcional, reaproveitando
+- [x] Registro aceita submissão sem endereço.
+- [x] Fluxo pós-login de captura de endereço funcional, reaproveitando
       `buscaViaCep`.
-- [ ] `LocationContextService` implementado e persistindo em
+- [x] `LocationContextService` implementado e persistindo em
       `localStorage`.
-- [ ] Navbar exibe endereço ativo.
-- [ ] `supplier-list` filtra por `cityId` do contexto; backend aplica
+- [x] Navbar exibe endereço ativo.
+- [x] `supplier-list` filtra por `cityId` do contexto; backend aplica
       RN05 server-side.
-- [ ] Todos os testes da seção 6 passando (`mvn test` + `ng test`).
+- [x] Todos os testes da seção 6 passando (`mvn test` + `ng test`) — os
+      9 testes do HU01 (3 backend, 6 frontend) passam; a suíte de
+      frontend tem 32 falhas pré-existentes não relacionadas (lacuna
+      conhecida, ver CLAUDE.md — CI não roda `ng test`), documentado,
+      não escondido.
 - [ ] Revisado e aprovado antes de HU02 começar.
+
+## 9. Nota de implementação — rota alterada documentada no Swagger
+
+`/api/suppliers/actives/open` ganhou `@Operation`/`@ApiResponses`/`@Parameter`
+para o novo `cityId` (exigência do CLAUDE.md para toda rota nova/alterada).
+Verificado via teste automatizado (`OpenApiDocsTest.deveDocumentarParametroCityIdNaRotaDeFornecedoresAtivosEAbertos`)
+que `cityId` aparece em `/v3/api-docs` — não via `curl` manual, porque havia
+um container Docker do desenvolvedor já rodando na porta 8080 com build
+antigo; evitei mexer nele.

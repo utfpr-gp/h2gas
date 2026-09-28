@@ -29,9 +29,10 @@ export class SupplierService extends AbstractService<Supplier> {
   }
 
 
-  getAllSupplierOpenAndActive(page: number = 0, size: number = 10): Observable<PaginatedResponse<Supplier>> {
+  getAllSupplierOpenAndActive(page: number = 0, size: number = 10, cityId?: number): Observable<PaginatedResponse<Supplier>> {
+    const cityParam = cityId != null ? `&cityId=${cityId}` : '';
     return this.http.get<PaginatedResponse<Supplier>>(
-      `${this.baseUrl}/actives/open?page=${page}&size=${size}`
+      `${this.baseUrl}/actives/open?page=${page}&size=${size}${cityParam}`
     );
   }
 

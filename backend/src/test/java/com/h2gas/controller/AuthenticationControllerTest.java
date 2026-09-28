@@ -156,6 +156,31 @@ class AuthenticationControllerTest {
     }
 
     @Test
+    void deveRegistrarClienteComSucessoSemEndereco() throws Exception {
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            user.setId("d4154c80-c616-4471-a0d8-04b29d30345f");
+            return user;
+        });
+
+        RegisterDTO registerDTO = new RegisterDTO(
+                "teste sem endereco",
+                "testesemendereco@teste.com",
+                "12323423423",
+                "12345678901",
+                "12345678000199",
+                "123456",
+                UserTypeEnum.CUSTOMER,
+                null
+        );
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(registerDTO)))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void naoDeveRegistrarUsuarioSeEmailJaExiste() throws Exception {
         RegisterDTO registerDTO = new RegisterDTO(
                 "João da Silva",
