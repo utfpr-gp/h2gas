@@ -3,12 +3,15 @@ package com.h2gas.controller;
 import com.h2gas.model.dto.AddressDTO;
 import com.h2gas.model.dto.CategoryProductDTO;
 import com.h2gas.model.dto.CityDTO;
+import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.AddressMapper;
 import com.h2gas.services.AddressService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,8 +37,12 @@ public class AddressController {
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER", "CUSTOMER"})
     public ResponseEntity<AddressDTO> createAddress(@RequestBody AddressDTO addressDTO) {
-        addressService.createAddress(addressDTO);
-        return ResponseEntity.ok(addressDTO);
+        // nunca confiar no userId do corpo — o dono é sempre o usuário autenticado
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User usuarioLogado = (User) authentication.getPrincipal();
+        addressDTO.setUserId(usuarioLogado.getId());
+        AddressDTO created = addressService.createAddress(addressDTO);
+        return ResponseEntity.ok(created);
     }
 
     @GetMapping("/by-user/{userId}")
