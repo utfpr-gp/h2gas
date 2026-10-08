@@ -106,7 +106,13 @@ class AddressServiceTest {
     @Test
     @DisplayName("Retorna erro ao passar o id incorreto do endereço")
     void findByIdAddressError() {
-        Long idInvalid = 50L;
+        // Long.MAX_VALUE em vez de um número "pequeno" fixo: o contador de
+        // auto-incremento do H2 não é resetado por rollback entre testes
+        // (@Transactional por método, mas a sequência é compartilhada pela
+        // classe inteira), então um id pequeno fixo pode colidir com um id
+        // real gerado por outro teste da mesma classe, dependendo da ordem
+        // de execução — causava falha intermitente no CI.
+        Long idInvalid = Long.MAX_VALUE;
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             addressService.findByIdAddress(idInvalid);
         });
@@ -161,6 +167,35 @@ class AddressServiceTest {
                 .filter(address -> address.getUser() != null && user.getId().equals(address.getUser().getId()))
                 .count();
         assertEquals(2, enderecosDoUsuario);
+    }
+
+    @Test
+    @DisplayName("Não deve quebrar ao buscar por usuário com múltiplos endereços")
+    void naoDeveQuebrarAoBuscarPorUsuarioComMultiplosEnderecos() {
+        City city = cityRepository.save(new City(null, "Curitiba", "PR"));
+        User user = userRepository.save(new User(
+                "Cliente Multi Endereco 2",
+                "cliente.multi2@h2gas.test",
+                "41988887778",
+                "12345678902",
+                "senha",
+                UserTypeEnum.CUSTOMER
+        ));
+
+        Address primeiro = new Address(
+                null, "Rua Um", "Casa", "10", null, "Centro", "80000-000", city, user
+        );
+        Address segundo = new Address(
+                null, "Rua Dois", "Trabalho", "20", null, "Batel", "80420-000", city, user
+        );
+
+        addressRepository.saveAndFlush(primeiro);
+        Address maisRecente = addressRepository.saveAndFlush(segundo);
+
+        AddressDTO result = assertDoesNotThrow(() -> addressService.findByUserIdAddress(user.getId()));
+
+        assertNotNull(result);
+        assertEquals(maisRecente.getId(), result.getId());
     }
 
     @Test

@@ -8,5 +8,12 @@ import java.util.Optional;
 
 public interface AddressRepository extends JpaRepository<Address, Long> {
     Optional<Address> findByStreetName(String name);
-    Optional<Address> findByUserId(String id);
+
+    /**
+     * Um usuário pode ter múltiplos endereços (F3). Até a HU04 entregar a
+     * gestão completa de múltiplos endereços, o "endereço ativo" usado por
+     * contextos que ainda assumem um único endereço (HU01) é o mais
+     * recente, para evitar IncorrectResultSizeDataAccessException.
+     */
+    Optional<Address> findFirstByUserIdOrderByIdDesc(String id);
 }

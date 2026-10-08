@@ -6,6 +6,7 @@ import { ToastrService } from 'ngx-toastr';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../services/auth.service';
 import { CartService } from '../../../services/cart.service';
+import { LocationContextService } from '../../../services/location-context.service';
 
 @Component({
   selector: 'app-login',
@@ -26,6 +27,7 @@ export class LoginComponent {
     private toastr: ToastrService,
     private authService: AuthService,
     private cartService: CartService,
+    private locationContext: LocationContextService,
   ) {
     this.loginform = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -40,6 +42,7 @@ export class LoginComponent {
   login() {
     localStorage.removeItem('access_token');
     localStorage.removeItem('user');
+    this.locationContext.clear();
     this.loading = true;
     this.cartService.setCart([]);
     this.authService.loginUser(this.loginform.value).subscribe({

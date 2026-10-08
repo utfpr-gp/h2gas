@@ -7,6 +7,7 @@ import { ProductItem } from '../../models/product-item';
 import { CartService } from '../../services/cart.service';
 import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
+import { LocationContextService } from '../../services/location-context.service';
 
 @Component({
   selector: 'app-menu',
@@ -24,6 +25,7 @@ export class MenuComponent implements OnInit {
     private authService: AuthService,
     private cartService: CartService,
     private toastr: ToastrService,
+    public locationContext: LocationContextService,
   ) {}
 
   userMenuOpen = false;
@@ -87,8 +89,12 @@ export class MenuComponent implements OnInit {
     this.userMenuOpen = false;
   }
 
-  navigate(route: string) {    
+  navigate(route: string) {
     this.router.navigate([route])
+  }
+
+  editAddress() {
+    this.router.navigate(['/primeiro-acesso-endereco']);
   }
 
   @HostListener('document:click', ['$event'])

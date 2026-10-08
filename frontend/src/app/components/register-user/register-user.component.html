@@ -106,27 +106,6 @@
               [(ngModel)]="confirmPassword" class="input input-bordered w-full" />
           </div>
         </div>
-
-        <!-- Endereço -->
-        <div class="mt-2">
-          <label class="label"><span class="label-text">Endereço</span></label>
-          <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-1">
-            <button *ngIf="address == undefined" type="button"
-              class="flex items-center gap-2 px-3 py-2 text-blue-600 border border-blue-500 rounded-lg hover:bg-blue-50 transition"
-              (click)="openModal()">
-              <i class="fas fa-plus text-sm"></i>
-              <span>Adicionar</span>
-            </button>
-
-            <p *ngIf="address != undefined" class="text-sm text-gray-800 font-medium">
-              {{ address.streetName }}, {{ address.number }}
-            </p>
-
-            <p class="text-sm text-gray-500 italic" *ngIf="address == undefined">
-              Clique em “Adicionar” para inserir um endereço
-            </p>
-          </div>
-        </div>
       </form>
 
       <!-- BOTÃO DE CADASTRO -->
@@ -173,98 +152,6 @@
       </div>
     </div>
   </section>
-
-  <!-- MODAL DE ENDEREÇO -->
-  <div *ngIf="modalAberta" class="fixed inset-0 z-50 flex justify-center items-center px-4">
-    <div class="absolute inset-0 bg-black/30"></div>
-
-    <div class="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[90vh] flex flex-col overflow-hidden">
-      <div class="p-6 overflow-y-auto">
-        <div class="flex justify-between items-center mb-4">
-          @if (userType == 'SUPPLIER') {
-          <h2 class="text-xl font-bold">Endereço da Sua Empresa</h2>
-          }
-
-          @if (userType == 'CUSTOMER') {
-          <h2 class="text-xl font-bold">Endereço</h2>
-          }
-          <button class="text-gray-500 hover:text-gray-700" (click)="modalAberta = false">
-            <i class="fas fa-times text-lg"></i>
-          </button>
-        </div>
-
-        <form class="space-y-4" [formGroup]="registerFormAddress">
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700">CEP</label>
-            <div class="flex gap-2">
-              <input type="text" placeholder="Digite o seu CEP"
-                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
-                required formControlName="zipCode" />
-              <button type="button" (click)="buscarCep()" [disabled]="isLoadingCep"
-                class="px-3 py-1.5 text-sm bg-[#0017bf] hover:bg-[#0017bf]/80 text-white rounded-md flex items-center justify-center gap-2">
-                <svg *ngIf="isLoadingCep" class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none"
-                  viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                </svg>
-                <span>{{ isLoadingCep ? 'Buscando...' : 'Buscar' }}</span>
-              </button>
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700">Cidade</label>
-            <select formControlName="cityId"
-              class="mt-1 block w-full rounded-lg border-2 border-blue-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
-              <option *ngFor="let city of cities" [ngValue]="city.id">
-                {{ city.name }}
-              </option>
-            </select>
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700">Rua</label>
-            <input type="text" placeholder="Digite o nome da sua rua"
-              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
-              required formControlName="streetName" />
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700">Complemento</label>
-            <input type="text" placeholder="Digite um complemento"
-              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
-              required formControlName="complement" />
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700">Bairro</label>
-            <input type="text" placeholder="Digite o bairro"
-              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
-              required formControlName="neighborhood" />
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700">Número</label>
-            <input type="number" placeholder="Digite o número"
-              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
-              required formControlName="number" />
-          </div>
-
-          <div class="flex justify-end gap-2 pt-4 border-t">
-            <button type="button"
-              class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
-              (click)="modalAberta = false">
-              Cancelar
-            </button>
-            <button type="submit" (click)="salvarAddress()"
-              class="px-4 py-2 bg-[#0017bf] hover:bg-[#0017bf]/80 text-white rounded-md">
-              Salvar
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
 </body>
 
 </html>

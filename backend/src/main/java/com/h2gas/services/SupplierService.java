@@ -71,6 +71,13 @@ public class SupplierService {
                 .map(supplierMapper::toDto);
     }
 
+    public Page<SupplierDTO> findAllSuppliersOpenAndActive(Long cityId, Pageable pageable) {
+        Page<Supplier> result = (cityId != null)
+                ? supplierRepository.findByCityIdAndActiveAndOpen(cityId, true, true, pageable)
+                : supplierRepository.findByActiveAndOpen(true, true, pageable);
+        return result.map(supplierMapper::toDto);
+    }
+
     public List<SupplierSummaryDTO> findAllSuppliersSummary() {
         return supplierRepository.findAll()
                 .stream()

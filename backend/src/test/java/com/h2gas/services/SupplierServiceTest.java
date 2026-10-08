@@ -17,6 +17,9 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
@@ -295,5 +298,59 @@ class SupplierServiceTest {
         Supplier atualizado = supplierRepository.findById(validId).orElse(null);
         assertNotNull(atualizado);
         assertFalse(atualizado.isActive());
+    }
+
+    @Test
+    @DisplayName("HU01: deve filtrar fornecedores por cidade quando cityId é informado")
+    void deveFiltrarFornecedoresPorCidadeQuandoCityIdInformado() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+
+        User userCuritiba = userRepository.save(new User(null,
+                "Fornecedor Curitiba", "fornecedorcuritiba@gmail.com",
+                "senha123", "111222333", "444555666", UserTypeEnum.SUPPLIER));
+
+        Address addressCuritiba = addressRepository.save(new Address(
+                null, "Rua Curitiba", "loja", "100", "perto do centro",
+                "Centro", "80000-000", curitiba, null));
+
+        Supplier supplierCuritiba = getSupplier(
+                "Fornecedor Curitiba", "fornecedorcuritiba@gmail",
+                "111222333", "999888777", "senhateste",
+                "98765432101234", "Fornecedor de Curitiba",
+                true, true, addressCuritiba, curitiba);
+        supplierRepository.save(supplierCuritiba);
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<SupplierDTO> result = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), pageable);
+
+        assertEquals(1, result.getTotalElements());
+        assertEquals("Fornecedor Curitiba", result.getContent().get(0).getName());
+    }
+
+    @Test
+    @DisplayName("HU01: deve retornar todos os ativos e abertos quando cityId é nulo")
+    void deveRetornarTodosAtivosEAbertosQuandoCityIdNulo() {
+        City cityAberta = cityRepository.save(new City(null, "Guarapuava", "PR"));
+
+        User userAberto = userRepository.save(new User(null,
+                "Fornecedor Aberto", "fornecedoraberto@gmail.com",
+                "senha123", "222333444", "555666777", UserTypeEnum.SUPPLIER));
+
+        Address addressAberta = addressRepository.save(new Address(
+                null, "Rua Aberta", "loja", "200", "perto do centro",
+                "Centro", "85000-000", cityAberta, null));
+
+        Supplier supplierAberto = getSupplier(
+                "Fornecedor Aberto", "fornecedoraberto@gmail",
+                "222333444", "888777666", "senhateste",
+                "12312312312345", "Fornecedor sempre aberto",
+                true, true, addressAberta, cityAberta);
+        supplierRepository.save(supplierAberto);
+
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<SupplierDTO> result = supplierService.findAllSuppliersOpenAndActive(null, pageable);
+
+        assertTrue(result.getContent().stream()
+                .anyMatch(dto -> "Fornecedor Aberto".equals(dto.getName())));
     }
 }
