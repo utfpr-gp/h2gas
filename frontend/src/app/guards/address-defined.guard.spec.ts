@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { CanActivateFn, Router } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 import { of, throwError } from 'rxjs';
 
 import { addressDefinedGuard } from './address-defined.guard';
@@ -14,6 +15,7 @@ describe('addressDefinedGuard', () => {
   let addressServiceSpy: jasmine.SpyObj<AddressService>;
   let userServiceSpy: jasmine.SpyObj<UserService>;
   let routerSpy: jasmine.SpyObj<Router>;
+  let toastrSpy: jasmine.SpyObj<ToastrService>;
   let locationContextService: LocationContextService;
 
   beforeEach(() => {
@@ -21,6 +23,7 @@ describe('addressDefinedGuard', () => {
     addressServiceSpy = jasmine.createSpyObj('AddressService', ['findByUserId']);
     userServiceSpy = jasmine.createSpyObj('UserService', ['getUserLocalStorage']);
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+    toastrSpy = jasmine.createSpyObj('ToastrService', ['error']);
 
     userServiceSpy.getUserLocalStorage.and.returnValue({ id: 'user-1' });
 
@@ -29,6 +32,7 @@ describe('addressDefinedGuard', () => {
         { provide: AddressService, useValue: addressServiceSpy },
         { provide: UserService, useValue: userServiceSpy },
         { provide: Router, useValue: routerSpy },
+        { provide: ToastrService, useValue: toastrSpy },
       ],
     });
 
@@ -36,13 +40,26 @@ describe('addressDefinedGuard', () => {
   });
 
   it('deveRedirecionarParaFirstAccessAddressSeUsuarioNaoTiverEndereco', (done) => {
-    addressServiceSpy.findByUserId.and.returnValue(throwError(() => new Error('404')));
+    addressServiceSpy.findByUserId.and.returnValue(throwError(() => ({ status: 404 })));
 
     const result = executeGuard({} as any, {} as any);
 
     (result as any).subscribe((canActivate: boolean) => {
       expect(canActivate).toBeFalse();
       expect(routerSpy.navigate).toHaveBeenCalledWith(['/primeiro-acesso-endereco']);
+      done();
+    });
+  });
+
+  it('naoDeveRedirecionarParaFirstAccessQuandoErroNaoForDeEnderecoNaoEncontrado', (done) => {
+    addressServiceSpy.findByUserId.and.returnValue(throwError(() => ({ status: 500 })));
+
+    const result = executeGuard({} as any, {} as any);
+
+    (result as any).subscribe((canActivate: boolean) => {
+      expect(canActivate).toBeFalse();
+      expect(routerSpy.navigate).not.toHaveBeenCalled();
+      expect(toastrSpy.error).toHaveBeenCalled();
       done();
     });
   });
