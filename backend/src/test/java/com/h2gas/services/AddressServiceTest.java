@@ -106,7 +106,13 @@ class AddressServiceTest {
     @Test
     @DisplayName("Retorna erro ao passar o id incorreto do endereço")
     void findByIdAddressError() {
-        Long idInvalid = 50L;
+        // Long.MAX_VALUE em vez de um número "pequeno" fixo: o contador de
+        // auto-incremento do H2 não é resetado por rollback entre testes
+        // (@Transactional por método, mas a sequência é compartilhada pela
+        // classe inteira), então um id pequeno fixo pode colidir com um id
+        // real gerado por outro teste da mesma classe, dependendo da ordem
+        // de execução — causava falha intermitente no CI.
+        Long idInvalid = Long.MAX_VALUE;
         RuntimeException exception = assertThrows(RuntimeException.class, () -> {
             addressService.findByIdAddress(idInvalid);
         });
