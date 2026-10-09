@@ -1,0 +1,11 @@
+<nav class="fixed bottom-0 inset-x-0 md:hidden bg-white border-t border-gray-200 flex justify-around items-center py-1 z-40">
+  <button
+    type="button"
+    *ngFor="let tab of tabs"
+    [attr.data-testid]="'tab-' + tab.id"
+    (click)="navigateTo(tab)"
+    class="flex flex-col items-center gap-0.5 text-gray-500 py-1 px-3">
+    <span class="material-icons">{{ tab.icon }}</span>
+    <span class="text-[11px]">{{ tab.label }}</span>
+  </button>
+</nav>

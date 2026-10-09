@@ -1,0 +1,34 @@
+<div class="flex gap-3 overflow-x-auto pb-2">
+  <button
+    type="button"
+    class="flex flex-col items-center gap-1 shrink-0"
+    (click)="select(null)">
+    <span
+      class="w-14 h-14 rounded-full flex items-center justify-center border-2"
+      [class.border-primary]="selected === null"
+      [class.bg-primary]="selected === null"
+      [class.text-white]="selected === null"
+      [class.border-gray-200]="selected !== null"
+      [class.text-gray-500]="selected !== null">
+      <span class="material-icons">apps</span>
+    </span>
+    <span class="text-xs text-gray-700">Todas</span>
+  </button>
+
+  <button
+    type="button"
+    class="flex flex-col items-center gap-1 shrink-0"
+    *ngFor="let categoria of categories"
+    (click)="select(categoria.name ?? null)">
+    <span
+      class="w-14 h-14 rounded-full flex items-center justify-center border-2"
+      [class.border-primary]="selected === categoria.name"
+      [class.bg-primary]="selected === categoria.name"
+      [class.text-white]="selected === categoria.name"
+      [class.border-gray-200]="selected !== categoria.name"
+      [class.text-gray-500]="selected !== categoria.name">
+      <span class="material-icons">{{ iconFor(categoria.name) }}</span>
+    </span>
+    <span class="text-xs text-gray-700">{{ categoria.name }}</span>
+  </button>
+</div>
