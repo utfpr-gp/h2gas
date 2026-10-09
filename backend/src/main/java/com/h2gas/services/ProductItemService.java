@@ -51,8 +51,8 @@ public class ProductItemService {
                 .collect(Collectors.toList());
     }
 
-    public Page<ProductItemDTO> findBySupplierActiveAndSupplierOpen(Pageable pageable) {
-        return productItemRepository.findBySupplierActiveAndSupplierOpen(true,true, pageable)
+    public Page<ProductItemDTO> findBySupplierActiveAndSupplierOpen(Long cityId, String category, Pageable pageable) {
+        return productItemRepository.findAvailableProducts(cityId, category, pageable)
                 .map(productItemMapper::toDto);
     }
 
@@ -62,17 +62,8 @@ public class ProductItemService {
     }
 
     public Page<ProductItemDTO> findProductsFiltered(String supplierId, String search, String category, Pageable pageable) {
-        Page<ProductItem> page;
-
-        if (category != null && !category.isBlank()) {
-            page = productItemRepository.findBySupplierIdAndCategoryProduct_ProductType_NameIgnoreCase(supplierId, category, pageable);
-        } else if (search != null && !search.isBlank()) {
-            page = productItemRepository.findBySupplierIdAndBrandContainingIgnoreCase(supplierId, search, pageable);
-        } else {
-            page = productItemRepository.findBySupplierId(supplierId, pageable);
-        }
-
-        return page.map(productItemMapper::toDto);
+        return productItemRepository.findBySupplierIdFiltered(supplierId, category, search, pageable)
+                .map(productItemMapper::toDto);
     }
 
 

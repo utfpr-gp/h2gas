@@ -12,16 +12,29 @@ import org.springframework.data.repository.query.Param;
 
 public interface ProductItemRepository extends JpaRepository<ProductItem, Long> {
     Page<ProductItem> findBySupplierId(String id, Pageable pageable);
-    Page<ProductItem> findBySupplierActiveAndSupplierOpen(Boolean active, Boolean open, Pageable pageable);
+
+    @Query("""
+        SELECT p FROM ProductItem p
+        WHERE p.supplier.active = true AND p.supplier.open = true
+          AND (:cityId IS NULL OR p.supplier.city.id = :cityId)
+          AND (:category IS NULL OR LOWER(p.categoryProduct.productType.name) = LOWER(:category))
+        """)
+    Page<ProductItem> findAvailableProducts(@Param("cityId") Long cityId,
+                                             @Param("category") String category,
+                                             Pageable pageable);
+
     @Lock(LockModeType.OPTIMISTIC)
     @Query("SELECT p FROM ProductItem p WHERE p.id = :id")
     ProductItem findByIdWithLock(@Param("id") Long id);
 
-//    Page<ProductItem> findBySupplierIdAndCategoryProduct_NameIgnoreCase(
-//            String supplierId, String category, Pageable pageable);
-    Page<ProductItem> findBySupplierIdAndCategoryProduct_ProductType_NameIgnoreCase(
-        String supplierId, String productTypeName, Pageable pageable);
-
-    Page<ProductItem> findBySupplierIdAndBrandContainingIgnoreCase(
-            String supplierId, String brand, Pageable pageable);
+    @Query("""
+        SELECT p FROM ProductItem p
+        WHERE p.supplier.id = :supplierId
+          AND (:category IS NULL OR LOWER(p.categoryProduct.productType.name) = LOWER(:category))
+          AND (:search IS NULL OR LOWER(p.brand) LIKE LOWER(CONCAT('%', :search, '%')))
+        """)
+    Page<ProductItem> findBySupplierIdFiltered(@Param("supplierId") String supplierId,
+                                                @Param("category") String category,
+                                                @Param("search") String search,
+                                                Pageable pageable);
 }
