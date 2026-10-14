@@ -8,6 +8,10 @@ import com.h2gas.model.mapper.ProductItemMapper;
 import com.h2gas.response.PageResponse;
 import com.h2gas.services.ProductItemService;
 import com.h2gas.util.PaginationUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,15 +83,20 @@ public class ProductItemController {
         return ResponseEntity.ok(updated);
     }
 
+    @Operation(summary = "Lista produtos de um fornecedor",
+            description = "Retorna os produtos de um fornecedor específico, opcionalmente filtrados por categoria e/ou busca por marca (os dois filtros podem ser combinados)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista paginada de produtos do fornecedor")
+    })
     @GetMapping("/by-supplier/{supplierId}")
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER", "CUSTOMER"})
     public ResponseEntity<PageResponse<ProductItemDTO>> getProductBySupplier(
-            @PathVariable String supplierId,
-            @RequestParam(value = "page", required = false) Integer page,
-            @RequestParam(value = "size", required = false) Integer size,
-            @RequestParam(value = "search", required = false) String search,
-            @RequestParam(value = "category", required = false) String category
+            @Parameter(description = "ID do fornecedor") @PathVariable String supplierId,
+            @Parameter(description = "Página") @RequestParam(value = "page", required = false) Integer page,
+            @Parameter(description = "Tamanho da página") @RequestParam(value = "size", required = false) Integer size,
+            @Parameter(description = "Filtra pela marca do produto") @RequestParam(value = "search", required = false) String search,
+            @Parameter(description = "Filtra pelo nome da categoria (ex.: Gás, Água)") @RequestParam(value = "category", required = false) String category
     ) {
         Pageable pageable = PaginationUtil.getPageableRequest(page, size);
         Page<ProductItemDTO> result = productItemService.findProductsFiltered(supplierId, search, category, pageable);
@@ -95,15 +104,23 @@ public class ProductItemController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Lista produtos disponíveis na plataforma",
+            description = "Retorna produtos de fornecedores ativos e abertos, opcionalmente filtrados por cidade do endereço ativo do cliente (RN05), por categoria e ordenados por preço de entrega")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Lista paginada de produtos disponíveis")
+    })
     @GetMapping("/by-supplier-open")
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER", "CUSTOMER"})
     public ResponseEntity<PageResponse<ProductItemDTO>> getAllProductsBySupplierOpen(
-            @RequestParam(value = "page", required = false) Integer page,
-            @RequestParam(value = "size", required = false) Integer size
+            @Parameter(description = "Página") @RequestParam(value = "page", required = false) Integer page,
+            @Parameter(description = "Tamanho da página") @RequestParam(value = "size", required = false) Integer size,
+            @Parameter(description = "Filtra por cidade do endereço ativo do cliente (RN05)") @RequestParam(value = "cityId", required = false) Long cityId,
+            @Parameter(description = "Filtra pelo nome da categoria (ex.: Gás, Água)") @RequestParam(value = "category", required = false) String category,
+            @Parameter(description = "Ordenação, ex.: priceDelivery,asc") @RequestParam(value = "sort", required = false) String sort
     ) {
-        Pageable pageable = PaginationUtil.getPageableRequest(page, size);
-        Page<ProductItemDTO> result = productItemService.findBySupplierActiveAndSupplierOpen(pageable);
+        Pageable pageable = PaginationUtil.getPageableRequest(page, size, sort);
+        Page<ProductItemDTO> result = productItemService.findBySupplierActiveAndSupplierOpen(cityId, category, pageable);
         PageResponse<ProductItemDTO> response = new PageResponse<>(result);
 
         return ResponseEntity.ok(response);

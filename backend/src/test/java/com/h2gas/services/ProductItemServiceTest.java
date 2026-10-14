@@ -13,6 +13,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
@@ -159,6 +163,105 @@ class ProductItemServiceTest {
 //    @Test
 //    void updateProductItem() {
 //    }
+
+    @Test
+    @DisplayName("HU02: deve ordenar por preço de entrega crescente")
+    void deveOrdenarPorPrecoDeEntregaCrescente() {
+        City city = new City(null, "Pato Branco", "PR");
+        cityRepository.save(city);
+
+        Supplier supplier = new Supplier();
+        supplier.setName("Fornecedor HU02");
+        supplier.setEmail("fornecedor.hu02@h2gas.test");
+        supplier.setPassword("senha");
+        supplier.setUserType(UserTypeEnum.SUPPLIER);
+        supplier.setCnpj("12345678000199");
+        supplier.setOpeningTime(LocalTime.of(8, 0));
+        supplier.setClosingTime(LocalTime.of(18, 0));
+        supplier.setAverageDeliveryTime(Duration.ofMinutes(30));
+        supplier.setActive(true);
+        supplier.setOpen(true);
+        supplier.setCity(city);
+        supplierRepository.save(supplier);
+
+        CategoryProduct categoryProduct = createCategoryForTest("HU02", supplier);
+
+        ProductItem caro = new ProductItem();
+        caro.setBrand("Produto Caro");
+        caro.setPriceDelivery(new BigDecimal("200.00"));
+        caro.setPricePickup(new BigDecimal("200.00"));
+        caro.setStockQuantity(5);
+        caro.setCategoryProduct(categoryProduct);
+        caro.setSupplier(supplier);
+        productItemRepository.save(caro);
+
+        ProductItem barato = new ProductItem();
+        barato.setBrand("Produto Barato");
+        barato.setPriceDelivery(new BigDecimal("50.00"));
+        barato.setPricePickup(new BigDecimal("50.00"));
+        barato.setStockQuantity(5);
+        barato.setCategoryProduct(categoryProduct);
+        barato.setSupplier(supplier);
+        productItemRepository.save(barato);
+
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "priceDelivery"));
+        Page<ProductItemDTO> result = productItemService.findBySupplierActiveAndSupplierOpen(
+                city.getId(), null, pageable);
+
+        List<ProductItemDTO> content = result.getContent();
+        assertTrue(content.size() >= 2);
+        assertEquals("Produto Barato", content.get(0).getBrand());
+    }
+
+    @Test
+    @DisplayName("Deve combinar filtro de categoria e busca por marca na listagem de um fornecedor")
+    void deveCombinarFiltroDeCategoriaEBuscaSimultaneamente() {
+        City city = new City(null, "Pato Branco", "PR");
+        cityRepository.save(city);
+
+        Supplier supplier = new Supplier();
+        supplier.setName("Fornecedor Filtro Combinado");
+        supplier.setEmail("filtro.combinado@h2gas.test");
+        supplier.setPassword("senha");
+        supplier.setUserType(UserTypeEnum.SUPPLIER);
+        supplier.setCnpj("12345678000199");
+        supplier.setOpeningTime(LocalTime.of(8, 0));
+        supplier.setClosingTime(LocalTime.of(18, 0));
+        supplier.setAverageDeliveryTime(Duration.ofMinutes(30));
+        supplier.setActive(true);
+        supplier.setOpen(true);
+        supplier.setCity(city);
+        supplierRepository.save(supplier);
+
+        CategoryProduct categoryProduct = createCategoryForTest("Água 20L", supplier);
+
+        ProductItem copap = new ProductItem();
+        copap.setBrand("CopapFixture");
+        copap.setPriceDelivery(new BigDecimal("15.00"));
+        copap.setPricePickup(new BigDecimal("15.00"));
+        copap.setStockQuantity(5);
+        copap.setCategoryProduct(categoryProduct);
+        copap.setSupplier(supplier);
+        productItemRepository.save(copap);
+
+        ProductItem minalba = new ProductItem();
+        minalba.setBrand("MinalbaFixture");
+        minalba.setPriceDelivery(new BigDecimal("25.00"));
+        minalba.setPricePickup(new BigDecimal("25.00"));
+        minalba.setStockQuantity(5);
+        minalba.setCategoryProduct(categoryProduct);
+        minalba.setSupplier(supplier);
+        productItemRepository.save(minalba);
+
+        String categoria = categoryProduct.getProductType().getName();
+        Pageable pageable = PageRequest.of(0, 10);
+        Page<ProductItemDTO> result = productItemService.findProductsFiltered(
+                supplier.getId(), "copap", categoria, pageable);
+
+        List<ProductItemDTO> content = result.getContent();
+        assertEquals(1, content.size());
+        assertEquals("CopapFixture", content.get(0).getBrand());
+    }
 
 
 

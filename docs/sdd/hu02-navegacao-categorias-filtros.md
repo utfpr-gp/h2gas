@@ -149,13 +149,14 @@ simples (sem paginação) consumível pelo cliente, adicionar
 
 ## 8. Definição de Pronto
 
-- [ ] `PaginationUtil` aceita `sort` sem quebrar chamadas existentes.
-- [ ] Endpoint `by-supplier-open` filtra por `cityId` e `category`, ordena
+- [x] `PaginationUtil` aceita `sort` sem quebrar chamadas existentes.
+- [x] Endpoint `by-supplier-open` filtra por `cityId` e `category`, ordena
       por `sort`.
-- [ ] `GET /api/product-types` acessível a `CUSTOMER`.
-- [ ] Abas de categoria e toggle de ordenação funcionais na visão de
-      produtos de `supplier-list`.
-- [ ] Trocar para `viewMode = 'products'` mantém o filtro de cidade da
-      HU01 (verificado manualmente, não só nos testes).
-- [ ] Todos os testes da seção 6 passando.
-- [ ] Revisado e aprovado antes de HU03 começar.
+- [x] `GET /api/product-types` acessível a `CUSTOMER`.
+- [x] Abas de categoria e toggle de ordenação funcionais na visão de
+      produtos de `supplier-list` (reimplementadas como chips circulares
+      pelo F7, mesma lógica de filtro/ordenação).
+- [x] Trocar para `viewMode = 'products'` mantém o filtro de cidade da
+      HU01 (verificado manualmente).
+- [x] Todos os testes da seção 6 passando.
+- [x] Revisado e aprovado antes de HU03 começar.

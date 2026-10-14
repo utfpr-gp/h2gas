@@ -43,8 +43,18 @@ export class ProductItemService extends AbstractService<ProductItem> {
   }
   
 
-  getProductsFromActiveSuppliers(page: number = 0, size: number = 20): Observable<PaginatedResponse<ProductItem>> {
-    const params = { page: page.toString(), size: size.toString() };
+  getProductsFromActiveSuppliers(
+    page: number = 0,
+    size: number = 20,
+    cityId?: number,
+    category?: string,
+    sort?: string
+  ): Observable<PaginatedResponse<ProductItem>> {
+    let params: Record<string, string> = { page: page.toString(), size: size.toString() };
+    if (cityId != null) params['cityId'] = cityId.toString();
+    if (category) params['category'] = category;
+    if (sort) params['sort'] = sort;
+
     return this.http.get<PaginatedResponse<ProductItem>>(`${this.baseUrl}/by-supplier-open`, { params });
   }
 
