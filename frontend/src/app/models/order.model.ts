@@ -6,6 +6,7 @@ export interface OrderRequest {
     supplierRef: string;
     paymentMethod: string;
     note: string;
+    addressId?: number;
     items: OrderItemRequest[]
 }
 

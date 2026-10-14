@@ -1,10 +1,12 @@
 package com.h2gas.services;
 
 import com.h2gas.enums.OrderStatusEnum;
+import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.OrderItemRequestDTO;
 import com.h2gas.model.dto.OrderRequestDTO;
 import com.h2gas.model.dto.OrderResponseDTO;
+import com.h2gas.model.entity.Address;
 import com.h2gas.model.entity.Order;
 import com.h2gas.model.entity.OrderItem;
 import com.h2gas.model.entity.Supplier;
@@ -56,7 +58,7 @@ public class OrderService {
         order.setSupplier(supplier);
         order.setOrderDate(LocalDateTime.now());
         order.setStatus(OrderStatusEnum.PENDING);
-        order.setDeliveryAddress(addressService.findEntityByUserId(user.getId()));
+        order.setDeliveryAddress(resolveDeliveryAddress(orderRequestDTO.getAddressId(), user));
         orderRepository.save(order);
 
         for (OrderItemRequestDTO item: orderRequestDTO.getItems()) {
@@ -70,6 +72,17 @@ public class OrderService {
         orderRepository.save(order);
 
         return orderMapper.toResponseDto(order);
+    }
+
+    private Address resolveDeliveryAddress(Long addressId, User customer) {
+        if (addressId == null) {
+            throw new BusinessRuleException("Informe o endereço de entrega.");
+        }
+        Address address = addressService.findByIdEntity(addressId);
+        if (address.getUser() == null || !address.getUser().getId().equals(customer.getId())) {
+            throw new BusinessRuleException("Endereço não pertence ao cliente informado.");
+        }
+        return address;
     }
 
     private BigDecimal calculateTotalPrice(List<OrderItem> orderItems) {

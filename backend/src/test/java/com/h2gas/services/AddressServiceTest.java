@@ -199,6 +199,41 @@ class AddressServiceTest {
     }
 
     @Test
+    @DisplayName("HU04: deve listar todos os endereços do usuário")
+    void deveListarTodosEnderecosDoUsuario() {
+        City city = cityRepository.save(new City(null, "Curitiba", "PR"));
+        User user = userRepository.save(new User(
+                "Cliente Lista Enderecos",
+                "cliente.lista@h2gas.test",
+                "41988887779",
+                "12345678903",
+                "senha",
+                UserTypeEnum.CUSTOMER
+        ));
+        User outro = userRepository.save(new User(
+                "Outro Cliente",
+                "outro.cliente@h2gas.test",
+                "41988887770",
+                "12345678904",
+                "senha",
+                UserTypeEnum.CUSTOMER
+        ));
+
+        addressRepository.saveAndFlush(new Address(
+                null, "Rua Um", "Casa", "10", null, "Centro", "80000-000", city, user));
+        addressRepository.saveAndFlush(new Address(
+                null, "Rua Dois", "Trabalho", "20", null, "Batel", "80420-000", city, user));
+        addressRepository.saveAndFlush(new Address(
+                null, "Rua Três", "Casa", "30", null, "Centro", "80000-000", city, outro));
+
+        List<AddressDTO> result = addressService.findAllByUserIdAddress(user.getId());
+
+        assertEquals(2, result.size());
+        assertTrue(result.stream().anyMatch(a -> "Casa".equals(a.getAddressName())));
+        assertTrue(result.stream().anyMatch(a -> "Trabalho".equals(a.getAddressName())));
+    }
+
+    @Test
     @DisplayName("Deve encontrar o endereço com sucesso")
     void findByStreetNameSuccess() {
         AddressDTO result = addressService.findByStreetName("rua teste 2");

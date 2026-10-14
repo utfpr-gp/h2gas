@@ -133,17 +133,22 @@
                             </button>
                         </div> -->
                         <div class="space-y-3">
-                            <div class="border-2 border-blue-500 rounded-lg p-4 flex items-start">
-                                <input checked="" class="mt-1 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                    id="address1" name="address" type="radio" />
-                                <label class="ml-3 block text-sm text-gray-900" for="address1">
+                            <div *ngFor="let endereco of addresses"
+                                class="border-2 rounded-lg p-4 flex items-start cursor-pointer"
+                                [class.border-blue-500]="endereco.id === selectedAddressId"
+                                [class.border-gray-200]="endereco.id !== selectedAddressId"
+                                (click)="selectAddress(endereco)">
+                                <input class="mt-1 h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                    [id]="'address-' + endereco.id" name="address" type="radio"
+                                    [checked]="endereco.id === selectedAddressId" />
+                                <label class="ml-3 block text-sm text-gray-900" [for]="'address-' + endereco.id">
                                     <div class="flex items-center">
                                         <span class="material-icons text-lg mr-2">home</span>
-                                        <span class="font-semibold">{{address?.addressName}}</span>
+                                        <span class="font-semibold">{{endereco.addressName || 'Endereço'}}</span>
                                     </div>
                                     <p class="text-gray-600 mt-1">
-                                        {{address?.streetName}}, {{address?.number}} - {{address?.neighborhood}}
-                                        - {{address?.cityName}} - CEP: {{address?.zipCode}}
+                                        {{endereco.streetName}}, {{endereco.number}} - {{endereco.neighborhood}}
+                                        - {{endereco.cityName}} - CEP: {{endereco.zipCode}}
                                     </p>
                                 </label>
                             </div>
