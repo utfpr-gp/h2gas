@@ -195,4 +195,4 @@ endereços, com rótulo), que o próprio TCC cita como inspiração desta HU.
       identificador, preservando os já cadastrados.
 - [x] Checkout permite selecionar entre endereços salvos sem redigitar.
 - [x] Todos os testes da seção 6 passando.
-- [ ] Revisado e aprovado antes de HU05 começar.
+- [x] Revisado e aprovado antes de HU05 começar.

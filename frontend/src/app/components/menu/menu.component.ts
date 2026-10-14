@@ -8,12 +8,14 @@ import { CartService } from '../../services/cart.service';
 import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { LocationContextService } from '../../services/location-context.service';
+import { BottomTabBarComponent } from '../bottom-tab-bar/bottom-tab-bar.component';
 
 @Component({
   selector: 'app-menu',
   imports: [
     CommonModule,
-    FormsModule
+    FormsModule,
+    BottomTabBarComponent
   ],
   templateUrl: './menu.component.html',
   styleUrl: './menu.component.css'

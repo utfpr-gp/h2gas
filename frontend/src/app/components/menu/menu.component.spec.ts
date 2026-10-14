@@ -54,4 +54,17 @@ describe('MenuComponent', () => {
 
     expect(router.navigate).toHaveBeenCalledWith(['/meus-enderecos']);
   });
+
+  it('deveExibirBottomTabBarParaCliente', () => {
+    expect(fixture.nativeElement.querySelector('app-bottom-tab-bar')).toBeTruthy();
+  });
+
+  it('naoDeveExibirBottomTabBarParaFornecedor', () => {
+    localStorage.setItem('user', JSON.stringify({ id: 'user-1', userType: 'SUPPLIER' }));
+    fixture = TestBed.createComponent(MenuComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-bottom-tab-bar')).toBeNull();
+  });
 });

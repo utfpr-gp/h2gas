@@ -1,16 +1,21 @@
-import { Component, ElementRef, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { SupplierService } from '../../../services/supplier.service';
 import { Supplier } from '../../../models/supplier';
 import { ToastrService } from 'ngx-toastr';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ProductItemService } from '../../../services/product-item.service';
 import { ProductItem } from '../../../models/product-item';
 import { CartService } from '../../../services/cart.service';
 import { PaginatedResponse } from '../../../models/paginated-response';
 import { PaginationComponent } from '../../pagination/pagination.component';
 import { LocationContextService } from '../../../services/location-context.service';
+import { ProductTypeService } from '../../../services/product-type.service';
+import { ProductType } from '../../../models/product-type';
+import { CategoryChipBarComponent } from '../../category-chip-bar/category-chip-bar.component';
+import { ProductCardComponent } from '../../product-card/product-card.component';
+import { SupplierCardComponent } from '../../supplier-card/supplier-card.component';
 
 @Component({
   selector: 'app-supplier-list',
@@ -18,7 +23,10 @@ import { LocationContextService } from '../../../services/location-context.servi
     FormsModule,
     CommonModule,
     ReactiveFormsModule,
-    PaginationComponent
+    PaginationComponent,
+    CategoryChipBarComponent,
+    ProductCardComponent,
+    SupplierCardComponent
   ],
   templateUrl: './supplier-list.component.html',
   styleUrl: './supplier-list.component.css'
@@ -33,6 +41,8 @@ export class SupplierListComponent implements OnInit {
     private cartService: CartService,
     private productItemService: ProductItemService,
     private locationContext: LocationContextService,
+    private productTypeService: ProductTypeService,
+    private route: ActivatedRoute,
   ) {
     this.formSearch = this.fb.group({
       name: ['']
@@ -41,16 +51,23 @@ export class SupplierListComponent implements OnInit {
 
 
   ngOnInit(): void {
-    this.getSuppliers();
+    if (this.route.snapshot.queryParamMap.get('view') === 'products') {
+      this.viewMode = 'products';
+      this.loadCategories();
+      this.getProducts();
+    } else {
+      this.getSuppliers();
+    }
   }
 
   suppliers?: Supplier[];
   formSearch!: FormGroup;
   products: ProductItem[] = [];
-  productSelect?: ProductItem = new ProductItem();
-  @ViewChild('productModal') productModal!: ElementRef<HTMLDialogElement>;
-  quantity: number = 1;
-  cartProduct?: ProductItem[] = [];
+
+  readonly promoBanners = [
+    { title: 'Fardinho de Água', subtitle: 'Compre água de diferentes tamanhos' },
+    { title: 'Gás de Cozinha e Industrial', subtitle: 'Até 15% OFF em itens selecionados' },
+  ];
 
   currentPage: number = 0;
   pageSize: number = 10; 
@@ -79,10 +96,14 @@ export class SupplierListComponent implements OnInit {
   }
 
   viewMode: 'suppliers' | 'products' = 'suppliers';
+  categories: ProductType[] = [];
+  selectedCategory: string | null = null;
+  sortByPrice = false;
 
   toggleView() {
     if (this.viewMode === 'suppliers') {
       this.viewMode = 'products';
+      this.loadCategories();
       this.getProducts(); // busca só quando alterna
     } else {
       this.viewMode = 'suppliers';
@@ -90,8 +111,37 @@ export class SupplierListComponent implements OnInit {
     }
   }
 
+  loadCategories() {
+    if (this.categories.length > 0) {
+      return;
+    }
+    this.productTypeService.findAll().subscribe({
+      next: (response) => {
+        this.categories = response;
+      },
+      error: () => {
+        this.toastr.error('Erro ao buscar categorias');
+      }
+    });
+  }
+
+  selectCategory(name: string | null) {
+    this.selectedCategory = name;
+    this.getProducts();
+  }
+
+  toggleSortByPrice() {
+    this.sortByPrice = !this.sortByPrice;
+    this.getProducts();
+  }
+
   getProducts() {
-    this.productItemService.getProductsFromActiveSuppliers().subscribe({
+    const cityId = this.locationContext.current()?.cityId;
+    const sort = this.sortByPrice ? 'priceDelivery,asc' : undefined;
+
+    this.productItemService.getProductsFromActiveSuppliers(
+      0, 20, cityId, this.selectedCategory ?? undefined, sort
+    ).subscribe({
       next: (response) => {
         this.products = response.data
       },
@@ -132,32 +182,9 @@ export class SupplierListComponent implements OnInit {
     });
   }
 
-  openModal(product: any) {
-    this.productSelect = product;
-    this.quantity = 1;
-    this.productModal.nativeElement.showModal();
-  }
-
-  closeModal() {
-    this.productModal.nativeElement.close();
-  }
-
-  confirmRequest() {
-    if (this.quantity < 1) {
-      this.toastr.warning("Selecione pelo menos 1 produto!");
-      this.closeModal();
-      return;
-    }
-  
-    const productToAdd = {
-      ...this.productSelect,
-      quantitySelect: this.quantity
-    };
-  
-    this.cartService.addProduct(productToAdd);
-  
-    this.toastr.success("Produto adicionado ao carrinho!");
-    this.closeModal();
+  addToCart(product: ProductItem) {
+    this.cartService.addProduct({ ...product, quantitySelect: 1 });
+    this.toastr.success('Produto adicionado ao carrinho!');
   }
 
 }
