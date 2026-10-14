@@ -43,6 +43,24 @@ describe('LocationContextService', () => {
     });
   });
 
+  it('deveSelecionarEnderecoComAddressId', () => {
+    service.selectAddress({
+      id: 7,
+      streetName: 'Rua XV',
+      number: '100',
+      cityId: 1,
+      cityName: 'Pato Branco',
+      addressName: 'Casa',
+    });
+
+    expect(service.current()).toEqual({
+      addressId: 7,
+      cityId: 1,
+      cityName: 'Pato Branco',
+      label: 'Rua XV, 100 · Pato Branco',
+    });
+  });
+
   it('deveLimparEnderecoAtivoAoChamarClear', () => {
     service.setAddress({ cityId: 1, cityName: 'Pato Branco', label: 'Rua XV, 100 · Pato Branco' });
 

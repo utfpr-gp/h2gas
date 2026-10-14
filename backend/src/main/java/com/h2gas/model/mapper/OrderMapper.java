@@ -119,6 +119,10 @@ public class OrderMapper {
 
     public Order toRequestEntity(OrderRequestDTO dto) {
         Order order = modelMapper.map(dto, Order.class);
+        // o ModelMapper casa addressId com Order.id; pedido novo nunca tem id,
+        // e o endereço de entrega é resolvido (com checagem de posse) no OrderService
+        order.setId(null);
+        order.setDeliveryAddress(null);
         if (dto.getCustomerUuid() != null) {
             User customerUser = new User();
             customerUser.setId(dto.getCustomerUuid());

@@ -116,6 +116,13 @@ public class AddressService {
 
     }
 
+    public List<AddressDTO> findAllByUserIdAddress(String userId) {
+        return addressRepository.findAllByUserIdOrderByIdDesc(userId)
+                .stream()
+                .map(addressMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
     public Address findEntityByUserId(String userId) {
         return addressRepository.findFirstByUserIdOrderByIdDesc(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Endereço não encontrado para esse usuário com id: " + userId));

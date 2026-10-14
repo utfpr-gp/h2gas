@@ -1,6 +1,7 @@
 package com.h2gas.services;
 
 import com.h2gas.enums.OrderStatusEnum;
+import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.dto.OrderItemRequestDTO;
 import com.h2gas.model.dto.OrderRequestDTO;
@@ -64,6 +65,8 @@ class OrderServiceTest {
     private String validCustomerId;
     private String validSupplierId;
     private Long validProductItemId;
+    private Long validCustomerAddressId;
+    private City testCity;
 
 
     @BeforeEach
@@ -71,6 +74,7 @@ class OrderServiceTest {
         // Criar cidade
         City city = new City(null, "Curitiba", "PR");
         cityRepository.save(city);
+        testCity = city;
 
         // Criar endereço do fornecedor
         Address supplierAddress = new Address(
@@ -112,6 +116,7 @@ class OrderServiceTest {
                 customer
         );
         addressRepository.save(customerAddress);
+        validCustomerAddressId = customerAddress.getId();
 
         // Criar fornecedor
         Supplier supplier = createSupplier(
@@ -191,6 +196,7 @@ class OrderServiceTest {
         requestDTO.setSupplierRef(validSupplierId);
         requestDTO.setPaymentMethod("Cartão de Crédito");
         requestDTO.setNote("Deixar na portaria");
+        requestDTO.setAddressId(validCustomerAddressId);
         requestDTO.setItems(List.of(itemDTO));
 
         // Act
@@ -203,6 +209,56 @@ class OrderServiceTest {
         assertEquals("Cartão de Crédito", result.getPaymentMethod());
         assertEquals(new BigDecimal("179.80"), result.getTotalPrice());
         assertEquals(1, result.getOrderItems().size());
+    }
+
+    private OrderRequestDTO novoPedido(Long addressId) {
+        OrderItemRequestDTO itemDTO = new OrderItemRequestDTO();
+        itemDTO.setProductItemRef(validProductItemId);
+        itemDTO.setQuantity(1);
+
+        OrderRequestDTO requestDTO = new OrderRequestDTO();
+        requestDTO.setCustomerUuid(validCustomerId);
+        requestDTO.setSupplierRef(validSupplierId);
+        requestDTO.setPaymentMethod("PIX");
+        requestDTO.setAddressId(addressId);
+        requestDTO.setItems(List.of(itemDTO));
+        return requestDTO;
+    }
+
+    @Test
+    @DisplayName("HU04: deve usar o endereço escolhido no pedido em vez de inferir do usuário")
+    void deveUsarAddressIdInformadoNoPedidoEmVezDeInferirDoUsuario() {
+        // endereço mais novo do cliente — o comportamento antigo escolheria este
+        User customer = userRepository.findById(validCustomerId).orElseThrow();
+        addressRepository.saveAndFlush(new Address(
+                null, "Rua do Trabalho", "Trabalho", "50", null, "Batel", "80420-000", testCity, customer));
+
+        OrderResponseDTO result = orderService.createOrder(novoPedido(validCustomerAddressId));
+
+        Order salvo = orderRepository.findById(result.getId()).orElseThrow();
+        assertEquals(validCustomerAddressId, salvo.getDeliveryAddress().getId());
+    }
+
+    @Test
+    @DisplayName("HU04: deve rejeitar pedido com endereço de outro cliente")
+    void deveRejeitarPedidoComAddressIdQueNaoPertenceAoCliente() {
+        User outro = userRepository.save(new User(
+                null, "Outro Cliente", "outro@teste.com", "41900000000",
+                "11122233344", "senha", UserTypeEnum.CUSTOMER));
+        Address enderecoDeOutro = addressRepository.saveAndFlush(new Address(
+                null, "Rua de Outro", "Casa", "1", null, "Centro", "80000-000", testCity, outro));
+
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class,
+                () -> orderService.createOrder(novoPedido(enderecoDeOutro.getId())));
+        assertEquals("Endereço não pertence ao cliente informado.", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("HU04: deve rejeitar pedido sem endereço de entrega")
+    void deveRejeitarPedidoSemEnderecoDeEntrega() {
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class,
+                () -> orderService.createOrder(novoPedido(null)));
+        assertEquals("Informe o endereço de entrega.", ex.getMessage());
     }
 
     @Test

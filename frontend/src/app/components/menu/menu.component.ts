@@ -94,7 +94,7 @@ export class MenuComponent implements OnInit {
   }
 
   editAddress() {
-    this.router.navigate(['/primeiro-acesso-endereco']);
+    this.router.navigate(['/meus-enderecos']);
   }
 
   @HostListener('document:click', ['$event'])

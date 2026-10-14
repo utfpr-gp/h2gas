@@ -22,4 +22,8 @@ export class AddressService extends AbstractService<Address>{
   findByUserId(userId: string) {
     return this.http.get(`${this.baseUrl}/by-user/${userId}`);
   }
+
+  findAllByUser(userId: string) {
+    return this.http.get<Address[]>(`${this.baseUrl}/by-user/${userId}/all`);
+  }
 }

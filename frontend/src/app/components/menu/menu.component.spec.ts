@@ -42,4 +42,16 @@ describe('MenuComponent', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).toContain('Rua XV, 100 · Pato Branco');
   });
+
+  it('deveIrParaMeusEnderecosAoClicarNoEnderecoAtivo', () => {
+    locationContextService.setAddress({ cityId: 1, cityName: 'Pato Branco', label: 'Rua XV, 100 · Pato Branco' });
+    fixture.detectChanges();
+    const router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+
+    const botaoEndereco = Array.from(fixture.nativeElement.querySelectorAll('button') as HTMLButtonElement[])
+      .find((b) => b.textContent?.includes('Rua XV, 100 · Pato Branco'));
+    botaoEndereco?.click();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/meus-enderecos']);
+  });
 });

@@ -13,6 +13,7 @@ import { OrderItemRequest } from '../../../models/order-item.model';
 import { OrderService } from '../../../services/order.service';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
+import { LocationContextService } from '../../../services/location-context.service';
 
 @Component({
   selector: 'app-order-resume',
@@ -34,6 +35,7 @@ export class OrderResumeComponent implements OnInit {
     private fb: FormBuilder, 
     private orderService: OrderService,
     private router: Router,
+    private locationContext: LocationContextService,
   ) {
     this.formOrder = this.fb.group({
       observation: [''],
@@ -45,15 +47,14 @@ export class OrderResumeComponent implements OnInit {
   formOrder!: FormGroup;
   order?: OrderRequest;
   userLogado?: User;
-  address?: Address;
+  addresses: Address[] = [];
+  selectedAddressId?: number;
   isLoading: boolean = false;
 
   ngOnInit(): void {
     this.productsCarts = this.cartService.getCart();
     this.userLogado = this.userService.getUserLocalStorage();
-    console.log(this.userLogado);
-    console.log(this.productsCarts);
-    this.getAddres();
+    this.loadAddresses();
   }
 
   get totalPrice() {
@@ -68,22 +69,33 @@ export class OrderResumeComponent implements OnInit {
     }
   }
 
-  getAddres() {
-    this.addressService.findByUserId(this.userLogado?.id!!).subscribe({
+  loadAddresses() {
+    this.addressService.findAllByUser(this.userLogado?.id!).subscribe({
       next: (response) => {
-        console.log(response);
-        this.address = response;
+        this.addresses = response;
+        const activeId = this.locationContext.current()?.addressId;
+        const ativo = response.find((a) => a.id === activeId) ?? response[0];
+        this.selectedAddressId = ativo?.id;
       },
       error: (err) => {
-        console.log(err);
-        this.toastr.error(`Erro ao buscar endereço: ${err.error.message}`);
+        this.toastr.error(`Erro ao buscar endereços: ${err.error?.message || err.message}`);
       },
-    })
+    });
+  }
+
+  selectAddress(address: Address) {
+    this.selectedAddressId = address.id;
+    this.locationContext.selectAddress(address);
   }
 
   createOrder() {
     if (!this.formOrder.valid) {
       this.toastr.error("Por favor selecione um meio de pagamento!!");
+      return;
+    }
+
+    if (this.selectedAddressId == null) {
+      this.toastr.error("Selecione o endereço de entrega.");
       return;
     }
   
@@ -109,6 +121,7 @@ export class OrderResumeComponent implements OnInit {
           supplierRef: supplierId,
           paymentMethod: this.formOrder.get('paymentMethod')?.value,
           note: this.formOrder.get('observation')?.value,
+          addressId: this.selectedAddressId,
           items: orderItemRequests
         };
   
