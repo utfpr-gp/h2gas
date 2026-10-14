@@ -14,8 +14,7 @@ import { ToastrService } from 'ngx-toastr';
     CommonModule,
     NgxMaskDirective
   ],
-  templateUrl: './customer-panel.component.html',
-  styleUrl: './customer-panel.component.css'
+  templateUrl: './customer-panel.component.html'
 })
 export class CustomerPanelComponent implements OnInit {
   userLogado?: User;

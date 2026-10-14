@@ -159,6 +159,48 @@ backend — fora de escopo de um script de UI).
 Grupos A–E não recebem teste automatizado novo (puro CSS/classe) —
 verificação por grep + checagem visual manual, como no F2.
 
+### 5.8 Cobertura por HU (HU01–HU11)
+
+Decisão do autor: o F7 vale para todas as HUs. Telas de HUs já
+implementadas recebem o F7 em fatias; HUs ainda não implementadas recebem
+o F7 **dentro da própria implementação** — a Definição de Pronto de cada
+uma passa a incluir "telas no padrão F7" (tokens do F2, sem HEX novo,
+idioma visual das Fatias 1 e 2, espaço para a bottom tab bar no mobile
+quando for tela do cliente).
+
+| HU | Telas | Quando recebe o F7 | Referência visual |
+|---|---|---|---|
+| HU01 | `first-access-address`, endereço ativo na navbar | Fatia 2 | Grupo A + navbar da Figura 11 |
+| HU02 | `supplier-list`, `product-list` | Fatia 1 (feita) | Figura 11 |
+| HU03 | `order-resume` (preços), cards de produto | Na implementação da HU03 | Figura 12a |
+| HU04 | `manage-addresses` (nova), `address-form` (novo), seletor de endereço do `order-resume`, `customer-panel` | Fatia 2 | Figura 3c (Aiqfome, citada no TCC como inspiração) + Figura 12a |
+| HU05 | `order-list` (Meus Pedidos, recompra) | Na implementação da HU05 | Figura 12b |
+| HU06 | `received-orders`, `orders-widget` | Na implementação da HU06 | Figura 14 |
+| HU07 | módulo do entregador, modal de atribuição | Na implementação da HU07 | Figuras 15 e 17 |
+| HU08 | notificações em tempo real nas telas existentes | Na implementação da HU08 | idioma das fatias anteriores |
+| HU09 | dashboard do fornecedor | Na implementação da HU09 | Figura 13 |
+| HU10 | `product-item`, `product-item-form`, `category-products` | Na implementação da HU10 | Figura 16 |
+| HU11 | telas de autenticação | Na implementação da HU11 | Figura 10 |
+
+Telas que nenhuma HU toca (ex.: `about`, `contact`, `supplier-approval`,
+`city-register`) seguem a §5.7 numa fatia final de varredura.
+
+### 5.9 Fatia 2 — telas de endereço e Meus Dados
+
+- `manage-addresses` e `address-form` nascem no padrão. O TCC não tem
+  mockup próprio do H2Gás para "Meus Endereços"; a referência é a Figura
+  3c (Aiqfome): endereço ativo em destaque, "outros endereços" abaixo,
+  rótulo (Casa/Trabalho) e "+ Adicionar endereço".
+- `first-access-address` (Grupo A): gradiente com HEX
+  (`#0E2068 → #3B82F6`) troca por tokens.
+- `customer-panel` (Grupo B): template reescrito no padrão; o
+  `customer-panel.component.css` (317 linhas que reimplementavam classes
+  do Tailwind, com blocos duplicados e uma regra `body` sem efeito dentro
+  de CSS de componente) é apagado; o modal de endereço sai (ver HU04) e
+  entra um atalho para "Meus endereços".
+- `order-resume`: só o bloco de seleção de endereço (HU04); o resto da
+  tela fica para a HU03.
+
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
 - Agregação de rating médio por fornecedor (gap de backend).
@@ -202,6 +244,12 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
       continuam verdes).
 - [x] Banners estáticos e placeholder de rating implementados.
 - [x] Testes da seção 7 (itens 1-7) verdes; `ng build` sem erro.
+
+**Fatia 2 (HU01/HU04) — concluída:**
+- [x] `manage-addresses` e `address-form` no padrão (referência Figura 3c).
+- [x] `first-access-address` sem HEX (gradiente nos tokens `primary`/`secondary`).
+- [x] `customer-panel` reescrito no padrão; CSS de 317 linhas removido.
+- [x] Seletor de endereço do `order-resume` no padrão.
 
 **Pendente (próximas fatias):**
 - [ ] Grupos A–E migrados pros tokens (grep: zero hex novo fora de
