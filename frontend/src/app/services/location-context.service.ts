@@ -1,6 +1,8 @@
 import { Injectable, signal } from '@angular/core';
+import { Address } from '../models/address';
 
 export interface ActiveAddress {
+  addressId?: number;
   cityId: number;
   cityName: string;
   label: string;
@@ -15,6 +17,15 @@ export class LocationContextService {
   setAddress(address: ActiveAddress) {
     this.addressSignal.set(address);
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(address));
+  }
+
+  selectAddress(address: Address) {
+    this.setAddress({
+      addressId: address.id,
+      cityId: address.cityId!,
+      cityName: address.cityName!,
+      label: `${address.streetName}, ${address.number} · ${address.cityName}`,
+    });
   }
 
   clear() {

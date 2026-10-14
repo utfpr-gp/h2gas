@@ -23,11 +23,16 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.List;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AddressController.class)
@@ -88,5 +93,29 @@ class AddressControllerTest {
         verify(addressService).createAddress(argThat(dto ->
                 "user-logado-123".equals(dto.getUserId())
         ));
+    }
+
+    @Test
+    void deveRetornarListaCompletaNoEndpointAll() throws Exception {
+        AddressDTO casa = new AddressDTO();
+        casa.setAddressName("Casa");
+        AddressDTO trabalho = new AddressDTO();
+        trabalho.setAddressName("Trabalho");
+
+        when(addressService.findAllByUserIdAddress("user-logado-123")).thenReturn(List.of(casa, trabalho));
+
+        mockMvc.perform(get("/api/addresses/by-user/user-logado-123/all"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].addressName").value("Casa"))
+                .andExpect(jsonPath("$[1].addressName").value("Trabalho"));
+    }
+
+    @Test
+    void deveNegarListagemDeEnderecosDeOutroUsuario() throws Exception {
+        mockMvc.perform(get("/api/addresses/by-user/user-de-outra-pessoa/all"))
+                .andExpect(status().isForbidden());
+
+        verify(addressService, never()).findAllByUserIdAddress(any());
     }
 }

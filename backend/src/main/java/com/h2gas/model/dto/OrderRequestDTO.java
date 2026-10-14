@@ -14,5 +14,6 @@ public class OrderRequestDTO {
     private String supplierRef;
     private String paymentMethod;
     private String note;
+    private Long addressId;
     private List<OrderItemRequestDTO> items;
 }

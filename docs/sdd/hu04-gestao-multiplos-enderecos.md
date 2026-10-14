@@ -55,36 +55,41 @@ quebra em produção assim que um cliente tiver 2+ endereços:
 
 ### 5.1 Backend
 
-**`AddressRepository.java`**:
-```java
-// substitui o antigo findByUserId (perigoso com N linhas)
-Optional<Address> findFirstByUserIdOrderByIdAsc(String userId);
+> **Atualização (implementação):** a HU01 já trocou o antigo
+> `findByUserId` por `findFirstByUserIdOrderByIdDesc` (endereço mais
+> recente), que é o que o guard da HU01 usa e já está testado. Esta HU
+> mantém esse método como está — não troca para `...Asc`.
 
-// novo — lista completa
-List<Address> findAllByUserId(String userId);
+**`AddressRepository.java`** — novo:
+```java
+List<Address> findAllByUserIdOrderByIdDesc(String userId);
 ```
 
-**`AddressService.java`**:
-- `findByUserIdAddress`/`findEntityByUserId` passam a chamar
-  `findFirstByUserIdOrderByIdAsc` (mantém o contrato usado pelo guard da
-  HU01 — "existe pelo menos um endereço?" — sem quebrar nada lá).
-- Novo `findAllByUserIdAddress(String userId): List<AddressDTO>`, usando
-  `findAllByUserId`.
+**`AddressService.java`** — novo
+`findAllByUserIdAddress(String userId): List<AddressDTO>`.
+`findByUserIdAddress`/`findEntityByUserId` continuam como a HU01 deixou.
 
-**`AddressController.java`** — novo endpoint:
+**`AddressController.java`** — novo endpoint, que confere o dono:
 ```java
 @GetMapping("/by-user/{userId}/all")
 @RolesAllowed({"ADMIN", "SUPPLIER", "CUSTOMER"})
 public ResponseEntity<List<AddressDTO>> getAllAddressesByUserId(@PathVariable String userId) {
+    // 403 se {userId} não for o usuário logado (exceto ADMIN)
     return ResponseEntity.ok(addressService.findAllByUserIdAddress(userId));
 }
 ```
+A checagem é feita no controller devolvendo `ResponseEntity.status(403)`:
+o `GlobalExceptionHandler` tem um handler genérico de `Exception` que
+transformaria um `AccessDeniedException` em 500.
 
 **`OrderRequestDTO.java`** — adicionar `private Long addressId;`.
 
 **`OrderService.createOrder`** — parar de inferir o endereço, usar o que
 o cliente escolheu no checkout, validando posse:
 ```java
+if (orderRequestDTO.getAddressId() == null) {
+    throw new BusinessRuleException("Informe o endereço de entrega.");
+}
 Address deliveryAddress = addressService.findByIdEntity(orderRequestDTO.getAddressId());
 if (!deliveryAddress.getUser().getId().equals(user.getId())) {
     throw new BusinessRuleException("Endereço não pertence ao cliente informado.");
@@ -103,7 +108,8 @@ com `@Input() mode: 'first' | 'add'` e `@Output() saved`. `first-access-address`
 passa a envolver esse componente; `manage-addresses` (abaixo) também.
 
 **Novo componente `manage-addresses`**
-(`components/pages/manage-addresses/`):
+(`components/pages/manage-addresses/`, rota `/meus-enderecos` — mesmo
+padrão das rotas do cliente `/meus-pedidos` e `/painel-cliente`):
 - Lista todos os endereços via `AddressService.findAllByUser(userId)`
   (novo método), exibindo `addressName` (rótulo) + `streetName`.
 - Botão "+ Adicionar endereço" abre `AddressFormComponent` em modo `add`
@@ -127,7 +133,16 @@ seleção atualiza `LocationContextService` **e** é enviada como
 `addressId` no payload de `createOrder` (fechando o gap do §4).
 
 **`menu.component.ts`** (navbar, HU01) — o link "editar endereço" passa a
-rotear para `/manage-addresses` em vez de reabrir `first-access-address`.
+rotear para `/meus-enderecos` em vez de reabrir `first-access-address`.
+
+**`customer-panel` (Meus Dados)** — o modal de endereço próprio (cópia
+do formulário de CEP) é removido; no lugar, um atalho para
+`/meus-enderecos`. Decisão do autor para não manter dois caminhos de
+cadastro de endereço.
+
+**Visual** — sem mockup próprio no TCC para esta tela; segue o F7, usando
+como referência a Figura 3c do TCC (Aiqfome: endereço principal + outros
+endereços, com rótulo), que o próprio TCC cita como inspiração desta HU.
 
 ## 6. Plano de Testes (TDD)
 
@@ -140,7 +155,8 @@ rotear para `/manage-addresses` em vez de reabrir `first-access-address`.
    `deveUsarAddressIdInformadoNoPedidoEmVezDeInferirDoUsuario`,
    `deveRejeitarPedidoComAddressIdQueNaoPertenceAoCliente` (espera
    `BusinessRuleException`).
-4. `AddressControllerTest` — `deveRetornarListaCompletaNoEndpointAll`.
+4. `AddressControllerTest` — `deveRetornarListaCompletaNoEndpointAll`,
+   `deveNegarListagemDeEnderecosDeOutroUsuario` (403).
 
 **Frontend:**
 5. `address.service.spec.ts` — `deveBuscarTodosEnderecosDoUsuario`.
@@ -162,15 +178,21 @@ rotear para `/manage-addresses` em vez de reabrir `first-access-address`.
   visível ao usuário.
 - Qualquer mudança na tela `first-access-address` além de passar a usar
   o `AddressFormComponent` compartilhado.
+- Checagem de dono nas rotas que já existiam (`PUT /api/users/{id}`,
+  `PUT /api/addresses/{id}`, `GET /api/addresses/by-user/{userId}`) —
+  dívida registrada; só a rota nova nasce com a checagem.
+- Formulário de endereço do fornecedor (`distribuitor-form`) não passa a
+  usar o `AddressFormComponent` nesta HU.
 
 ## 8. Definição de Pronto
 
-- [ ] `AddressRepository`/`AddressService` não quebram mais com múltiplos
+- [x] `AddressRepository`/`AddressService` não quebram mais com múltiplos
       endereços por usuário.
-- [ ] `GET /api/addresses/by-user/{userId}/all` implementado.
-- [ ] `OrderService.createOrder` usa `addressId` do request, valida posse.
-- [ ] `manage-addresses` permite adicionar endereço com rótulo
+- [x] `GET /api/addresses/by-user/{userId}/all` implementado (com checagem
+      de dono, 403).
+- [x] `OrderService.createOrder` usa `addressId` do request, valida posse.
+- [x] `manage-addresses` permite adicionar endereço com rótulo
       identificador, preservando os já cadastrados.
-- [ ] Checkout permite selecionar entre endereços salvos sem redigitar.
-- [ ] Todos os testes da seção 6 passando.
+- [x] Checkout permite selecionar entre endereços salvos sem redigitar.
+- [x] Todos os testes da seção 6 passando.
 - [ ] Revisado e aprovado antes de HU05 começar.

@@ -18,6 +18,7 @@ import { ProductListComponent } from './components/pages/product-list/product-li
 import { OrderResumeComponent } from './components/pages/order-resume/order-resume.component';
 import { OrderListComponent } from './components/pages/order-list/order-list.component';
 import { CustomerPanelComponent } from './components/pages/customer-panel/customer-panel.component';
+import { ManageAddressesComponent } from './components/pages/manage-addresses/manage-addresses.component';
 import { ReceivedOrdersComponent } from './components/pages/received-orders/received-orders.component';
 import { AwaitingApprovalComponent } from './components/pages/awaiting-approval/awaiting-approval.component';
 import { OrderHistoryComponent } from './components/pages/order-history/order-history.component';
@@ -122,7 +123,13 @@ export const routes: Routes = [
         data: {roles: ['ADMIN', 'CUSTOMER']}
     },
     {
-        path: 'dashboard-fornecedor', 
+        path: 'meus-enderecos',
+        component: ManageAddressesComponent,
+        canActivate: [authGuard],
+        data: {roles: ['ADMIN', 'CUSTOMER']}
+    },
+    {
+        path: 'dashboard-fornecedor',
         component: ReceivedOrdersComponent,
         canActivate: [authGuard],
         data: {roles: ['ADMIN', 'SUPPLIER']}
