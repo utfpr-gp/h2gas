@@ -18,6 +18,10 @@ public class ProductItemMapper {
         ProductItemDTO productItemDTO = modelMapper.map(data, ProductItemDTO.class);
         if (data.getPriceDelivery() != null) {
             productItemDTO.setPrice(data.getPriceDelivery().doubleValue());
+            productItemDTO.setPriceDelivery(data.getPriceDelivery().doubleValue());
+        }
+        if (data.getPricePickup() != null) {
+            productItemDTO.setPricePickup(data.getPricePickup().doubleValue());
         }
         if (data.getCategoryProduct().getName() != null) {
             productItemDTO.setCategory(data.getCategoryProduct().getName());

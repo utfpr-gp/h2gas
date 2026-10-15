@@ -1,5 +1,6 @@
 package com.h2gas.services;
 
+import com.h2gas.enums.DeliveryModeEnum;
 import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.OrderItemRequestDTO;
@@ -50,9 +51,9 @@ public class OrderItemService {
         productItem.setStockQuantity(currentStock - quantityRequested);
         productItemService.save(productItem);
 
-        BigDecimal totalPrice = calculateTotalPrice(orderItem.getQuantity(), productItem.getPriceDelivery());
-        orderItem.setTotalPrice(totalPrice);
-        orderItem.setUnitPrice(productItem.getPriceDelivery());
+        BigDecimal unitPrice = unitPriceFor(productItem, order.getDeliveryMode());
+        orderItem.setTotalPrice(calculateTotalPrice(orderItem.getQuantity(), unitPrice));
+        orderItem.setUnitPrice(unitPrice);
         orderItem.setProduct(productItem);
         orderItem.setOrder(order);
 
@@ -70,7 +71,13 @@ public class OrderItemService {
                 -> new ResourceNotFoundException("Order Item não encontrado com esse id: " + id));
     }
 
-    private BigDecimal calculateTotalPrice(int quantity, BigDecimal unitPrice) {
+    static BigDecimal unitPriceFor(ProductItem productItem, DeliveryModeEnum deliveryMode) {
+        return deliveryMode == DeliveryModeEnum.PICKUP
+                ? productItem.getPricePickup()
+                : productItem.getPriceDelivery();
+    }
+
+    static BigDecimal calculateTotalPrice(int quantity, BigDecimal unitPrice) {
         return unitPrice.multiply(new BigDecimal(quantity));
     }
 }

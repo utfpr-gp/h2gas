@@ -1,14 +1,19 @@
 package com.h2gas.services;
 
+import com.h2gas.enums.DeliveryModeEnum;
 import com.h2gas.enums.OrderStatusEnum;
 import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.OrderItemRequestDTO;
+import com.h2gas.model.dto.OrderPreviewDTO;
+import com.h2gas.model.dto.OrderPreviewItemDTO;
+import com.h2gas.model.dto.OrderPreviewRequestDTO;
 import com.h2gas.model.dto.OrderRequestDTO;
 import com.h2gas.model.dto.OrderResponseDTO;
 import com.h2gas.model.entity.Address;
 import com.h2gas.model.entity.Order;
 import com.h2gas.model.entity.OrderItem;
+import com.h2gas.model.entity.ProductItem;
 import com.h2gas.model.entity.Supplier;
 import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.OrderMapper;
@@ -58,6 +63,7 @@ public class OrderService {
         order.setSupplier(supplier);
         order.setOrderDate(LocalDateTime.now());
         order.setStatus(OrderStatusEnum.PENDING);
+        order.setDeliveryMode(resolveDeliveryMode(orderRequestDTO.getDeliveryMode()));
         order.setDeliveryAddress(resolveDeliveryAddress(orderRequestDTO.getAddressId(), user));
         orderRepository.save(order);
 
@@ -72,6 +78,34 @@ public class OrderService {
         orderRepository.save(order);
 
         return orderMapper.toResponseDto(order);
+    }
+
+    public OrderPreviewDTO previewOrder(OrderPreviewRequestDTO request) {
+        DeliveryModeEnum deliveryMode = resolveDeliveryMode(request.getDeliveryMode());
+        List<OrderPreviewItemDTO> items = new ArrayList<>();
+
+        for (OrderItemRequestDTO item : request.getItems()) {
+            ProductItem productItem = productItemService.findEntityById(item.getProductItemRef());
+            BigDecimal unitPrice = OrderItemService.unitPriceFor(productItem, deliveryMode);
+            BigDecimal totalPrice = OrderItemService.calculateTotalPrice(item.getQuantity(), unitPrice);
+            items.add(new OrderPreviewItemDTO(item.getProductItemRef(), item.getQuantity(), unitPrice, totalPrice));
+        }
+
+        BigDecimal subtotal = items.stream()
+                .map(OrderPreviewItemDTO::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return new OrderPreviewDTO(items, subtotal);
+    }
+
+    private DeliveryModeEnum resolveDeliveryMode(String deliveryMode) {
+        if (deliveryMode == null || deliveryMode.isBlank()) {
+            return DeliveryModeEnum.DELIVERY;
+        }
+        try {
+            return DeliveryModeEnum.valueOf(deliveryMode.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new BusinessRuleException("Modalidade de entrega inválida: " + deliveryMode);
+        }
     }
 
     private Address resolveDeliveryAddress(Long addressId, User customer) {

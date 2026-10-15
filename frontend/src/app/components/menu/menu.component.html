@@ -184,7 +184,8 @@
                         {{ cartProduct.category }}
                       </h3>
                       <p class="text-sm text-gray-500">
-                        {{ cartProduct.price | currency:'BRL':'symbol':'1.2-2' }}
+                        {{ unitPriceForMode(cartProduct) | currency:'BRL':'symbol':'1.2-2' }}
+                        <span class="text-xs">{{ deliveryMode === 'PICKUP' ? 'retirada' : 'entrega' }}</span>
                       </p>
                     </div>
                   </div>

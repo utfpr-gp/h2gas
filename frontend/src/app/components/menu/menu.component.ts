@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user';
 import { ProductItem } from '../../models/product-item';
+import { DeliveryMode } from '../../models/order.model';
 import { CartService } from '../../services/cart.service';
 import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
@@ -35,6 +36,7 @@ export class MenuComponent implements OnInit {
   user?: User;
   cartProducts?: ProductItem[];
   isCartOpen = false;
+  deliveryMode: DeliveryMode = 'DELIVERY';
 
   quantity: number = 1;
   min: number = 1;
@@ -71,6 +73,7 @@ export class MenuComponent implements OnInit {
       this.cartProducts = cart;
       console.log('Carrinho atualizado:', this.cartProducts);
     });
+    this.cartService.deliveryMode$.subscribe(mode => this.deliveryMode = mode);
 
     if (userJson) {
       this.user = JSON.parse(userJson);
@@ -78,8 +81,13 @@ export class MenuComponent implements OnInit {
   }
 
 
+  unitPriceForMode(product: ProductItem): number | undefined {
+    return this.deliveryMode === 'PICKUP' ? product.pricePickup : product.priceDelivery;
+  }
+
+  // estimativa do drawer; o valor cobrado vem do preview do backend no checkout (RN01)
   get totalPrice() {
-    return this.cartProducts!.reduce((sum, item) => sum + item.price! * item.quantitySelect!, 0);
+    return this.cartProducts!.reduce((sum, item) => sum + (this.unitPriceForMode(item) ?? 0) * item.quantitySelect!, 0);
   }
 
 

@@ -8,7 +8,7 @@ import { User } from '../../../models/user';
 import { UserService } from '../../../services/user.service';
 import { Address } from '../../../models/address';
 import { ToastrService } from 'ngx-toastr';
-import { OrderRequest } from '../../../models/order.model';
+import { DeliveryMode, OrderPreview, OrderRequest } from '../../../models/order.model';
 import { OrderItemRequest } from '../../../models/order-item.model';
 import { OrderService } from '../../../services/order.service';
 import { Router } from '@angular/router';
@@ -50,23 +50,53 @@ export class OrderResumeComponent implements OnInit {
   addresses: Address[] = [];
   selectedAddressId?: number;
   isLoading: boolean = false;
+  deliveryMode: DeliveryMode = 'DELIVERY';
+  preview?: OrderPreview;
+
+  readonly paymentMethods = [
+    { value: 'DINHEIRO', label: 'Dinheiro', hint: 'Pagamento na entrega', icon: 'payments' },
+    { value: 'PIX', label: 'PIX', hint: 'Pagamento instantâneo na entrega', icon: 'pix' },
+    { value: 'CREDIT_CARD', label: 'Cartão de Crédito', hint: 'Visa, Mastercard, Elo', icon: 'credit_card' },
+  ];
 
   ngOnInit(): void {
     this.productsCarts = this.cartService.getCart();
     this.userLogado = this.userService.getUserLocalStorage();
+    this.deliveryMode = this.cartService.getDeliveryMode();
     this.loadAddresses();
+    this.loadPreview();
   }
 
-  get totalPrice() {
-    return this.productsCarts!.reduce((sum, item) => sum + item.price! * item.quantitySelect!, 0);
+  setDeliveryMode(mode: DeliveryMode) {
+    this.deliveryMode = mode;
+    this.cartService.setDeliveryMode(mode);
+    this.loadPreview();
   }
 
-  totalPerUnit(product: ProductItem): number {
-    if (product.price && product.quantitySelect) {
-      return product.price * product!.quantitySelect;
-    } else {
-      return 0;
+  // RN01: preço unitário, total por item e subtotal vêm do backend
+  loadPreview() {
+    if (!this.productsCarts?.length) {
+      this.preview = undefined;
+      return;
     }
+    this.orderService.previewOrder({
+      items: this.toOrderItemRequests(this.productsCarts),
+      deliveryMode: this.deliveryMode,
+    }).subscribe({
+      next: (preview) => this.preview = preview,
+      error: (err) => this.toastr.error(`Erro ao calcular o subtotal: ${err.error?.message || err.message}`),
+    });
+  }
+
+  previewItem(product: ProductItem) {
+    return this.preview?.items.find((item) => item.productItemRef === product.id);
+  }
+
+  private toOrderItemRequests(products: ProductItem[]): OrderItemRequest[] {
+    return products.map(p => ({
+      productItemRef: p.id ?? 0,
+      quantity: p.quantitySelect ?? 0
+    }));
   }
 
   loadAddresses() {
@@ -111,18 +141,14 @@ export class OrderResumeComponent implements OnInit {
   
     const pedidosObservables = Array.from(productsBySupplier.entries()).map(
       ([supplierId, products]) => {
-        const orderItemRequests: OrderItemRequest[] = products!.map(p => ({
-          productItemRef: p.id ?? 0,
-          quantity: p.quantitySelect ?? 0
-        }));
-  
-        const order = {
+        const order: OrderRequest = {
           customerUuid: this.userLogado!.id,
           supplierRef: supplierId,
           paymentMethod: this.formOrder.get('paymentMethod')?.value,
           note: this.formOrder.get('observation')?.value,
           addressId: this.selectedAddressId,
-          items: orderItemRequests
+          deliveryMode: this.deliveryMode,
+          items: this.toOrderItemRequests(products!)
         };
   
         return this.orderService.createOrder(order);

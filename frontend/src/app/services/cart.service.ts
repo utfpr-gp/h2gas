@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { ProductItem } from '../models/product-item';
+import { DeliveryMode } from '../models/order.model';
 
 @Injectable({
   providedIn: 'root'
@@ -15,6 +16,22 @@ export class CartService {
   private getFromLocalStorage(): any[] {
     const data = localStorage.getItem('cart-product');
     return data ? JSON.parse(data) : [];
+  }
+
+  private deliveryModeSubject = new BehaviorSubject<DeliveryMode>(this.readDeliveryModeFromStorage());
+  deliveryMode$ = this.deliveryModeSubject.asObservable();
+
+  private readDeliveryModeFromStorage(): DeliveryMode {
+    return localStorage.getItem('cart-delivery-mode') === 'PICKUP' ? 'PICKUP' : 'DELIVERY';
+  }
+
+  getDeliveryMode(): DeliveryMode {
+    return this.deliveryModeSubject.value;
+  }
+
+  setDeliveryMode(mode: DeliveryMode) {
+    localStorage.setItem('cart-delivery-mode', mode);
+    this.deliveryModeSubject.next(mode);
   }
 
   setCart(cart: any[]) {

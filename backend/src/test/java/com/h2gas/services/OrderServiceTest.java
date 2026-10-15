@@ -1,9 +1,12 @@
 package com.h2gas.services;
 
+import com.h2gas.enums.DeliveryModeEnum;
 import com.h2gas.enums.OrderStatusEnum;
 import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.dto.OrderItemRequestDTO;
+import com.h2gas.model.dto.OrderPreviewDTO;
+import com.h2gas.model.dto.OrderPreviewRequestDTO;
 import com.h2gas.model.dto.OrderRequestDTO;
 import com.h2gas.model.dto.OrderResponseDTO;
 import com.h2gas.model.entity.*;
@@ -157,7 +160,7 @@ class OrderServiceTest {
         ProductItem productItem = new ProductItem();
         productItem.setBrand("Marca Teste");
         productItem.setPriceDelivery(new BigDecimal("89.90"));
-        productItem.setPricePickup(new BigDecimal("89.90"));
+        productItem.setPricePickup(new BigDecimal("79.90"));
         productItem.setStockQuantity(100);
         productItem.setImageUrl("example.com/image.jpg");
         productItem.setCategoryProduct(category);
@@ -259,6 +262,71 @@ class OrderServiceTest {
         BusinessRuleException ex = assertThrows(BusinessRuleException.class,
                 () -> orderService.createOrder(novoPedido(null)));
         assertEquals("Informe o endereço de entrega.", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("HU03: deve persistir a modalidade e cobrar o preço de retirada")
+    void devePersistirDeliveryModeNoPedido() {
+        OrderRequestDTO request = novoPedido(validCustomerAddressId);
+        request.setDeliveryMode("PICKUP");
+
+        OrderResponseDTO result = orderService.createOrder(request);
+
+        Order salvo = orderRepository.findById(result.getId()).orElseThrow();
+        assertEquals(DeliveryModeEnum.PICKUP, salvo.getDeliveryMode());
+        assertEquals(new BigDecimal("79.90"), salvo.getTotalPrice());
+    }
+
+    @Test
+    @DisplayName("HU03: deve assumir entrega quando a modalidade não for informada")
+    void deveAssumirEntregaQuandoModalidadeAusente() {
+        OrderResponseDTO result = orderService.createOrder(novoPedido(validCustomerAddressId));
+
+        Order salvo = orderRepository.findById(result.getId()).orElseThrow();
+        assertEquals(DeliveryModeEnum.DELIVERY, salvo.getDeliveryMode());
+        assertEquals(new BigDecimal("89.90"), salvo.getTotalPrice());
+    }
+
+    @Test
+    @DisplayName("HU03: deve rejeitar modalidade desconhecida")
+    void deveRejeitarModalidadeDesconhecida() {
+        OrderRequestDTO request = novoPedido(validCustomerAddressId);
+        request.setDeliveryMode("DRONE");
+
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class,
+                () -> orderService.createOrder(request));
+        assertEquals("Modalidade de entrega inválida: DRONE", ex.getMessage());
+    }
+
+    private OrderPreviewRequestDTO novoPreview(String deliveryMode, int quantity) {
+        OrderItemRequestDTO itemDTO = new OrderItemRequestDTO();
+        itemDTO.setProductItemRef(validProductItemId);
+        itemDTO.setQuantity(quantity);
+        return new OrderPreviewRequestDTO(List.of(itemDTO), deliveryMode);
+    }
+
+    @Test
+    @DisplayName("HU03: preview calcula o subtotal sem persistir pedido nem mexer no estoque")
+    void deveCalcularSubtotalSemPersistirNadaNoPreview() {
+        long pedidosAntes = orderRepository.count();
+
+        OrderPreviewDTO preview = orderService.previewOrder(novoPreview("DELIVERY", 2));
+
+        assertEquals(new BigDecimal("179.80"), preview.getSubtotal());
+        assertEquals(1, preview.getItems().size());
+        assertEquals(new BigDecimal("89.90"), preview.getItems().get(0).getUnitPrice());
+        assertEquals(new BigDecimal("179.80"), preview.getItems().get(0).getTotalPrice());
+        assertEquals(pedidosAntes, orderRepository.count());
+        assertEquals(100, productItemRepository.findById(validProductItemId).orElseThrow().getStockQuantity());
+    }
+
+    @Test
+    @DisplayName("HU03: preview reflete a modalidade informada")
+    void devePreviewRefletirModalidadeInformada() {
+        OrderPreviewDTO preview = orderService.previewOrder(novoPreview("PICKUP", 2));
+
+        assertEquals(new BigDecimal("159.80"), preview.getSubtotal());
+        assertEquals(new BigDecimal("79.90"), preview.getItems().get(0).getUnitPrice());
     }
 
     @Test
