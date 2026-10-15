@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { AbstractService } from './abstract.service';
 import { environment } from '../../environments/environment';
-import { OrderRequest, OrderResponse } from '../models/order.model';
+import { OrderPreview, OrderPreviewRequest, OrderRequest, OrderResponse } from '../models/order.model';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PaginatedResponse } from '../models/paginated-response';
@@ -18,6 +18,10 @@ export class OrderService extends AbstractService<OrderResponse> {
 
   createOrder(data: OrderRequest): Observable<OrderResponse> {
     return this.http.post<OrderResponse>(this.baseUrl, data);
+  }
+
+  previewOrder(data: OrderPreviewRequest): Observable<OrderPreview> {
+    return this.http.post<OrderPreview>(`${this.baseUrl}/preview`, data);
   }
 
   findByCustomerId(customerId: string, page: number = 0, size: number = 5, status?: string): Observable<PaginatedResponse<OrderResponse>> {

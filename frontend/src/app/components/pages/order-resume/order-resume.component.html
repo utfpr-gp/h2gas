@@ -1,189 +1,139 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+<div class="max-w-2xl mx-auto px-4 pt-6 pb-24 md:pb-10">
+    <h1 class="text-2xl font-bold text-gray-800">Checkout</h1>
+    <p class="text-sm text-gray-500 mb-6">Revise seu pedido e conclua a compra.</p>
 
-<head>
-    <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Icons" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
-        rel="stylesheet" />
-</head>
+    <form [formGroup]="formOrder" class="space-y-4">
+        <!-- Dados para Entrega -->
+        <section class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
+            <h2 class="flex items-center gap-2 font-semibold text-gray-800 mb-3">
+                <span class="material-icons text-primary text-lg">location_on</span>
+                Dados para Entrega
+            </h2>
+            <div class="space-y-3">
+                <div *ngFor="let endereco of addresses"
+                    class="border-2 rounded-xl p-3 flex items-start cursor-pointer transition"
+                    [class.border-primary]="endereco.id === selectedAddressId"
+                    [class.border-gray-200]="endereco.id !== selectedAddressId"
+                    (click)="selectAddress(endereco)">
+                    <input class="radio radio-primary radio-sm mt-1"
+                        [id]="'address-' + endereco.id" name="address" type="radio"
+                        [checked]="endereco.id === selectedAddressId" />
+                    <label class="ml-3 block text-sm text-gray-900" [for]="'address-' + endereco.id">
+                        <span class="font-semibold">{{endereco.addressName || 'Endereço'}}</span>
+                        <p class="text-gray-600 mt-1">
+                            {{endereco.streetName}}, {{endereco.number}} - {{endereco.neighborhood}}
+                            - {{endereco.cityName}} - CEP: {{endereco.zipCode}}
+                        </p>
+                    </label>
+                </div>
+                <button type="button" (click)="navigate('/meus-enderecos')"
+                    class="text-sm text-primary font-semibold inline-flex items-center gap-1">
+                    <span class="material-icons text-base">add</span>
+                    Gerenciar endereços
+                </button>
+            </div>
 
-<body>
-    <div class="container mx-auto p-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="bg-white p-6 rounded-lg shadow-md">
-                <h2 class="text-xl font-bold mb-6">Resumo do Pedido</h2>
-                <div class="space-y-4">
-                    <div *ngFor="let product of productsCarts" class="flex items-center justify-between pb-4 border-b">
-                        <div class="flex items-center">
-                            <img alt="{{product!!.type}} {{product!!.brand}} {{product!!.category}}"
-                                class="w-16 h-16 object-cover rounded-md mr-4" src="{{product.imageUrl}}" />
-                            <div>
-                                <p class="font-semibold">
-                                    {{product!!.type}} {{product!!.brand}} {{product!!.category}}
-                                </p>
-                                <p class="text-sm text-gray-500">
-                                    {{product!!.price | currency:'BRL':'symbol':'1.2-2'}} por produto
-                                </p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-sm text-gray-500">Qtd: {{product!.quantitySelect}}</p>
-                            <p class="font-semibold">
-                                {{totalPerUnit(product) | currency:'BRL':'symbol':'1.2-2'}}
+            <label class="block text-sm font-medium text-gray-700 mt-4 mb-1" for="observations">Observações</label>
+            <textarea formControlName="observation"
+                class="textarea textarea-bordered w-full rounded-xl"
+                id="observations" placeholder="Instruções especiais, ponto de referência..."
+                rows="2"></textarea>
+        </section>
+
+        <!-- Método de Pagamento -->
+        <section class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
+            <h2 class="flex items-center gap-2 font-semibold text-gray-800 mb-3">
+                <span class="material-icons text-primary text-lg">payments</span>
+                Método de Pagamento na Entrega
+            </h2>
+            <div class="space-y-3">
+                <label *ngFor="let metodo of paymentMethods"
+                    class="flex items-center gap-3 p-3 border-2 rounded-xl cursor-pointer transition"
+                    [class.border-primary]="formOrder.get('paymentMethod')?.value === metodo.value"
+                    [class.border-gray-200]="formOrder.get('paymentMethod')?.value !== metodo.value">
+                    <input formControlName="paymentMethod" [value]="metodo.value" type="radio"
+                        class="radio radio-primary radio-sm" />
+                    <span class="material-icons text-primary">{{ metodo.icon }}</span>
+                    <span class="flex flex-col">
+                        <span class="font-semibold text-gray-800">{{ metodo.label }}</span>
+                        <span class="text-gray-500 text-xs">{{ metodo.hint }}</span>
+                    </span>
+                </label>
+            </div>
+        </section>
+
+        <!-- Resumo do Pedido -->
+        <section class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
+            <h2 class="flex items-center gap-2 font-semibold text-gray-800 mb-3">
+                <span class="material-icons text-primary text-lg">receipt_long</span>
+                Resumo do Pedido
+            </h2>
+
+            <div class="grid grid-cols-2 gap-2 mb-4" role="radiogroup" aria-label="Modalidade">
+                <button type="button" data-testid="mode-delivery" (click)="setDeliveryMode('DELIVERY')"
+                    [attr.aria-checked]="deliveryMode === 'DELIVERY'" role="radio"
+                    class="flex items-center justify-center gap-1 rounded-xl py-2 text-sm font-semibold border-2 transition"
+                    [class.bg-primary]="deliveryMode === 'DELIVERY'"
+                    [class.text-primary-content]="deliveryMode === 'DELIVERY'"
+                    [class.border-primary]="deliveryMode === 'DELIVERY'"
+                    [class.border-gray-200]="deliveryMode !== 'DELIVERY'">
+                    <span class="material-icons text-base">local_shipping</span>
+                    Entrega no local
+                </button>
+                <button type="button" data-testid="mode-pickup" (click)="setDeliveryMode('PICKUP')"
+                    [attr.aria-checked]="deliveryMode === 'PICKUP'" role="radio"
+                    class="flex items-center justify-center gap-1 rounded-xl py-2 text-sm font-semibold border-2 transition"
+                    [class.bg-primary]="deliveryMode === 'PICKUP'"
+                    [class.text-primary-content]="deliveryMode === 'PICKUP'"
+                    [class.border-primary]="deliveryMode === 'PICKUP'"
+                    [class.border-gray-200]="deliveryMode !== 'PICKUP'">
+                    <span class="material-icons text-base">storefront</span>
+                    Retirada na loja
+                </button>
+            </div>
+
+            <div class="divide-y divide-gray-100">
+                <div *ngFor="let product of productsCarts" class="flex items-center justify-between py-3 gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <img *ngIf="product.imageUrl" [alt]="product.brand"
+                            class="w-12 h-12 object-contain rounded-md" [src]="product.imageUrl" />
+                        <div class="min-w-0">
+                            <p class="font-semibold text-sm text-gray-800 truncate">
+                                {{product.type}} {{product.brand}} {{product.category}}
+                            </p>
+                            <p class="text-xs text-gray-500">
+                                {{ previewItem(product)?.unitPrice | currency:'BRL':'symbol':'1.2-2' }} por unidade
                             </p>
                         </div>
                     </div>
-                </div>
-                <div class="flex justify-between items-center mt-6">
-                    <span class="text-lg font-semibold">Total:</span>
-                    <span class="text-2xl font-bold text-blue-600">{{totalPrice |
-                        currency:'BRL':'symbol':'1.2-2'}}</span>
-                </div>
-            </div>
-            <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-lg">
-                <h1 class="text-2xl font-bold text-gray-800 mb-6">Método de Pagamento na Entrega</h1>
-
-                <div class="space-y-4">
-                    <form [formGroup]="formOrder">
-                        <!-- Mercado Pago (ativo) -->
-                        <!-- <label
-                            class="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors duration-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 relative">
-                            <input type="radio" formControlName="paymentMethod" value="MERCADO_PAGO"
-                                class="form-radio h-5 w-5 text-blue-600 peer" checked />
-                            <div class="ml-4 flex items-center w-full">
-                                <div class="bg-blue-500 text-white rounded-md p-2">
-                                    <span class="material-icons">account_balance_wallet</span>
-                                </div>
-                                <div class="ml-4">
-                                    <span class="font-semibold text-gray-800">Mercado Pago</span>
-                                    <p class="text-gray-600 text-sm">Cartão, PIX ou conta Mercado Pago</p>
-                                </div>
-                            </div>
-                        </label> -->
-
-                        <!-- Dinheiro (ativo) -->
-                        <label
-                            class="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors duration-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 relative">
-                            <input formControlName="paymentMethod" value="DINHEIRO" type="radio"
-                                class="form-radio h-5 w-5 text-blue-600 peer" />
-                            <div class="ml-4 flex items-center w-full">
-                                <div class="bg-orange-500 text-white rounded-md p-2">
-                                    <span class="material-icons">payments</span>
-                                </div>
-                                <div class="ml-4">
-                                    <span class="font-semibold text-gray-800">Dinheiro</span>
-                                    <p class="text-gray-600 text-sm">Pagamento na entrega</p>
-                                </div>
-                            </div>
-                        </label>
-
-                        <!-- PIX (desabilitado) -->
-                        <label
-                            class="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors duration-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 relative">
-                            <input formControlName="paymentMethod" value="PIX" type="radio"
-                                class="form-radio h-5 w-5 text-blue-600 peer" />
-                            <div class="ml-4 flex items-center w-full">
-                                <div class="bg-green-500 text-white rounded-md p-2">
-                                    <span class="material-icons">pix</span>
-                                </div>
-                                <div class="ml-4 flex flex-col">
-                                    <span class="font-semibold text-gray-800 flex items-center">
-                                        PIX
-                                    </span>
-                                    <p class="text-gray-600 text-sm">Pagamento instantâneo na entrega</p>
-                                </div>
-                            </div>
-                        </label>
-
-                        <!-- Cartão de Crédito (desabilitado) -->
-                        <label
-                            class="flex items-center p-4 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors duration-200 peer-checked:border-blue-500 peer-checked:bg-blue-50 relative">
-                            <input formControlName="paymentMethod" value="CREDIT_CARD" type="radio"
-                                class="form-radio h-5 w-5 text-blue-600 peer" />
-                            <div class="ml-4 flex items-center w-full">
-                                <div class="bg-purple-500 text-white rounded-md p-2">
-                                    <span class="material-icons">credit_card</span>
-                                </div>
-                                <div class="ml-4 flex flex-col">
-                                    <span class="font-semibold text-gray-800 flex items-center">
-                                        Cartão de Crédito
-                                    </span>
-                                    <p class="text-gray-600 text-sm">Visa, Mastercard, Elo</p>
-                                </div>
-                            </div>
-                        </label>
-
-                    </form>
-
-
-                </div>
-            </div>
-
-            <div class="bg-white p-6 rounded-lg shadow-md">
-                <h2 class="text-xl font-bold mb-6">Dados para Entrega</h2>
-                <form [formGroup]="formOrder">
-                    <div class="mb-4">
-                        <!-- <div class="flex justify-between items-center mb-2">
-                            <label class="block text-sm font-medium text-gray-700">Endereço de Entrega</label>
-                            <button class="flex items-center text-sm text-blue-600 font-semibold" type="button">
-                                <span class="material-icons text-base mr-1">add</span>
-                                Novo Endereço
-                            </button>
-                        </div> -->
-                        <div class="space-y-3">
-                            <div *ngFor="let endereco of addresses"
-                                class="border-2 rounded-xl p-4 flex items-start cursor-pointer transition"
-                                [class.border-primary]="endereco.id === selectedAddressId"
-                                [class.border-gray-200]="endereco.id !== selectedAddressId"
-                                (click)="selectAddress(endereco)">
-                                <input class="radio radio-primary radio-sm mt-1"
-                                    [id]="'address-' + endereco.id" name="address" type="radio"
-                                    [checked]="endereco.id === selectedAddressId" />
-                                <label class="ml-3 block text-sm text-gray-900" [for]="'address-' + endereco.id">
-                                    <div class="flex items-center">
-                                        <span class="material-icons text-lg mr-2 text-primary">location_on</span>
-                                        <span class="font-semibold">{{endereco.addressName || 'Endereço'}}</span>
-                                    </div>
-                                    <p class="text-gray-600 mt-1">
-                                        {{endereco.streetName}}, {{endereco.number}} - {{endereco.neighborhood}}
-                                        - {{endereco.cityName}} - CEP: {{endereco.zipCode}}
-                                    </p>
-                                </label>
-                            </div>
-                            <button type="button" (click)="navigate('/meus-enderecos')"
-                                class="text-sm text-primary font-semibold inline-flex items-center gap-1">
-                                <span class="material-icons text-base">add</span>
-                                Gerenciar endereços
-                            </button>
-                        </div>
+                    <div class="text-right shrink-0">
+                        <p class="text-xs text-gray-500">Qtd: {{product.quantitySelect}}</p>
+                        <p class="font-semibold text-sm">
+                            {{ previewItem(product)?.totalPrice | currency:'BRL':'symbol':'1.2-2' }}
+                        </p>
                     </div>
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-1"
-                            for="observations">Observações</label>
-                        <textarea formControlName="observation"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            id="observations" placeholder="Instruções especiais, ponto de referência..."
-                            rows="3"></textarea>
-                    </div>
-                    <button (click)="createOrder()"
-                        class="w-full bg-blue-600 cursor-pointer text-white font-bold py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        type="submit">
-                        Confirmar Pedido
-                    </button>
-                </form>
+                </div>
             </div>
-        </div>
 
-        <div *ngIf="isLoading" class="fixed inset-0 bg-gray-900/20 backdrop-blur-md flex items-center justify-center z-50">
-            <div class="flex flex-col items-center">
-            <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500 border-solid"></div>
+            <div class="flex justify-between items-center border-t border-gray-200 pt-3 mt-1">
+                <span class="font-semibold text-gray-800">Subtotal</span>
+                <span class="text-xl font-bold text-primary" data-testid="order-subtotal">
+                    {{ preview?.subtotal | currency:'BRL':'symbol':'1.2-2' }}
+                </span>
+            </div>
+
+            <button (click)="createOrder()" type="submit"
+                class="btn btn-primary w-full rounded-xl mt-4">
+                <span class="material-icons text-base">lock</span>
+                Confirmar Pedido
+            </button>
+        </section>
+    </form>
+
+    <div *ngIf="isLoading" class="fixed inset-0 bg-gray-900/20 backdrop-blur-md flex items-center justify-center z-50">
+        <div class="flex flex-col items-center">
+            <span class="loading loading-spinner loading-lg text-primary"></span>
             <p class="text-white mt-4 font-medium">Criando pedido...</p>
-            </div>
         </div>
     </div>
-
-</body>
-
-</html>
+</div>

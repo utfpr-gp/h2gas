@@ -22,16 +22,22 @@ describe('OrderResumeComponent', () => {
 
   beforeEach(async () => {
     localStorage.clear();
-    const cartServiceSpy = jasmine.createSpyObj('CartService', ['getCart', 'setCart']);
+    const cartServiceSpy = jasmine.createSpyObj('CartService', ['getCart', 'setCart', 'getDeliveryMode', 'setDeliveryMode']);
+    cartServiceSpy.getDeliveryMode.and.returnValue('DELIVERY');
     cartServiceSpy.getCart.and.returnValue([
-      { id: 5, supplierId: 'sup-1', price: 100, quantitySelect: 1 },
+      { id: 5, supplierId: 'sup-1', priceDelivery: 110, pricePickup: 95, quantitySelect: 1 },
     ]);
     const addressServiceSpy = jasmine.createSpyObj('AddressService', ['findAllByUser']);
     addressServiceSpy.findAllByUser.and.returnValue(of([trabalho, casa]));
     const userServiceSpy = jasmine.createSpyObj('UserService', ['getUserLocalStorage']);
     userServiceSpy.getUserLocalStorage.and.returnValue({ id: 'user-1' });
-    orderServiceSpy = jasmine.createSpyObj('OrderService', ['createOrder']);
+    orderServiceSpy = jasmine.createSpyObj('OrderService', ['createOrder', 'previewOrder']);
     orderServiceSpy.createOrder.and.returnValue(of({} as any));
+    orderServiceSpy.previewOrder.and.callFake((req) => of(
+      req.deliveryMode === 'PICKUP'
+        ? { items: [{ productItemRef: 5, quantity: 1, unitPrice: 95, totalPrice: 95 }], subtotal: 95 }
+        : { items: [{ productItemRef: 5, quantity: 1, unitPrice: 110, totalPrice: 110 }], subtotal: 110 }
+    ));
 
     await TestBed.configureTestingModule({
       imports: [OrderResumeComponent],
@@ -75,6 +81,41 @@ describe('OrderResumeComponent', () => {
 
     expect(orderServiceSpy.createOrder).toHaveBeenCalledWith(
       jasmine.objectContaining({ addressId: 2, supplierRef: 'sup-1' })
+    );
+  });
+
+  it('deveChamarPreviewAoAlterarModalidade', () => {
+    expect(orderServiceSpy.previewOrder).toHaveBeenCalledWith(
+      { items: [{ productItemRef: 5, quantity: 1 }], deliveryMode: 'DELIVERY' }
+    );
+
+    component.setDeliveryMode('PICKUP');
+
+    expect(orderServiceSpy.previewOrder).toHaveBeenCalledWith(
+      { items: [{ productItemRef: 5, quantity: 1 }], deliveryMode: 'PICKUP' }
+    );
+    expect(component.preview?.subtotal).toBe(95);
+  });
+
+  it('naoDeveMaisCalcularTotalLocalmente', () => {
+    expect((component as any).totalPrice).toBeUndefined();
+    expect((component as any).totalPerUnit).toBeUndefined();
+
+    component.setDeliveryMode('PICKUP');
+    fixture.detectChanges();
+
+    const subtotal = fixture.nativeElement.querySelector('[data-testid="order-subtotal"]') as HTMLElement;
+    expect(subtotal.textContent).toMatch(/95[.,]00/);
+  });
+
+  it('deveEnviarDeliveryModeAoCriarPedido', () => {
+    component.setDeliveryMode('PICKUP');
+    component.formOrder.get('paymentMethod')?.setValue('PIX');
+
+    component.createOrder();
+
+    expect(orderServiceSpy.createOrder).toHaveBeenCalledWith(
+      jasmine.objectContaining({ deliveryMode: 'PICKUP' })
     );
   });
 });

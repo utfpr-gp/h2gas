@@ -1,5 +1,6 @@
 package com.h2gas.model.entity;
 
+import com.h2gas.enums.DeliveryModeEnum;
 import com.h2gas.enums.OrderStatusEnum;
 import jakarta.persistence.*;
 import lombok.*;
@@ -41,6 +42,10 @@ public class Order {
 
     @Enumerated(EnumType.STRING)
     private OrderStatusEnum status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "delivery_mode", nullable = false, length = 20)
+    private DeliveryModeEnum deliveryMode = DeliveryModeEnum.DELIVERY;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items;

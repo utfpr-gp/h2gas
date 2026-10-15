@@ -13,6 +13,8 @@ public class ProductItemDTO {
     private Long id;
     private String brand;
     private Double price;
+    private Double priceDelivery;
+    private Double pricePickup;
     private String category;
     private String type;
     private String supllierName;

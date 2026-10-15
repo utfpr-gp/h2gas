@@ -33,4 +33,14 @@ describe('ProductCardComponent', () => {
       jasmine.objectContaining({ id: 10, quantitySelect: 1 })
     );
   });
+
+  it('deveExibirAmbosPrecosSimultaneamente', () => {
+    component.product = { id: 10, brand: 'Ultragaz', priceDelivery: 110, pricePickup: 95 } as ProductItem;
+    fixture.detectChanges();
+
+    const entrega = fixture.nativeElement.querySelector('[data-testid="price-delivery"]') as HTMLElement;
+    const retirada = fixture.nativeElement.querySelector('[data-testid="price-pickup"]') as HTMLElement;
+    expect(entrega.textContent).toMatch(/110[.,]00/);
+    expect(retirada.textContent).toMatch(/95[.,]00/);
+  });
 });

@@ -1,6 +1,8 @@
 package com.h2gas.controller;
 
 import com.h2gas.enums.OrderStatusEnum;
+import com.h2gas.model.dto.OrderPreviewDTO;
+import com.h2gas.model.dto.OrderPreviewRequestDTO;
 import com.h2gas.model.dto.OrderRequestDTO;
 import com.h2gas.model.dto.OrderResponseDTO;
 import com.h2gas.model.dto.SupplierDTO;
@@ -8,7 +10,11 @@ import com.h2gas.model.mapper.OrderMapper;
 import com.h2gas.response.PageResponse;
 import com.h2gas.services.OrderService;
 import com.h2gas.util.PaginationUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import jakarta.annotation.security.RolesAllowed;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -58,12 +64,38 @@ public class OrderController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Cria um pedido",
+            description = "Cria o pedido com status PENDING (RN03). O preço de cada item é calculado no backend (RN01) "
+                    + "conforme a modalidade: DELIVERY usa o preço de entrega, PICKUP o de retirada; ausente = DELIVERY. "
+                    + "Decrementa o estoque na mesma transação (RN02)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Pedido criado"),
+            @ApiResponse(responseCode = "400", description = "Estoque insuficiente, endereço inválido ou modalidade desconhecida"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido ou papel sem permissão"),
+            @ApiResponse(responseCode = "404", description = "Cliente, fornecedor, endereço ou produto inexistente")
+    })
     @PostMapping
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER", "CUSTOMER"})
     public ResponseEntity<OrderResponseDTO> createOrder(@RequestBody OrderRequestDTO orderRequestDTO) {
         OrderResponseDTO orderResponseDTO = orderService.createOrder(orderRequestDTO);
         return ResponseEntity.ok(orderResponseDTO);
+    }
+
+    @Operation(summary = "Pré-visualiza o subtotal do carrinho",
+            description = "Calcula no backend (RN01) o preço unitário e o total de cada item conforme a modalidade "
+                    + "(DELIVERY ou PICKUP) e o subtotal. Não cria pedido nem mexe no estoque")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Subtotal calculado"),
+            @ApiResponse(responseCode = "400", description = "Sem itens, quantidade inválida ou modalidade desconhecida"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido ou papel sem permissão"),
+            @ApiResponse(responseCode = "404", description = "Produto inexistente")
+    })
+    @PostMapping("/preview")
+    @ResponseBody
+    @RolesAllowed({"ADMIN", "CUSTOMER"})
+    public ResponseEntity<OrderPreviewDTO> previewOrder(@Valid @RequestBody OrderPreviewRequestDTO request) {
+        return ResponseEntity.ok(orderService.previewOrder(request));
     }
 
     @GetMapping("/by-customer/{customerId}")
