@@ -201,6 +201,54 @@ Telas que nenhuma HU toca (ex.: `about`, `contact`, `supplier-approval`,
 - `order-resume`: só o bloco de seleção de endereço (HU04); o resto da
   tela fica para a HU03.
 
+### 5.10 Fatia 3 — feedback (toasts), Meus Dados e menu do usuário
+
+Pedido do autor em 2026-10-15, depois de testar a HU05: toasts com
+visual padrão do `ngx-toastr` destoando do F7, toast de "sucesso" a cada
+busca, e "Meus Dados"/ícone de usuário pobres. Ordem: **depois da HU11**.
+
+**Toasts (global):**
+- `ToastrModule.forRoot` (hoje sem opções, em `src/main.ts`) passa a
+  configurar: `timeOut: 3000`, `progressBar: true`,
+  `preventDuplicates: true`, `maxOpened: 3`, `newestOnTop: true`,
+  `closeButton: true`, `positionClass` no topo central.
+- No mobile (< `md`), o container vai para o rodapé, **acima da bottom
+  tab bar** (mesmo deslocamento da barra de ação do checkout da HU05).
+- Visual em `styles.css` sobrescrevendo `.ngx-toastr`/`.toast-success`/
+  `.toast-error`/`.toast-warning`/`.toast-info`: card branco
+  `rounded-xl` com sombra, faixa lateral e ícone na cor semântica
+  (`success`, `error`, `warning`, `info` — tokens já existentes no tema
+  desde a HU05), título/texto em `base-content`. Sem HEX novo. O
+  `node_modules/ngx-toastr/toastr.css` continua importado (estrutura),
+  só a aparência muda.
+- **Regra de uso**: toast de sucesso só em **ação do usuário** (salvar,
+  excluir, confirmar, aprovar). **Leitura/busca não gera toast.** Erro
+  sempre com a mensagem do backend quando houver
+  (`err.error?.error || err.error?.message`).
+- Toasts de busca a remover (levantamento de 2026-10-15):
+  `order-list` ("Pedidos buscados"), `supplier-list` (2×),
+  `supplier-approval`, `received-orders` (3×), `order-history` (3×),
+  `product-item`, `product-item-form` (2×), `category-products`,
+  `configuration`, `city-register`, `distribuitor-form` (2×, inclui
+  "Cep buscado") e `address-form` ("Cep buscado").
+  `distributor-management` é código morto (fora).
+
+**Menu do usuário (`menu`):**
+- O ícone genérico de pessoa vira **avatar com as iniciais** do usuário
+  (círculo `bg-secondary`/`text-secondary-content`, 2 letras).
+- Dropdown no padrão F7: cabeçalho com nome e e-mail; itens Meus Dados,
+  Meus Pedidos, Meus Endereços (cliente) ou Dashboard/Configuração
+  (fornecedor), e Sair separado. Abre/fecha com a animação `fadeIn` da
+  HU05 (`animations/checkout.animations.ts`), fecha com Esc e clique
+  fora, `aria-expanded`/`aria-haspopup`, foco no primeiro item.
+
+**Meus Dados (`customer-panel`):**
+- Cabeçalho com avatar grande de iniciais, nome e e-mail.
+- Campos com ícone e rótulo, estados de carregando (skeleton) e
+  salvando (spinner no botão, botão desabilitado sem alteração).
+- "Meus endereços" e "Meus pedidos" como itens de lista com chevron.
+- Tokens, `rounded-xl`, `pb-24` no mobile.
+
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
 - Agregação de rating médio por fornecedor (gap de backend).
@@ -212,6 +260,11 @@ Telas que nenhuma HU toca (ex.: `about`, `contact`, `supplier-approval`,
 - `distributor-management` (código morto).
 - Modalidade de entrega/retirada lado a lado nos cards (isso é HU03).
 - Filtro por sub-categoria nos chips (já era fora de escopo do HU02).
+- Fatia 3: trocar a biblioteca de toast; foto de perfil (upload) no
+  avatar; telas de admin/fornecedor além do menu (fatia final de
+  varredura); autenticação (HU11); variáveis estruturais do tema DaisyUI
+  (`--radius-*`, `--size-*`, `--border` — dívida registrada na HU05,
+  pede revisão visual própria).
 
 ## 7. Plano de Testes (TDD)
 
@@ -229,6 +282,18 @@ Telas que nenhuma HU toca (ex.: `about`, `contact`, `supplier-approval`,
    `ProductTypeService` mockado, não de botão hardcoded); novo teste de
    `addToCart`.
 7. `menu.component.spec.ts` — bottom tab bar visível só para `CUSTOMER`.
+
+**Fatia 3:**
+8. `menu.component.spec.ts` — `deveExibirIniciaisDoUsuarioNoAvatar`,
+   `deveAbrirMenuDoUsuarioComOpcoes`, `deveFecharMenuComEsc`.
+9. `customer-panel.component.spec.ts` —
+   `deveExibirAvatarComIniciaisENome`,
+   `deveDesabilitarSalvarSemAlteracoes`.
+10. Amostra da regra de toast — `order-list.component.spec.ts` e
+    `supplier-list.component.spec.ts`:
+    `naoDeveExibirToastDeSucessoAoBuscar`.
+11. Config global — spec que verifica as opções do `ToastrModule`
+    (`deveConfigurarToastrComOpcoesGlobais`).
 
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
@@ -250,6 +315,16 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 - [x] `first-access-address` sem HEX (gradiente nos tokens `primary`/`secondary`).
 - [x] `customer-panel` reescrito no padrão; CSS de 317 linhas removido.
 - [x] Seletor de endereço do `order-resume` no padrão.
+
+**Fatia 3 (toasts, Meus Dados, menu do usuário) — depois da HU11:**
+- [ ] Toasts com opções globais e visual por tokens; acima da tab bar no
+      mobile.
+- [ ] Nenhum toast de sucesso em busca/leitura (lista da §5.10).
+- [ ] Avatar com iniciais e dropdown do usuário no padrão.
+- [ ] `customer-panel` com cabeçalho de avatar e estados de carregando/
+      salvando.
+- [ ] Testes da seção 7 (itens 8-11) verdes; specs antigos falhando não
+      aumentam; teste manual.
 
 **Pendente (próximas fatias):**
 - [ ] Grupos A–E migrados pros tokens (grep: zero hex novo fora de
