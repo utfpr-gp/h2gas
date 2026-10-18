@@ -23,8 +23,8 @@ describe('ReceivedOrdersComponent', () => {
   const carlos: Deliverer = { id: 1, name: 'Carlos Silva', email: 'c@h2gas.local', phoneNumber: '41988887777', vehicleInfo: 'Moto', active: true, busy: true };
   const ana: Deliverer = { id: 2, name: 'Ana Souza', email: 'a@h2gas.local', phoneNumber: '41977776666', vehicleInfo: 'Carro', active: true, busy: false };
 
-  const pedido = (id: string, status: string, deliveryMode = 'DELIVERY') =>
-    ({ id, status, deliveryMode, supplierName: 'Gás Centro', customerName: 'Maria', totalPrice: 125, orderItems: [] } as unknown as OrderResponse);
+  const pedido = (id: string, status: string, deliveryMode = 'DELIVERY', extra: Partial<OrderResponse> = {}) =>
+    ({ id, status, deliveryMode, supplierName: 'Gás Centro', customerName: 'Maria', totalPrice: 125, orderItems: [], ...extra } as unknown as OrderResponse);
   const lista = (...orders: OrderResponse[]) =>
     of({ data: orders, page: 0, totalPages: 1, hasNext: false, hasPrevious: false } as any);
 
@@ -176,7 +176,7 @@ describe('ReceivedOrdersComponent', () => {
     beforeEach(() => {
       orderServiceSpy.findByExcludeStatus.and.returnValue(emPreparo());
       orderServiceSpy.updateStatusOrder.and.returnValue(of({ status: 'Saiu para entrega' }));
-      orderServiceSpy.assignDeliverer.and.returnValue(of({ id: 'e1', status: 'Saiu para entrega', delivererName: 'Ana Souza' } as any));
+      orderServiceSpy.assignDeliverer.and.returnValue(of({ id: 'e1', status: 'Em preparacao', delivererName: 'Ana Souza' } as any));
       fixture.detectChanges();
     });
 
@@ -224,10 +224,34 @@ describe('ReceivedOrdersComponent', () => {
       fixture.detectChanges();
 
       expect(orderServiceSpy.assignDeliverer).toHaveBeenCalledOnceWith('e1', 2);
-      expect(component.orders!.find((o) => o.id === 'e1')!.status).toBe('Saiu para entrega');
+      expect(component.orders!.find((o) => o.id === 'e1')!.status).toBe('Em preparacao');
       expect(component.orders!.find((o) => o.id === 'e1')!.delivererName).toBe('Ana Souza');
       expect(fixture.nativeElement.querySelector('[data-testid=dispatch-modal]')).toBeNull();
       expect(toastrSpy.success).toHaveBeenCalledWith(jasmine.stringMatching('Ana Souza'));
+    });
+
+    it('deveOferecerTrocarEntregadorQuandoJaAtribuido', () => {
+      orderServiceSpy.findByExcludeStatus.and.returnValue(lista(
+        pedido('e1', 'Em preparacao', 'DELIVERY', { delivererName: 'Carlos Silva' })));
+      component.ngOnInit();
+      component.selectOrder(component.orders!.find((o) => o.id === 'e1'));
+      fixture.detectChanges();
+
+      expect(botao('DISPATCH')?.textContent?.trim()).toBe('Trocar entregador');
+      expect(fixture.nativeElement.textContent).toContain('Aguardando Carlos Silva iniciar a entrega');
+    });
+
+    it('deveExibirMotivoDaUltimaRecusa', () => {
+      orderServiceSpy.findByExcludeStatus.and.returnValue(lista(
+        pedido('e1', 'Em preparacao', 'DELIVERY', { lastRefusalReason: 'Moto quebrou', lastRefusalBy: 'Carlos Silva' })));
+      component.ngOnInit();
+      component.selectOrder(component.orders!.find((o) => o.id === 'e1'));
+      fixture.detectChanges();
+
+      const aviso = fixture.nativeElement.querySelector('[data-testid=last-refusal]') as HTMLElement;
+      expect(aviso.textContent).toContain('Recusado por Carlos Silva');
+      expect(aviso.textContent).toContain('Moto quebrou');
+      expect(botao('DISPATCH')?.textContent?.trim()).toBe('Despachar');
     });
 
     it('deveAvisarQuandoNaoHaEntregadores', () => {

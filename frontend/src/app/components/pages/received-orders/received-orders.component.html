@@ -140,7 +140,13 @@
 
             <p *ngIf="order.delivererName" class="mt-3 flex items-center gap-1 text-sm text-gray-700">
                 <span class="material-icons text-base text-primary">two_wheeler</span>
-                Entregador: <span class="font-semibold">{{ order.delivererName }}</span>
+                <ng-container *ngIf="order.status === 'Saiu para entrega'">Entregador: <span class="font-semibold">{{ order.delivererName }}</span></ng-container>
+                <ng-container *ngIf="order.status !== 'Saiu para entrega'">Aguardando <span class="font-semibold">{{ order.delivererName }}</span> iniciar a entrega</ng-container>
+            </p>
+            <p *ngIf="!order.delivererName && order.lastRefusalReason" data-testid="last-refusal"
+                class="mt-3 flex items-start gap-1 text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3">
+                <span class="material-icons text-base">report_problem</span>
+                <span>Recusado por <span class="font-semibold">{{ order.lastRefusalBy }}</span>: {{ order.lastRefusalReason }}</span>
             </p>
 
             <div *ngIf="actionsFor(order).length" class="flex flex-wrap gap-2 mt-5">

@@ -118,7 +118,7 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
     const actions = this.actionsByStatus[order.status as OrderStatus] ?? [];
     return actions.map((action) =>
       action.action === 'OUT_FOR_DELIVERY' && order.deliveryMode !== 'PICKUP'
-        ? { ...action, label: 'Despachar', action: 'DISPATCH' }
+        ? { ...action, label: order.delivererName ? 'Trocar entregador' : 'Despachar', action: 'DISPATCH' }
         : action);
   }
 
@@ -233,8 +233,10 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
         this.dispatching = false;
         order.status = response.status;
         order.delivererName = response.delivererName;
+        order.lastRefusalReason = undefined;
+        order.lastRefusalBy = undefined;
         this.closeDispatch();
-        this.toastr.success(`Pedido despachado com ${response.delivererName}.`);
+        this.toastr.success(`${response.delivererName} foi atribuído ao pedido. Ele inicia a entrega pelo app.`);
       },
       error: (err) => {
         this.dispatching = false;
