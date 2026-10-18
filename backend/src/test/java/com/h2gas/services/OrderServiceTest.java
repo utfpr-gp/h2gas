@@ -6,6 +6,8 @@ import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ForbiddenResourceException;
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.dto.DelivererCreateDTO;
+import com.h2gas.model.dto.DeliveryHistoryDTO;
+import com.h2gas.model.dto.DeliveryHistoryItemDTO;
 import com.h2gas.model.dto.OrderItemRequestDTO;
 import com.h2gas.model.dto.OrderPreviewDTO;
 import com.h2gas.model.dto.OrderPreviewRequestDTO;
@@ -897,6 +899,51 @@ class OrderServiceTest {
         List<OrderResponseDTO> rotas = orderService.findActiveByDeliverer(carlos);
 
         assertEquals(List.of(primeiro, segundo, pendente), rotas.stream().map(OrderResponseDTO::getId).toList());
+    }
+
+    @Test
+    @DisplayName("HU07: o histórico mistura entregues e recusadas dele, da mais recente para a mais antiga")
+    void deveMontarHistoricoComEntreguesERecusadas() {
+        Long carlos = entregadorDe(validSupplierId, "carlos@teste.com");
+        Long ana = entregadorDe(validSupplierId, "ana@teste.com");
+        String entregue = pedidoEmRota(carlos);
+        orderService.completeDelivery(entregue, carlos);
+        String recusado = pedidoEmRota(carlos);
+        orderService.cancelDelivery(recusado, carlos, "Moto quebrou");
+        String deAna = pedidoEmRota(ana);
+        orderService.completeDelivery(deAna, ana);
+        pedidoEmRota(carlos);
+
+        DeliveryHistoryDTO historico = orderService.findDeliveryHistory(carlos);
+
+        assertEquals(List.of(recusado, entregue), historico.getItems().stream().map(DeliveryHistoryItemDTO::getOrderId).toList());
+        DeliveryHistoryItemDTO itemRecusado = historico.getItems().get(0);
+        assertEquals("REFUSED", itemRecusado.getKind());
+        assertNull(itemRecusado.getTotalPrice());
+        DeliveryHistoryItemDTO itemEntregue = historico.getItems().get(1);
+        assertEquals("DELIVERED", itemEntregue.getKind());
+        assertNotNull(itemEntregue.getTotalPrice());
+        assertEquals("Curitiba", itemEntregue.getCityName());
+        assertFalse(itemEntregue.getItemsSummary().isBlank());
+        assertNotNull(itemEntregue.getOccurredAt());
+    }
+
+    @Test
+    @DisplayName("HU07: 'Entregas hoje' conta só as entregues no dia corrente")
+    void deveContarEntregasDeHoje() {
+        Long carlos = entregadorDe(validSupplierId, "carlos@teste.com");
+        String hoje = pedidoEmRota(carlos);
+        orderService.completeDelivery(hoje, carlos);
+        String antigo = pedidoEmRota(carlos);
+        orderService.completeDelivery(antigo, carlos);
+        Order pedidoAntigo = orderRepository.findById(antigo).orElseThrow();
+        pedidoAntigo.setDeliveredAt(java.time.LocalDateTime.now().minusDays(2));
+        orderRepository.save(pedidoAntigo);
+
+        DeliveryHistoryDTO historico = orderService.findDeliveryHistory(carlos);
+
+        assertEquals(1, historico.getDeliveredToday());
+        assertEquals(2, historico.getItems().size());
     }
 
     @Test

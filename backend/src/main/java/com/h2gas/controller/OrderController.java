@@ -4,6 +4,7 @@ import com.h2gas.enums.OrderStatusEnum;
 import com.h2gas.model.dto.AssignDelivererRequestDTO;
 import com.h2gas.model.dto.CancelDeliveryRequestDTO;
 import com.h2gas.model.dto.CancelOrderRequestDTO;
+import com.h2gas.model.dto.DeliveryHistoryDTO;
 import com.h2gas.model.dto.CancelOrderResponseDTO;
 import com.h2gas.model.dto.OrderPreviewDTO;
 import com.h2gas.model.entity.Order;
@@ -258,6 +259,22 @@ public class OrderController {
     public ResponseEntity<List<OrderResponseDTO>> myRoutes() {
         Deliverer entregador = delivererService.findByUserId(loggedUser().getId());
         return ResponseEntity.ok(orderService.findActiveByDeliverer(entregador.getId()));
+    }
+
+    @Operation(summary = "Histórico de entregas do entregador logado",
+            description = "Entregas que o entregador concluiu (DELIVERED) e as que recusou (REFUSED), da mais recente à mais antiga, "
+                    + "com a contagem de entregas concluídas hoje. O entregador vem do token")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Histórico do entregador"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido ou papel diferente de DELIVERER"),
+            @ApiResponse(responseCode = "404", description = "Usuário logado não é um entregador cadastrado")
+    })
+    @GetMapping("/my-deliveries/history")
+    @ResponseBody
+    @RolesAllowed("DELIVERER")
+    public ResponseEntity<DeliveryHistoryDTO> myDeliveryHistory() {
+        Deliverer entregador = delivererService.findByUserId(loggedUser().getId());
+        return ResponseEntity.ok(orderService.findDeliveryHistory(entregador.getId()));
     }
 
     @Operation(summary = "Inicia a entrega (entregador)",

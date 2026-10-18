@@ -15,6 +15,7 @@ import com.h2gas.model.repository.UserRepository;
 import com.h2gas.services.OrderService;
 import com.h2gas.services.OrderNotificationService;
 import com.h2gas.services.DelivererService;
+import com.h2gas.model.dto.DeliveryHistoryDTO;
 import com.h2gas.model.dto.OrderResponseDTO;
 import com.h2gas.model.entity.Deliverer;
 import com.h2gas.enums.OrderStatusEnum;
@@ -227,6 +228,19 @@ class OrderControllerTest {
 
         verify(orderService).findActiveByDeliverer(9L);
         verify(orderService, never()).findActiveByDeliverer(eq(1L));
+    }
+
+    @Test
+    void deveRetornarHistoricoDoEntregador() throws Exception {
+        autenticarComo(UserTypeEnum.DELIVERER, "usuario-entregador");
+        Deliverer entregador = new Deliverer();
+        entregador.setId(9L);
+        when(delivererService.findByUserId("usuario-entregador")).thenReturn(entregador);
+        when(orderService.findDeliveryHistory(9L)).thenReturn(new DeliveryHistoryDTO(12, List.of()));
+
+        mockMvc.perform(get("/api/orders/my-deliveries/history"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.deliveredToday").value(12));
     }
 
     @Test

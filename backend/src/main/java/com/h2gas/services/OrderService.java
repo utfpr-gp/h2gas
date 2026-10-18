@@ -6,6 +6,8 @@ import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ForbiddenResourceException;
 import com.h2gas.exceptions.ResourceNotFoundException;
+import com.h2gas.model.dto.DeliveryHistoryDTO;
+import com.h2gas.model.dto.DeliveryHistoryItemDTO;
 import com.h2gas.model.dto.OrderItemRequestDTO;
 import com.h2gas.model.dto.OrderPreviewDTO;
 import com.h2gas.model.dto.OrderPreviewItemDTO;
@@ -33,10 +35,13 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
@@ -309,6 +314,36 @@ public class OrderService {
         return Stream.concat(emRota.stream(), pendentes.stream())
                 .map(orderMapper::toResponseDto)
                 .toList();
+    }
+
+    // HU07 (Figura 17c): entregues e recusadas do entregador logado, da mais recente para a mais antiga
+    @Transactional(readOnly = true)
+    public DeliveryHistoryDTO findDeliveryHistory(Long delivererId) {
+        List<Order> delivered = orderRepository.findByDelivererIdAndStatusOrderByDeliveredAtDesc(delivererId, OrderStatusEnum.DELIVERED);
+        List<DeliveryRefusal> refusals = deliveryRefusalRepository.findByDelivererIdOrderByCreatedAtDesc(delivererId);
+
+        List<DeliveryHistoryItemDTO> items = Stream.concat(
+                        delivered.stream().map(order -> historyItem(order, "DELIVERED", order.getDeliveredAt(), order.getTotalPrice())),
+                        refusals.stream().map(refusal -> historyItem(refusal.getOrder(), "REFUSED", refusal.getCreatedAt(), null)))
+                .sorted(Comparator.comparing(DeliveryHistoryItemDTO::getOccurredAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .toList();
+        int deliveredToday = (int) delivered.stream()
+                .filter(order -> order.getDeliveredAt() != null && order.getDeliveredAt().toLocalDate().equals(LocalDate.now()))
+                .count();
+        return new DeliveryHistoryDTO(deliveredToday, items);
+    }
+
+    private DeliveryHistoryItemDTO historyItem(Order order, String kind, LocalDateTime occurredAt, BigDecimal totalPrice) {
+        Address address = order.getDeliveryAddress();
+        String summary = order.getItems() == null ? "" : order.getItems().stream()
+                .map(item -> item.getQuantity() + "x " + item.getProduct().getBrand() + " " + item.getProduct().getCategoryProduct().getName())
+                .collect(Collectors.joining(", "));
+        return new DeliveryHistoryItemDTO(order.getId(), kind, occurredAt,
+                address == null ? null : address.getStreetName(),
+                address == null ? null : address.getNumber(),
+                address == null ? null : address.getNeighborhood(),
+                address == null || address.getCity() == null ? null : address.getCity().getName(),
+                summary, order.getPaymentMethod(), totalPrice);
     }
 
     // HU07: o entregador recusa; o pedido volta ao fornecedor (não é cancelado ao cliente, estoque intacto)
