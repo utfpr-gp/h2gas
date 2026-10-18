@@ -14,8 +14,10 @@ describe('DelivererRoutesComponent', () => {
   let orderServiceSpy: jasmine.SpyObj<OrderService>;
   let toastrSpy: jasmine.SpyObj<ToastrService>;
 
-  const rota = (id: string, bairro: string, pagamento = 'PIX') => ({
-    id, status: 'Saiu para entrega', paymentMethod: pagamento, streetName: 'Rua das Flores', number: '300',
+  const PENDENTE = 'Em preparacao';
+  const EM_ROTA = 'Saiu para entrega';
+  const rota = (id: string, bairro: string, pagamento = 'PIX', status = EM_ROTA) => ({
+    id, status, paymentMethod: pagamento, streetName: 'Rua das Flores', number: '300',
     neighborhood: bairro, customerName: 'Maria', customerPhone: '41988880000', totalPrice: 125,
     orderItems: [{ quantity: 2, productBrand: 'Ultragaz', productNameCategory: 'Gás 13kg' }],
   } as unknown as OrderResponse);
@@ -23,8 +25,9 @@ describe('DelivererRoutesComponent', () => {
   const cards = () => Array.from(fixture.nativeElement.querySelectorAll('[data-testid=route-card]')) as HTMLElement[];
 
   beforeEach(async () => {
-    orderServiceSpy = jasmine.createSpyObj('OrderService', ['myRoutes', 'completeDelivery']);
-    orderServiceSpy.myRoutes.and.returnValue(of([rota('r1', 'Centro'), rota('r2', 'Batel', 'DINHEIRO')]));
+    orderServiceSpy = jasmine.createSpyObj('OrderService', ['myRoutes', 'startDelivery', 'completeDelivery']);
+    orderServiceSpy.myRoutes.and.returnValue(of([rota('r1', 'Centro'), rota('r2', 'Batel', 'DINHEIRO', PENDENTE)]));
+    orderServiceSpy.startDelivery.and.returnValue(of({ id: 'r2', status: EM_ROTA } as OrderResponse));
     orderServiceSpy.completeDelivery.and.returnValue(of({ id: 'r1', status: 'Entregue' } as OrderResponse));
     toastrSpy = jasmine.createSpyObj('ToastrService', ['success', 'warning', 'error']);
 
@@ -52,6 +55,8 @@ describe('DelivererRoutesComponent', () => {
     expect(cards()[0].textContent).toContain('Centro');
     expect(cards()[0].textContent).toContain('2x Ultragaz Gás 13kg');
     expect(cards()[1].textContent).toContain('Dinheiro');
+    expect(cards()[0].textContent).toContain('EM ROTA');
+    expect(cards()[1].textContent).toContain('PENDENTE');
     expect(fixture.nativeElement.querySelector('[data-testid=pending-count]').textContent).toContain('2');
   });
 
@@ -63,8 +68,28 @@ describe('DelivererRoutesComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Nenhuma entrega no momento');
   });
 
-  it('deveConfirmarEntregaComUmToque', fakeAsync(() => {
+  it('deveIniciarEntregaDoCardPendente', fakeAsync(() => {
     fixture.detectChanges();
+    expect(cards()[1].querySelector('[data-testid=confirm-delivery]')).toBeNull();
+
+    (cards()[1].querySelector('[data-testid=start-delivery]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    tick(500);
+    fixture.detectChanges();
+
+    expect(orderServiceSpy.startDelivery).toHaveBeenCalledOnceWith('r2');
+    expect(cards()[1].textContent).toContain('EM ROTA');
+    expect(cards()[1].querySelector('[data-testid=start-delivery]')).toBeNull();
+    expect(cards()[1].querySelector('[data-testid=confirm-delivery]')).toBeTruthy();
+    expect(cards().length).toBe(2);
+
+    fixture.destroy();
+    discardPeriodicTasks();
+  }));
+
+  it('deveConfirmarEntregaDoCardEmRota', fakeAsync(() => {
+    fixture.detectChanges();
+    expect(cards()[0].querySelector('[data-testid=start-delivery]')).toBeNull();
 
     (cards()[0].querySelector('[data-testid=confirm-delivery]') as HTMLButtonElement).click();
     fixture.detectChanges();

@@ -20,6 +20,7 @@ export class DelivererRoutesComponent implements OnInit, OnDestroy {
   routes: OrderResponse[] = [];
   loading = true;
   confirmingId?: string;
+  startingId?: string;
   readonly refreshIntervalMs = 30000;
   readonly paymentLabel = paymentLabel;
   private refreshSub?: Subscription;
@@ -58,8 +59,31 @@ export class DelivererRoutesComponent implements OnInit, OnDestroy {
     return order.id;
   }
 
+  // PENDENTE = atribuído mas ainda em preparo; EM ROTA = o entregador já iniciou
+  isInRoute(order: OrderResponse) {
+    return order.status === 'Saiu para entrega';
+  }
+
   open(order: OrderResponse) {
     this.router.navigate(['/entregas', order.id]);
+  }
+
+  start(order: OrderResponse) {
+    if (this.startingId) {
+      return;
+    }
+    this.startingId = order.id;
+    this.orderService.startDelivery(order.id).subscribe({
+      next: (updated) => {
+        this.startingId = undefined;
+        this.routes = this.routes.map((r) => (r.id === order.id ? { ...r, status: updated.status } : r));
+        this.toastr.success('Entrega iniciada. Boa rota!');
+      },
+      error: (err) => {
+        this.startingId = undefined;
+        this.toastr.error(`Erro ao iniciar a entrega: ${this.backendMessage(err)}`);
+      },
+    });
   }
 
   confirm(order: OrderResponse) {

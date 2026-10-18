@@ -31,7 +31,8 @@
                             </span>
                         </span>
                     </span>
-                    <span class="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">EM ROTA</span>
+                    <span *ngIf="isInRoute(order)" data-testid="badge-route" class="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">EM ROTA</span>
+                    <span *ngIf="!isInRoute(order)" data-testid="badge-pending" class="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">PENDENTE</span>
                 </span>
 
                 <span class="block mt-3 space-y-1 text-sm text-gray-800">
@@ -46,7 +47,14 @@
                 </span>
             </button>
 
-            <button type="button" data-testid="confirm-delivery" (click)="confirm(order)" [disabled]="confirmingId === order.id"
+            <button *ngIf="!isInRoute(order)" type="button" data-testid="start-delivery" (click)="start(order)" [disabled]="startingId === order.id"
+                class="btn btn-primary w-full rounded-xl mt-4">
+                <span *ngIf="startingId === order.id" class="loading loading-spinner loading-sm"></span>
+                Iniciar Entrega
+                <span *ngIf="startingId !== order.id" class="material-icons text-base">arrow_forward</span>
+            </button>
+
+            <button *ngIf="isInRoute(order)" type="button" data-testid="confirm-delivery" (click)="confirm(order)" [disabled]="confirmingId === order.id"
                 class="btn btn-primary w-full rounded-xl mt-4">
                 <span *ngIf="confirmingId === order.id" class="loading loading-spinner loading-sm"></span>
                 <span *ngIf="confirmingId !== order.id" class="material-icons text-base">task_alt</span>
