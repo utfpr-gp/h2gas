@@ -69,6 +69,7 @@ export interface OrderResponse {
     neighborhood:string;
     deliveryMode?: DeliveryMode;
     customerPhone?: string;
+    delivererName?: string;
     cancellationReason?: string;
 }
 

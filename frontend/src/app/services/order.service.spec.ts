@@ -43,4 +43,29 @@ describe('OrderService', () => {
     expect(req.request.body).toEqual({ reason: 'Sem entregador' });
     req.flush({ status: 'Cancelado', customerNotified: true });
   });
+
+  it('deveDespacharPedido', () => {
+    service.assignDeliverer('pedido-1', 7).subscribe((pedido) => expect(pedido.delivererName).toBe('Carlos'));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/orders/pedido-1/assign-deliverer`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ delivererId: 7 });
+    req.flush({ id: 'pedido-1', delivererName: 'Carlos' });
+  });
+
+  it('deveBuscarMinhasRotas', () => {
+    service.myRoutes().subscribe((rotas) => expect(rotas.length).toBe(1));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/orders/my-routes`);
+    expect(req.request.method).toBe('GET');
+    req.flush([{ id: 'pedido-1' }]);
+  });
+
+  it('deveConfirmarEntrega', () => {
+    service.completeDelivery('pedido-1').subscribe((pedido) => expect(pedido.status).toBe('Entregue'));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/orders/pedido-1/complete-delivery`);
+    expect(req.request.method).toBe('PATCH');
+    req.flush({ id: 'pedido-1', status: 'Entregue' });
+  });
 });

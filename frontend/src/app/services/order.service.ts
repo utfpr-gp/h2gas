@@ -24,6 +24,18 @@ export class OrderService extends AbstractService<OrderResponse> {
     return this.http.post<OrderPreview>(`${this.baseUrl}/preview`, data);
   }
 
+  assignDeliverer(orderId: string, delivererId: number): Observable<OrderResponse> {
+    return this.http.patch<OrderResponse>(`${this.baseUrl}/${orderId}/assign-deliverer`, { delivererId });
+  }
+
+  myRoutes(): Observable<OrderResponse[]> {
+    return this.http.get<OrderResponse[]>(`${this.baseUrl}/my-routes`);
+  }
+
+  completeDelivery(orderId: string): Observable<OrderResponse> {
+    return this.http.patch<OrderResponse>(`${this.baseUrl}/${orderId}/complete-delivery`, {});
+  }
+
   cancelOrder(orderId: string, reason: string): Observable<CancelOrderResponse> {
     return this.http.patch<CancelOrderResponse>(`${this.baseUrl}/${orderId}/cancel`, { reason });
   }
