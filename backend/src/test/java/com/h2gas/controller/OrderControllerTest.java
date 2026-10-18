@@ -230,6 +230,21 @@ class OrderControllerTest {
     }
 
     @Test
+    void deveRetornar200AoIniciarEntrega() throws Exception {
+        autenticarComo(UserTypeEnum.DELIVERER, "usuario-entregador");
+        Deliverer entregador = new Deliverer();
+        entregador.setId(9L);
+        when(delivererService.findByUserId("usuario-entregador")).thenReturn(entregador);
+        OrderResponseDTO emRota = new OrderResponseDTO();
+        emRota.setStatus("Saiu para entrega");
+        when(orderService.startDelivery("pedido-rota", 9L)).thenReturn(emRota);
+
+        mockMvc.perform(patch("/api/orders/pedido-rota/start-delivery"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("Saiu para entrega"));
+    }
+
+    @Test
     void deveRetornar200AoConfirmarEntrega() throws Exception {
         autenticarComo(UserTypeEnum.DELIVERER, "usuario-entregador");
         Deliverer entregador = new Deliverer();

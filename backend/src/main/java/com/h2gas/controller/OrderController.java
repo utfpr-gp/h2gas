@@ -224,8 +224,9 @@ public class OrderController {
 
     @Operation(summary = "Despacha o pedido atribuindo um entregador (fornecedor)",
             description = "Só pedido de entrega em preparação (IN_PREPARATION) do próprio fornecedor (ou ADMIN). "
-                    + "O entregador precisa ser ativo e da frota do fornecedor; atribui, leva o pedido a OUT_FOR_DELIVERY "
-                    + "e registra dispatchedAt. Entregador já em rota pode receber outro pedido")
+                    + "O entregador precisa ser ativo e da frota do fornecedor. Apenas atribui: o pedido segue em preparação até o "
+                    + "entregador iniciar a entrega (start-delivery). Chamar de novo troca o entregador. "
+                    + "Entregador já em rota pode receber outro pedido")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Pedido despachado"),
             @ApiResponse(responseCode = "400", description = "Pedido fora de preparação ou de retirada; entregador de outro fornecedor ou inativo"),
@@ -255,6 +256,22 @@ public class OrderController {
     public ResponseEntity<List<OrderResponseDTO>> myRoutes() {
         Deliverer entregador = delivererService.findByUserId(loggedUser().getId());
         return ResponseEntity.ok(orderService.findActiveByDeliverer(entregador.getId()));
+    }
+
+    @Operation(summary = "Inicia a entrega (entregador)",
+            description = "O entregador logado inicia um pedido atribuído a ele e em preparação: vai a OUT_FOR_DELIVERY e registra dispatchedAt")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Entrega iniciada"),
+            @ApiResponse(responseCode = "400", description = "Pedido não está em preparação"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido, papel sem permissão ou pedido de outro entregador"),
+            @ApiResponse(responseCode = "404", description = "Pedido inexistente ou usuário não é entregador")
+    })
+    @PatchMapping("/{id}/start-delivery")
+    @ResponseBody
+    @RolesAllowed("DELIVERER")
+    public ResponseEntity<OrderResponseDTO> startDelivery(@Parameter(description = "ID do pedido") @PathVariable String id) {
+        Deliverer entregador = delivererService.findByUserId(loggedUser().getId());
+        return ResponseEntity.ok(orderService.startDelivery(id, entregador.getId()));
     }
 
     @Operation(summary = "Confirma a entrega (entregador)",
