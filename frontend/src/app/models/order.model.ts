@@ -68,4 +68,11 @@ export interface OrderResponse {
     complement:string;
     neighborhood:string;
     deliveryMode?: DeliveryMode;
+    customerPhone?: string;
+    cancellationReason?: string;
+}
+
+export interface CancelOrderResponse {
+    status: string;
+    customerNotified: boolean;
 }

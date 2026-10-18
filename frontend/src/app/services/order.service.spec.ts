@@ -32,4 +32,15 @@ describe('OrderService', () => {
     expect(req.request.method).toBe('GET');
     req.flush({ availableItems: [{ productId: 5 }], unavailableItems: [] });
   });
+
+  it('deveCancelarPedidoComMotivo', () => {
+    service.cancelOrder('pedido-1', 'Sem entregador').subscribe((resposta) => {
+      expect(resposta.customerNotified).toBeTrue();
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/orders/pedido-1/cancel`);
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ reason: 'Sem entregador' });
+    req.flush({ status: 'Cancelado', customerNotified: true });
+  });
 });
