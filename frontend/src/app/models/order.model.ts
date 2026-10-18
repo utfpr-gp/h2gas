@@ -71,6 +71,10 @@ export interface OrderResponse {
     customerPhone?: string;
     delivererName?: string;
     cancellationReason?: string;
+    cityName?: string;
+    deliveredAt?: string;
+    lastRefusalReason?: string;
+    lastRefusalBy?: string;
 }
 
 export interface CancelOrderResponse {
