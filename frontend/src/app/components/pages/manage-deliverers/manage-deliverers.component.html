@@ -12,31 +12,31 @@
             <label class="block text-sm text-gray-700">
                 Nome
                 <input formControlName="name" autocomplete="off"
-                    class="input input-bordered w-full rounded-xl mt-1" [class.input-error]="invalid('name')" />
+                    class="input w-full rounded-xl mt-1 border border-gray-300 bg-white" [class.input-error]="invalid('name')" />
                 <span *ngIf="invalid('name')" class="text-xs text-error">Informe o nome.</span>
             </label>
             <label class="block text-sm text-gray-700">
                 Telefone
                 <input formControlName="phoneNumber" type="tel" inputmode="tel" autocomplete="off"
-                    class="input input-bordered w-full rounded-xl mt-1" [class.input-error]="invalid('phoneNumber')" />
+                    class="input w-full rounded-xl mt-1 border border-gray-300 bg-white" [class.input-error]="invalid('phoneNumber')" />
                 <span *ngIf="invalid('phoneNumber')" class="text-xs text-error">Informe o telefone.</span>
             </label>
             <label class="block text-sm text-gray-700">
                 E-mail (login)
                 <input formControlName="email" type="email" autocomplete="off"
-                    class="input input-bordered w-full rounded-xl mt-1" [class.input-error]="invalid('email')" />
+                    class="input w-full rounded-xl mt-1 border border-gray-300 bg-white" [class.input-error]="invalid('email')" />
                 <span *ngIf="invalid('email')" class="text-xs text-error">Informe um e-mail válido.</span>
             </label>
             <label class="block text-sm text-gray-700">
                 Senha inicial
                 <input formControlName="password" type="password" autocomplete="new-password"
-                    class="input input-bordered w-full rounded-xl mt-1" [class.input-error]="invalid('password')" />
+                    class="input w-full rounded-xl mt-1 border border-gray-300 bg-white" [class.input-error]="invalid('password')" />
                 <span *ngIf="invalid('password')" class="text-xs text-error">Mínimo de 6 caracteres.</span>
             </label>
             <label class="block text-sm text-gray-700 sm:col-span-2">
                 Veículo e placa <span class="text-gray-400">(opcional)</span>
                 <input formControlName="vehicleInfo" placeholder="Ex.: Moto - ABC-1234" autocomplete="off"
-                    class="input input-bordered w-full rounded-xl mt-1" />
+                    class="input w-full rounded-xl mt-1 border border-gray-300 bg-white" />
             </label>
             <button type="submit" [disabled]="saving" class="btn btn-primary rounded-xl sm:col-span-2">
                 <span *ngIf="saving" class="loading loading-spinner loading-sm"></span>
