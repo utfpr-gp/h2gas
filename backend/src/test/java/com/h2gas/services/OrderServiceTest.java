@@ -483,6 +483,15 @@ class OrderServiceTest {
     }
 
     @Test
+    @DisplayName("HU06: a resposta do pedido traz o telefone do cliente")
+    void deveExporTelefoneDoClienteNoPedido() {
+        OrderResponseDTO result = orderService.createOrder(novoPedido(validCustomerAddressId));
+
+        assertEquals("41987654321", result.getCustomerPhone());
+        assertNull(result.getCancellationReason());
+    }
+
+    @Test
     @DisplayName("Deve buscar todos os pedidos com paginação")
     void findAllOrders() {
         // Arrange

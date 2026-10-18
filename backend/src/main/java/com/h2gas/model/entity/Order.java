@@ -47,6 +47,9 @@ public class Order {
     @Column(name = "delivery_mode", nullable = false, length = 20)
     private DeliveryModeEnum deliveryMode = DeliveryModeEnum.DELIVERY;
 
+    @Column(name = "cancellation_reason", length = 500)
+    private String cancellationReason;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items;
 
