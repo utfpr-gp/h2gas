@@ -8,6 +8,8 @@ import { ReceivedOrdersComponent } from './received-orders.component';
 import { OrderService } from '../../../services/order.service';
 import { UserService } from '../../../services/user.service';
 import { SupplierService } from '../../../services/supplier.service';
+import { DelivererService } from '../../../services/deliverer.service';
+import { Deliverer } from '../../../models/deliverer';
 import { OrderResponse } from '../../../models/order.model';
 
 describe('ReceivedOrdersComponent', () => {
@@ -16,18 +18,25 @@ describe('ReceivedOrdersComponent', () => {
   let orderServiceSpy: jasmine.SpyObj<OrderService>;
   let toastrSpy: jasmine.SpyObj<ToastrService>;
 
-  const pedido = (id: string, status: string) =>
-    ({ id, status, supplierName: 'Gás Centro', customerName: 'Maria', totalPrice: 125, orderItems: [] } as unknown as OrderResponse);
+  let delivererServiceSpy: jasmine.SpyObj<DelivererService>;
+
+  const carlos: Deliverer = { id: 1, name: 'Carlos Silva', email: 'c@h2gas.local', phoneNumber: '41988887777', vehicleInfo: 'Moto', active: true, busy: true };
+  const ana: Deliverer = { id: 2, name: 'Ana Souza', email: 'a@h2gas.local', phoneNumber: '41977776666', vehicleInfo: 'Carro', active: true, busy: false };
+
+  const pedido = (id: string, status: string, deliveryMode = 'DELIVERY') =>
+    ({ id, status, deliveryMode, supplierName: 'Gás Centro', customerName: 'Maria', totalPrice: 125, orderItems: [] } as unknown as OrderResponse);
   const lista = (...orders: OrderResponse[]) =>
     of({ data: orders, page: 0, totalPages: 1, hasNext: false, hasPrevious: false } as any);
 
   beforeEach(async () => {
     orderServiceSpy = jasmine.createSpyObj('OrderService',
-      ['findByExcludeStatus', 'findBySupplierId', 'updateStatusOrder', 'cancelOrder']);
+      ['findByExcludeStatus', 'findBySupplierId', 'updateStatusOrder', 'cancelOrder', 'assignDeliverer']);
     orderServiceSpy.findByExcludeStatus.and.returnValue(
       lista(pedido('c1', 'Confirmado'), pedido('p1', 'Pendente'), pedido('p2', 'Pendente')));
     orderServiceSpy.updateStatusOrder.and.returnValue(of({ status: 'Confirmado' }));
     orderServiceSpy.cancelOrder.and.returnValue(of({ status: 'Cancelado', customerNotified: true }));
+    delivererServiceSpy = jasmine.createSpyObj('DelivererService', ['listMine']);
+    delivererServiceSpy.listMine.and.returnValue(of([carlos, ana]));
     toastrSpy = jasmine.createSpyObj('ToastrService', ['success', 'warning', 'error', 'info']);
     const userServiceSpy = jasmine.createSpyObj('UserService', ['getUserLocalStorage']);
     userServiceSpy.getUserLocalStorage.and.returnValue({ id: 'sup-1', supplierId: 'sup-1' });
@@ -40,6 +49,7 @@ describe('ReceivedOrdersComponent', () => {
         { provide: OrderService, useValue: orderServiceSpy },
         { provide: UserService, useValue: userServiceSpy },
         { provide: SupplierService, useValue: supplierServiceSpy },
+        { provide: DelivererService, useValue: delivererServiceSpy },
         { provide: ToastrService, useValue: toastrSpy },
         provideRouter([]),
         provideNoopAnimations(),
@@ -156,5 +166,79 @@ describe('ReceivedOrdersComponent', () => {
     expect(modal).toBeTruthy();
     expect((modal.querySelector('[data-testid=confirm-cancel]') as HTMLButtonElement).disabled).toBeTrue();
     expect(orderServiceSpy.updateStatusOrder).not.toHaveBeenCalled();
+  });
+
+  describe('despacho (HU07)', () => {
+    const emPreparo = () => lista(
+      pedido('e1', 'Em preparacao', 'DELIVERY'),
+      pedido('r1', 'Em preparacao', 'PICKUP'));
+
+    beforeEach(() => {
+      orderServiceSpy.findByExcludeStatus.and.returnValue(emPreparo());
+      orderServiceSpy.updateStatusOrder.and.returnValue(of({ status: 'Saiu para entrega' }));
+      orderServiceSpy.assignDeliverer.and.returnValue(of({ id: 'e1', status: 'Saiu para entrega', delivererName: 'Ana Souza' } as any));
+      fixture.detectChanges();
+    });
+
+    const botao = (acao: string) => fixture.nativeElement.querySelector(`[data-testid=action-${acao}]`) as HTMLButtonElement | null;
+
+    it('deveExibirDespacharApenasParaEntregaEmPreparo', () => {
+      component.selectOrder(component.orders!.find((o) => o.id === 'e1'));
+      fixture.detectChanges();
+      expect(botao('DISPATCH')?.textContent?.trim()).toBe('Despachar');
+      expect(botao('OUT_FOR_DELIVERY')).toBeNull();
+
+      component.selectOrder(component.orders!.find((o) => o.id === 'r1'));
+      fixture.detectChanges();
+      expect(botao('DISPATCH')).toBeNull();
+      expect(botao('OUT_FOR_DELIVERY')?.textContent?.trim()).toBe('Pronto para retirada');
+    });
+
+    it('deveManterAtalhoDeRetiradaSemEntregador', () => {
+      component.selectOrder(component.orders!.find((o) => o.id === 'r1'));
+      fixture.detectChanges();
+
+      botao('OUT_FOR_DELIVERY')!.click();
+      fixture.detectChanges();
+
+      expect(orderServiceSpy.updateStatusOrder).toHaveBeenCalledOnceWith({ orderStatus: 'OUT_FOR_DELIVERY' }, 'r1');
+      expect(fixture.nativeElement.querySelector('[data-testid=dispatch-modal]')).toBeNull();
+    });
+
+    it('deveAtribuirEntregadorSelecionadoNoModal', () => {
+      component.selectOrder(component.orders!.find((o) => o.id === 'e1'));
+      fixture.detectChanges();
+      botao('DISPATCH')!.click();
+      fixture.detectChanges();
+
+      const opcoes = Array.from(fixture.nativeElement.querySelectorAll('[data-testid=deliverer-option]')) as HTMLElement[];
+      expect(opcoes.length).toBe(2);
+      expect(opcoes[0].textContent).toContain('Em rota');
+      expect(opcoes[1].textContent).toContain('Disponível');
+      const confirmar = () => fixture.nativeElement.querySelector('[data-testid=confirm-dispatch]') as HTMLButtonElement;
+      expect(confirmar().disabled).toBeTrue();
+
+      opcoes[1].click();
+      fixture.detectChanges();
+      confirmar().click();
+      fixture.detectChanges();
+
+      expect(orderServiceSpy.assignDeliverer).toHaveBeenCalledOnceWith('e1', 2);
+      expect(component.orders!.find((o) => o.id === 'e1')!.status).toBe('Saiu para entrega');
+      expect(component.orders!.find((o) => o.id === 'e1')!.delivererName).toBe('Ana Souza');
+      expect(fixture.nativeElement.querySelector('[data-testid=dispatch-modal]')).toBeNull();
+      expect(toastrSpy.success).toHaveBeenCalledWith(jasmine.stringMatching('Ana Souza'));
+    });
+
+    it('deveAvisarQuandoNaoHaEntregadores', () => {
+      delivererServiceSpy.listMine.and.returnValue(of([]));
+      component.selectOrder(component.orders!.find((o) => o.id === 'e1'));
+      fixture.detectChanges();
+
+      botao('DISPATCH')!.click();
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelector('[data-testid=no-deliverers]')).toBeTruthy();
+    });
   });
 });
