@@ -245,6 +245,35 @@ class OrderControllerTest {
     }
 
     @Test
+    void deveRetornar400AoCancelarEntregaSemMotivo() throws Exception {
+        autenticarComo(UserTypeEnum.DELIVERER, "usuario-entregador");
+
+        mockMvc.perform(patch("/api/orders/pedido-rota/cancel-delivery")
+                        .contentType("application/json")
+                        .content("{\"reason\":\"   \"}"))
+                .andExpect(status().isBadRequest());
+
+        verify(orderService, never()).cancelDelivery(any(), any(), any());
+    }
+
+    @Test
+    void deveRetornar200AoCancelarEntregaComMotivo() throws Exception {
+        autenticarComo(UserTypeEnum.DELIVERER, "usuario-entregador");
+        Deliverer entregador = new Deliverer();
+        entregador.setId(9L);
+        when(delivererService.findByUserId("usuario-entregador")).thenReturn(entregador);
+        OrderResponseDTO devolvido = new OrderResponseDTO();
+        devolvido.setStatus("Em preparacao");
+        when(orderService.cancelDelivery("pedido-rota", 9L, "Moto quebrou")).thenReturn(devolvido);
+
+        mockMvc.perform(patch("/api/orders/pedido-rota/cancel-delivery")
+                        .contentType("application/json")
+                        .content("{\"reason\":\"Moto quebrou\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("Em preparacao"));
+    }
+
+    @Test
     void deveRetornar200AoConfirmarEntrega() throws Exception {
         autenticarComo(UserTypeEnum.DELIVERER, "usuario-entregador");
         Deliverer entregador = new Deliverer();

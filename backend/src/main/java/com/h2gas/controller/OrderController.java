@@ -2,6 +2,7 @@ package com.h2gas.controller;
 
 import com.h2gas.enums.OrderStatusEnum;
 import com.h2gas.model.dto.AssignDelivererRequestDTO;
+import com.h2gas.model.dto.CancelDeliveryRequestDTO;
 import com.h2gas.model.dto.CancelOrderRequestDTO;
 import com.h2gas.model.dto.CancelOrderResponseDTO;
 import com.h2gas.model.dto.OrderPreviewDTO;
@@ -272,6 +273,25 @@ public class OrderController {
     public ResponseEntity<OrderResponseDTO> startDelivery(@Parameter(description = "ID do pedido") @PathVariable String id) {
         Deliverer entregador = delivererService.findByUserId(loggedUser().getId());
         return ResponseEntity.ok(orderService.startDelivery(id, entregador.getId()));
+    }
+
+    @Operation(summary = "Cancela a entrega (entregador)",
+            description = "O entregador logado recusa um pedido atribuído a ele, com motivo obrigatório. O pedido volta a "
+                    + "IN_PREPARATION sem entregador para o fornecedor despachar de novo; o pedido não é cancelado ao cliente")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Entrega devolvida ao fornecedor"),
+            @ApiResponse(responseCode = "400", description = "Motivo ausente ou maior que 500 caracteres; pedido já entregue ou cancelado"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido, papel sem permissão ou pedido de outro entregador"),
+            @ApiResponse(responseCode = "404", description = "Pedido inexistente ou usuário não é entregador")
+    })
+    @PatchMapping("/{id}/cancel-delivery")
+    @ResponseBody
+    @RolesAllowed("DELIVERER")
+    public ResponseEntity<OrderResponseDTO> cancelDelivery(
+            @Parameter(description = "ID do pedido") @PathVariable String id,
+            @Valid @RequestBody CancelDeliveryRequestDTO request) {
+        Deliverer entregador = delivererService.findByUserId(loggedUser().getId());
+        return ResponseEntity.ok(orderService.cancelDelivery(id, entregador.getId(), request.getReason()));
     }
 
     @Operation(summary = "Confirma a entrega (entregador)",

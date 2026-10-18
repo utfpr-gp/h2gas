@@ -51,6 +51,9 @@ class OrderServiceTest {
     private DelivererRepository delivererRepository;
 
     @Autowired
+    private DeliveryRefusalRepository deliveryRefusalRepository;
+
+    @Autowired
     private OrderRepository orderRepository;
 
     @Autowired
@@ -724,6 +727,71 @@ class OrderServiceTest {
         String orderId = pedidoEmRota(entregadorId);
 
         assertThrows(BusinessRuleException.class, () -> orderService.startDelivery(orderId, entregadorId));
+    }
+
+    @Test
+    @DisplayName("HU07: recusa devolve o pedido ao fornecedor, sem cancelar nem mexer no estoque")
+    void deveCancelarEntregaDevolvendoPedidoAoFornecedor() {
+        Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
+        String orderId = pedidoEmRota(entregadorId);
+        int estoque = productItemRepository.findById(validProductItemId).orElseThrow().getStockQuantity();
+
+        orderService.cancelDelivery(orderId, entregadorId, "  Moto quebrou  ");
+
+        Order devolvido = orderRepository.findById(orderId).orElseThrow();
+        assertEquals(OrderStatusEnum.IN_PREPARATION, devolvido.getStatus());
+        assertNull(devolvido.getDeliverer());
+        assertNull(devolvido.getDispatchedAt());
+        assertNull(devolvido.getCancellationReason());
+        assertEquals(estoque, productItemRepository.findById(validProductItemId).orElseThrow().getStockQuantity());
+        List<DeliveryRefusal> recusas = deliveryRefusalRepository.findByDelivererIdOrderByCreatedAtDesc(entregadorId);
+        assertEquals(1, recusas.size());
+        assertEquals("Moto quebrou", recusas.get(0).getReason());
+        assertEquals(orderId, recusas.get(0).getOrder().getId());
+    }
+
+    @Test
+    @DisplayName("HU07: também recusa pedido atribuído que ainda não iniciou")
+    void deveCancelarEntregaAindaNaoIniciada() {
+        Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
+        String orderId = pedidoAtribuido(entregadorId);
+
+        orderService.cancelDelivery(orderId, entregadorId, "Fora da minha região");
+
+        assertNull(orderRepository.findById(orderId).orElseThrow().getDeliverer());
+        assertEquals(OrderStatusEnum.IN_PREPARATION, orderRepository.findById(orderId).orElseThrow().getStatus());
+    }
+
+    @Test
+    @DisplayName("HU07: recusa exige motivo")
+    void deveRejeitarCancelamentoDeEntregaSemMotivo() {
+        Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
+        String orderId = pedidoEmRota(entregadorId);
+
+        assertThrows(BusinessRuleException.class, () -> orderService.cancelDelivery(orderId, entregadorId, "   "));
+        assertEquals(entregadorId, orderRepository.findById(orderId).orElseThrow().getDeliverer().getId());
+    }
+
+    @Test
+    @DisplayName("HU07: entregador não recusa pedido atribuído a outro entregador")
+    void deveRejeitarCancelamentoDeEntregaDeOutroEntregador() {
+        Long carlos = entregadorDe(validSupplierId, "carlos@teste.com");
+        Long ana = entregadorDe(validSupplierId, "ana@teste.com");
+        String orderId = pedidoEmRota(carlos);
+
+        assertThrows(ForbiddenResourceException.class, () -> orderService.cancelDelivery(orderId, ana, "Não é meu"));
+        assertEquals(OrderStatusEnum.OUT_FOR_DELIVERY, orderRepository.findById(orderId).orElseThrow().getStatus());
+    }
+
+    @Test
+    @DisplayName("HU07: não recusa pedido já entregue")
+    void deveRejeitarCancelamentoDePedidoJaEntregue() {
+        Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
+        String orderId = pedidoEmRota(entregadorId);
+        orderService.completeDelivery(orderId, entregadorId);
+
+        assertThrows(BusinessRuleException.class, () -> orderService.cancelDelivery(orderId, entregadorId, "Tarde demais"));
+        assertEquals(OrderStatusEnum.DELIVERED, orderRepository.findById(orderId).orElseThrow().getStatus());
     }
 
     @Test

@@ -17,12 +17,14 @@ import com.h2gas.model.dto.ReorderPreviewDTO;
 import com.h2gas.model.entity.Address;
 import com.h2gas.model.entity.CategoryProduct;
 import com.h2gas.model.entity.Deliverer;
+import com.h2gas.model.entity.DeliveryRefusal;
 import com.h2gas.model.entity.Order;
 import com.h2gas.model.entity.OrderItem;
 import com.h2gas.model.entity.ProductItem;
 import com.h2gas.model.entity.Supplier;
 import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.OrderMapper;
+import com.h2gas.model.repository.DeliveryRefusalRepository;
 import com.h2gas.model.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -61,6 +63,12 @@ public class OrderService {
 
     @Autowired
     private DelivererService delivererService;
+
+    private final DeliveryRefusalRepository deliveryRefusalRepository;
+
+    public OrderService(DeliveryRefusalRepository deliveryRefusalRepository) {
+        this.deliveryRefusalRepository = deliveryRefusalRepository;
+    }
 
     // RN02: pedido, itens e decremento de estoque entram ou saem juntos
     @Transactional
@@ -298,6 +306,23 @@ public class OrderService {
                 .stream()
                 .map(orderMapper::toResponseDto)
                 .toList();
+    }
+
+    // HU07: o entregador recusa; o pedido volta ao fornecedor (não é cancelado ao cliente, estoque intacto)
+    @Transactional
+    public OrderResponseDTO cancelDelivery(String orderId, Long delivererId, String reason) {
+        if (reason == null || reason.isBlank()) {
+            throw new BusinessRuleException("Informe o motivo para cancelar a entrega.");
+        }
+        Order order = findOrderOfDeliverer(orderId, delivererId);
+        if (order.getStatus() != OrderStatusEnum.IN_PREPARATION && order.getStatus() != OrderStatusEnum.OUT_FOR_DELIVERY) {
+            throw new BusinessRuleException("Só é possível cancelar a entrega de pedidos atribuídos e ainda não entregues.");
+        }
+        deliveryRefusalRepository.save(new DeliveryRefusal(null, order, order.getDeliverer(), reason.trim(), LocalDateTime.now()));
+        order.setDeliverer(null);
+        order.setDispatchedAt(null);
+        order.setStatus(OrderStatusEnum.IN_PREPARATION);
+        return orderMapper.toResponseDto(orderRepository.save(order));
     }
 
     // HU07: confirmação da entrega com um toque pelo entregador
