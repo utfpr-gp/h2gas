@@ -22,6 +22,7 @@ import { ManageAddressesComponent } from './components/pages/manage-addresses/ma
 import { ReceivedOrdersComponent } from './components/pages/received-orders/received-orders.component';
 import { AwaitingApprovalComponent } from './components/pages/awaiting-approval/awaiting-approval.component';
 import { OrderHistoryComponent } from './components/pages/order-history/order-history.component';
+import { ManageDeliverersComponent } from './components/pages/manage-deliverers/manage-deliverers.component';
 import { ForgotPasswordComponent } from './components/pages/forgot-password/forgot-password.component';
 import { CheckEmailComponent } from './components/pages/check-email/check-email.component';
 import { ResetPasswordComponent } from './components/pages/reset-password/reset-password.component';
@@ -139,6 +140,12 @@ export const routes: Routes = [
         component: AwaitingApprovalComponent,
         canActivate: [authGuard],
         data: {roles: ['ADMIN', 'SUPPLIER']}
+    },
+    {
+        path: 'entregadores',
+        component: ManageDeliverersComponent,
+        canActivate: [authGuard],
+        data: {roles: ['SUPPLIER']}
     },
     {
         path: 'historico-pedidos', 
