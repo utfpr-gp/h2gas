@@ -20,6 +20,24 @@ export interface OrderPreview {
     subtotal: number;
 }
 
+export interface ReorderItem {
+    productId?: number;
+    productBrand?: string;
+    category?: string;
+    type?: string;
+    imageUrl?: string;
+    supplierId?: string;
+    quantity: number;
+    priceDelivery?: number;
+    pricePickup?: number;
+    unavailableReason?: 'PRODUTO_REMOVIDO' | 'SEM_ESTOQUE';
+}
+
+export interface ReorderPreview {
+    availableItems: ReorderItem[];
+    unavailableItems: ReorderItem[];
+}
+
 export interface OrderRequest {
     customerUuid: string;
     supplierRef: string;
@@ -49,4 +67,5 @@ export interface OrderResponse {
     number:string;
     complement:string;
     neighborhood:string;
+    deliveryMode?: DeliveryMode;
 }

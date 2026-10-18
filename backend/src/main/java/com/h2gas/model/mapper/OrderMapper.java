@@ -63,6 +63,10 @@ public class OrderMapper {
             orderResponseDTO.setStatus(data.getStatus().getStatus());
         }
 
+        if (data.getDeliveryMode() != null) {
+            orderResponseDTO.setDeliveryMode(data.getDeliveryMode().name());
+        }
+
         if (data.getDeliveryAddress() != null) {
             orderResponseDTO.setNumber(data.getDeliveryAddress().getNumber());
             orderResponseDTO.setStreetName(data.getDeliveryAddress().getStreetName());

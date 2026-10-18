@@ -31,4 +31,5 @@ public class OrderResponseDTO {
     private String number;
     private String complement;
     private String neighborhood;
+    private String deliveryMode;
 }

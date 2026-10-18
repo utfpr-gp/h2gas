@@ -244,8 +244,10 @@ pode aumentar.
 
 - Gatilho de "frete grátis" quando `priceDelivery == pricePickup`
   (etiqueta visual) — isso é HU10, do lado do cadastro do fornecedor.
-- Tornar `deliveryAddress` opcional para pedidos `PICKUP` — mantido
-  obrigatório por simplicidade; não é um critério de aceitação do TCC.
+- ~~Tornar `deliveryAddress` opcional para pedidos `PICKUP` — mantido
+  obrigatório por simplicidade; não é um critério de aceitação do TCC.~~
+  **Revertido pela HU05 (§5.3.1, 2026-10-15)**: pedidos de retirada não
+  têm endereço de entrega.
 - Qualquer UI de seleção de modalidade por item individual — a modalidade
   é por pedido inteiro, não por produto.
 

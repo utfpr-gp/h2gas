@@ -6,6 +6,10 @@ import com.h2gas.configuration.security.TokenService;
 import com.h2gas.model.dto.OrderPreviewDTO;
 import com.h2gas.model.dto.OrderPreviewItemDTO;
 import com.h2gas.model.dto.OrderPreviewRequestDTO;
+import com.h2gas.model.dto.ReorderItemDTO;
+import com.h2gas.model.dto.ReorderPreviewDTO;
+import com.h2gas.model.entity.User;
+import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.mapper.OrderMapper;
 import com.h2gas.model.repository.UserRepository;
 import com.h2gas.services.OrderService;
@@ -28,9 +32,12 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.same;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -100,5 +107,27 @@ class OrderControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(orderService, never()).previewOrder(any());
+    }
+
+    @Test
+    void deveRetornar200ComPreviewValido() throws Exception {
+        User cliente = new User(null, "Cliente", "cliente@teste.com", "41999999999",
+                "12345678900", "senha", UserTypeEnum.CUSTOMER);
+        cliente.setId("cliente-1");
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                cliente, null, List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER"))));
+
+        ReorderItemDTO item = new ReorderItemDTO();
+        item.setProductId(5L);
+        item.setQuantity(2);
+        item.setSupplierId("sup-1");
+        when(orderService.buildReorderPreview(eq("pedido-1"), same(cliente)))
+                .thenReturn(new ReorderPreviewDTO(List.of(item), List.of()));
+
+        mockMvc.perform(get("/api/orders/pedido-1/reorder-preview"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.availableItems[0].productId").value(5))
+                .andExpect(jsonPath("$.availableItems[0].supplierId").value("sup-1"))
+                .andExpect(jsonPath("$.unavailableItems").isEmpty());
     }
 }

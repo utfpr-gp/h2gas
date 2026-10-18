@@ -57,6 +57,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
 
+    @ExceptionHandler(ForbiddenResourceException.class)
+    public ResponseEntity<?> handleForbiddenResourceException(ForbiddenResourceException ex) {
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(Map.of("error", ex.getMessage()));
+    }
+
     @ExceptionHandler(BusinessRuleException.class)
     public ResponseEntity<?> handleBusinessRuleException(BusinessRuleException ex) {
         return ResponseEntity

@@ -122,11 +122,13 @@
               class="hidden lg:inline-block relative cursor-pointer p-2 rounded-md text-white hover:bg-white/10"
             >
               <i class="fas fa-shopping-cart text-lg"></i>
-              <div
-                class="absolute -top-1 -right-1 badge badge-info text-white badge-xs"
+              <span
+                *ngIf="cartProducts?.length"
+                data-testid="cart-count"
+                class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-info text-info-content text-[11px] font-bold leading-none flex items-center justify-center ring-2 ring-primary"
               >
-                {{ cartProducts!!.length }}
-              </div>
+                {{ cartProducts!.length }}
+              </span>
             </label>
   
             <!-- Ícone mobile -->
@@ -135,11 +137,13 @@
               class="lg:hidden relative cursor-pointer p-2 rounded-md text-white hover:bg-white/10"
             >
               <i class="fas fa-shopping-cart text-lg"></i>
-              <div
-                class="absolute -top-1 -right-1 badge badge-info text-white badge-xs"
+              <span
+                *ngIf="cartProducts?.length"
+                data-testid="cart-count"
+                class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-info text-info-content text-[11px] font-bold leading-none flex items-center justify-center ring-2 ring-primary"
               >
-                {{ cartProducts!!.length }}
-              </div>
+                {{ cartProducts!.length }}
+              </span>
             </label>
           </div>
   

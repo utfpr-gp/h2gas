@@ -13,8 +13,18 @@
   --color-secondary-content: #ffffff;
   --color-base-100: #ffffff;
   --color-base-200: #f7f8fc;
+  --color-base-300: #e6e9f2;
   --color-base-content: #1c1c1e;
   --color-neutral: #6b7280;
+  --color-neutral-content: #ffffff;
+  --color-info: #0ea5e9;
+  --color-info-content: #ffffff;
+  --color-success: #16a34a;
+  --color-success-content: #ffffff;
+  --color-warning: #f59e0b;
+  --color-warning-content: #1c1c1e;
+  --color-error: #dc2626;
+  --color-error-content: #ffffff;
 }
 
 @tailwind base;
@@ -159,5 +169,22 @@ body {
       transform: scale(1);
       opacity: 1;
     }
+  }
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* acessibilidade: quem pede menos movimento não vê animações nem transições */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

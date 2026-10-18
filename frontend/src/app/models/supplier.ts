@@ -16,6 +16,7 @@ export class Supplier {
     userId?: string;
     addressStreetName?: string;
     addressNumber?: string;
+    addressNeighborhood?: string;
     open?: boolean;
     email?: string;
     cnpj?: string;
