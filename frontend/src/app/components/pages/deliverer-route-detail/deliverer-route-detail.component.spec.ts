@@ -69,7 +69,18 @@ describe('DelivererRouteDetailComponent', () => {
 
     const endereco = encodeURIComponent('Rua das Flores, 300, Centro, Curitiba');
     expect((byId('route-map') as HTMLIFrameElement).src).toBe(`https://maps.google.com/maps?q=${endereco}&output=embed`);
-    expect((byId('open-maps') as HTMLAnchorElement).href).toBe(`https://www.google.com/maps/dir/?api=1&destination=${endereco}`);
+    expect((byId('open-maps') as HTMLAnchorElement).href).toBe(`https://www.google.com/maps/dir/?api=1&destination=${endereco}&travelmode=driving`);
+  });
+
+  it('deveAbrirGoogleMapsComARotaAoClicarNoMapa', async () => {
+    await setup('Em preparacao');
+
+    const endereco = encodeURIComponent('Rua das Flores, 300, Centro, Curitiba');
+    const areaDoMapa = byId('map-click') as HTMLAnchorElement;
+    expect(areaDoMapa.href).toBe(`https://www.google.com/maps/dir/?api=1&destination=${endereco}&travelmode=driving`);
+    expect(areaDoMapa.target).toBe('_blank');
+    expect(areaDoMapa.getAttribute('aria-label')).toContain('Google Maps');
+    expect((byId('open-maps') as HTMLAnchorElement).href).toBe(areaDoMapa.href);
   });
 
   it('deveIniciarEPoisConfirmarEntrega', async () => {

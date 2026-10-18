@@ -15,8 +15,18 @@
             <span *ngIf="!isInRoute" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">PENDENTE</span>
         </div>
 
-        <iframe data-testid="route-map" [src]="mapUrl" title="Mapa do endereço de entrega" loading="lazy"
-            class="w-full h-48 rounded-xl border border-gray-200"></iframe>
+        <div class="relative">
+            <iframe data-testid="route-map" [src]="mapUrl" title="Mapa do endereço de entrega" tabindex="-1"
+                class="w-full h-56 rounded-xl border border-gray-200 pointer-events-none"></iframe>
+            <!-- o clique no mapa leva ao Google Maps com a rota até o endereço do pedido -->
+            <a data-testid="map-click" [href]="mapsLink" target="_blank" rel="noopener"
+                aria-label="Abrir a rota no Google Maps"
+                class="absolute inset-0 rounded-xl flex items-end justify-center pb-3">
+                <span class="bg-white/95 text-primary text-xs font-semibold rounded-full shadow px-3 py-1 flex items-center gap-1">
+                    <span class="material-icons text-sm">directions</span> Toque para abrir a rota
+                </span>
+            </a>
+        </div>
 
         <section class="bg-white rounded-xl shadow-md border border-gray-200 p-4 mt-3">
             <div class="flex items-start gap-2">

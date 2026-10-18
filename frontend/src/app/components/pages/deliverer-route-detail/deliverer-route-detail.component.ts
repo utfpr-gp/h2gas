@@ -156,7 +156,7 @@ export class DelivererRouteDetailComponent implements OnInit {
     this.order = order;
     const query = encodeURIComponent(this.address);
     this.mapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(`https://maps.google.com/maps?q=${query}&output=embed`);
-    this.mapsLink = `https://www.google.com/maps/dir/?api=1&destination=${query}`;
+    this.mapsLink = `https://www.google.com/maps/dir/?api=1&destination=${query}&travelmode=driving`;
   }
 
   // o GlobalExceptionHandler devolve { error } para regra de negócio e { message } para os demais erros
