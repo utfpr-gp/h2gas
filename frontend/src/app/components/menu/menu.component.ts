@@ -81,6 +81,11 @@ export class MenuComponent implements OnInit {
   }
 
 
+  // HU07: o entregador só vê a marca e "Sair" (sem catálogo, carrinho ou links do cliente)
+  get isDeliverer(): boolean {
+    return this.user?.userType === 'DELIVERER';
+  }
+
   unitPriceForMode(product: ProductItem): number | undefined {
     return this.deliveryMode === 'PICKUP' ? product.pricePickup : product.priceDelivery;
   }

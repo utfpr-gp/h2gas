@@ -66,7 +66,8 @@ export class LoginComponent {
       next: (response: any) => {
         console.log('Usuario buscado sucesso!', response);
         localStorage.setItem('user', JSON.stringify(response))
-        this.navigate('/inicio')  
+        // o entregador não tem catálogo: vai direto para as entregas (HU07)
+        this.navigate(response.userType === 'DELIVERER' ? '/entregas' : '/inicio')
       }, 
       error: (err) => {
         console.error('Erro ao buscar o usuario logado:', err);

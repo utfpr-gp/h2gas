@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
+import { of } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
 import { LoginComponent } from './login.component';
@@ -49,5 +50,25 @@ describe('LoginComponent', () => {
 
     expect(locationContextService.current()).toBeNull();
     expect(localStorage.getItem('h2gas.activeAddress')).toBeNull();
+  });
+
+  it('deveRedirecionarEntregadorParaEntregas', () => {
+    const userService = TestBed.inject(UserService) as jasmine.SpyObj<UserService>;
+    userService.getMe.and.returnValue(of({ id: 'u1', userType: 'DELIVERER' } as any));
+    const router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+
+    component.getAndSaveMe();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/entregas']);
+  });
+
+  it('deveManterInicioParaOsDemaisPerfis', () => {
+    const userService = TestBed.inject(UserService) as jasmine.SpyObj<UserService>;
+    userService.getMe.and.returnValue(of({ id: 'u2', userType: 'CUSTOMER' } as any));
+    const router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+
+    component.getAndSaveMe();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/inicio']);
   });
 });
