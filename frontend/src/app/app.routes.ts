@@ -25,6 +25,7 @@ import { OrderHistoryComponent } from './components/pages/order-history/order-hi
 import { ManageDeliverersComponent } from './components/pages/manage-deliverers/manage-deliverers.component';
 import { DelivererRoutesComponent } from './components/pages/deliverer-routes/deliverer-routes.component';
 import { DelivererRouteDetailComponent } from './components/pages/deliverer-route-detail/deliverer-route-detail.component';
+import { DelivererHistoryComponent } from './components/pages/deliverer-history/deliverer-history.component';
 import { ForgotPasswordComponent } from './components/pages/forgot-password/forgot-password.component';
 import { CheckEmailComponent } from './components/pages/check-email/check-email.component';
 import { ResetPasswordComponent } from './components/pages/reset-password/reset-password.component';
@@ -146,6 +147,12 @@ export const routes: Routes = [
     {
         path: 'entregas',
         component: DelivererRoutesComponent,
+        canActivate: [authGuard],
+        data: {roles: ['ADMIN', 'DELIVERER']}
+    },
+    {
+        path: 'entregas/historico',
+        component: DelivererHistoryComponent,
         canActivate: [authGuard],
         data: {roles: ['ADMIN', 'DELIVERER']}
     },

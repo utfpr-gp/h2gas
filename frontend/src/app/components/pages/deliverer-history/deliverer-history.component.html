@@ -1,0 +1,47 @@
+<div class="max-w-md mx-auto px-4 pt-5 pb-28">
+    <h1 class="text-2xl font-bold text-gray-800 mb-4">Histórico</h1>
+
+    <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4 text-center mb-5">
+        <p class="text-[11px] font-semibold tracking-wide text-gray-500 uppercase">Entregas hoje</p>
+        <p data-testid="delivered-today" class="text-4xl font-bold text-primary mt-1">{{ deliveredToday }}</p>
+    </div>
+
+    <div *ngIf="loading" class="space-y-3">
+        <div class="skeleton h-24 w-full rounded-xl"></div>
+        <div class="skeleton h-24 w-full rounded-xl"></div>
+    </div>
+
+    <div *ngIf="!loading && !groups.length" class="text-center bg-white rounded-xl border border-gray-200 py-12 px-4">
+        <span class="material-icons text-gray-300" style="font-size: 56px">history</span>
+        <p class="text-gray-700 font-semibold mt-2">Nenhuma entrega no histórico</p>
+        <p class="text-sm text-gray-500">As entregas que você concluir ou cancelar aparecem aqui.</p>
+    </div>
+
+    <section *ngFor="let group of groups" data-testid="day-group" class="mb-5">
+        <p class="flex items-center gap-2 text-sm font-semibold text-gray-600 mb-2">
+            <span class="material-icons text-base">event</span> {{ group.label }}
+        </p>
+        <ul class="space-y-3">
+            <li *ngFor="let item of group.items" data-testid="history-item" @listItem
+                class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
+                <div class="flex items-center justify-between">
+                    <span class="flex items-center gap-1 text-sm text-gray-600">
+                        <span class="material-icons text-base">schedule</span> {{ item.occurredAt | date:'HH:mm' }}
+                    </span>
+                    <span *ngIf="item.kind === 'DELIVERED'" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700">Entregue</span>
+                    <span *ngIf="item.kind === 'REFUSED'" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700">Cancelado</span>
+                </div>
+                <p class="font-semibold text-gray-800 mt-2">{{ item.streetName }}, {{ item.number }}</p>
+                <p class="text-xs text-gray-500">{{ item.neighborhood }}<ng-container *ngIf="item.cityName"> - {{ item.cityName }}</ng-container></p>
+                <p class="text-sm text-gray-700 mt-2">{{ item.itemsSummary }}</p>
+                <div class="flex items-center justify-between border-t border-gray-100 mt-3 pt-2">
+                    <span class="text-sm text-gray-600">{{ paymentLabel(item.paymentMethod) }}</span>
+                    <span class="font-bold text-gray-800">
+                        <ng-container *ngIf="item.totalPrice != null; else semValor">{{ item.totalPrice | currency:'BRL':'symbol':'1.2-2' }}</ng-container>
+                        <ng-template #semValor>—</ng-template>
+                    </span>
+                </div>
+            </li>
+        </ul>
+    </section>
+</div>
