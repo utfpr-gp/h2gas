@@ -85,6 +85,10 @@ describe('MenuComponent', () => {
     contadores.forEach((contador) => expect(contador.textContent?.trim()).toBe('2'));
   });
 
+  it('naoDeveExibirAbasDoEntregadorParaCliente', () => {
+    expect(fixture.nativeElement.querySelector('app-deliverer-tab-bar')).toBeNull();
+  });
+
   it('deveMostrarSoAMarcaESairParaEntregador', () => {
     localStorage.setItem('user', JSON.stringify({ id: 'u9', name: 'Carlos', userType: 'DELIVERER' }));
     fixture = TestBed.createComponent(MenuComponent);
@@ -92,8 +96,9 @@ describe('MenuComponent', () => {
     const el = fixture.nativeElement as HTMLElement;
 
     expect(el.querySelector('#cart-drawer')).toBeNull();
-    expect(el.querySelector('nav')).toBeNull();
+    expect(el.querySelector('nav:not([aria-label="Módulo do entregador"])')).toBeNull();
     expect(el.querySelector('app-bottom-tab-bar')).toBeNull();
+    expect(el.querySelector('app-deliverer-tab-bar')).toBeTruthy();
     expect((el.querySelector('a[aria-label="Ir para a tela inicial"]') as HTMLAnchorElement).getAttribute('href')).toBe('/entregas');
   });
 });

@@ -10,13 +10,15 @@ import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { LocationContextService } from '../../services/location-context.service';
 import { BottomTabBarComponent } from '../bottom-tab-bar/bottom-tab-bar.component';
+import { DelivererTabBarComponent } from '../deliverer-tab-bar/deliverer-tab-bar.component';
 
 @Component({
   selector: 'app-menu',
   imports: [
     CommonModule,
     FormsModule,
-    BottomTabBarComponent
+    BottomTabBarComponent,
+    DelivererTabBarComponent
   ],
   templateUrl: './menu.component.html',
   styleUrl: './menu.component.css'
