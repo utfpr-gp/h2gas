@@ -795,6 +795,39 @@ class OrderServiceTest {
     }
 
     @Test
+    @DisplayName("HU07: o pedido expõe a cidade de entrega e, após recusa, o motivo e quem recusou")
+    void deveExporCidadeEUltimaRecusaNoPedido() {
+        Long carlos = entregadorDe(validSupplierId, "carlos@teste.com");
+        Long ana = entregadorDe(validSupplierId, "ana@teste.com");
+        String orderId = pedidoEmRota(carlos);
+
+        assertEquals("Curitiba", orderService.findByIdOrder(orderId).getCityName());
+        assertNull(orderService.findByIdOrder(orderId).getLastRefusalReason());
+
+        orderService.cancelDelivery(orderId, carlos, "Moto quebrou");
+
+        OrderResponseDTO devolvido = orderService.findByIdOrder(orderId);
+        assertEquals("Moto quebrou", devolvido.getLastRefusalReason());
+        assertEquals("Carlos Silva", devolvido.getLastRefusalBy());
+        assertNull(devolvido.getDelivererName());
+
+        orderService.assignDeliverer(orderId, ana, fornecedorDoPedido());
+        assertNull(orderService.findByIdOrder(orderId).getLastRefusalReason(),
+                "com novo entregador atribuído a recusa antiga não aparece mais");
+    }
+
+    @Test
+    @DisplayName("HU07: o pedido entregue expõe deliveredAt")
+    void deveExporDeliveredAtNoPedidoEntregue() {
+        Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
+        String orderId = pedidoEmRota(entregadorId);
+
+        OrderResponseDTO entregue = orderService.completeDelivery(orderId, entregadorId);
+
+        assertNotNull(entregue.getDeliveredAt());
+    }
+
+    @Test
     @DisplayName("HU07: o entregador confirma a entrega e o pedido vai a DELIVERED com deliveredAt")
     void deveConcluirEntregaEGravarDeliveredAt() {
         Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");

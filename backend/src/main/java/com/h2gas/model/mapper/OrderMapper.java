@@ -80,6 +80,16 @@ public class OrderMapper {
             orderResponseDTO.setStreetName(data.getDeliveryAddress().getStreetName());
             orderResponseDTO.setComplement(data.getDeliveryAddress().getComplement());
             orderResponseDTO.setNeighborhood(data.getDeliveryAddress().getNeighborhood());
+            if (data.getDeliveryAddress().getCity() != null) {
+                orderResponseDTO.setCityName(data.getDeliveryAddress().getCity().getName());
+            }
+        }
+
+        // HU07: a recusa mais recente só interessa enquanto o pedido espera um novo entregador
+        if (data.getDeliverer() == null && data.getRefusals() != null && !data.getRefusals().isEmpty()) {
+            DeliveryRefusal lastRefusal = data.getRefusals().get(0);
+            orderResponseDTO.setLastRefusalReason(lastRefusal.getReason());
+            orderResponseDTO.setLastRefusalBy(lastRefusal.getDeliverer().getUser().getName());
         }
 
         if (data.getItems() != null) {

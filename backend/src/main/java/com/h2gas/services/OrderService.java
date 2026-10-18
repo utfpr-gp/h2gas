@@ -318,7 +318,12 @@ public class OrderService {
         if (order.getStatus() != OrderStatusEnum.IN_PREPARATION && order.getStatus() != OrderStatusEnum.OUT_FOR_DELIVERY) {
             throw new BusinessRuleException("Só é possível cancelar a entrega de pedidos atribuídos e ainda não entregues.");
         }
-        deliveryRefusalRepository.save(new DeliveryRefusal(null, order, order.getDeliverer(), reason.trim(), LocalDateTime.now()));
+        DeliveryRefusal refusal = deliveryRefusalRepository.save(
+                new DeliveryRefusal(null, order, order.getDeliverer(), reason.trim(), LocalDateTime.now()));
+        if (order.getRefusals() == null) {
+            order.setRefusals(new ArrayList<>());
+        }
+        order.getRefusals().add(0, refusal);
         order.setDeliverer(null);
         order.setDispatchedAt(null);
         order.setStatus(OrderStatusEnum.IN_PREPARATION);
