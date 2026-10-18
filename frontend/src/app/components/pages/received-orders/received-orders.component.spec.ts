@@ -137,4 +137,24 @@ describe('ReceivedOrdersComponent', () => {
 
     expect(toastrSpy.success).not.toHaveBeenCalled();
   });
+
+  it('deveExibirContagemDePendentesNoBadge', () => {
+    fixture.detectChanges();
+
+    const badge = fixture.nativeElement.querySelector('[data-testid=pending-count]') as HTMLElement;
+    expect(badge.textContent?.trim()).toBe('2');
+    expect(fixture.nativeElement.querySelectorAll('[data-testid=order-row]').length).toBe(3);
+  });
+
+  it('deveAbrirModalDeJustificativaComBotaoTravado', () => {
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('[data-testid=action-CANCELED]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const modal = fixture.nativeElement.querySelector('[data-testid=cancel-modal]') as HTMLElement;
+    expect(modal).toBeTruthy();
+    expect((modal.querySelector('[data-testid=confirm-cancel]') as HTMLButtonElement).disabled).toBeTrue();
+    expect(orderServiceSpy.updateStatusOrder).not.toHaveBeenCalled();
+  });
 });

@@ -147,9 +147,8 @@ ALTER TABLE orders ADD COLUMN cancellation_reason VARCHAR(500) NULL;
   - atualização a cada 30 s (pedido novo pendente ganha destaque
     "Novo"); sem toast de sucesso nas buscas;
   - tokens F2, cards `rounded-xl`, sem HEX novo.
-- `orders-widget` deixa de ser usado pelo `received-orders` (continua
-  existindo para outras telas, se houver uso; senão vira código morto
-  registrado).
+- `orders-widget` deixa de ser usado pelo `received-orders`; continua
+  em uso pelo `order-history` (histórico), que fica como está.
 
 ## 6. Plano de Testes (TDD)
 

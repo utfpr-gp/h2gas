@@ -10,7 +10,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { OrderStatus } from '../../../models/order-status.enum';
 import { SupplierService } from '../../../services/supplier.service';
-import { OrdersWidgetComponent } from '../../orders-widget/orders-widget.component';
+import { OrderStatusTimelineComponent } from '../../order-status-timeline/order-status-timeline.component';
+import { fadeIn, staggerList } from '../../../animations/checkout.animations';
 
 @Component({
   selector: 'app-received-orders',
@@ -18,10 +19,10 @@ import { OrdersWidgetComponent } from '../../orders-widget/orders-widget.compone
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    OrdersWidgetComponent
+    OrderStatusTimelineComponent
   ],
   templateUrl: './received-orders.component.html',
-  styleUrl: './received-orders.component.css'
+  animations: [fadeIn, staggerList],
 })
 
 export class ReceivedOrdersComponent implements OnInit, OnDestroy {
@@ -45,6 +46,7 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
   cancelTarget?: OrderResponse;
   cancelReason = '';
   canceling = false;
+  showDetailMobile = false;
   readonly refreshIntervalMs = 30000;
   private knownOrderIds = new Set<string>();
   private newOrderIds = new Set<string>();
@@ -95,9 +97,19 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
 
   selectOrder(order?: OrderResponse) {
     this.selectedOrder = order;
+    this.showDetailMobile = !!order;
     if (order) {
       this.newOrderIds.delete(order.id);
     }
+  }
+
+  // na retirada, "saiu para entrega" e "entregue" mudam de sentido
+  actionLabel(order: OrderResponse, action: { label: string; action: string }): string {
+    if (order.deliveryMode === 'PICKUP') {
+      if (action.action === 'OUT_FOR_DELIVERY') return 'Pronto para retirada';
+      if (action.action === 'DELIVERED') return 'Marcar como retirado';
+    }
+    return action.label;
   }
 
   onStatusChange(status: string) {
