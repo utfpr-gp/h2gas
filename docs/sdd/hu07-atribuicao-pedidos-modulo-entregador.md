@@ -8,7 +8,7 @@
 | Perfil | Fornecedor (SUPPLIER) e Entregador (DELIVERER) |
 | Prioridade MoSCoW | Must have |
 | Dependências | F3 (entidade `Deliverer`, `Order.deliverer`/`dispatchedAt`/`deliveredAt`), F5 (PWA — módulo do entregador é mobile-first), HU05/HU06 (retirada sem endereço, painel do fornecedor, `ForbiddenResourceException`), F7 (Figuras 15 e 17) |
-| Referência no TCC | Apêndice A.1 — HU07 |
+| Referência no TCC | Apêndice A.1 — HU07; Figura 17a/b/c (p. 42) |
 
 ## 2. História de Usuário
 
@@ -19,64 +19,73 @@ logística de campo.
 ## 3. Critérios de Aceitação (BDD)
 
 > Revisado em 2026-10-18 sobre a `develop` com HU01–HU06 mergeadas.
-> Decisões do autor nesta revisão: (a) entregador "Em rota" pode receber
-> outro pedido (o badge só avisa); (b) o "Despachar" substitui o atalho
-> "Enviar para entrega" nos pedidos de entrega e o backend recusa o
-> atalho; (c) o módulo móvel entrega as Figuras 17a (lista) e 17b
-> (detalhe).
+> Decisões do autor: (a) entregador "Em rota" pode receber outro pedido
+> (o badge só avisa); (b) o "Despachar" substitui o atalho "Enviar para
+> entrega" nos pedidos de entrega e o backend recusa o atalho.
+>
+> **Segunda revisão (mesma data)**: a primeira entrega divergia da
+> Figura 17 do TCC. Decisões do autor para alinhar: (c) seguir o fluxo do
+> TCC — despachar só **atribui**; o entregador toca **Iniciar Entrega**
+> para o pedido sair em rota; (d) **Cancelar Entrega** devolve o pedido ao
+> fornecedor com motivo, sem cancelar o pedido do cliente; (e) o detalhe
+> tem **mapa embutido** (iframe sem chave de API) e o link "Abrir no
+> Maps"; (f) entram o **histórico** (17c) e a **barra de abas**
+> Entregas/Histórico; ficam fora troco e aba Perfil.
 
 - **Cenário 1 — Encaminhamento**: Dado um pedido pronto, Quando o
   fornecedor aciona o despacho, Então permite atribuir a entrega a um
-  entregador específico da frota.
+  entregador específico da frota (e trocar o entregador enquanto ele não
+  iniciou a entrega).
 - **Cenário 2 — Rota em campo**: Dado o acesso do entregador no módulo
   móvel, Quando visualiza suas tarefas, Então exibe apenas suas rotas
-  **e** disponibiliza botões de atalho para confirmar a entrega.
+  (PENDENTE e EM ROTA), o detalhe com trajeto e contato do cliente, **e**
+  disponibiliza botões para iniciar e confirmar a entrega.
+- **Cenário 3 — Recusa**: Dado um pedido atribuído a ele, Quando o
+  entregador cancela a entrega informando o motivo, Então o pedido volta
+  ao fornecedor (em preparo, sem entregador), que vê o motivo e pode
+  despachar de novo; o cliente não é avisado de cancelamento.
+- **Cenário 4 — Histórico**: Dado o entregador logado, Quando abre o
+  Histórico, Então vê as entregas que concluiu e as que recusou, por dia,
+  com a contagem de entregas de hoje.
 
 ## 4. Estado atual (achados)
 
 - F3 criou a entidade `Deliverer` (`user`, `supplier`, `active`,
-  `vehicleInfo`) e `DelivererRepository` vazio. **Não há service,
-  controller, DTO nem tela** — greenfield. `Order` já tem `deliverer`,
-  `dispatchedAt` e `deliveredAt`, hoje nunca preenchidos (o "tempo médio
-  de entrega" da HU09 depende de preenchê-los aqui).
+  `vehicleInfo`). `Order` já tem `deliverer`, `dispatchedAt` e
+  `deliveredAt` (o "tempo médio de entrega" da HU09 depende de preenchê-los
+  aqui; `dispatchedAt` passa a ser gravado no **início** da entrega).
 - `UserTypeEnum.DELIVERER` existe e a V3 já libera o valor no banco. O
   login por senha serve para qualquer perfil (`ROLE_DELIVERER`); o
-  `authGuard` é genérico por `route.data.roles`. O `login.component`
-  navega sempre para `/inicio`, então o entregador precisa de redirecionamento
-  próprio, e o `menu` só tem opções para ADMIN/SUPPLIER/CUSTOMER.
+  `authGuard` é genérico por `route.data.roles`.
 - **Como um entregador passa a existir**: o fornecedor cadastra a própria
   frota (par `User(DELIVERER)` + `Deliverer`). Não é auto-registro.
-- **Correções ao rascunho anterior** (que usava `auth.getName()` e
-  `findEntityByName`, e é de antes da HU06):
-  - o principal autenticado já é o `User` (`SecurityContextHolder`); o id
-    do fornecedor **é** o id do usuário (`Supplier` herda `User` com
-    `JOINED`). Nunca receber `supplierId` por URL/corpo (CLAUDE.md): a
-    listagem da frota é `GET /api/deliverers/mine`;
-  - a atribuição precisa checar o **dono do pedido** (o rascunho só checava
-    o dono do entregador): outro fornecedor → 403
-    (`ForbiddenResourceException`); ADMIN pode;
-  - a conclusão precisa checar **status** `OUT_FOR_DELIVERY` (o rascunho
-    permitiria reconcluir pedido entregue) e tratar pedido sem entregador
-    (o rascunho daria NPE);
-  - atribuição só vale para `deliveryMode = DELIVERY`; pedido de retirada
-    (HU05) não tem entregador e segue o fluxo "Pronto para retirada".
+- O principal autenticado é o `User` (`SecurityContextHolder`); o id do
+  fornecedor **é** o id do usuário (`Supplier` herda `User` com `JOINED`).
+  Nunca receber `supplierId`/`delivererId` por URL/corpo quando o principal
+  define o dono (CLAUDE.md).
+- Atribuição checa o **dono do pedido** (outro fornecedor → 403; ADMIN
+  pode) e só vale para `deliveryMode = DELIVERY`. Início, conclusão e
+  recusa checam que o pedido está **atribuído ao entregador do token** e o
+  **status** adequado.
 - **"Pedido pronto" (Cenário 1)** = `IN_PREPARATION`; "aciona o despacho"
-  = atribuir entregador, o que leva a `OUT_FOR_DELIVERY` e grava
-  `dispatchedAt`.
+  = atribuir entregador (o pedido **continua** `IN_PREPARATION`).
 - **Atalho legado**: o painel (HU06) tem "Enviar para entrega"
-  (`PATCH /update-order-status` → `OUT_FOR_DELIVERY`) sem entregador.
-  Para pedido de entrega isso deixaria um pedido "em rota" que não
-  aparece na rota de ninguém. Decisão do autor: o backend passa a recusar
-  esse atalho para `DELIVERY` (400, "use o despacho com entregador") e o
-  painel mostra "Despachar". Retirada continua usando o atalho.
-- `OrderResponseDTO` não traz o entregador nem os horários; o detalhe do
-  fornecedor e o do entregador precisam de `delivererName`, e o do
-  entregador de `paymentMethod` (já existe) e `customerPhone` (HU06).
+  (`PATCH /update-order-status` → `OUT_FOR_DELIVERY`) sem entregador. O
+  backend recusa esse atalho para `DELIVERY` (400, "use o despacho com
+  entregador"); retirada continua usando o atalho.
+- **Divergências da primeira entrega em relação ao TCC (Figura 17)**:
+  despacho já levava a `OUT_FOR_DELIVERY` (TCC: card PENDENTE + "Iniciar
+  Entrega → ", e o botão "gatilho direto" do motoboy dispara as
+  notificações ao cliente e ao fornecedor); não havia detalhe com mapa,
+  "Cancelar Entrega", histórico nem abas.
+- `OrderResponseDTO` hoje traz `delivererName`, `customerPhone` e o
+  endereço sem a **cidade**; o detalhe precisa de `cityName` (mapa/Maps),
+  `deliveredAt` e do último motivo de recusa para o painel do fornecedor.
 - **Visual (F7 §5.8 → Figuras 15 e 17)**: modal "Atribuir a um
-  Entregador" (15) com lista de entregadores, badge DISPONÍVEL / EM ROTA,
-  e "Confirmar Atribuição"; módulo móvel "Minhas Entregas" (17a) em cards
-  e detalhe da entrega (17b) com endereço, resumo, ligar/WhatsApp, "Abrir
-  no Maps" e "Confirmar Entrega".
+  Entregador" (15); módulo móvel com "Minhas Entregas" (17a), detalhe
+  (17b: mapa, "Abrir no Maps", cliente com ligar/mensagem, resumo,
+  "Confirmar Entrega" e "Cancelar Entrega") e histórico (17c: "Entregas
+  hoje", grupos por dia, Entregue/Cancelado) com abas Entregas/Histórico.
 
 ## 5. Contrato Técnico
 
@@ -95,7 +104,8 @@ logística de campo.
   - `findMine(supplierId)`: lista com `busy` = existe pedido
     `OUT_FOR_DELIVERY` com esse entregador
     (`OrderRepository.existsByDelivererIdAndStatus`); `busy` é computado,
-    não persistido;
+    não persistido (pedido só atribuído, ainda não iniciado, não torna o
+    entregador "em rota");
   - `findEntityById(id)` (404) e `findByUserId(userId)` (404 se o usuário
     não for entregador).
 - `DelivererController` (`/api/deliverers`, `@Tag("Entregadores")`):
@@ -112,53 +122,96 @@ logística de campo.
     (ADMIN pode);
   - status ≠ `IN_PREPARATION` → 400; `deliveryMode` ≠ `DELIVERY` → 400;
   - entregador inexistente → 404; de outro fornecedor ou inativo → 400;
-  - grava `deliverer`, `OUT_FOR_DELIVERY` e `dispatchedAt = now`.
+  - grava `deliverer` e **mantém `IN_PREPARATION`** (não grava
+    `dispatchedAt`); chamar de novo com outro entregador **troca** o
+    entregador (permitido enquanto `IN_PREPARATION`).
 - `PATCH /api/orders/{id}/assign-deliverer` (`ADMIN`, `SUPPLIER`, `@Valid`)
   devolve o `OrderResponseDTO`. OpenAPI 200/400/403/404.
 - `OrderService.updateOrderStatus`: `OUT_FOR_DELIVERY` em pedido
   `DELIVERY` → `BusinessRuleException` ("Use o despacho com entregador.").
-- `OrderResponseDTO` ganha `delivererName` (preenchido no `OrderMapper`).
+- `OrderResponseDTO` ganha `delivererName`, `cityName`, `deliveredAt`,
+  `lastRefusalReason` e `lastRefusalBy` (nome do entregador da recusa mais
+  recente; só preenchidos enquanto o pedido está sem entregador após uma
+  recusa), todos preenchidos no `OrderMapper`.
 
 ### 5.3 Backend — Cenário 2 (rota do entregador)
 
-- `OrderRepository`: `existsByDelivererIdAndStatus`,
-  `findByDelivererIdAndStatusOrderByDispatchedAtAsc`.
-- `GET /api/orders/my-routes` (`DELIVERER`): o entregador vem do
-  **principal** (`findByUserId`), nunca de parâmetro; devolve os pedidos
-  `OUT_FOR_DELIVERY` dele, do despacho mais antigo ao mais novo.
+- O entregador **sempre** vem do principal (`findByUserId`), nunca de
+  parâmetro.
+- `GET /api/orders/my-routes` (`DELIVERER`): pedidos atribuídos a ele com
+  status `IN_PREPARATION` (PENDENTE) ou `OUT_FOR_DELIVERY` (EM ROTA);
+  em rota primeiro (do despacho mais antigo), depois pendentes (do mais
+  antigo `createdAt`). Quem consome distingue pelo `status`.
+- `PATCH /api/orders/{id}/start-delivery` (`DELIVERER`):
+  - pedido inexistente → 404; não atribuído a este entregador → 403;
+  - status ≠ `IN_PREPARATION` → 400;
+  - grava `OUT_FOR_DELIVERY` e `dispatchedAt = now`.
 - `PATCH /api/orders/{id}/complete-delivery` (`DELIVERER`):
-  - pedido inexistente → 404; não atribuído a este entregador (ou sem
-    entregador) → 403;
+  - 404; não atribuído a este entregador (ou sem entregador) → 403;
   - status ≠ `OUT_FOR_DELIVERY` → 400;
   - grava `DELIVERED` e `deliveredAt = now`.
-- OpenAPI nas duas (200/400/403/404, segurança Bearer).
+- OpenAPI nas rotas (200/400/403/404, segurança Bearer).
 
-### 5.4 Frontend
+### 5.4 Backend — Cenário 3 (recusa) e Cenário 4 (histórico)
+
+- **Migração `V7__delivery_refusals.sql`**: tabela `delivery_refusals`
+  (`id` BIGINT AI PK, `order_id` VARCHAR(36) FK `orders`, `deliverer_id`
+  BIGINT FK `deliverers`, `reason` VARCHAR(500) NOT NULL, `created_at`
+  DATETIME NOT NULL) e índice por `deliverer_id, created_at`. Entidade
+  `DeliveryRefusal` + `DeliveryRefusalRepository`; `Order` ganha
+  `@OneToMany refusals` (somente leitura, ordenada por `createdAt desc`).
+- `PATCH /api/orders/{id}/cancel-delivery` (`DELIVERER`, `@Valid`
+  `CancelDeliveryRequestDTO { @NotBlank @Size(max = 500) reason }`):
+  - 404; não atribuído a este entregador → 403;
+  - status fora de `IN_PREPARATION`/`OUT_FOR_DELIVERY` → 400;
+  - grava um `DeliveryRefusal` (motivo sem espaços nas pontas), limpa
+    `deliverer` e `dispatchedAt` e deixa o pedido em `IN_PREPARATION`;
+  - **não** cancela o pedido nem mexe no estoque.
+- `GET /api/orders/my-deliveries/history` (`DELIVERER`): devolve
+  `DeliveryHistoryDTO { deliveredToday, items[] }`, itens do mais recente
+  ao mais antigo, de dois tipos: `DELIVERED` (pedidos entregues por ele,
+  data = `deliveredAt`) e `REFUSED` (recusas dele, data = `createdAt` da
+  recusa). Cada item: `orderId`, `kind`, `occurredAt`, endereço (rua,
+  número, bairro, cidade), resumo dos itens, `paymentMethod`,
+  `totalPrice` (nulo em `REFUSED`). `deliveredToday` conta as `DELIVERED`
+  do dia corrente.
+- OpenAPI (200/400/403/404, Bearer) nas duas rotas.
+
+### 5.5 Frontend
 
 - `models/deliverer.ts`, `services/deliverer.service.ts` (`listMine`,
-  `create`) e `OrderService.assignDeliverer` / `myRoutes` /
-  `completeDelivery`; `OrderResponse.delivererName?`.
+  `create`); `OrderService.assignDeliverer` / `myRoutes` /
+  `startDelivery` / `completeDelivery` / `cancelDelivery` /
+  `deliveryHistory`; `OrderResponse` com os campos novos do 5.2; model do
+  histórico.
 - **Fornecedor**
   - `manage-deliverers` (rota `/entregadores`, só `SUPPLIER`): formulário
-    de cadastro (nome, e-mail, telefone, senha, veículo) e lista da frota
-    com badge Disponível / Em rota; link "Entregadores" no menu.
-  - `received-orders`: em pedido `IN_PREPARATION` de entrega o botão
-    vira **"Despachar"** e abre o modal da Figura 15 — lista com badge
-    DISPONÍVEL / EM ROTA (em rota continua selecionável), "Confirmar
-    atribuição"; frota vazia mostra atalho para cadastrar. Retirada segue
-    com "Pronto para retirada". O detalhe mostra "Entregador: …".
+    de cadastro e lista da frota com badge Disponível / Em rota.
+  - `received-orders`: em pedido `IN_PREPARATION` de entrega **sem
+    entregador** o botão é **"Despachar"** (modal da Figura 15). Com
+    entregador atribuído e ainda em preparo, o detalhe mostra "Aguardando
+    <nome> iniciar" e o botão vira **"Trocar entregador"** (mesmo modal).
+    Se houve recusa, mostra "Recusado por <nome>: <motivo>" e volta a
+    oferecer "Despachar". Retirada segue com "Pronto para retirada".
 - **Entregador** (mobile-first, tokens F2, `rounded-xl`, alto contraste):
-  - login redireciona `DELIVERER` para `/entregas`; o `menu` do entregador
-    mostra só a marca e "Sair";
-  - `deliverer-routes` (`/entregas`, Figura 17a): "Minhas Entregas" com a
-    contagem de pendentes, um card por pedido (bairro/endereço, itens,
-    pagamento) e atualização a cada 30 s;
-  - `deliverer-route-detail` (`/entregas/:id`, Figura 17b): endereço
-    completo com link "Abrir no Maps" (URL de busca com o endereço, sem
-    mapa embutido), cliente com Ligar (`tel:`) e WhatsApp (`wa.me`),
-    itens, forma de pagamento, total e **Confirmar Entrega** (um toque,
-    com confirmação visual e volta para a lista).
-  - rotas com `data.roles: ['DELIVERER']` (e `ADMIN` para inspeção).
+  - login redireciona `DELIVERER` para `/entregas`; o `menu` mostra só a
+    marca e "Sair"; **barra de abas** fixa no rodapé: Entregas |
+    Histórico;
+  - `deliverer-routes` (`/entregas`, Figura 17a): contagem de pendentes e
+    um card por pedido (bairro/endereço, itens, pagamento). Card
+    PENDENTE tem **"Iniciar Entrega →"**; card EM ROTA tem **"Confirmar
+    entrega"**; tocar no card abre o detalhe; atualização a cada 30 s;
+  - `deliverer-route-detail` (`/entregas/:id`, Figura 17b): **mapa
+    embutido** (iframe `maps.google.com/maps?q=<endereço>&output=embed`,
+    sanitizado), endereço completo com **"Abrir no Maps"**
+    (`google.com/maps/dir/?api=1&destination=`), cliente com Ligar (`tel:`)
+    e WhatsApp (`wa.me`), itens, pagamento, total e os botões **Iniciar
+    Entrega** ou **Confirmar Entrega** (conforme o status) e **Cancelar
+    Entrega** (modal com motivo obrigatório, padrão do modal da HU06);
+  - `deliverer-history` (`/entregas/historico`, Figura 17c): "Entregas
+    hoje N", grupos por dia, selo Entregue/Cancelado, endereço, itens,
+    pagamento e valor ("—" quando recusada).
+  - rotas com `data.roles: ['DELIVERER', 'ADMIN']`.
 
 ## 6. Plano de Testes (TDD)
 
@@ -166,29 +219,44 @@ logística de campo.
 1. `DelivererServiceTest` — `deveCriarEntregadorVinculadoAoFornecedor`,
    `deveRejeitarEmailJaCadastrado`,
    `deveMarcarEntregadorComoOcupadoQuandoHaPedidoEmRota`,
-   `deveListarApenasEntregadoresDoFornecedor`.
-2. `OrderServiceTest` — `deveDespacharEntregadorEAvancarParaOutForDelivery`
-   (grava `dispatchedAt`), `deveRejeitarDespachoForaDeEmPreparacao`,
+   `deveListarApenasEntregadoresDoFornecedor`,
+   `naoDeveMarcarOcupadoQuandoPedidoSoEstaAtribuido`.
+2. `OrderServiceTest` — despacho: `deveAtribuirEntregadorSemAvancarStatus`,
+   `devePermitirTrocarEntregadorEnquantoEmPreparacao`,
+   `deveRejeitarDespachoForaDeEmPreparacao`,
    `deveRejeitarDespachoDePedidoDeRetirada`,
    `deveRejeitarDespachoDePedidoDeOutroFornecedor` (403),
    `deveRejeitarEntregadorDeOutroFornecedor`,
-   `devePermitirDespacharEntregadorJaEmRota`,
-   `deveRecusarAtalhoDeEnvioParaPedidoDeEntrega`,
+   `deveRecusarAtalhoDeEnvioParaPedidoDeEntrega`;
+   início: `deveIniciarEntregaEGravarDispatchedAt`,
+   `deveRejeitarInicioDePedidoDeOutroEntregador` (403),
+   `deveRejeitarInicioForaDeEmPreparacao`; conclusão:
    `deveConcluirEntregaEGravarDeliveredAt`,
    `deveRejeitarConclusaoDePedidoDeOutroEntregador` (403),
-   `deveRejeitarConclusaoForaDeOutForDelivery`,
-   `deveListarApenasRotasDoEntregador`.
+   `deveRejeitarConclusaoForaDeOutForDelivery`; recusa:
+   `deveCancelarEntregaDevolvendoPedidoAoFornecedor`,
+   `deveRejeitarCancelamentoDeEntregaDeOutroEntregador` (403),
+   `deveRejeitarCancelamentoDePedidoJaEntregue`,
+   `deveExporUltimaRecusaNoPedido`; listas:
+   `deveListarRotasPendentesEEmRotaApenasDoEntregador`,
+   `deveMontarHistoricoComEntreguesERecusadas`,
+   `deveContarEntregasDeHoje`.
 3. `DelivererControllerTest` — `deveRetornar400ComDadosInvalidos`,
    `deveRetornar200AoCadastrarEntregador`.
 4. `OrderControllerTest` — `deveRetornar200AoDespacharComEntregador`,
    `deveRetornarRotasDoEntregadorAutenticado`,
-   `deveRetornar200AoConfirmarEntrega`.
+   `deveRetornar200AoIniciarEntrega`,
+   `deveRetornar200AoConfirmarEntrega`,
+   `deveRetornar400AoCancelarEntregaSemMotivo`,
+   `deveRetornar200AoCancelarEntregaComMotivo`,
+   `deveRetornarHistoricoDoEntregador`.
 
 **Frontend:**
 5. `deliverer.service.spec.ts` — `deveListarFrotaDoFornecedor`,
    `deveCadastrarEntregador`; `order.service.spec.ts` —
-   `deveDespacharPedido`, `deveBuscarMinhasRotas`,
-   `deveConfirmarEntrega`.
+   `deveDespacharPedido`, `deveBuscarMinhasRotas`, `deveIniciarEntrega`,
+   `deveConfirmarEntrega`, `deveCancelarEntregaComMotivo`,
+   `deveBuscarHistoricoDeEntregas`.
 6. `manage-deliverers.component.spec.ts` —
    `deveListarEntregadoresComStatus`,
    `deveCadastrarEntregadorEAtualizarLista`.
@@ -196,50 +264,70 @@ logística de campo.
    `deveExibirDespacharApenasParaEntregaEmPreparo`,
    `deveManterAtalhoDeRetiradaSemEntregador`,
    `deveAtribuirEntregadorSelecionadoNoModal`,
-   `deveAvisarQuandoNaoHaEntregadores`.
+   `deveAvisarQuandoNaoHaEntregadores`,
+   `deveOferecerTrocarEntregadorQuandoJaAtribuido`,
+   `deveExibirMotivoDaUltimaRecusa`.
 8. `deliverer-routes.component.spec.ts` —
    `deveListarRotasDoEntregadorLogado`,
-   `deveAtualizarRotasPeriodicamente`;
-   `deliverer-route-detail.component.spec.ts` —
+   `deveMostrarEstadoVazioSemRotas`,
+   `deveAtualizarRotasPeriodicamente`,
+   `deveIniciarEntregaDoCardPendente`,
+   `deveConfirmarEntregaDoCardEmRota`.
+9. `deliverer-route-detail.component.spec.ts` —
    `deveExibirEnderecoEContatoDoCliente`,
-   `deveConfirmarEntregaComUmToque`.
-9. `login.component.spec.ts` — `deveRedirecionarEntregadorParaEntregas`.
+   `deveMontarMapaELinkAbrirNoMaps`,
+   `deveIniciarEPoisConfirmarEntrega`,
+   `naoDeveCancelarEntregaSemMotivo`,
+   `deveCancelarEntregaComMotivoEVoltarParaLista`.
+10. `deliverer-history.component.spec.ts` —
+    `deveExibirEntregasDeHojeEGruposPorDia`,
+    `deveMarcarEntregaRecusadaComoCancelada`.
+11. `menu.component.spec.ts` — `deveExibirAbasEntregasEHistoricoParaEntregador`;
+    `login.component.spec.ts` — `deveRedirecionarEntregadorParaEntregas`.
 
 Regra herdada: specs antigos falhando no frontend não aumentam (22).
 
 ## 7. Fora de Escopo
 
-- Notificação em tempo real (SSE) ao cliente quando despachado/entregue —
-  HU08; aqui só a transição de status e os horários.
-- Histórico de entregas do entregador (Figura 17c) e aba Perfil.
-- Mapa embutido e GPS em tempo real (Won't have no TCC); só link para o
-  Maps.
-- "Cancelar Entrega" pelo entregador (botão da Figura 17b) e "Iniciar
-  Entrega" (o despacho já leva a `OUT_FOR_DELIVERY`).
+- Notificação em tempo real (SSE) ao cliente/fornecedor — HU08; aqui só
+  as transições de status e os horários (o fornecedor vê a recusa no
+  painel por polling de 30 s).
+- Aba **Perfil** da barra inferior.
+- GPS em tempo real e traçado de rota calculado por nós; o "trajeto" é o
+  do Google Maps (iframe/link), sem chave de API.
 - Troco: `Order.changeFor` existe, mas o checkout não coleta o valor; a
   linha "Receber R$ x e dar R$ y de troco" fica para quando o checkout
   capturar.
+- Selo "Cortesia / sem taxa extra" e "Agendado: hh:mm" da Figura 17.
+- Cancelamento do pedido do cliente pelo entregador (a recusa devolve ao
+  fornecedor; cancelar o pedido é do fornecedor, HU06).
 - Busca por nome no modal da Figura 15 (frota pequena).
 - Edição, desativação e exclusão de entregador; cadastro de entregador
   por ADMIN.
 - Checagem de dono no `update-order-status` genérico para os demais
-  status (dívida das rotas antigas).
+  status (dívida das rotas antigas) e o `AccessDenied` devolvendo 500 em
+  vez de 403 no `GlobalExceptionHandler` (pré-existente).
 
 ## 8. Definição de Pronto
 
 - [ ] Fornecedor cadastra entregadores da própria frota
       (`POST /api/deliverers`) e vê quem está disponível ou em rota
       (`GET /api/deliverers/mine`).
-- [ ] Despacho atribui entregador a pedido de entrega `IN_PREPARATION`,
-      leva a `OUT_FOR_DELIVERY` e grava `dispatchedAt`; 403 para pedido de
-      outro fornecedor; retirada não tem entregador; atalho "Enviar para
+- [ ] Despacho atribui (e permite trocar) entregador em pedido de entrega
+      `IN_PREPARATION` sem mudar o status; 403 para pedido de outro
+      fornecedor; retirada não tem entregador; atalho "Enviar para
       entrega" recusado para pedidos de entrega.
-- [ ] Entregador vê apenas as próprias rotas (identificado pelo token) e
-      confirma a entrega com um toque, gravando `deliveredAt` e indo a
-      `DELIVERED`.
-- [ ] Rotas novas documentadas no Swagger.
-- [ ] Telas no padrão F7 (Figuras 15 e 17), mobile-first no módulo do
-      entregador.
+- [ ] Entregador vê apenas as próprias rotas (identificado pelo token),
+      inicia a entrega (grava `dispatchedAt`, vai a `OUT_FOR_DELIVERY`) e
+      a confirma (grava `deliveredAt`, vai a `DELIVERED`).
+- [ ] Entregador cancela a entrega com motivo; o pedido volta ao
+      fornecedor, que vê o motivo e redespacha; nada é cancelado ao
+      cliente.
+- [ ] Histórico do entregador lista entregues e recusadas, por dia, com
+      "Entregas hoje".
+- [ ] Rotas novas documentadas no Swagger; migração `V7` aplicada.
+- [ ] Telas no padrão F7 (Figuras 15 e 17), mobile-first, com mapa
+      embutido e "Abrir no Maps" no detalhe e barra de abas.
 - [ ] Testes da seção 6 verdes; `mvn test` e `ng test` (≤ 22 falhas
       antigas).
 - [ ] Commits pequenos por fatia (CLAUDE.md, seção Git).
