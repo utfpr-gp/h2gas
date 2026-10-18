@@ -1,0 +1,87 @@
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+import { Subscription, interval } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
+import { OrderService } from '../../../services/order.service';
+import { OrderResponse } from '../../../models/order.model';
+import { paymentLabel } from '../../../models/payment-label';
+import { listItem } from '../../../animations/checkout.animations';
+
+// HU07 (Figura 17a): central de despacho do entregador, só com as rotas dele
+@Component({
+  selector: 'app-deliverer-routes',
+  standalone: true,
+  imports: [CommonModule],
+  templateUrl: './deliverer-routes.component.html',
+  animations: [listItem],
+})
+export class DelivererRoutesComponent implements OnInit, OnDestroy {
+  routes: OrderResponse[] = [];
+  loading = true;
+  confirmingId?: string;
+  readonly refreshIntervalMs = 30000;
+  readonly paymentLabel = paymentLabel;
+  private refreshSub?: Subscription;
+
+  constructor(
+    private orderService: OrderService,
+    private toastr: ToastrService,
+    private router: Router,
+  ) {}
+
+  ngOnInit(): void {
+    this.load();
+    // a HU08 (SSE) não cobre o módulo do entregador: despacho novo chega por atualização periódica
+    this.refreshSub = interval(this.refreshIntervalMs).subscribe(() => this.load());
+  }
+
+  ngOnDestroy(): void {
+    this.refreshSub?.unsubscribe();
+  }
+
+  load() {
+    this.orderService.myRoutes().subscribe({
+      next: (routes) => {
+        this.routes = routes;
+        this.loading = false;
+      },
+      error: (err) => {
+        this.loading = false;
+        this.toastr.error(`Erro ao buscar suas entregas: ${this.backendMessage(err)}`);
+      },
+    });
+  }
+
+  // sem trackBy, cada atualização periódica recriaria todos os cards
+  trackById(_: number, order: OrderResponse) {
+    return order.id;
+  }
+
+  open(order: OrderResponse) {
+    this.router.navigate(['/entregas', order.id]);
+  }
+
+  confirm(order: OrderResponse) {
+    if (this.confirmingId) {
+      return;
+    }
+    this.confirmingId = order.id;
+    this.orderService.completeDelivery(order.id).subscribe({
+      next: () => {
+        this.confirmingId = undefined;
+        this.routes = this.routes.filter((r) => r.id !== order.id);
+        this.toastr.success('Entrega confirmada.');
+      },
+      error: (err) => {
+        this.confirmingId = undefined;
+        this.toastr.error(`Erro ao confirmar a entrega: ${this.backendMessage(err)}`);
+      },
+    });
+  }
+
+  // o GlobalExceptionHandler devolve { error } para regra de negócio e { message } para os demais erros
+  private backendMessage(err: any): string {
+    return err?.error?.error || err?.error?.message || err?.message || 'erro inesperado';
+  }
+}

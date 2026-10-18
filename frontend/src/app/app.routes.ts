@@ -23,6 +23,7 @@ import { ReceivedOrdersComponent } from './components/pages/received-orders/rece
 import { AwaitingApprovalComponent } from './components/pages/awaiting-approval/awaiting-approval.component';
 import { OrderHistoryComponent } from './components/pages/order-history/order-history.component';
 import { ManageDeliverersComponent } from './components/pages/manage-deliverers/manage-deliverers.component';
+import { DelivererRoutesComponent } from './components/pages/deliverer-routes/deliverer-routes.component';
 import { ForgotPasswordComponent } from './components/pages/forgot-password/forgot-password.component';
 import { CheckEmailComponent } from './components/pages/check-email/check-email.component';
 import { ResetPasswordComponent } from './components/pages/reset-password/reset-password.component';
@@ -140,6 +141,12 @@ export const routes: Routes = [
         component: AwaitingApprovalComponent,
         canActivate: [authGuard],
         data: {roles: ['ADMIN', 'SUPPLIER']}
+    },
+    {
+        path: 'entregas',
+        component: DelivererRoutesComponent,
+        canActivate: [authGuard],
+        data: {roles: ['ADMIN', 'DELIVERER']}
     },
     {
         path: 'entregadores',
