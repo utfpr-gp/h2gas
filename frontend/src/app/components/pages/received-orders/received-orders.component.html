@@ -8,8 +8,15 @@
         <div class="flex items-center gap-3">
             <label class="flex items-center gap-2 cursor-pointer text-sm font-semibold"
                 [class.text-primary]="showSupplier" [class.text-gray-500]="!showSupplier">
-                <input type="checkbox" class="toggle toggle-primary toggle-sm" [checked]="showSupplier"
+                <!-- switch em Tailwind puro: o toggle do DaisyUI depende de variáveis que o tema h2gas não define -->
+                <input type="checkbox" class="sr-only peer" data-testid="store-toggle" [checked]="showSupplier"
                     (change)="onToggleSupplier($event)" />
+                <span aria-hidden="true"
+                    class="relative w-10 h-6 rounded-full transition-colors duration-200 peer-focus-visible:ring-2 peer-focus-visible:ring-primary/40"
+                    [class.bg-primary]="showSupplier" [class.bg-base-300]="!showSupplier">
+                    <span class="absolute top-1 left-1 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200"
+                        [class.translate-x-4]="showSupplier"></span>
+                </span>
                 {{ showSupplier ? 'Loja aberta' : 'Loja fechada' }}
             </label>
             <button type="button" (click)="navigateEdit(userLogado?.supplierId)"
