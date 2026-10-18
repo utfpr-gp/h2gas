@@ -667,6 +667,72 @@ class OrderServiceTest {
         assertEquals("Saiu para entrega", orderService.updateOrderStatus(retirada, "OUT_FOR_DELIVERY"));
     }
 
+    private String pedidoEmRota(Long entregadorId) {
+        String orderId = pedidoEmPreparo("DELIVERY");
+        orderService.assignDeliverer(orderId, entregadorId, fornecedorDoPedido());
+        return orderId;
+    }
+
+    @Test
+    @DisplayName("HU07: o entregador confirma a entrega e o pedido vai a DELIVERED com deliveredAt")
+    void deveConcluirEntregaEGravarDeliveredAt() {
+        Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
+        String orderId = pedidoEmRota(entregadorId);
+
+        OrderResponseDTO resposta = orderService.completeDelivery(orderId, entregadorId);
+
+        Order entregue = orderRepository.findById(orderId).orElseThrow();
+        assertEquals(OrderStatusEnum.DELIVERED, entregue.getStatus());
+        assertNotNull(entregue.getDeliveredAt());
+        assertEquals("Entregue", resposta.getStatus());
+    }
+
+    @Test
+    @DisplayName("HU07: entregador não conclui pedido atribuído a outro entregador")
+    void deveRejeitarConclusaoDePedidoDeOutroEntregador() {
+        Long carlos = entregadorDe(validSupplierId, "carlos@teste.com");
+        Long ana = entregadorDe(validSupplierId, "ana@teste.com");
+        String orderId = pedidoEmRota(carlos);
+
+        assertThrows(ForbiddenResourceException.class, () -> orderService.completeDelivery(orderId, ana));
+        assertEquals(OrderStatusEnum.OUT_FOR_DELIVERY, orderRepository.findById(orderId).orElseThrow().getStatus());
+    }
+
+    @Test
+    @DisplayName("HU07: pedido sem entregador também é recusado")
+    void deveRejeitarConclusaoDePedidoSemEntregador() {
+        Long carlos = entregadorDe(validSupplierId, "carlos@teste.com");
+        String orderId = pedidoEmPreparo("DELIVERY");
+
+        assertThrows(ForbiddenResourceException.class, () -> orderService.completeDelivery(orderId, carlos));
+    }
+
+    @Test
+    @DisplayName("HU07: só conclui pedido em rota (não reconclui entrega feita)")
+    void deveRejeitarConclusaoForaDeOutForDelivery() {
+        Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
+        String orderId = pedidoEmRota(entregadorId);
+        orderService.completeDelivery(orderId, entregadorId);
+
+        assertThrows(BusinessRuleException.class, () -> orderService.completeDelivery(orderId, entregadorId));
+    }
+
+    @Test
+    @DisplayName("HU07: a rota do entregador traz só os pedidos em rota dele, do mais antigo ao mais novo")
+    void deveListarApenasRotasDoEntregador() {
+        Long carlos = entregadorDe(validSupplierId, "carlos@teste.com");
+        Long ana = entregadorDe(validSupplierId, "ana@teste.com");
+        String primeiro = pedidoEmRota(carlos);
+        String segundo = pedidoEmRota(carlos);
+        pedidoEmRota(ana);
+        String jaEntregue = pedidoEmRota(carlos);
+        orderService.completeDelivery(jaEntregue, carlos);
+
+        List<OrderResponseDTO> rotas = orderService.findActiveByDeliverer(carlos);
+
+        assertEquals(List.of(primeiro, segundo), rotas.stream().map(OrderResponseDTO::getId).toList());
+    }
+
     @Test
     @DisplayName("Deve buscar todos os pedidos com paginação")
     void findAllOrders() {

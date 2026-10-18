@@ -281,6 +281,31 @@ public class OrderService {
         return orderMapper.toResponseDto(orderRepository.save(order));
     }
 
+    // HU07: a rota é só do entregador autenticado (o id vem do token, nunca de parâmetro livre)
+    @Transactional(readOnly = true)
+    public List<OrderResponseDTO> findActiveByDeliverer(Long delivererId) {
+        return orderRepository.findByDelivererIdAndStatusOrderByDispatchedAtAsc(delivererId, OrderStatusEnum.OUT_FOR_DELIVERY)
+                .stream()
+                .map(orderMapper::toResponseDto)
+                .toList();
+    }
+
+    // HU07: confirmação da entrega com um toque pelo entregador
+    @Transactional
+    public OrderResponseDTO completeDelivery(String orderId, Long delivererId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido com " + orderId + " não encontrado"));
+        if (order.getDeliverer() == null || !order.getDeliverer().getId().equals(delivererId)) {
+            throw new ForbiddenResourceException("Pedido não está atribuído a este entregador.");
+        }
+        if (order.getStatus() != OrderStatusEnum.OUT_FOR_DELIVERY) {
+            throw new BusinessRuleException("Só é possível concluir pedidos que estão em rota.");
+        }
+        order.setStatus(OrderStatusEnum.DELIVERED);
+        order.setDeliveredAt(LocalDateTime.now());
+        return orderMapper.toResponseDto(orderRepository.save(order));
+    }
+
     public String updateOrderStatus(String id, String newStatus) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido com " + id + " não encontrado"));
