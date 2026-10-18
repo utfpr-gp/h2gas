@@ -310,26 +310,29 @@ Regra herdada: specs antigos falhando no frontend não aumentam (22).
 
 ## 8. Definição de Pronto
 
-- [ ] Fornecedor cadastra entregadores da própria frota
+- [x] Fornecedor cadastra entregadores da própria frota
       (`POST /api/deliverers`) e vê quem está disponível ou em rota
       (`GET /api/deliverers/mine`).
-- [ ] Despacho atribui (e permite trocar) entregador em pedido de entrega
+- [x] Despacho atribui (e permite trocar) entregador em pedido de entrega
       `IN_PREPARATION` sem mudar o status; 403 para pedido de outro
       fornecedor; retirada não tem entregador; atalho "Enviar para
       entrega" recusado para pedidos de entrega.
-- [ ] Entregador vê apenas as próprias rotas (identificado pelo token),
+- [x] Entregador vê apenas as próprias rotas (identificado pelo token),
       inicia a entrega (grava `dispatchedAt`, vai a `OUT_FOR_DELIVERY`) e
       a confirma (grava `deliveredAt`, vai a `DELIVERED`).
-- [ ] Entregador cancela a entrega com motivo; o pedido volta ao
+- [x] Entregador cancela a entrega com motivo; o pedido volta ao
       fornecedor, que vê o motivo e redespacha; nada é cancelado ao
       cliente.
-- [ ] Histórico do entregador lista entregues e recusadas, por dia, com
+- [x] Histórico do entregador lista entregues e recusadas, por dia, com
       "Entregas hoje".
-- [ ] Rotas novas documentadas no Swagger; migração `V7` aplicada.
-- [ ] Telas no padrão F7 (Figuras 15 e 17), mobile-first, com mapa
+- [x] Rotas novas documentadas no Swagger; migração `V7` aplicada.
+- [x] Telas no padrão F7 (Figuras 15 e 17), mobile-first, com mapa
       embutido e "Abrir no Maps" no detalhe e barra de abas.
-- [ ] Testes da seção 6 verdes; `mvn test` e `ng test` (≤ 22 falhas
+- [x] Testes da seção 6 verdes; `mvn test` e `ng test` (≤ 22 falhas
       antigas).
-- [ ] Commits pequenos por fatia (CLAUDE.md, seção Git).
-- [ ] Testado de ponta a ponta (API e interface, com entregador de teste
+- [x] Commits pequenos por fatia (CLAUDE.md, seção Git).
+- [x] Testado de ponta a ponta (API e interface, com entregador de teste
       no banco local).
+
+> Verificado em 2026-10-18: backend 166 testes (o único erro é `BackendApplicationTests.contextLoads`,
+> que precisa do MySQL local e já falhava fora do Docker); frontend 192 testes com as 22 falhas antigas.
