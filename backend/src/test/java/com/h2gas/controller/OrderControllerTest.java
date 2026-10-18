@@ -14,6 +14,9 @@ import com.h2gas.model.mapper.OrderMapper;
 import com.h2gas.model.repository.UserRepository;
 import com.h2gas.services.OrderService;
 import com.h2gas.services.OrderNotificationService;
+import com.h2gas.services.DelivererService;
+import com.h2gas.model.dto.OrderResponseDTO;
+import com.h2gas.model.entity.Deliverer;
 import com.h2gas.enums.OrderStatusEnum;
 import com.h2gas.model.entity.Order;
 import org.junit.jupiter.api.AfterEach;
@@ -72,6 +75,18 @@ class OrderControllerTest {
 
     @MockitoBean
     private OrderNotificationService orderNotificationService;
+
+    @MockitoBean
+    private DelivererService delivererService;
+
+    private User autenticarComo(UserTypeEnum tipo, String id) {
+        User usuario = new User(null, "Usuário " + tipo, tipo.name().toLowerCase() + "@teste.com", "41999999999",
+                "12345678900", "senha", tipo);
+        usuario.setId(id);
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                usuario, null, List.of(new SimpleGrantedAuthority("ROLE_" + tipo.name()))));
+        return usuario;
+    }
 
     @BeforeEach
     void autenticarComoCliente() {
@@ -166,5 +181,66 @@ class OrderControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("Cancelado"))
                 .andExpect(jsonPath("$.customerNotified").value(false));
+    }
+
+    @Test
+    void deveRetornar200AoDespacharComEntregador() throws Exception {
+        User fornecedor = autenticarComo(UserTypeEnum.SUPPLIER, "fornecedor-1");
+        OrderResponseDTO despachado = new OrderResponseDTO();
+        despachado.setStatus("Saiu para entrega");
+        despachado.setDelivererName("Carlos Silva");
+        when(orderService.assignDeliverer(eq("pedido-1"), eq(7L), same(fornecedor))).thenReturn(despachado);
+
+        mockMvc.perform(patch("/api/orders/pedido-1/assign-deliverer")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"delivererId\": 7}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("Saiu para entrega"))
+                .andExpect(jsonPath("$.delivererName").value("Carlos Silva"));
+    }
+
+    @Test
+    void deveRetornar400AoDespacharSemEntregador() throws Exception {
+        autenticarComo(UserTypeEnum.SUPPLIER, "fornecedor-1");
+
+        mockMvc.perform(patch("/api/orders/pedido-1/assign-deliverer")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+
+        verify(orderService, never()).assignDeliverer(any(), any(), any());
+    }
+
+    @Test
+    void deveRetornarApenasRotasDoEntregadorAutenticado() throws Exception {
+        autenticarComo(UserTypeEnum.DELIVERER, "usuario-entregador");
+        Deliverer entregador = new Deliverer();
+        entregador.setId(9L);
+        when(delivererService.findByUserId("usuario-entregador")).thenReturn(entregador);
+        OrderResponseDTO rota = new OrderResponseDTO();
+        rota.setId("pedido-rota");
+        when(orderService.findActiveByDeliverer(9L)).thenReturn(List.of(rota));
+
+        mockMvc.perform(get("/api/orders/my-routes"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value("pedido-rota"));
+
+        verify(orderService).findActiveByDeliverer(9L);
+        verify(orderService, never()).findActiveByDeliverer(eq(1L));
+    }
+
+    @Test
+    void deveRetornar200AoConfirmarEntrega() throws Exception {
+        autenticarComo(UserTypeEnum.DELIVERER, "usuario-entregador");
+        Deliverer entregador = new Deliverer();
+        entregador.setId(9L);
+        when(delivererService.findByUserId("usuario-entregador")).thenReturn(entregador);
+        OrderResponseDTO entregue = new OrderResponseDTO();
+        entregue.setStatus("Entregue");
+        when(orderService.completeDelivery("pedido-rota", 9L)).thenReturn(entregue);
+
+        mockMvc.perform(patch("/api/orders/pedido-rota/complete-delivery"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("Entregue"));
     }
 }
