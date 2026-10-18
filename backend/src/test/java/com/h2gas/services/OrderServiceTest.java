@@ -881,19 +881,22 @@ class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("HU07: a rota do entregador traz só os pedidos em rota dele, do mais antigo ao mais novo")
-    void deveListarApenasRotasDoEntregador() {
+    @DisplayName("HU07: a rota traz só pedidos dele: em rota (despacho mais antigo primeiro) e depois os pendentes")
+    void deveListarRotasPendentesEEmRotaApenasDoEntregador() {
         Long carlos = entregadorDe(validSupplierId, "carlos@teste.com");
         Long ana = entregadorDe(validSupplierId, "ana@teste.com");
+        String pendente = pedidoAtribuido(carlos);
         String primeiro = pedidoEmRota(carlos);
         String segundo = pedidoEmRota(carlos);
         pedidoEmRota(ana);
         String jaEntregue = pedidoEmRota(carlos);
         orderService.completeDelivery(jaEntregue, carlos);
+        String recusado = pedidoEmRota(carlos);
+        orderService.cancelDelivery(recusado, carlos, "Moto quebrou");
 
         List<OrderResponseDTO> rotas = orderService.findActiveByDeliverer(carlos);
 
-        assertEquals(List.of(primeiro, segundo), rotas.stream().map(OrderResponseDTO::getId).toList());
+        assertEquals(List.of(primeiro, segundo, pendente), rotas.stream().map(OrderResponseDTO::getId).toList());
     }
 
     @Test

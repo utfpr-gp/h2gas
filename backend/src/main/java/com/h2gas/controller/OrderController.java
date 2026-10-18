@@ -244,7 +244,8 @@ public class OrderController {
     }
 
     @Operation(summary = "Rotas ativas do entregador logado",
-            description = "Pedidos em rota (OUT_FOR_DELIVERY) atribuídos ao entregador autenticado, do despacho mais antigo ao mais novo. "
+            description = "Pedidos atribuídos ao entregador autenticado: em rota (OUT_FOR_DELIVERY, do despacho mais antigo) e depois os "
+                    + "pendentes de início (IN_PREPARATION, do pedido mais antigo); o status distingue EM ROTA de PENDENTE. "
                     + "O entregador vem do token; não há parâmetro para consultar rotas de outro")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Rotas do entregador"),

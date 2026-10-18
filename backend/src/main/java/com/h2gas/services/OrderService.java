@@ -37,6 +37,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @Component
 public class OrderService {
@@ -299,11 +300,13 @@ public class OrderService {
         return orderMapper.toResponseDto(orderRepository.save(order));
     }
 
-    // HU07: a rota é só do entregador autenticado (o id vem do token, nunca de parâmetro livre)
+    // HU07: a rota é só do entregador autenticado (o id vem do token, nunca de parâmetro livre);
+    // em rota primeiro (despacho mais antigo), depois os pendentes de início (pedido mais antigo)
     @Transactional(readOnly = true)
     public List<OrderResponseDTO> findActiveByDeliverer(Long delivererId) {
-        return orderRepository.findByDelivererIdAndStatusOrderByDispatchedAtAsc(delivererId, OrderStatusEnum.OUT_FOR_DELIVERY)
-                .stream()
+        List<Order> emRota = orderRepository.findByDelivererIdAndStatusOrderByDispatchedAtAsc(delivererId, OrderStatusEnum.OUT_FOR_DELIVERY);
+        List<Order> pendentes = orderRepository.findByDelivererIdAndStatusOrderByCreatedAtAsc(delivererId, OrderStatusEnum.IN_PREPARATION);
+        return Stream.concat(emRota.stream(), pendentes.stream())
                 .map(orderMapper::toResponseDto)
                 .toList();
     }
