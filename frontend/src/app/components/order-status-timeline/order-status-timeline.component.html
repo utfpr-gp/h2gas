@@ -1,0 +1,32 @@
+<div *ngIf="canceled" class="flex items-center gap-2 rounded-xl bg-error/10 text-error px-3 py-2 text-sm font-semibold">
+  <span class="material-icons text-base">cancel</span>
+  Pedido cancelado
+</div>
+
+<ol *ngIf="!canceled" class="grid grid-cols-5 gap-1" aria-label="Andamento do pedido">
+  <li *ngFor="let step of steps; let first = first" data-testid="timeline-step"
+      class="relative flex flex-col items-center text-center"
+      [attr.data-state]="step.state"
+      [attr.aria-current]="step.state === 'current' ? 'step' : null">
+    <span *ngIf="!first" aria-hidden="true"
+          class="absolute top-4 right-1/2 w-full h-0.5 -z-0 transition-colors duration-300"
+          [class.bg-primary]="step.state !== 'todo'"
+          [class.bg-base-300]="step.state === 'todo'"></span>
+    <span class="relative z-10 w-8 h-8 rounded-full flex items-center justify-center border-2 transition-colors duration-300"
+          [class.bg-primary]="step.state !== 'todo'"
+          [class.border-primary]="step.state !== 'todo'"
+          [class.text-primary-content]="step.state !== 'todo'"
+          [class.bg-base-100]="step.state === 'todo'"
+          [class.border-base-300]="step.state === 'todo'"
+          [class.text-gray-400]="step.state === 'todo'"
+          [ngClass]="{ 'ring-4 ring-primary/20': step.state === 'current' }">
+      <span class="material-icons text-base">{{ step.state === 'done' ? 'check' : step.icon }}</span>
+    </span>
+    <span class="mt-1 text-[11px] leading-tight"
+          [class.font-semibold]="step.state === 'current'"
+          [class.text-gray-800]="step.state !== 'todo'"
+          [class.text-gray-400]="step.state === 'todo'">
+      {{ step.label }}
+    </span>
+  </li>
+</ol>
