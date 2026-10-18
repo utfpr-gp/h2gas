@@ -67,6 +67,9 @@ public class OrderMapper {
             orderResponseDTO.setCustomerPhone(data.getCustomer().getPhoneNumber());
         }
         orderResponseDTO.setCancellationReason(data.getCancellationReason());
+        if (data.getDeliverer() != null) {
+            orderResponseDTO.setDelivererName(data.getDeliverer().getUser().getName());
+        }
 
         if (data.getDeliveryMode() != null) {
             orderResponseDTO.setDeliveryMode(data.getDeliveryMode().name());

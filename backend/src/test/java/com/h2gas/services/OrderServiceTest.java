@@ -5,6 +5,7 @@ import com.h2gas.enums.OrderStatusEnum;
 import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ForbiddenResourceException;
 import com.h2gas.enums.UserTypeEnum;
+import com.h2gas.model.dto.DelivererCreateDTO;
 import com.h2gas.model.dto.OrderItemRequestDTO;
 import com.h2gas.model.dto.OrderPreviewDTO;
 import com.h2gas.model.dto.OrderPreviewRequestDTO;
@@ -42,6 +43,12 @@ class OrderServiceTest {
 
     @Autowired
     private OrderService orderService;
+
+    @Autowired
+    private DelivererService delivererService;
+
+    @Autowired
+    private DelivererRepository delivererRepository;
 
     @Autowired
     private OrderRepository orderRepository;
@@ -560,6 +567,104 @@ class OrderServiceTest {
         // entregue tirou 1 (99), o segundo pedido tirou 1 (98), o primeiro cancelamento devolveu 1 (99)
         assertEquals(99, productItemRepository.findById(validProductItemId).orElseThrow().getStockQuantity(),
                 "o segundo cancelamento não pode devolver estoque de novo");
+    }
+
+    private Long entregadorDe(String supplierId, String email) {
+        return delivererService.createDeliverer(
+                new DelivererCreateDTO("Carlos Silva", email, "41988887777", "senha123", "Moto - ABC-1234"), supplierId).getId();
+    }
+
+    private String pedidoEmPreparo(String deliveryMode) {
+        OrderRequestDTO request = novoPedido(validCustomerAddressId);
+        request.setDeliveryMode(deliveryMode);
+        String orderId = orderService.createOrder(request).getId();
+        orderService.updateOrderStatus(orderId, "CONFIRMED");
+        orderService.updateOrderStatus(orderId, "IN_PREPARATION");
+        return orderId;
+    }
+
+    @Test
+    @DisplayName("HU07: despachar atribui o entregador, vai a OUT_FOR_DELIVERY e grava dispatchedAt")
+    void deveDespacharEntregadorEAvancarParaOutForDelivery() {
+        String orderId = pedidoEmPreparo("DELIVERY");
+        Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
+
+        OrderResponseDTO resposta = orderService.assignDeliverer(orderId, entregadorId, fornecedorDoPedido());
+
+        Order despachado = orderRepository.findById(orderId).orElseThrow();
+        assertEquals(OrderStatusEnum.OUT_FOR_DELIVERY, despachado.getStatus());
+        assertEquals(entregadorId, despachado.getDeliverer().getId());
+        assertNotNull(despachado.getDispatchedAt());
+        assertEquals("Carlos Silva", resposta.getDelivererName());
+    }
+
+    @Test
+    @DisplayName("HU07: só despacha pedido em preparação")
+    void deveRejeitarDespachoForaDeEmPreparacao() {
+        String orderId = pedidoRealizado(1);
+        Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
+
+        assertThrows(BusinessRuleException.class,
+                () -> orderService.assignDeliverer(orderId, entregadorId, fornecedorDoPedido()));
+        assertNull(orderRepository.findById(orderId).orElseThrow().getDeliverer());
+    }
+
+    @Test
+    @DisplayName("HU07: pedido de retirada não tem entregador")
+    void deveRejeitarDespachoDePedidoDeRetirada() {
+        String orderId = pedidoEmPreparo("PICKUP");
+        Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
+
+        assertThrows(BusinessRuleException.class,
+                () -> orderService.assignDeliverer(orderId, entregadorId, fornecedorDoPedido()));
+    }
+
+    @Test
+    @DisplayName("HU07: fornecedor não despacha pedido de outro fornecedor")
+    void deveRejeitarDespachoDePedidoDeOutroFornecedor() {
+        String orderId = pedidoEmPreparo("DELIVERY");
+        Supplier outro = outroFornecedor();
+        Long entregadorId = entregadorDe(outro.getId(), "outro.entregador@teste.com");
+
+        assertThrows(ForbiddenResourceException.class, () -> orderService.assignDeliverer(orderId, entregadorId, outro));
+        assertEquals(OrderStatusEnum.IN_PREPARATION, orderRepository.findById(orderId).orElseThrow().getStatus());
+    }
+
+    @Test
+    @DisplayName("HU07: não usa entregador da frota de outro fornecedor")
+    void deveRejeitarEntregadorDeOutroFornecedor() {
+        String orderId = pedidoEmPreparo("DELIVERY");
+        Long entregadorDeOutro = entregadorDe(outroFornecedor().getId(), "outro.entregador@teste.com");
+
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class,
+                () -> orderService.assignDeliverer(orderId, entregadorDeOutro, fornecedorDoPedido()));
+        assertEquals("Entregador não pertence ao fornecedor do pedido.", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("HU07: entregador já em rota pode receber outro pedido (o badge só avisa)")
+    void devePermitirDespacharEntregadorJaEmRota() {
+        Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
+        String primeiro = pedidoEmPreparo("DELIVERY");
+        String segundo = pedidoEmPreparo("DELIVERY");
+
+        orderService.assignDeliverer(primeiro, entregadorId, fornecedorDoPedido());
+        orderService.assignDeliverer(segundo, entregadorId, fornecedorDoPedido());
+
+        assertEquals(OrderStatusEnum.OUT_FOR_DELIVERY, orderRepository.findById(segundo).orElseThrow().getStatus());
+        assertTrue(delivererService.findMine(validSupplierId).get(0).isBusy());
+    }
+
+    @Test
+    @DisplayName("HU07: o atalho 'enviar para entrega' é recusado em pedido de entrega, mas vale na retirada")
+    void deveRecusarAtalhoDeEnvioParaPedidoDeEntrega() {
+        String entrega = pedidoEmPreparo("DELIVERY");
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class,
+                () -> orderService.updateOrderStatus(entrega, "OUT_FOR_DELIVERY"));
+        assertEquals("Use o despacho com entregador.", ex.getMessage());
+
+        String retirada = pedidoEmPreparo("PICKUP");
+        assertEquals("Saiu para entrega", orderService.updateOrderStatus(retirada, "OUT_FOR_DELIVERY"));
     }
 
     @Test

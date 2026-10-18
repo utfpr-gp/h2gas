@@ -33,5 +33,6 @@ public class OrderResponseDTO {
     private String neighborhood;
     private String deliveryMode;
     private String customerPhone;
+    private String delivererName;
     private String cancellationReason;
 }

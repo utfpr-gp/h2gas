@@ -16,6 +16,7 @@ import com.h2gas.model.dto.ReorderItemDTO;
 import com.h2gas.model.dto.ReorderPreviewDTO;
 import com.h2gas.model.entity.Address;
 import com.h2gas.model.entity.CategoryProduct;
+import com.h2gas.model.entity.Deliverer;
 import com.h2gas.model.entity.Order;
 import com.h2gas.model.entity.OrderItem;
 import com.h2gas.model.entity.ProductItem;
@@ -57,6 +58,9 @@ public class OrderService {
 
     @Autowired
     private AddressService addressService;
+
+    @Autowired
+    private DelivererService delivererService;
 
     // RN02: pedido, itens e decremento de estoque entram ou saem juntos
     @Transactional
@@ -247,9 +251,44 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
+    // HU07: despacho = atribuir entregador; leva o pedido de entrega a OUT_FOR_DELIVERY
+    @Transactional
+    public OrderResponseDTO assignDeliverer(String orderId, Long delivererId, User actor) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido com " + orderId + " não encontrado"));
+        boolean isAdmin = actor.getUserType() == UserTypeEnum.ADMIN;
+        if (!isAdmin && (order.getSupplier() == null || !order.getSupplier().getId().equals(actor.getId()))) {
+            throw new ForbiddenResourceException("Pedido não pertence ao fornecedor logado.");
+        }
+        if (order.getStatus() != OrderStatusEnum.IN_PREPARATION) {
+            throw new BusinessRuleException("Só é possível atribuir entregador a pedidos em preparação.");
+        }
+        if (order.getDeliveryMode() != DeliveryModeEnum.DELIVERY) {
+            throw new BusinessRuleException("Pedido de retirada não tem entregador.");
+        }
+
+        Deliverer deliverer = delivererService.findEntityById(delivererId);
+        if (!deliverer.getSupplier().getId().equals(order.getSupplier().getId())) {
+            throw new BusinessRuleException("Entregador não pertence ao fornecedor do pedido.");
+        }
+        if (!deliverer.isActive()) {
+            throw new BusinessRuleException("Entregador inativo.");
+        }
+
+        order.setDeliverer(deliverer);
+        order.setStatus(OrderStatusEnum.OUT_FOR_DELIVERY);
+        order.setDispatchedAt(LocalDateTime.now());
+        return orderMapper.toResponseDto(orderRepository.save(order));
+    }
+
     public String updateOrderStatus(String id, String newStatus) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido com " + id + " não encontrado"));
+
+        // pedido de entrega só sai da loja por despacho com entregador (HU07); retirada segue por aqui
+        if (OrderStatusEnum.OUT_FOR_DELIVERY.name().equals(newStatus) && order.getDeliveryMode() == DeliveryModeEnum.DELIVERY) {
+            throw new BusinessRuleException("Use o despacho com entregador.");
+        }
 
         order.setStatus(OrderStatusEnum.valueOf(newStatus));
         orderRepository.save(order);
