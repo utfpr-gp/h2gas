@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subscription, interval } from 'rxjs';
 import { OrderService } from '../../../services/order.service';
 import { UserService } from '../../../services/user.service';
 import { ToastrService } from 'ngx-toastr';
@@ -23,7 +24,7 @@ import { OrdersWidgetComponent } from '../../orders-widget/orders-widget.compone
   styleUrl: './received-orders.component.css'
 })
 
-export class ReceivedOrdersComponent implements OnInit {
+export class ReceivedOrdersComponent implements OnInit, OnDestroy {
 
   constructor(
     private orderService: OrderService,
@@ -37,6 +38,17 @@ export class ReceivedOrdersComponent implements OnInit {
   orders?: OrderResponse[];
   orderStatus = OrderStatus;
   showSupplier = false;
+
+  // HU06: fila com pendentes no topo, pedido selecionado no detalhe (Figura 14)
+  selectedOrder?: OrderResponse;
+  statusFilter = 'ALL';
+  cancelTarget?: OrderResponse;
+  cancelReason = '';
+  canceling = false;
+  readonly refreshIntervalMs = 30000;
+  private knownOrderIds = new Set<string>();
+  private newOrderIds = new Set<string>();
+  private refreshSub?: Subscription;
 
   actionsByStatus: Record<OrderStatus, { label: string, icon: string, color: string, action: string }[]> = {
     [OrderStatus.PENDING]: [
@@ -59,113 +71,142 @@ export class ReceivedOrdersComponent implements OnInit {
 
   ngOnInit() {
     this.userLogado = this.userService.getUserLocalStorage();
-    this.getOrderExcludeStatus();
+    this.loadOrders();
     this.getOpenStatus();
+    // a HU08 (SSE) não cobre o painel do fornecedor: pedido novo chega por atualização periódica
+    this.refreshSub = interval(this.refreshIntervalMs).subscribe(() => this.loadOrders());
   }
-  
+
+  ngOnDestroy() {
+    this.refreshSub?.unsubscribe();
+  }
+
+  get pendingOrders(): OrderResponse[] {
+    return this.orders?.filter((o) => o.status === OrderStatus.PENDING) ?? [];
+  }
+
+  get otherOrders(): OrderResponse[] {
+    return this.orders?.filter((o) => o.status !== OrderStatus.PENDING) ?? [];
+  }
+
+  isNew(order: OrderResponse): boolean {
+    return this.newOrderIds.has(order.id);
+  }
+
+  selectOrder(order?: OrderResponse) {
+    this.selectedOrder = order;
+    if (order) {
+      this.newOrderIds.delete(order.id);
+    }
+  }
 
   onStatusChange(status: string) {
-    if (status == "ALL") {
-      this.getOrderExcludeStatus();
-    } else {
-      this.getOrders(status);
+    this.statusFilter = status;
+    this.loadOrders();
+  }
+
+  loadOrders() {
+    const supplierId = this.userLogado?.supplierId!;
+    const request = this.statusFilter === 'ALL'
+      ? this.orderService.findByExcludeStatus(supplierId, ['DELIVERED', 'CANCELED'])
+      : this.orderService.findBySupplierId(supplierId, this.statusFilter);
+    request.subscribe({
+      next: (response) => this.applyOrders(response.data),
+      error: (err) => this.toastr.error(`Erro ao buscar os pedidos: ${this.backendMessage(err)}`),
+    });
+  }
+
+  private applyOrders(orders: OrderResponse[]) {
+    const firstLoad = this.knownOrderIds.size === 0 && !this.orders;
+    for (const order of orders) {
+      if (!firstLoad && !this.knownOrderIds.has(order.id) && order.status === OrderStatus.PENDING) {
+        this.newOrderIds.add(order.id);
+      }
+      this.knownOrderIds.add(order.id);
     }
+    this.orders = orders;
+    const stillThere = this.selectedOrder && orders.find((o) => o.id === this.selectedOrder!.id);
+    this.selectedOrder = stillThere || this.pendingOrders[0] || orders[0];
   }
 
   onToggleSupplier(checked: any) {
     this.showSupplier = checked.target.checked;
-    console.log('Distribuidora aberta?', checked);
-
-    let data = {
-      "status": this.showSupplier
-    }
-
-    this.supplierService.openDistribuidor(data, this.userLogado?.supplierId!).subscribe({
-      next: (value) => {
-        if (this.showSupplier) {
-          this.toastr.success("Distribuidora aberta com sucesso!!");          
-        } else {
-          this.toastr.success("Distribuidora fechada com sucesso!!");          
-        }
-      },
-      error: (err) => {
-        this.toastr.error(`Erro ao abrir distribuidora: ${err.error.message} `);
-      },
-    })
-
-  }
-
-
-  getOrders(status?: string) {
-    
-
-    this.orderService.findBySupplierId(this.userLogado?.supplierId!, status).subscribe({
-      next: (response) => {
-        this.orders = response.data;
-        console.log(this.orders);
-
-        this.toastr.success("Pedidos buscado com sucesso");
-      },
-      error: (err) => {
-        console.error(err)
-        this.toastr.error(`Erro ao buscar os pedidos: ${err.error.message}`);
-      },
-    })
-  }
-
-  getOrderExcludeStatus() {
-    
-    let exludeStatus: string[] = ['DELIVERED', 'CANCELED'];
-
-    this.orderService.findByExcludeStatus(this.userLogado?.supplierId!, exludeStatus).subscribe({
-      next: (response) => {
-        this.orders = response.data;
-        console.log(this.orders);
-
-        this.toastr.success("Pedidos buscado com sucesso");
-      },
-      error: (err) => {
-        console.error(err)
-        this.toastr.error(`Erro ao buscar os pedidos: ${err.error.message}`);
-      },
-    })
+    this.supplierService.openDistribuidor({ status: this.showSupplier }, this.userLogado?.supplierId!).subscribe({
+      next: () => this.toastr.success(this.showSupplier ? 'Distribuidora aberta.' : 'Distribuidora fechada.'),
+      error: (err) => this.toastr.error(`Erro ao abrir distribuidora: ${this.backendMessage(err)}`),
+    });
   }
 
   getOpenStatus() {
-    
     this.supplierService.getOpen(this.userLogado?.supplierId!).subscribe({
-      next: (response) => {
-        console.log('Distribuidora buscada com sucesso!', response);
-        this.showSupplier = response;
-        this.toastr.success('Distribuidora buscada com sucesso!');
-      },
-      error: (err) => {
-        console.error('Erro ao buscar:', err.error.message);
-      }
-    })
+      next: (response) => this.showSupplier = response,
+      error: (err) => this.toastr.error(`Erro ao buscar a distribuidora: ${this.backendMessage(err)}`),
+    });
   }
 
   changeStatus(order: OrderResponse, action: string) {
-    console.log('Executando ação', action, 'para o pedido', order.id);
-    let data = {
-      "orderStatus": action
+    if (action === 'CANCELED') {
+      this.openCancel(order);
+      return;
     }
-    console.log(data);
-    
-
-    this.orderService.updateStatusOrder(data, order.id).subscribe({
+    this.orderService.updateStatusOrder({ orderStatus: action }, order.id).subscribe({
       next: (response: any) => {
-        order.status = response.status
-        this.toastr.success(`Status do pedido atualizado para: ${response.status}`)        
-        if (order.status === 'Cancelado' || order.status === 'Entregue') {
-          this.orders = this.orders?.filter(o => o.id !== order.id);
+        order.status = response.status;
+        this.toastr.success(`Pedido atualizado para: ${response.status}`);
+        if (order.status === OrderStatus.DELIVERED) {
+          this.removeOrder(order);
+        }
+      },
+      error: (err) => this.toastr.error(`Erro ao atualizar o pedido: ${this.backendMessage(err)}`),
+    });
+  }
+
+  // Cenário 2: cancelar só com justificativa
+  openCancel(order: OrderResponse) {
+    this.cancelTarget = order;
+    this.cancelReason = '';
+  }
+
+  closeCancel() {
+    this.cancelTarget = undefined;
+    this.cancelReason = '';
+  }
+
+  confirmCancel() {
+    const reason = this.cancelReason.trim();
+    if (!this.cancelTarget || !reason || this.canceling) {
+      return;
+    }
+    const order = this.cancelTarget;
+    this.canceling = true;
+    this.orderService.cancelOrder(order.id, reason).subscribe({
+      next: (response) => {
+        this.canceling = false;
+        this.removeOrder(order);
+        this.closeCancel();
+        if (response.customerNotified) {
+          this.toastr.success('Pedido cancelado e cliente avisado por e-mail.');
+        } else {
+          this.toastr.warning('Pedido cancelado, mas o cliente não foi avisado por e-mail.');
         }
       },
       error: (err) => {
-        this.toastr.error(`Erro ao salvar categoria: ${err.error.message}`)        
-        console.error(err);
+        this.canceling = false;
+        this.toastr.error(`Erro ao cancelar: ${this.backendMessage(err)}`);
       },
-    })
+    });
+  }
+
+  private removeOrder(order: OrderResponse) {
+    this.orders = this.orders?.filter((o) => o.id !== order.id);
+    if (this.selectedOrder?.id === order.id) {
+      this.selectedOrder = this.pendingOrders[0] || this.orders?.[0];
+    }
+  }
+
+  // o GlobalExceptionHandler devolve { error } para regra de negócio e { message } para os demais erros
+  private backendMessage(err: any): string {
+    return err?.error?.error || err?.error?.message || err?.message || 'erro inesperado';
   }
 
   navigateEdit(id?: string) {
