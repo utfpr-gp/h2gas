@@ -483,6 +483,86 @@ class OrderServiceTest {
     }
 
     @Test
+    @DisplayName("HU06: a resposta do pedido traz o telefone do cliente")
+    void deveExporTelefoneDoClienteNoPedido() {
+        OrderResponseDTO result = orderService.createOrder(novoPedido(validCustomerAddressId));
+
+        assertEquals("41987654321", result.getCustomerPhone());
+        assertNull(result.getCancellationReason());
+    }
+
+    private User fornecedorDoPedido() {
+        return supplierRepository.findById(validSupplierId).orElseThrow();
+    }
+
+    private Supplier outroFornecedor() {
+        return supplierRepository.save(createSupplier("Outro Fornecedor", "outro.fornecedor@teste.com",
+                "41955555555", "55566677788", "senha", "99887766000155", "Outro", true, true, null, testCity));
+    }
+
+    @Test
+    @DisplayName("HU06: cancelar exige justificativa")
+    void deveRejeitarCancelamentoSemJustificativa() {
+        String orderId = pedidoRealizado(1);
+
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class,
+                () -> orderService.cancelOrder(orderId, "   ", fornecedorDoPedido()));
+        assertEquals("Justificativa é obrigatória para cancelar um pedido.", ex.getMessage());
+        assertEquals(OrderStatusEnum.PENDING, orderRepository.findById(orderId).orElseThrow().getStatus());
+    }
+
+    @Test
+    @DisplayName("HU06: cancelar com justificativa grava status e motivo")
+    void deveCancelarPedidoComJustificativaValida() {
+        String orderId = pedidoRealizado(1);
+
+        orderService.cancelOrder(orderId, "Sem entregador disponível hoje", fornecedorDoPedido());
+
+        Order cancelado = orderRepository.findById(orderId).orElseThrow();
+        assertEquals(OrderStatusEnum.CANCELED, cancelado.getStatus());
+        assertEquals("Sem entregador disponível hoje", cancelado.getCancellationReason());
+    }
+
+    @Test
+    @DisplayName("HU06: cancelar devolve o estoque dos itens")
+    void deveDevolverEstoqueAoCancelar() {
+        String orderId = pedidoRealizado(3);
+        assertEquals(97, productItemRepository.findById(validProductItemId).orElseThrow().getStockQuantity());
+
+        orderService.cancelOrder(orderId, "Cliente desistiu por telefone", fornecedorDoPedido());
+
+        assertEquals(100, productItemRepository.findById(validProductItemId).orElseThrow().getStockQuantity());
+    }
+
+    @Test
+    @DisplayName("HU06: fornecedor não cancela pedido de outro fornecedor")
+    void deveRejeitarCancelamentoDePedidoDeOutroFornecedor() {
+        String orderId = pedidoRealizado(1);
+        Supplier outro = outroFornecedor();
+
+        assertThrows(ForbiddenResourceException.class,
+                () -> orderService.cancelOrder(orderId, "Não é meu", outro));
+        assertEquals(OrderStatusEnum.PENDING, orderRepository.findById(orderId).orElseThrow().getStatus());
+    }
+
+    @Test
+    @DisplayName("HU06: pedido entregue ou já cancelado não pode ser cancelado")
+    void deveRejeitarCancelamentoDePedidoEntregueOuJaCancelado() {
+        String entregue = pedidoRealizado(1);
+        orderService.updateOrderStatus(entregue, "DELIVERED");
+        assertThrows(BusinessRuleException.class,
+                () -> orderService.cancelOrder(entregue, "Tarde demais", fornecedorDoPedido()));
+
+        String cancelado = pedidoRealizado(1);
+        orderService.cancelOrder(cancelado, "Primeiro cancelamento", fornecedorDoPedido());
+        assertThrows(BusinessRuleException.class,
+                () -> orderService.cancelOrder(cancelado, "De novo", fornecedorDoPedido()));
+        // entregue tirou 1 (99), o segundo pedido tirou 1 (98), o primeiro cancelamento devolveu 1 (99)
+        assertEquals(99, productItemRepository.findById(validProductItemId).orElseThrow().getStockQuantity(),
+                "o segundo cancelamento não pode devolver estoque de novo");
+    }
+
+    @Test
     @DisplayName("Deve buscar todos os pedidos com paginação")
     void findAllOrders() {
         // Arrange

@@ -32,4 +32,6 @@ public class OrderResponseDTO {
     private String complement;
     private String neighborhood;
     private String deliveryMode;
+    private String customerPhone;
+    private String cancellationReason;
 }

@@ -2,6 +2,7 @@ package com.h2gas.services;
 
 import com.h2gas.enums.DeliveryModeEnum;
 import com.h2gas.enums.OrderStatusEnum;
+import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ForbiddenResourceException;
 import com.h2gas.exceptions.ResourceNotFoundException;
@@ -216,6 +217,34 @@ public class OrderService {
     public Page<OrderResponseDTO> findByStatus(OrderStatusEnum status, Pageable pageable) {
         return orderRepository.findByStatus(status, pageable)
                 .map(orderMapper::toResponseDto);
+    }
+
+    // HU06: cancelamento pelo fornecedor; o "estorno" é a devolução do estoque (não há gateway de pagamento)
+    @Transactional
+    public Order cancelOrder(String orderId, String reason, User actor) {
+        if (reason == null || reason.isBlank()) {
+            throw new BusinessRuleException("Justificativa é obrigatória para cancelar um pedido.");
+        }
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido com " + orderId + " não encontrado"));
+        boolean isAdmin = actor.getUserType() == UserTypeEnum.ADMIN;
+        if (!isAdmin && (order.getSupplier() == null || !order.getSupplier().getId().equals(actor.getId()))) {
+            throw new ForbiddenResourceException("Pedido não pertence ao fornecedor logado.");
+        }
+        if (order.getStatus() == OrderStatusEnum.DELIVERED || order.getStatus() == OrderStatusEnum.CANCELED) {
+            throw new BusinessRuleException("Pedido " + order.getStatus().getStatus().toLowerCase() + " não pode ser cancelado.");
+        }
+
+        for (OrderItem item : order.getItems()) {
+            ProductItem product = item.getProduct();
+            if (product != null) {
+                product.setStockQuantity(product.getStockQuantity() + item.getQuantity());
+                productItemService.save(product);
+            }
+        }
+        order.setStatus(OrderStatusEnum.CANCELED);
+        order.setCancellationReason(reason.trim());
+        return orderRepository.save(order);
     }
 
     public String updateOrderStatus(String id, String newStatus) {

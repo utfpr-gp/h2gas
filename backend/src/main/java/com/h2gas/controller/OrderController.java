@@ -1,7 +1,11 @@
 package com.h2gas.controller;
 
 import com.h2gas.enums.OrderStatusEnum;
+import com.h2gas.model.dto.CancelOrderRequestDTO;
+import com.h2gas.model.dto.CancelOrderResponseDTO;
 import com.h2gas.model.dto.OrderPreviewDTO;
+import com.h2gas.model.entity.Order;
+import com.h2gas.services.OrderNotificationService;
 import com.h2gas.model.dto.OrderPreviewRequestDTO;
 import com.h2gas.model.dto.OrderRequestDTO;
 import com.h2gas.model.dto.OrderResponseDTO;
@@ -38,6 +42,9 @@ public class OrderController {
 
     @Autowired
     private OrderMapper orderMapper;
+
+    @Autowired
+    private OrderNotificationService orderNotificationService;
 
     @GetMapping("/{id}")
     @ResponseBody
@@ -185,5 +192,27 @@ public class OrderController {
             @RequestBody Map<String, String> status) {
         String novoStatus = orderService.updateOrderStatus(id, status.get("orderStatus"));
         return ResponseEntity.ok(Map.of("status", novoStatus));
+    }
+
+    @Operation(summary = "Cancela um pedido com justificativa (fornecedor)",
+            description = "Só o fornecedor dono do pedido (ou um ADMIN) cancela. Exige justificativa, devolve o estoque "
+                    + "dos itens na mesma transação e tenta avisar o cliente por e-mail; se o e-mail falhar, o pedido "
+                    + "continua cancelado e a resposta vem com customerNotified=false")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Pedido cancelado"),
+            @ApiResponse(responseCode = "400", description = "Sem justificativa, ou pedido já entregue/cancelado"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido, papel sem permissão ou pedido de outro fornecedor"),
+            @ApiResponse(responseCode = "404", description = "Pedido inexistente")
+    })
+    @PatchMapping("/{id}/cancel")
+    @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER"})
+    public ResponseEntity<CancelOrderResponseDTO> cancelOrder(
+            @Parameter(description = "ID do pedido") @PathVariable String id,
+            @Valid @RequestBody CancelOrderRequestDTO request) {
+        User usuarioLogado = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Order cancelado = orderService.cancelOrder(id, request.getReason(), usuarioLogado);
+        boolean customerNotified = orderNotificationService.notifyCancellation(cancelado);
+        return ResponseEntity.ok(new CancelOrderResponseDTO(cancelado.getStatus().getStatus(), customerNotified));
     }
 }

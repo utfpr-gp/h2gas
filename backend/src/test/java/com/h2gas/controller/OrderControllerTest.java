@@ -13,6 +13,9 @@ import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.mapper.OrderMapper;
 import com.h2gas.model.repository.UserRepository;
 import com.h2gas.services.OrderService;
+import com.h2gas.services.OrderNotificationService;
+import com.h2gas.enums.OrderStatusEnum;
+import com.h2gas.model.entity.Order;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,6 +41,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -65,6 +69,9 @@ class OrderControllerTest {
 
     @MockitoBean
     private OrderMapper orderMapper;
+
+    @MockitoBean
+    private OrderNotificationService orderNotificationService;
 
     @BeforeEach
     void autenticarComoCliente() {
@@ -129,5 +136,35 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.availableItems[0].productId").value(5))
                 .andExpect(jsonPath("$.availableItems[0].supplierId").value("sup-1"))
                 .andExpect(jsonPath("$.unavailableItems").isEmpty());
+    }
+
+    @Test
+    void deveRetornar400SeJustificativaAusente() throws Exception {
+        mockMvc.perform(patch("/api/orders/pedido-1/cancel")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\": \"  \"}"))
+                .andExpect(status().isBadRequest());
+
+        verify(orderService, never()).cancelOrder(any(), any(), any());
+    }
+
+    @Test
+    void deveRetornar200AoCancelarComJustificativa() throws Exception {
+        User fornecedor = new User(null, "Gás Centro", "gas@teste.com", "41999999999",
+                "12345678900", "senha", UserTypeEnum.SUPPLIER);
+        fornecedor.setId("fornecedor-1");
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                fornecedor, null, List.of(new SimpleGrantedAuthority("ROLE_SUPPLIER"))));
+        Order cancelado = new Order();
+        cancelado.setStatus(OrderStatusEnum.CANCELED);
+        when(orderService.cancelOrder(eq("pedido-1"), eq("Sem gás no estoque"), same(fornecedor))).thenReturn(cancelado);
+        when(orderNotificationService.notifyCancellation(cancelado)).thenReturn(false);
+
+        mockMvc.perform(patch("/api/orders/pedido-1/cancel")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\": \"Sem gás no estoque\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("Cancelado"))
+                .andExpect(jsonPath("$.customerNotified").value(false));
     }
 }

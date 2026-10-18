@@ -7,7 +7,7 @@
 | ID | HU06 |
 | Perfil | Fornecedor (SUPPLIER) |
 | Prioridade MoSCoW | Must have |
-| Dependências | Nenhuma nova |
+| Dependências | HU03/HU05 (`deliveryMode`, retirada sem endereço); F7 (visual, Figura 14) |
 | Referência no TCC | Apêndice A.1 — HU06 |
 
 > **Nota de correção**: a versão anterior deste script tinha um Cenário 2
@@ -25,6 +25,11 @@ cliente antes de repassá-la ao entregador.
 
 ## 3. Critérios de Aceitação (BDD)
 
+> Revisado em 2026-10-18 sobre a `develop` com HU01–HU05 e F7 (fatias
+> 1 e 2) mergeados. Decisões do autor nesta revisão: (a) o cancelamento
+> **devolve o estoque** dos itens ("estorno" de estoque; não há gateway de
+> pagamento); (b) o painel entrega o layout completo da **Figura 14**.
+
 - **Cenário 1 — Aceite na fila**: Dado o painel administrativo ativo,
   Quando entra um pedido `PENDING`, Então o sistema emite alerta visual
   **e** permite mudar para "Confirmado" num clique.
@@ -34,49 +39,54 @@ cliente antes de repassá-la ao entregador.
 
 ## 4. Estado atual (achados)
 
-**Cenário 1 — já quase pronto:**
-- A rota `dashboard-fornecedor` → `ReceivedOrdersComponent` **já é** o
-  painel correto (não confundir com `historico-pedidos` →
-  `OrderHistoryComponent`, tela separada só para pedidos
-  `DELIVERED`/`CANCELED` — as duas existem de propósito).
-- Já carrega por padrão todos os pedidos exceto `DELIVERED`/`CANCELED`
-  (inclui `PENDING`), ordenado por `createdAt DESC` — já testado em
-  `OrderServiceTest`.
-- A transição PENDING→CONFIRMED em um clique **já existe e já é
-  testada** (`changeStatus()` → `PATCH /update-order-status`,
-  `actionsByStatus[PENDING]`).
-- **O que falta**: "alerta visual" — hoje `PENDING` mistura-se
-  visualmente com `CONFIRMED`/`IN_PREPARATION`/`OUT_FOR_DELIVERY` numa
-  lista só ordenada por data, sem destaque nem agrupamento por urgência.
+**Cenário 1:**
+- `dashboard-fornecedor` → `ReceivedOrdersComponent` é o painel certo
+  (`historico-pedidos` → `OrderHistoryComponent` é outra tela, só
+  `DELIVERED`/`CANCELED`). Carrega tudo menos `DELIVERED`/`CANCELED`
+  (`GET /api/orders/{supplierId}/exclude-status`), mais recente primeiro.
+- Os cards são do `OrderWidgetComponent` (`orders-widget`), com botões
+  por status via `actionsByStatus`; PENDING→CONFIRMED já é um clique
+  (`changeStatus()` → `PATCH /{id}/update-order-status`).
+- **Falta**: alerta visual — `PENDING` se mistura com os demais. Também
+  não há atualização sozinha: um pedido novo só aparece recarregando a
+  página. A HU08 (SSE) exclui explicitamente o painel do fornecedor
+  (§ Fora de Escopo dela), então aqui o "quando entra um pedido" é
+  atendido com **atualização periódica** (polling).
+- A cada busca o componente mostra toast "Pedidos buscado com sucesso";
+  com polling isso vira spam — sai aqui (a F7 fatia 3 já previa).
 
-**Cenário 2 — não existe hoje:**
-- O botão de cancelar em `received-orders.component.ts` chama
-  `changeStatus(order, 'CANCELED')` — o mesmo endpoint genérico de
-  transição de status (`PATCH /update-order-status`), **sem pedir
-  justificativa, sem registrar motivo, sem notificar o cliente**.
-- Não existe coluna para armazenar o motivo do cancelamento.
-- **Interpretação de "estorno"**: o método de pagamento hoje é
-  selecionado no checkout mas cobrado **na entrega** (dinheiro/Pix/cartão
-  "na entrega", conforme Figura 12a do TCC) — não há captura de
-  pagamento antecipada nem integração com gateway nesta fase do projeto
-  (Pix dinâmico só chega na HU13, Should-have). Por isso, "efetuar o
-  estorno" não pode significar uma chamada real a um gateway de
-  pagamento — ainda não existe nenhuma. A leitura possível dentro do
-  escopo Must-have é: **a transição para `CANCELED` só pode acontecer
-  depois que a justificativa for capturada** — isso é o que se implementa
-  aqui. Uma integração real de estorno fica fora de escopo (ver §7).
-- **Infra reaproveitável**: `MailService.sendMail(to, subject, text)` já
-  existe e já é usado para redefinição de senha — reaproveitado aqui para
-  "avisar o cliente", em vez de criar um canal novo de notificação.
-- **Achado colateral (tela diferente, fora do escopo)**:
-  `order-history.component.ts` tem um botão de cancelar com
-  `action: 'cancel'` (minúsculo) que quebra
-  `OrderStatusEnum.valueOf(newStatus)` em runtime. Não corrigido aqui —
-  ver §7.
+**Cenário 2:**
+- "Cancelar" chama `changeStatus(order, 'CANCELED')` no endpoint
+  genérico — sem justificativa, sem motivo salvo, sem aviso ao cliente,
+  e **sem devolver o estoque** baixado na criação do pedido (HU05 tornou a
+  criação atômica, mas nada repõe estoque no cancelamento).
+- Nenhuma checagem de dono: qualquer `SUPPLIER` pode mudar status de
+  pedido de outro fornecedor pelo endpoint genérico (dívida já conhecida
+  de rotas antigas; a rota nova de cancelamento nasce com checagem, via
+  `ForbiddenResourceException` → 403, criada na HU05).
+- `MailService.sendMail(to, subject, text)` existe e é reaproveitado.
+- **Estorno**: o pagamento é na entrega (sem gateway; Pix dinâmico só na
+  HU13). Estorno aqui = **devolver o estoque dos itens na mesma transação
+  do cancelamento** (decisão do autor), além de exigir a justificativa.
+- Migração: V3–V5 já usadas; a desta HU é a **`V6`** (a HU11, revisada
+  antes prevendo V6, passa para V7 quando começar).
+- `OrderResponseDTO` não traz o telefone do cliente, que a Figura 14
+  mostra no detalhe.
+- **Achado colateral (fora do escopo)**: `order-history.component.ts`
+  usa `action: 'cancel'` (minúsculo), que quebra
+  `OrderStatusEnum.valueOf` em runtime.
+
+**Visual (F7 §5.8 → Figura 14):** mestre-detalhe. À esquerda, "Pedidos
+Recebidos" em lista compacta (número, itens, horário, modalidade). À
+direita, o pedido selecionado: cabeçalho "Pedido #…", **linha do tempo de
+status** (Pendente → Confirmado → Em preparo → Saiu para entrega /
+Pronto para retirada → Entregue), ações do status atual, cards de
+cliente (nome, telefone) e entrega (endereço ou "Retirada na loja"),
+itens e total. O botão "Atribuir Entregador" da figura é da **HU07**.
 
 ## 5. Contrato Técnico
 
-### 5.1 Migração `V4__order_cancellation_reason.sql`
+### 5.1 Migração `V6__order_cancellation_reason.sql`
 
 ```sql
 ALTER TABLE orders ADD COLUMN cancellation_reason VARCHAR(500) NULL;
@@ -84,119 +94,115 @@ ALTER TABLE orders ADD COLUMN cancellation_reason VARCHAR(500) NULL;
 
 ### 5.2 Backend
 
-**`Order.java`** — adicionar `private String cancellationReason;`.
-
-**Novo DTO `CancelOrderRequestDTO { private String reason; }`**.
-
-**`OrderService.java`** — novo método dedicado (substitui o uso do
-`updateOrderStatus` genérico para cancelamento):
-```java
-public String cancelOrder(String orderId, String reason) {
-    if (reason == null || reason.isBlank()) {
-        throw new BusinessRuleException("Justificativa é obrigatória para cancelar um pedido.");
-    }
-
-    Order order = findEntityById(orderId);
-    order.setStatus(OrderStatusEnum.CANCELED);
-    order.setCancellationReason(reason);
-    orderRepository.save(order);
-
-    mailService.sendMail(
-        order.getCustomer().getEmail(),
-        "Seu pedido foi cancelado",
-        "Olá " + order.getCustomer().getName() + ", seu pedido #" + order.getId()
-            + " foi cancelado pelo fornecedor. Motivo: " + reason
-    );
-
-    return order.getStatus().getStatus();
-}
-```
-
-**`OrderController.java`** — novo endpoint dedicado:
-```java
-@PatchMapping("/{id}/cancel")
-@ResponseBody
-@RolesAllowed({"ADMIN", "SUPPLIER"})
-public ResponseEntity<Map<String, String>> cancelOrder(
-        @PathVariable String id,
-        @RequestBody CancelOrderRequestDTO request) {
-    String status = orderService.cancelOrder(id, request.getReason());
-    return ResponseEntity.ok(Map.of("status", status));
-}
-```
+- `Order.cancellationReason` (`String`, coluna `cancellation_reason`).
+- `OrderResponseDTO` ganha `customerPhone` e `cancellationReason`
+  (preenchidos no `OrderMapper`).
+- `CancelOrderRequestDTO { @NotBlank @Size(max = 500) String reason; }`
+  com `@Schema`.
+- `CancelOrderResponseDTO { String status; boolean customerNotified; }`.
+- **`OrderService.cancelOrder(String orderId, String reason, User actor)`**
+  — `@Transactional`:
+  - pedido inexistente → `ResourceNotFoundException` (404);
+  - `actor` SUPPLIER que não é o fornecedor do pedido →
+    `ForbiddenResourceException` (403); ADMIN pode;
+  - status `DELIVERED` ou `CANCELED` → `BusinessRuleException` (400);
+  - devolve `quantity` de cada item ao `stockQuantity` do produto (item
+    com produto nulo é ignorado), grava `CANCELED` + motivo;
+  - devolve o `Order` para a notificação.
+- **`OrderNotificationService.notifyCancellation(Order)`** — novo, fora
+  da transação: chama `MailService.sendMail` para o e-mail do cliente
+  (assunto "Seu pedido foi cancelado", com número do pedido, fornecedor e
+  motivo). Falha de e-mail (`MailException`) **não desfaz o
+  cancelamento**: é registrada em log de aviso e devolvida como
+  `customerNotified=false`, que a tela mostra ao fornecedor (falha
+  visível, não engolida).
+- **`PATCH /api/orders/{id}/cancel`** (`@RolesAllowed({"ADMIN",
+  "SUPPLIER"})`, `@Valid`), dono = principal autenticado. OpenAPI:
+  `@Operation` + `@ApiResponses` 200 (`CancelOrderResponseDTO`), 400
+  (sem justificativa / já entregue ou cancelado), 403 (sem token, papel
+  sem permissão ou pedido de outro fornecedor), 404.
 
 ### 5.3 Frontend
 
-**`received-orders.component.ts`** — particionamento por prioridade
-(Cenário 1):
-```ts
-get pendingOrders(): OrderResponse[] {
-  return this.orders?.filter(o => o.status === 'Pendente') ?? [];
-}
-get otherOrders(): OrderResponse[] {
-  return this.orders?.filter(o => o.status !== 'Pendente') ?? [];
-}
-```
-Template: seção "Novos Pedidos" com badge de contagem, acima de
-`otherOrders`, reaproveitando a classe `.status-pendente` já existente.
-
-**Cancelamento (Cenário 2)** — o botão "Cancelar" deixa de chamar
-`changeStatus(order, 'CANCELED')` diretamente; abre um modal simples
-pedindo a justificativa (`<textarea required>`), só então chama:
-```ts
-cancelOrder(order: OrderResponse, reason: string) {
-  this.orderService.cancelOrder(order.id, reason).subscribe({
-    next: () => {
-      order.status = 'Cancelado';
-      this.orders = this.orders?.filter(o => o.id !== order.id);
-      this.toastr.success('Pedido cancelado e cliente notificado.');
-    },
-    error: (err) => this.toastr.error(`Erro ao cancelar: ${err.error.message}`)
-  });
-}
-```
-
-**`order.service.ts`** — novo método `cancelOrder(orderId: string, reason: string)`
-apontando para `PATCH /{id}/cancel`.
+- `models/order.model.ts`: `OrderResponse.customerPhone?`,
+  `cancellationReason?`; `CancelOrderResponse`.
+- `order.service.ts`: `cancelOrder(orderId, reason)` →
+  `PATCH /orders/{id}/cancel`.
+- **`order-status-timeline`** (componente novo, standalone): recebe
+  `status` e `deliveryMode`; marca etapas concluídas/atual; rótulo da
+  4ª etapa conforme a modalidade ("Saiu para entrega" / "Pronto para
+  retirada"); pedido cancelado mostra estado "Cancelado".
+- **`received-orders`** (mestre-detalhe, Figura 14):
+  - lista à esquerda com seção **"Novos pedidos"** (PENDING) no topo,
+    badge com a contagem e destaque visual, e os demais abaixo;
+  - pedido selecionado à direita (o primeiro pendente por padrão; no
+    mobile a lista vira tela inteira e o detalhe abre ao tocar, com
+    "Voltar");
+  - ações do status atual reaproveitam `actionsByStatus`/`changeStatus`
+    (Confirmar = um clique);
+  - "Cancelar" abre modal com `textarea` obrigatória (até 500
+    caracteres); só envia com texto; resposta com
+    `customerNotified=false` mostra aviso de que o cliente não foi
+    avisado por e-mail;
+  - atualização a cada 30 s (pedido novo pendente ganha destaque
+    "Novo"); sem toast de sucesso nas buscas;
+  - tokens F2, cards `rounded-xl`, sem HEX novo.
+- `orders-widget` deixa de ser usado pelo `received-orders`; continua
+  em uso pelo `order-history` (histórico), que fica como está.
 
 ## 6. Plano de Testes (TDD)
 
 **Backend:**
-1. `OrderServiceTest` — `deveRejeitarCancelamentoSemJustificativa`
-   (`BusinessRuleException`), `deveCancelarPedidoComJustificativaValida`,
-   `devePersistirMotivoDoCancelamento`,
-   `deveEnviarEmailDeNotificacaoAoCancelar` (mock de `MailService`,
-   verifica chamada).
-2. `OrderControllerTest` — `deveRetornar400SeJustificativaAusente`,
-   `deveRetornar200AoCancelarComJustificativa`.
+1. `OrderServiceTest` — `deveRejeitarCancelamentoSemJustificativa`,
+   `deveCancelarPedidoComJustificativaValida` (status + motivo),
+   `deveDevolverEstoqueAoCancelar`,
+   `deveRejeitarCancelamentoDePedidoDeOutroFornecedor` (403),
+   `deveRejeitarCancelamentoDePedidoEntregueOuJaCancelado`,
+   `deveExporTelefoneDoClienteNoPedido`.
+2. `OrderNotificationServiceTest` (Mockito) —
+   `deveEnviarEmailAoClienteComMotivo`,
+   `deveRetornarFalsoQuandoEmailFalhar`.
+3. `OrderControllerTest` — `deveRetornar400SeJustificativaAusente`,
+   `deveRetornar200AoCancelarComJustificativa` (com `customerNotified`).
 
-**Frontend (a cobertura hoje é só o boilerplate `should create`):**
-3. `received-orders.component.spec.ts` —
-   `deveAgruparPedidosPendentesSeparadamenteDosDemais`,
-   `deveConfirmarPedidoPendenteComUmaUnicaChamadaAoServico`,
-   `deveExibirContagemDePedidosPendentesNoBadge`,
-   `naoDevePermitirCancelarSemPreencherJustificativa`,
-   `deveChamarCancelOrderComMotivoInformado`.
+**Frontend:**
+4. `order.service.spec.ts` — `deveCancelarPedidoComMotivo`.
+5. `order-status-timeline.component.spec.ts` —
+   `deveMarcarEtapasConcluidasEAtual`,
+   `deveUsarRotuloDeRetiradaQuandoPickup`.
+6. `received-orders.component.spec.ts` —
+   `deveSepararPedidosPendentesNoTopoComContagem`,
+   `deveSelecionarPrimeiroPendentePorPadrao`,
+   `deveConfirmarPedidoPendenteComUmClique`,
+   `naoDevePermitirCancelarSemJustificativa`,
+   `deveChamarCancelOrderComMotivoInformado`,
+   `deveAvisarQuandoClienteNaoFoiNotificado`,
+   `deveAtualizarPedidosPeriodicamente`,
+   `naoDeveExibirToastDeSucessoAoBuscarPedidos`.
+
+Regra herdada: specs antigos falhando no frontend não aumentam (23).
 
 ## 7. Fora de Escopo
 
-- Integração real com gateway de pagamento/estorno — não existe captura
-  de pagamento antecipada no sistema hoje; "estorno" é tratado aqui só
-  como "não cancelar sem justificativa registrada" (ver §4).
-- Corrigir o bug de `action: 'cancel'` (minúsculo) em
-  `order-history.component.ts` — pertence a outra tela; mencionado só
-  porque foi encontrado durante a investigação desta HU.
-- Push em tempo real (SSE) de novos pedidos para o dashboard do
-  fornecedor — nenhuma HU do Apêndice A exige isso explicitamente para o
-  painel do fornecedor (só HU08, do lado do cliente).
-- Notificação ao cliente por outro canal além de e-mail (push, SMS,
-  WhatsApp) — reaproveita só a infra de e-mail já existente.
+- Integração real com gateway de pagamento/estorno financeiro.
+- Botão "Atribuir Entregador" e modal (Figura 15) — **HU07**.
+- Tempo real por SSE no painel do fornecedor (HU08 também exclui).
+- Checagem de dono no endpoint genérico `update-order-status` (dívida
+  das rotas antigas, registrada).
+- Corrigir `action: 'cancel'` em `order-history.component.ts`.
+- Notificação por outro canal além de e-mail.
 
 ## 8. Definição de Pronto
 
-- [ ] `received-orders` agrupa/destaca pedidos `PENDING` visualmente.
-- [ ] Cancelamento exige justificativa (400 sem ela), persiste o motivo,
-      dispara e-mail ao cliente.
-- [ ] Confirmação com um clique continua funcionando (regressão).
-- [ ] Testes da seção 6 passando (`mvn test` + `ng test`).
-- [ ] Revisado e aprovado antes de HU09 começar.
+- [ ] `V6__order_cancellation_reason.sql` aplicada.
+- [ ] Cancelamento exige justificativa (400 sem ela), checa dono (403),
+      bloqueia entregue/cancelado (400), devolve estoque, persiste o
+      motivo e tenta avisar o cliente por e-mail (`customerNotified`).
+- [ ] `PATCH /api/orders/{id}/cancel` documentado no Swagger.
+- [ ] Painel no layout da Figura 14: pendentes destacados com contagem,
+      detalhe com linha do tempo, confirmação em um clique (regressão),
+      atualização periódica.
+- [ ] Testes da seção 6 verdes; `mvn test` e `ng test` (≤ 23 falhas
+      antigas).
+- [ ] Commits pequenos por fatia (CLAUDE.md, seção Git).
+- [ ] Testado de ponta a ponta (navegador ou E2E automatizado).
