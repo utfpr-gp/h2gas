@@ -110,6 +110,22 @@ class DelivererServiceTest {
     }
 
     @Test
+    @DisplayName("HU07: pedido só atribuído (entrega não iniciada) não torna o entregador ocupado")
+    void naoDeveMarcarOcupadoQuandoPedidoSoEstaAtribuido() {
+        DelivererDTO entregador = delivererService.createDeliverer(dto("Carlos", "carlos@teste.com"), fornecedor.getId());
+        Order pedido = new Order();
+        pedido.setCustomer(cliente);
+        pedido.setSupplier(fornecedor);
+        pedido.setStatus(OrderStatusEnum.IN_PREPARATION);
+        pedido.setPaymentMethod("PIX");
+        pedido.setTotalPrice(new BigDecimal("125.00"));
+        pedido.setDeliverer(delivererRepository.findById(entregador.getId()).orElseThrow());
+        orderRepository.save(pedido);
+
+        assertFalse(delivererService.findMine(fornecedor.getId()).get(0).isBusy());
+    }
+
+    @Test
     @DisplayName("HU07: entregador com pedido em rota aparece como ocupado")
     void deveMarcarEntregadorComoOcupadoQuandoHaPedidoEmRota() {
         DelivererDTO ocupado = delivererService.createDeliverer(dto("Carlos", "carlos@teste.com"), fornecedor.getId());

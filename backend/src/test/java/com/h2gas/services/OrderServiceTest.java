@@ -584,18 +584,31 @@ class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("HU07: despachar atribui o entregador, vai a OUT_FOR_DELIVERY e grava dispatchedAt")
-    void deveDespacharEntregadorEAvancarParaOutForDelivery() {
+    @DisplayName("HU07: despachar só atribui o entregador; o pedido segue em preparo, sem dispatchedAt")
+    void deveAtribuirEntregadorSemAvancarStatus() {
         String orderId = pedidoEmPreparo("DELIVERY");
         Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
 
         OrderResponseDTO resposta = orderService.assignDeliverer(orderId, entregadorId, fornecedorDoPedido());
 
-        Order despachado = orderRepository.findById(orderId).orElseThrow();
-        assertEquals(OrderStatusEnum.OUT_FOR_DELIVERY, despachado.getStatus());
-        assertEquals(entregadorId, despachado.getDeliverer().getId());
-        assertNotNull(despachado.getDispatchedAt());
+        Order atribuido = orderRepository.findById(orderId).orElseThrow();
+        assertEquals(OrderStatusEnum.IN_PREPARATION, atribuido.getStatus());
+        assertEquals(entregadorId, atribuido.getDeliverer().getId());
+        assertNull(atribuido.getDispatchedAt());
         assertEquals("Carlos Silva", resposta.getDelivererName());
+    }
+
+    @Test
+    @DisplayName("HU07: o fornecedor pode trocar o entregador enquanto ele não iniciou a entrega")
+    void devePermitirTrocarEntregadorEnquantoEmPreparacao() {
+        String orderId = pedidoEmPreparo("DELIVERY");
+        Long carlos = entregadorDe(validSupplierId, "carlos@teste.com");
+        Long ana = entregadorDe(validSupplierId, "ana@teste.com");
+        orderService.assignDeliverer(orderId, carlos, fornecedorDoPedido());
+
+        orderService.assignDeliverer(orderId, ana, fornecedorDoPedido());
+
+        assertEquals(ana, orderRepository.findById(orderId).orElseThrow().getDeliverer().getId());
     }
 
     @Test
@@ -645,13 +658,13 @@ class OrderServiceTest {
     @DisplayName("HU07: entregador já em rota pode receber outro pedido (o badge só avisa)")
     void devePermitirDespacharEntregadorJaEmRota() {
         Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
-        String primeiro = pedidoEmPreparo("DELIVERY");
+        String primeiro = pedidoEmRota(entregadorId);
         String segundo = pedidoEmPreparo("DELIVERY");
 
-        orderService.assignDeliverer(primeiro, entregadorId, fornecedorDoPedido());
         orderService.assignDeliverer(segundo, entregadorId, fornecedorDoPedido());
 
-        assertEquals(OrderStatusEnum.OUT_FOR_DELIVERY, orderRepository.findById(segundo).orElseThrow().getStatus());
+        assertEquals(entregadorId, orderRepository.findById(segundo).orElseThrow().getDeliverer().getId());
+        assertEquals(OrderStatusEnum.OUT_FOR_DELIVERY, orderRepository.findById(primeiro).orElseThrow().getStatus());
         assertTrue(delivererService.findMine(validSupplierId).get(0).isBusy());
     }
 
@@ -667,10 +680,50 @@ class OrderServiceTest {
         assertEquals("Saiu para entrega", orderService.updateOrderStatus(retirada, "OUT_FOR_DELIVERY"));
     }
 
-    private String pedidoEmRota(Long entregadorId) {
+    private String pedidoAtribuido(Long entregadorId) {
         String orderId = pedidoEmPreparo("DELIVERY");
         orderService.assignDeliverer(orderId, entregadorId, fornecedorDoPedido());
         return orderId;
+    }
+
+    private String pedidoEmRota(Long entregadorId) {
+        String orderId = pedidoAtribuido(entregadorId);
+        orderService.startDelivery(orderId, entregadorId);
+        return orderId;
+    }
+
+    @Test
+    @DisplayName("HU07: o entregador inicia a entrega, o pedido vai a OUT_FOR_DELIVERY e grava dispatchedAt")
+    void deveIniciarEntregaEGravarDispatchedAt() {
+        Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
+        String orderId = pedidoAtribuido(entregadorId);
+
+        OrderResponseDTO resposta = orderService.startDelivery(orderId, entregadorId);
+
+        Order emRota = orderRepository.findById(orderId).orElseThrow();
+        assertEquals(OrderStatusEnum.OUT_FOR_DELIVERY, emRota.getStatus());
+        assertNotNull(emRota.getDispatchedAt());
+        assertEquals("Saiu para entrega", resposta.getStatus());
+    }
+
+    @Test
+    @DisplayName("HU07: entregador não inicia pedido atribuído a outro entregador")
+    void deveRejeitarInicioDePedidoDeOutroEntregador() {
+        Long carlos = entregadorDe(validSupplierId, "carlos@teste.com");
+        Long ana = entregadorDe(validSupplierId, "ana@teste.com");
+        String orderId = pedidoAtribuido(carlos);
+
+        assertThrows(ForbiddenResourceException.class, () -> orderService.startDelivery(orderId, ana));
+        assertEquals(OrderStatusEnum.IN_PREPARATION, orderRepository.findById(orderId).orElseThrow().getStatus());
+    }
+
+    @Test
+    @DisplayName("HU07: só inicia pedido em preparo (não reinicia entrega em rota)")
+    void deveRejeitarInicioForaDeEmPreparacao() {
+        Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
+        String orderId = pedidoEmRota(entregadorId);
+
+        assertThrows(BusinessRuleException.class, () -> orderService.startDelivery(orderId, entregadorId));
     }
 
     @Test
@@ -705,6 +758,15 @@ class OrderServiceTest {
         String orderId = pedidoEmPreparo("DELIVERY");
 
         assertThrows(ForbiddenResourceException.class, () -> orderService.completeDelivery(orderId, carlos));
+    }
+
+    @Test
+    @DisplayName("HU07: não conclui pedido atribuído que ainda não iniciou a entrega")
+    void deveRejeitarConclusaoDePedidoAindaNaoIniciado() {
+        Long carlos = entregadorDe(validSupplierId, "carlos@teste.com");
+        String orderId = pedidoAtribuido(carlos);
+
+        assertThrows(BusinessRuleException.class, () -> orderService.completeDelivery(orderId, carlos));
     }
 
     @Test

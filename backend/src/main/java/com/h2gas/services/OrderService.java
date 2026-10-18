@@ -251,7 +251,7 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
-    // HU07: despacho = atribuir entregador; leva o pedido de entrega a OUT_FOR_DELIVERY
+    // HU07: despacho = atribuir (ou trocar) o entregador; o pedido segue em preparo até o entregador iniciar
     @Transactional
     public OrderResponseDTO assignDeliverer(String orderId, Long delivererId, User actor) {
         Order order = orderRepository.findById(orderId)
@@ -276,6 +276,16 @@ public class OrderService {
         }
 
         order.setDeliverer(deliverer);
+        return orderMapper.toResponseDto(orderRepository.save(order));
+    }
+
+    // HU07: o entregador toca "Iniciar Entrega"; é aqui que o pedido sai em rota
+    @Transactional
+    public OrderResponseDTO startDelivery(String orderId, Long delivererId) {
+        Order order = findOrderOfDeliverer(orderId, delivererId);
+        if (order.getStatus() != OrderStatusEnum.IN_PREPARATION) {
+            throw new BusinessRuleException("Só é possível iniciar a entrega de pedidos em preparação.");
+        }
         order.setStatus(OrderStatusEnum.OUT_FOR_DELIVERY);
         order.setDispatchedAt(LocalDateTime.now());
         return orderMapper.toResponseDto(orderRepository.save(order));
@@ -293,17 +303,22 @@ public class OrderService {
     // HU07: confirmação da entrega com um toque pelo entregador
     @Transactional
     public OrderResponseDTO completeDelivery(String orderId, Long delivererId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Pedido com " + orderId + " não encontrado"));
-        if (order.getDeliverer() == null || !order.getDeliverer().getId().equals(delivererId)) {
-            throw new ForbiddenResourceException("Pedido não está atribuído a este entregador.");
-        }
+        Order order = findOrderOfDeliverer(orderId, delivererId);
         if (order.getStatus() != OrderStatusEnum.OUT_FOR_DELIVERY) {
             throw new BusinessRuleException("Só é possível concluir pedidos que estão em rota.");
         }
         order.setStatus(OrderStatusEnum.DELIVERED);
         order.setDeliveredAt(LocalDateTime.now());
         return orderMapper.toResponseDto(orderRepository.save(order));
+    }
+
+    private Order findOrderOfDeliverer(String orderId, Long delivererId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido com " + orderId + " não encontrado"));
+        if (order.getDeliverer() == null || !order.getDeliverer().getId().equals(delivererId)) {
+            throw new ForbiddenResourceException("Pedido não está atribuído a este entregador.");
+        }
+        return order;
     }
 
     public String updateOrderStatus(String id, String newStatus) {
