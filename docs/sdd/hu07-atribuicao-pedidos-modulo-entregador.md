@@ -7,7 +7,7 @@
 | ID | HU07 |
 | Perfil | Fornecedor (SUPPLIER) e Entregador (DELIVERER) |
 | Prioridade MoSCoW | Must have |
-| Dependências | F3 (entidade `Deliverer`, `Order.deliverer`/`dispatchedAt`/`deliveredAt`), F5 (PWA — módulo do entregador é mobile-first) |
+| Dependências | F3 (entidade `Deliverer`, `Order.deliverer`/`dispatchedAt`/`deliveredAt`), F5 (PWA — módulo do entregador é mobile-first), HU05/HU06 (retirada sem endereço, painel do fornecedor, `ForbiddenResourceException`), F7 (Figuras 15 e 17) |
 | Referência no TCC | Apêndice A.1 — HU07 |
 
 ## 2. História de Usuário
@@ -18,6 +18,13 @@ logística de campo.
 
 ## 3. Critérios de Aceitação (BDD)
 
+> Revisado em 2026-10-18 sobre a `develop` com HU01–HU06 mergeadas.
+> Decisões do autor nesta revisão: (a) entregador "Em rota" pode receber
+> outro pedido (o badge só avisa); (b) o "Despachar" substitui o atalho
+> "Enviar para entrega" nos pedidos de entrega e o backend recusa o
+> atalho; (c) o módulo móvel entrega as Figuras 17a (lista) e 17b
+> (detalhe).
+
 - **Cenário 1 — Encaminhamento**: Dado um pedido pronto, Quando o
   fornecedor aciona o despacho, Então permite atribuir a entrega a um
   entregador específico da frota.
@@ -27,238 +34,214 @@ logística de campo.
 
 ## 4. Estado atual (achados)
 
-- F3 criou a entidade `Deliverer` e o repositório, mas **nenhuma camada
-  de serviço/controller existe ainda** — nem cadastro de entregador, nem
-  atribuição, nem consulta de rotas. É greenfield quase completo.
-- **Como um `Deliverer` passa a existir?** O TCC não tem uma HU dedicada
-  a "cadastro de entregador" — mas o Cenário 1 fala em "entregador
-  específico da frota", implicando que o fornecedor gerencia sua própria
-  frota. Modelo adotado: **o fornecedor cadastra seus entregadores**
-  (análogo a cadastrar produtos), criando o par `User(DELIVERER)` +
-  `Deliverer` vinculado ao seu `supplierId` — não é auto-registro público
-  como cliente/fornecedor.
-- **"Pedido pronto" (Cenário 1)**: interpretado como status
-  `IN_PREPARATION` — é o estado que antecede logicamente o despacho no
-  fluxo já existente (`PENDING → CONFIRMED → IN_PREPARATION →
-  OUT_FOR_DELIVERY → DELIVERED`). "Aciona o despacho" = atribuir
-  entregador, o que avança o status para `OUT_FOR_DELIVERY`.
-- **Fecha duas pontas soltas do F3**: `Order.dispatchedAt` (nunca
-  preenchido até agora) passa a ser setado no momento da atribuição;
-  `Order.deliveredAt` passa a ser setado quando o entregador confirma a
-  entrega. Isso é o que finalmente alimenta o "tempo médio de entrega" da
-  HU09, que até aqui sempre retornava nulo.
-- O guard de rotas (`authGuard`) já é genérico por `route.data.roles` +
-  `user.userType` — adicionar `'DELIVERER'` como valor válido não exige
-  mudança no guard, só nas rotas novas.
-- Padrão de senha já estabelecido em `UserService`:
-  `new BCryptPasswordEncoder().encode(...)` — reaproveitado aqui.
+- F3 criou a entidade `Deliverer` (`user`, `supplier`, `active`,
+  `vehicleInfo`) e `DelivererRepository` vazio. **Não há service,
+  controller, DTO nem tela** — greenfield. `Order` já tem `deliverer`,
+  `dispatchedAt` e `deliveredAt`, hoje nunca preenchidos (o "tempo médio
+  de entrega" da HU09 depende de preenchê-los aqui).
+- `UserTypeEnum.DELIVERER` existe e a V3 já libera o valor no banco. O
+  login por senha serve para qualquer perfil (`ROLE_DELIVERER`); o
+  `authGuard` é genérico por `route.data.roles`. O `login.component`
+  navega sempre para `/inicio`, então o entregador precisa de redirecionamento
+  próprio, e o `menu` só tem opções para ADMIN/SUPPLIER/CUSTOMER.
+- **Como um entregador passa a existir**: o fornecedor cadastra a própria
+  frota (par `User(DELIVERER)` + `Deliverer`). Não é auto-registro.
+- **Correções ao rascunho anterior** (que usava `auth.getName()` e
+  `findEntityByName`, e é de antes da HU06):
+  - o principal autenticado já é o `User` (`SecurityContextHolder`); o id
+    do fornecedor **é** o id do usuário (`Supplier` herda `User` com
+    `JOINED`). Nunca receber `supplierId` por URL/corpo (CLAUDE.md): a
+    listagem da frota é `GET /api/deliverers/mine`;
+  - a atribuição precisa checar o **dono do pedido** (o rascunho só checava
+    o dono do entregador): outro fornecedor → 403
+    (`ForbiddenResourceException`); ADMIN pode;
+  - a conclusão precisa checar **status** `OUT_FOR_DELIVERY` (o rascunho
+    permitiria reconcluir pedido entregue) e tratar pedido sem entregador
+    (o rascunho daria NPE);
+  - atribuição só vale para `deliveryMode = DELIVERY`; pedido de retirada
+    (HU05) não tem entregador e segue o fluxo "Pronto para retirada".
+- **"Pedido pronto" (Cenário 1)** = `IN_PREPARATION`; "aciona o despacho"
+  = atribuir entregador, o que leva a `OUT_FOR_DELIVERY` e grava
+  `dispatchedAt`.
+- **Atalho legado**: o painel (HU06) tem "Enviar para entrega"
+  (`PATCH /update-order-status` → `OUT_FOR_DELIVERY`) sem entregador.
+  Para pedido de entrega isso deixaria um pedido "em rota" que não
+  aparece na rota de ninguém. Decisão do autor: o backend passa a recusar
+  esse atalho para `DELIVERY` (400, "use o despacho com entregador") e o
+  painel mostra "Despachar". Retirada continua usando o atalho.
+- `OrderResponseDTO` não traz o entregador nem os horários; o detalhe do
+  fornecedor e o do entregador precisam de `delivererName`, e o do
+  entregador de `paymentMethod` (já existe) e `customerPhone` (HU06).
+- **Visual (F7 §5.8 → Figuras 15 e 17)**: modal "Atribuir a um
+  Entregador" (15) com lista de entregadores, badge DISPONÍVEL / EM ROTA,
+  e "Confirmar Atribuição"; módulo móvel "Minhas Entregas" (17a) em cards
+  e detalhe da entrega (17b) com endereço, resumo, ligar/WhatsApp, "Abrir
+  no Maps" e "Confirmar Entrega".
 
 ## 5. Contrato Técnico
 
-### 5.1 Backend — Cadastro de entregador (pré-requisito dos 2 cenários)
+### 5.1 Backend — frota do fornecedor
 
-**Novo DTO `DelivererCreateDTO { String name; String email; String phoneNumber; String password; String vehicleInfo; }`**.
+- `DelivererRepository`: `Optional<Deliverer> findByUserId(String)`,
+  `List<Deliverer> findBySupplierIdOrderByUserNameAsc(String)`.
+- `DelivererCreateDTO` (`@NotBlank name`, `@NotBlank @Email email`,
+  `@NotBlank phoneNumber`, `@NotBlank @Size(min = 6) password`,
+  `vehicleInfo` opcional) e `DelivererDTO` (`id`, `name`, `email`,
+  `phoneNumber`, `vehicleInfo`, `active`, `busy`), ambos com `@Schema`.
+- `DelivererService` (injeção por construtor, `@Transactional`):
+  - `createDeliverer(dto, supplier)`: e-mail já usado → `BusinessRuleException`
+    (400); senha com `BCryptPasswordEncoder` (padrão do `UserService`);
+    cria `User(DELIVERER)` + `Deliverer` ativo vinculado ao fornecedor;
+  - `findMine(supplierId)`: lista com `busy` = existe pedido
+    `OUT_FOR_DELIVERY` com esse entregador
+    (`OrderRepository.existsByDelivererIdAndStatus`); `busy` é computado,
+    não persistido;
+  - `findEntityById(id)` (404) e `findByUserId(userId)` (404 se o usuário
+    não for entregador).
+- `DelivererController` (`/api/deliverers`, `@Tag("Entregadores")`):
+  - `POST` `@RolesAllowed("SUPPLIER")`, `@Valid` — o fornecedor é o
+    principal; OpenAPI 200/400/403;
+  - `GET /mine` `@RolesAllowed("SUPPLIER")` — OpenAPI 200/403.
 
-**Novo DTO `DelivererDTO { Long id; String name; String vehicleInfo; boolean active; boolean busy; }`**
-(`busy` é computado, não persistido — ver §5.2.)
+### 5.2 Backend — Cenário 1 (despacho pelo fornecedor)
 
-**`DelivererService.java`** (novo):
-```java
-public DelivererDTO createDeliverer(DelivererCreateDTO dto, String supplierId) {
-    User user = new User(dto.getName(), dto.getEmail(), dto.getPhoneNumber(),
-            null, new BCryptPasswordEncoder().encode(dto.getPassword()), UserTypeEnum.DELIVERER);
-    userRepository.save(user);
+- `AssignDelivererRequestDTO { @NotNull Long delivererId }`.
+- `OrderService.assignDeliverer(orderId, delivererId, actor)`
+  (`@Transactional`):
+  - pedido inexistente → 404; fornecedor que não é o do pedido → 403
+    (ADMIN pode);
+  - status ≠ `IN_PREPARATION` → 400; `deliveryMode` ≠ `DELIVERY` → 400;
+  - entregador inexistente → 404; de outro fornecedor ou inativo → 400;
+  - grava `deliverer`, `OUT_FOR_DELIVERY` e `dispatchedAt = now`.
+- `PATCH /api/orders/{id}/assign-deliverer` (`ADMIN`, `SUPPLIER`, `@Valid`)
+  devolve o `OrderResponseDTO`. OpenAPI 200/400/403/404.
+- `OrderService.updateOrderStatus`: `OUT_FOR_DELIVERY` em pedido
+  `DELIVERY` → `BusinessRuleException` ("Use o despacho com entregador.").
+- `OrderResponseDTO` ganha `delivererName` (preenchido no `OrderMapper`).
 
-    Deliverer deliverer = new Deliverer();
-    deliverer.setUser(user);
-    deliverer.setSupplier(supplierService.findEntityById(supplierId));
-    deliverer.setActive(true);
-    deliverer.setVehicleInfo(dto.getVehicleInfo());
-    delivererRepository.save(deliverer);
+### 5.3 Backend — Cenário 2 (rota do entregador)
 
-    return toDto(deliverer);
-}
-```
-
-**`DelivererController.java`** (novo):
-```java
-@PostMapping
-@RolesAllowed({"ADMIN", "SUPPLIER"})
-public ResponseEntity<DelivererDTO> create(@RequestBody DelivererCreateDTO dto, Authentication auth) {
-    String supplierId = supplierService.findEntityByName(auth.getName()).getId();
-    return ResponseEntity.ok(delivererService.createDeliverer(dto, supplierId));
-}
-
-@GetMapping("/by-supplier/{supplierId}")
-@RolesAllowed({"ADMIN", "SUPPLIER"})
-public ResponseEntity<List<DelivererDTO>> listBySupplier(@PathVariable String supplierId) {
-    return ResponseEntity.ok(delivererService.findBySupplier(supplierId));
-}
-```
-
-### 5.2 Backend — Cenário 1 (atribuição pelo fornecedor)
-
-**`DelivererRepository.java`** — nova query de disponibilidade:
-```java
-boolean existsByIdAndOrders_Status(Long delivererId, OrderStatusEnum status);
-```
-(ou, mais simples e explícito via `@Query` no `OrderRepository`:)
-```java
-boolean existsByDelivererIdAndStatus(Long delivererId, OrderStatusEnum status);
-```
-`busy = orderRepository.existsByDelivererIdAndStatus(deliverer.getId(), OrderStatusEnum.OUT_FOR_DELIVERY)`.
-
-**`OrderService.java`** — novo método:
-```java
-public void assignDeliverer(String orderId, Long delivererId, String supplierId) {
-    Order order = findEntityById(orderId);
-    if (order.getStatus() != OrderStatusEnum.IN_PREPARATION) {
-        throw new BusinessRuleException("Só é possível atribuir entregador a pedidos em preparação.");
-    }
-
-    Deliverer deliverer = delivererService.findEntityById(delivererId);
-    if (!deliverer.getSupplier().getId().equals(supplierId)) {
-        throw new BusinessRuleException("Entregador não pertence a este fornecedor.");
-    }
-
-    order.setDeliverer(deliverer);
-    order.setStatus(OrderStatusEnum.OUT_FOR_DELIVERY);
-    order.setDispatchedAt(LocalDateTime.now());
-    orderRepository.save(order);
-}
-```
-
-**`OrderController.java`** — novo endpoint:
-```java
-@PatchMapping("/{id}/assign-deliverer")
-@RolesAllowed({"ADMIN", "SUPPLIER"})
-public ResponseEntity<Map<String, String>> assignDeliverer(
-        @PathVariable String id,
-        @RequestBody Map<String, Long> body,
-        Authentication auth) {
-    String supplierId = supplierService.findEntityByName(auth.getName()).getId();
-    orderService.assignDeliverer(id, body.get("delivererId"), supplierId);
-    return ResponseEntity.ok(Map.of("status", "OUT_FOR_DELIVERY"));
-}
-```
-
-### 5.3 Backend — Cenário 2 (rota do entregador em campo)
-
-**`DelivererRepository.java`** — `Optional<Deliverer> findByUserId(String userId);`
-(mapeia o usuário autenticado para seu perfil de entregador.)
-
-**`OrderRepository.java`** — `List<Order> findByDelivererIdAndStatusOrderByDispatchedAtAsc(Long delivererId, OrderStatusEnum status);`
-
-**`OrderController.java`** — novos endpoints, escopados ao próprio entregador autenticado:
-```java
-@GetMapping("/my-routes")
-@RolesAllowed({"DELIVERER"})
-public ResponseEntity<List<OrderResponseDTO>> myRoutes(Authentication auth) {
-    Deliverer deliverer = delivererService.findByUserId(auth.getName());
-    return ResponseEntity.ok(orderService.findActiveByDeliverer(deliverer.getId()));
-}
-
-@PatchMapping("/{id}/complete-delivery")
-@RolesAllowed({"DELIVERER"})
-public ResponseEntity<Map<String, String>> completeDelivery(@PathVariable String id, Authentication auth) {
-    Deliverer deliverer = delivererService.findByUserId(auth.getName());
-    orderService.completeDelivery(id, deliverer.getId());
-    return ResponseEntity.ok(Map.of("status", "DELIVERED"));
-}
-```
-
-**`OrderService.completeDelivery`**:
-```java
-public void completeDelivery(String orderId, Long delivererId) {
-    Order order = findEntityById(orderId);
-    if (!order.getDeliverer().getId().equals(delivererId)) {
-        throw new BusinessRuleException("Pedido não está atribuído a este entregador.");
-    }
-    order.setStatus(OrderStatusEnum.DELIVERED);
-    order.setDeliveredAt(LocalDateTime.now());
-    orderRepository.save(order);
-}
-```
-(`findActiveByDeliverer` reaproveita `findByDelivererIdAndStatusOrderByDispatchedAtAsc` com status `OUT_FOR_DELIVERY` — "exibe apenas suas rotas" do Cenário 2 é garantido pelo filtro `delivererId` vindo do próprio token autenticado, não de parâmetro livre — um entregador não pode consultar rotas de outro.)
+- `OrderRepository`: `existsByDelivererIdAndStatus`,
+  `findByDelivererIdAndStatusOrderByDispatchedAtAsc`.
+- `GET /api/orders/my-routes` (`DELIVERER`): o entregador vem do
+  **principal** (`findByUserId`), nunca de parâmetro; devolve os pedidos
+  `OUT_FOR_DELIVERY` dele, do despacho mais antigo ao mais novo.
+- `PATCH /api/orders/{id}/complete-delivery` (`DELIVERER`):
+  - pedido inexistente → 404; não atribuído a este entregador (ou sem
+    entregador) → 403;
+  - status ≠ `OUT_FOR_DELIVERY` → 400;
+  - grava `DELIVERED` e `deliveredAt = now`.
+- OpenAPI nas duas (200/400/403/404, segurança Bearer).
 
 ### 5.4 Frontend
 
-**`UserTypeEnum`/rotas** — `'DELIVERER'` passa a ser um valor válido de
-`userType`; novas rotas protegidas com `data: { roles: ['ADMIN', 'DELIVERER'] }`.
-
-**Supplier — atribuição (Cenário 1)**:
-- Modal de atribuição (Figura 15 do TCC) em `received-orders` — ação
-  "Despachar" visível só para pedidos `IN_PREPARATION`; lista
-  entregadores via `GET /api/deliverers/by-supplier/{id}`, badge
-  "Disponível"/"Em rota" a partir de `busy`. Confirmar chama
-  `PATCH /orders/{id}/assign-deliverer`.
-- Novo componente `manage-deliverers` (`components/pages/manage-deliverers/`)
-  — cadastro simples de entregador (nome, e-mail, telefone, senha,
-  veículo), lista os já cadastrados via `GET /by-supplier/{id}`.
-
-**Entregador — módulo móvel (Cenário 2)**:
-- Novo componente `deliverer-routes` (`components/pages/deliverer-routes/`)
-  — tela principal pós-login do entregador (Figura 17a): lista
-  `GET /api/orders/my-routes` em formato de cards, botão de atalho
-  "Confirmar Entrega" por card chamando
-  `PATCH /orders/{id}/complete-delivery`.
-- Login existente (`login.component.ts`) já funciona para qualquer
-  `userType` — sem mudança necessária ali; só o redirecionamento
-  pós-login precisa reconhecer `DELIVERER` e mandar para
-  `/deliverer-routes` em vez de `/painel-cliente`/`/dashboard-fornecedor`.
+- `models/deliverer.ts`, `services/deliverer.service.ts` (`listMine`,
+  `create`) e `OrderService.assignDeliverer` / `myRoutes` /
+  `completeDelivery`; `OrderResponse.delivererName?`.
+- **Fornecedor**
+  - `manage-deliverers` (rota `/entregadores`, só `SUPPLIER`): formulário
+    de cadastro (nome, e-mail, telefone, senha, veículo) e lista da frota
+    com badge Disponível / Em rota; link "Entregadores" no menu.
+  - `received-orders`: em pedido `IN_PREPARATION` de entrega o botão
+    vira **"Despachar"** e abre o modal da Figura 15 — lista com badge
+    DISPONÍVEL / EM ROTA (em rota continua selecionável), "Confirmar
+    atribuição"; frota vazia mostra atalho para cadastrar. Retirada segue
+    com "Pronto para retirada". O detalhe mostra "Entregador: …".
+- **Entregador** (mobile-first, tokens F2, `rounded-xl`, alto contraste):
+  - login redireciona `DELIVERER` para `/entregas`; o `menu` do entregador
+    mostra só a marca e "Sair";
+  - `deliverer-routes` (`/entregas`, Figura 17a): "Minhas Entregas" com a
+    contagem de pendentes, um card por pedido (bairro/endereço, itens,
+    pagamento) e atualização a cada 30 s;
+  - `deliverer-route-detail` (`/entregas/:id`, Figura 17b): endereço
+    completo com link "Abrir no Maps" (URL de busca com o endereço, sem
+    mapa embutido), cliente com Ligar (`tel:`) e WhatsApp (`wa.me`),
+    itens, forma de pagamento, total e **Confirmar Entrega** (um toque,
+    com confirmação visual e volta para a lista).
+  - rotas com `data.roles: ['DELIVERER']` (e `ADMIN` para inspeção).
 
 ## 6. Plano de Testes (TDD)
 
 **Backend:**
 1. `DelivererServiceTest` — `deveCriarEntregadorVinculadoAoFornecedor`,
-   `deveCalcularBusyComoTrueQuandoHaPedidoEmRotaAtribuido`.
-2. `OrderServiceTest` —
-   `deveAtribuirEntregadorEAvancarStatusParaOutForDelivery`,
-   `deveSetarDispatchedAtAoAtribuir`,
-   `deveRejeitarAtribuicaoQuandoPedidoNaoEstaEmPreparacao`,
-   `deveRejeitarAtribuicaoDeEntregadorDeOutroFornecedor`,
-   `deveConcluirEntregaESetarDeliveredAt`,
-   `deveRejeitarConclusaoDePedidoNaoAtribuidoAoEntregador`.
-3. `OrderControllerTest` —
-   `deveRetornarApenasRotasDoEntregadorAutenticado` (garante isolamento —
-   um entregador não vê pedidos de outro),
-   `deveRetornar200AoDespacharComEntregadorValido`.
+   `deveRejeitarEmailJaCadastrado`,
+   `deveMarcarEntregadorComoOcupadoQuandoHaPedidoEmRota`,
+   `deveListarApenasEntregadoresDoFornecedor`.
+2. `OrderServiceTest` — `deveDespacharEntregadorEAvancarParaOutForDelivery`
+   (grava `dispatchedAt`), `deveRejeitarDespachoForaDeEmPreparacao`,
+   `deveRejeitarDespachoDePedidoDeRetirada`,
+   `deveRejeitarDespachoDePedidoDeOutroFornecedor` (403),
+   `deveRejeitarEntregadorDeOutroFornecedor`,
+   `devePermitirDespacharEntregadorJaEmRota`,
+   `deveRecusarAtalhoDeEnvioParaPedidoDeEntrega`,
+   `deveConcluirEntregaEGravarDeliveredAt`,
+   `deveRejeitarConclusaoDePedidoDeOutroEntregador` (403),
+   `deveRejeitarConclusaoForaDeOutForDelivery`,
+   `deveListarApenasRotasDoEntregador`.
+3. `DelivererControllerTest` — `deveRetornar400ComDadosInvalidos`,
+   `deveRetornar200AoCadastrarEntregador`.
+4. `OrderControllerTest` — `deveRetornar200AoDespacharComEntregador`,
+   `deveRetornarRotasDoEntregadorAutenticado`,
+   `deveRetornar200AoConfirmarEntrega`.
 
 **Frontend:**
-4. `deliverer.service.spec.ts` — `deveBuscarEntregadoresPorFornecedor`,
-   `deveCriarNovoEntregador`.
-5. `received-orders.component.spec.ts` — estender:
-   `deveExibirAcaoDeDespacharApenasParaPedidosEmPreparacao`,
-   `deveAtribuirEntregadorSelecionadoNoModal`.
-6. `deliverer-routes.component.spec.ts` —
-   `deveListarApenasRotasDoEntregadorLogado`,
+5. `deliverer.service.spec.ts` — `deveListarFrotaDoFornecedor`,
+   `deveCadastrarEntregador`; `order.service.spec.ts` —
+   `deveDespacharPedido`, `deveBuscarMinhasRotas`,
+   `deveConfirmarEntrega`.
+6. `manage-deliverers.component.spec.ts` —
+   `deveListarEntregadoresComStatus`,
+   `deveCadastrarEntregadorEAtualizarLista`.
+7. `received-orders.component.spec.ts` —
+   `deveExibirDespacharApenasParaEntregaEmPreparo`,
+   `deveManterAtalhoDeRetiradaSemEntregador`,
+   `deveAtribuirEntregadorSelecionadoNoModal`,
+   `deveAvisarQuandoNaoHaEntregadores`.
+8. `deliverer-routes.component.spec.ts` —
+   `deveListarRotasDoEntregadorLogado`,
+   `deveAtualizarRotasPeriodicamente`;
+   `deliverer-route-detail.component.spec.ts` —
+   `deveExibirEnderecoEContatoDoCliente`,
    `deveConfirmarEntregaComUmToque`.
+9. `login.component.spec.ts` — `deveRedirecionarEntregadorParaEntregas`.
+
+Regra herdada: specs antigos falhando no frontend não aumentam (22).
 
 ## 7. Fora de Escopo
 
-- Notificação em tempo real (SSE) quando o pedido é despachado ou
-  entregue — isso é HU08, cliente-side; aqui só a transição de status
-  acontece, sem push.
-- Tela de histórico de entregas do entregador (Figura 17c do TCC) — não
-  é exigida pelos 2 cenários oficiais da HU07; pode ser incremento
-  futuro.
-- Mapa/navegação (Figura 17b mostra um mapa) — o TCC já lista
-  "Rastreamento de GPS em Tempo Real" como Won't have explícito
-  (§5.3.4); um link estático para app de mapas externo (ex.: `geo:` URI
-  ou link do Google Maps com o endereço) é aceitável, mas não é parte do
-  critério de aceitação.
-- Edição/exclusão de entregador cadastrado — só criação e listagem.
-- Recusa de entrega pelo entregador — os cenários só falam em confirmar.
+- Notificação em tempo real (SSE) ao cliente quando despachado/entregue —
+  HU08; aqui só a transição de status e os horários.
+- Histórico de entregas do entregador (Figura 17c) e aba Perfil.
+- Mapa embutido e GPS em tempo real (Won't have no TCC); só link para o
+  Maps.
+- "Cancelar Entrega" pelo entregador (botão da Figura 17b) e "Iniciar
+  Entrega" (o despacho já leva a `OUT_FOR_DELIVERY`).
+- Troco: `Order.changeFor` existe, mas o checkout não coleta o valor; a
+  linha "Receber R$ x e dar R$ y de troco" fica para quando o checkout
+  capturar.
+- Busca por nome no modal da Figura 15 (frota pequena).
+- Edição, desativação e exclusão de entregador; cadastro de entregador
+  por ADMIN.
+- Checagem de dono no `update-order-status` genérico para os demais
+  status (dívida das rotas antigas).
 
 ## 8. Definição de Pronto
 
-- [ ] Fornecedor consegue cadastrar entregadores da própria frota.
-- [ ] Fornecedor consegue atribuir um entregador a um pedido
-      `IN_PREPARATION`, avançando para `OUT_FOR_DELIVERY` e preenchendo
-      `dispatchedAt`.
-- [ ] Entregador vê apenas suas próprias rotas ativas, isoladas por
-      autenticação (não por parâmetro manipulável).
-- [ ] Entregador confirma entrega com um toque, preenchendo
-      `deliveredAt` e avançando para `DELIVERED`.
-- [ ] Todos os testes da seção 6 passando.
-- [ ] Revisado e aprovado antes de HU08 começar.
+- [ ] Fornecedor cadastra entregadores da própria frota
+      (`POST /api/deliverers`) e vê quem está disponível ou em rota
+      (`GET /api/deliverers/mine`).
+- [ ] Despacho atribui entregador a pedido de entrega `IN_PREPARATION`,
+      leva a `OUT_FOR_DELIVERY` e grava `dispatchedAt`; 403 para pedido de
+      outro fornecedor; retirada não tem entregador; atalho "Enviar para
+      entrega" recusado para pedidos de entrega.
+- [ ] Entregador vê apenas as próprias rotas (identificado pelo token) e
+      confirma a entrega com um toque, gravando `deliveredAt` e indo a
+      `DELIVERED`.
+- [ ] Rotas novas documentadas no Swagger.
+- [ ] Telas no padrão F7 (Figuras 15 e 17), mobile-first no módulo do
+      entregador.
+- [ ] Testes da seção 6 verdes; `mvn test` e `ng test` (≤ 22 falhas
+      antigas).
+- [ ] Commits pequenos por fatia (CLAUDE.md, seção Git).
+- [ ] Testado de ponta a ponta (API e interface, com entregador de teste
+      no banco local).
