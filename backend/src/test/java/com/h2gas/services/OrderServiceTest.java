@@ -3,10 +3,13 @@ package com.h2gas.services;
 import com.h2gas.enums.DeliveryModeEnum;
 import com.h2gas.enums.OrderStatusEnum;
 import com.h2gas.exceptions.BusinessRuleException;
+import com.h2gas.exceptions.ForbiddenResourceException;
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.dto.OrderItemRequestDTO;
 import com.h2gas.model.dto.OrderPreviewDTO;
 import com.h2gas.model.dto.OrderPreviewRequestDTO;
+import com.h2gas.model.dto.ReorderItemDTO;
+import com.h2gas.model.dto.ReorderPreviewDTO;
 import com.h2gas.model.dto.OrderRequestDTO;
 import com.h2gas.model.dto.OrderResponseDTO;
 import com.h2gas.model.entity.*;
@@ -278,6 +281,39 @@ class OrderServiceTest {
     }
 
     @Test
+    @DisplayName("HU05: pedido de retirada é criado sem endereço de entrega")
+    void deveCriarPedidoDeRetiradaSemEndereco() {
+        OrderRequestDTO request = novoPedido(null);
+        request.setDeliveryMode("PICKUP");
+
+        OrderResponseDTO result = orderService.createOrder(request);
+
+        Order salvo = orderRepository.findById(result.getId()).orElseThrow();
+        assertNull(salvo.getDeliveryAddress());
+        assertEquals(DeliveryModeEnum.PICKUP, salvo.getDeliveryMode());
+    }
+
+    @Test
+    @DisplayName("HU05: pedido de retirada ignora o endereço recebido")
+    void deveIgnorarEnderecoEmPedidoDeRetirada() {
+        OrderRequestDTO request = novoPedido(validCustomerAddressId);
+        request.setDeliveryMode("PICKUP");
+
+        OrderResponseDTO result = orderService.createOrder(request);
+
+        assertNull(orderRepository.findById(result.getId()).orElseThrow().getDeliveryAddress());
+    }
+
+    @Test
+    @DisplayName("HU05: a resposta do pedido expõe a modalidade")
+    void deveExporModalidadeNaRespostaDoPedido() {
+        OrderRequestDTO request = novoPedido(null);
+        request.setDeliveryMode("PICKUP");
+
+        assertEquals("PICKUP", orderService.createOrder(request).getDeliveryMode());
+    }
+
+    @Test
     @DisplayName("HU03: deve assumir entrega quando a modalidade não for informada")
     void deveAssumirEntregaQuandoModalidadeAusente() {
         OrderResponseDTO result = orderService.createOrder(novoPedido(validCustomerAddressId));
@@ -327,6 +363,123 @@ class OrderServiceTest {
 
         assertEquals(new BigDecimal("159.80"), preview.getSubtotal());
         assertEquals(new BigDecimal("79.90"), preview.getItems().get(0).getUnitPrice());
+    }
+
+    private String pedidoRealizado(int quantity) {
+        OrderRequestDTO request = novoPedido(validCustomerAddressId);
+        request.getItems().get(0).setQuantity(quantity);
+        return orderService.createOrder(request).getId();
+    }
+
+    private User clienteLogado() {
+        return userRepository.findById(validCustomerId).orElseThrow();
+    }
+
+    private void alterarProduto(java.util.function.Consumer<ProductItem> alteracao) {
+        ProductItem produto = productItemRepository.findById(validProductItemId).orElseThrow();
+        alteracao.accept(produto);
+        productItemRepository.saveAndFlush(produto);
+    }
+
+    @Test
+    @DisplayName("HU05: deve montar a recompra com todos os itens disponíveis")
+    void deveMontarPreviewComTodosItensDisponiveis() {
+        String orderId = pedidoRealizado(2);
+
+        ReorderPreviewDTO preview = orderService.buildReorderPreview(orderId, clienteLogado());
+
+        assertEquals(1, preview.getAvailableItems().size());
+        assertTrue(preview.getUnavailableItems().isEmpty());
+        ReorderItemDTO item = preview.getAvailableItems().get(0);
+        assertEquals(validProductItemId, item.getProductId());
+        assertEquals(2, item.getQuantity());
+        assertEquals("Marca Teste", item.getProductBrand());
+        assertNull(item.getUnavailableReason());
+    }
+
+    @Test
+    @DisplayName("HU05: deve trazer o fornecedor nos itens disponíveis (checkout agrupa por fornecedor)")
+    void deveTrazerSupplierIdNosItensDisponiveis() {
+        ReorderPreviewDTO preview = orderService.buildReorderPreview(pedidoRealizado(1), clienteLogado());
+
+        assertEquals(validSupplierId, preview.getAvailableItems().get(0).getSupplierId());
+    }
+
+    @Test
+    @DisplayName("HU05: deve marcar item como indisponível quando o produto foi removido")
+    void deveMarcarItemComoIndisponivelQuandoProdutoForRemovido() {
+        String orderId = pedidoRealizado(1);
+        Order pedido = orderRepository.findById(orderId).orElseThrow();
+        pedido.getItems().forEach(item -> item.setProduct(null));
+        orderRepository.saveAndFlush(pedido);
+
+        ReorderPreviewDTO preview = orderService.buildReorderPreview(orderId, clienteLogado());
+
+        assertTrue(preview.getAvailableItems().isEmpty());
+        assertEquals("PRODUTO_REMOVIDO", preview.getUnavailableItems().get(0).getUnavailableReason());
+    }
+
+    @Test
+    @DisplayName("HU05: deve marcar item como indisponível quando o estoque zerou")
+    void deveMarcarItemComoIndisponivelQuandoEstoqueZerado() {
+        String orderId = pedidoRealizado(1);
+        alterarProduto(p -> p.setStockQuantity(0));
+
+        ReorderPreviewDTO preview = orderService.buildReorderPreview(orderId, clienteLogado());
+
+        assertTrue(preview.getAvailableItems().isEmpty());
+        ReorderItemDTO item = preview.getUnavailableItems().get(0);
+        assertEquals("SEM_ESTOQUE", item.getUnavailableReason());
+        assertEquals("Marca Teste", item.getProductBrand());
+    }
+
+    @Test
+    @DisplayName("HU05: deve limitar a quantidade ao estoque atual")
+    void deveLimitarQuantidadeAoEstoqueAtualQuandoInsuficiente() {
+        String orderId = pedidoRealizado(3);
+        alterarProduto(p -> p.setStockQuantity(2));
+
+        ReorderPreviewDTO preview = orderService.buildReorderPreview(orderId, clienteLogado());
+
+        assertEquals(2, preview.getAvailableItems().get(0).getQuantity());
+    }
+
+    @Test
+    @DisplayName("HU05: deve usar o preço atual do produto, não o do pedido antigo")
+    void deveUsarPrecoAtualDoProdutoNaoOHistorico() {
+        String orderId = pedidoRealizado(1);
+        alterarProduto(p -> {
+            p.setPriceDelivery(new BigDecimal("99.90"));
+            p.setPricePickup(new BigDecimal("85.00"));
+        });
+
+        ReorderItemDTO item = orderService.buildReorderPreview(orderId, clienteLogado()).getAvailableItems().get(0);
+
+        assertEquals(99.90, item.getPriceDelivery());
+        assertEquals(85.00, item.getPricePickup());
+    }
+
+    @Test
+    @DisplayName("HU05: deve rejeitar recompra de pedido de outro cliente")
+    void deveRejeitarPreviewDePedidoQueNaoPertenceAoCliente() {
+        String orderId = pedidoRealizado(1);
+        User outro = userRepository.save(new User(
+                null, "Outro Cliente", "outro@teste.com", "41900000000",
+                "11122233344", "senha", UserTypeEnum.CUSTOMER));
+
+        assertThrows(ForbiddenResourceException.class,
+                () -> orderService.buildReorderPreview(orderId, outro));
+    }
+
+    @Test
+    @DisplayName("HU05: a recompra não altera o estoque")
+    void naoDeveAlterarEstoqueNoReorderPreview() {
+        String orderId = pedidoRealizado(1);
+        int estoqueAntes = productItemRepository.findById(validProductItemId).orElseThrow().getStockQuantity();
+
+        orderService.buildReorderPreview(orderId, clienteLogado());
+
+        assertEquals(estoqueAntes, productItemRepository.findById(validProductItemId).orElseThrow().getStockQuantity());
     }
 
     @Test

@@ -5,12 +5,15 @@ import com.h2gas.model.dto.OrderPreviewDTO;
 import com.h2gas.model.dto.OrderPreviewRequestDTO;
 import com.h2gas.model.dto.OrderRequestDTO;
 import com.h2gas.model.dto.OrderResponseDTO;
+import com.h2gas.model.dto.ReorderPreviewDTO;
+import com.h2gas.model.entity.User;
 import com.h2gas.model.dto.SupplierDTO;
 import com.h2gas.model.mapper.OrderMapper;
 import com.h2gas.response.PageResponse;
 import com.h2gas.services.OrderService;
 import com.h2gas.util.PaginationUtil;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -67,6 +71,7 @@ public class OrderController {
     @Operation(summary = "Cria um pedido",
             description = "Cria o pedido com status PENDING (RN03). O preço de cada item é calculado no backend (RN01) "
                     + "conforme a modalidade: DELIVERY usa o preço de entrega, PICKUP o de retirada; ausente = DELIVERY. "
+                    + "DELIVERY exige addressId do próprio cliente; PICKUP não tem endereço de entrega. "
                     + "Decrementa o estoque na mesma transação (RN02)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Pedido criado"),
@@ -96,6 +101,24 @@ public class OrderController {
     @RolesAllowed({"ADMIN", "CUSTOMER"})
     public ResponseEntity<OrderPreviewDTO> previewOrder(@Valid @RequestBody OrderPreviewRequestDTO request) {
         return ResponseEntity.ok(orderService.previewOrder(request));
+    }
+
+    @Operation(summary = "Monta a recompra de um pedido (Pedir Novamente)",
+            description = "Para o cliente dono do pedido, devolve os itens que podem voltar ao carrinho com dados e "
+                    + "preços atuais do produto (quantidade limitada ao estoque) e os que ficaram de fora "
+                    + "(removidos ou sem estoque). Não altera estoque nem cria pedido")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Itens disponíveis e indisponíveis para a recompra"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido, papel sem permissão ou pedido de outro cliente"),
+            @ApiResponse(responseCode = "404", description = "Pedido inexistente")
+    })
+    @GetMapping("/{id}/reorder-preview")
+    @ResponseBody
+    @RolesAllowed({"ADMIN", "CUSTOMER"})
+    public ResponseEntity<ReorderPreviewDTO> getReorderPreview(
+            @Parameter(description = "ID do pedido a refazer") @PathVariable String id) {
+        User usuarioLogado = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return ResponseEntity.ok(orderService.buildReorderPreview(id, usuarioLogado));
     }
 
     @GetMapping("/by-customer/{customerId}")

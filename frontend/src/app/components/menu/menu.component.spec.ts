@@ -5,6 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import { MenuComponent } from './menu.component';
 import { AuthService } from '../../services/auth.service';
 import { LocationContextService } from '../../services/location-context.service';
+import { CartService } from '../../services/cart.service';
 
 describe('MenuComponent', () => {
   let component: MenuComponent;
@@ -66,5 +67,21 @@ describe('MenuComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-bottom-tab-bar')).toBeNull();
+  });
+
+  it('deveOcultarContadorComCarrinhoVazio', () => {
+    TestBed.inject(CartService).setCart([]);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="cart-count"]')).toBeNull();
+  });
+
+  it('deveMostrarQuantidadeDeItensNoContador', () => {
+    TestBed.inject(CartService).setCart([{ id: 1, quantitySelect: 1 }, { id: 2, quantitySelect: 3 }]);
+    fixture.detectChanges();
+
+    const contadores = fixture.nativeElement.querySelectorAll('[data-testid="cart-count"]') as NodeListOf<HTMLElement>;
+    expect(contadores.length).toBeGreaterThan(0);
+    contadores.forEach((contador) => expect(contador.textContent?.trim()).toBe('2'));
   });
 });

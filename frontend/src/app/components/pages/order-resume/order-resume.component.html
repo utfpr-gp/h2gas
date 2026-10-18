@@ -1,139 +1,290 @@
-<div class="max-w-2xl mx-auto px-4 pt-6 pb-24 md:pb-10">
+<!-- Sucesso -->
+<div *ngIf="orderPlaced" @fadeIn
+    class="min-h-[70vh] flex flex-col items-center justify-center text-center px-6 pb-24">
+    <span @popIn class="material-icons text-success" style="font-size: 96px">check_circle</span>
+    <h1 class="text-2xl font-bold text-gray-800 mt-4">Pedido realizado!</h1>
+    <p class="text-gray-500 mt-1">Você pode acompanhar tudo em Meus Pedidos.</p>
+    <span class="loading loading-dots loading-md text-primary mt-6"></span>
+</div>
+
+<div *ngIf="!orderPlaced" class="max-w-2xl mx-auto px-4 pt-6 pb-44 md:pb-10">
     <h1 class="text-2xl font-bold text-gray-800">Checkout</h1>
-    <p class="text-sm text-gray-500 mb-6">Revise seu pedido e conclua a compra.</p>
+    <p class="text-sm text-gray-500 mb-4">Revise seu pedido e conclua a compra.</p>
 
-    <form [formGroup]="formOrder" class="space-y-4">
-        <!-- Dados para Entrega -->
-        <section class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
-            <h2 class="flex items-center gap-2 font-semibold text-gray-800 mb-3">
-                <span class="material-icons text-primary text-lg">location_on</span>
-                Dados para Entrega
-            </h2>
-            <div class="space-y-3">
-                <div *ngFor="let endereco of addresses"
-                    class="border-2 rounded-xl p-3 flex items-start cursor-pointer transition"
-                    [class.border-primary]="endereco.id === selectedAddressId"
-                    [class.border-gray-200]="endereco.id !== selectedAddressId"
-                    (click)="selectAddress(endereco)">
-                    <input class="radio radio-primary radio-sm mt-1"
-                        [id]="'address-' + endereco.id" name="address" type="radio"
-                        [checked]="endereco.id === selectedAddressId" />
-                    <label class="ml-3 block text-sm text-gray-900" [for]="'address-' + endereco.id">
-                        <span class="font-semibold">{{endereco.addressName || 'Endereço'}}</span>
-                        <p class="text-gray-600 mt-1">
-                            {{endereco.streetName}}, {{endereco.number}} - {{endereco.neighborhood}}
-                            - {{endereco.cityName}} - CEP: {{endereco.zipCode}}
-                        </p>
-                    </label>
+    <ul class="steps w-full mb-6">
+        <li *ngFor="let label of steps; let i = index"
+            class="step text-xs transition-colors duration-300"
+            [class.step-primary]="step >= i + 1"
+            [class.cursor-pointer]="i + 1 < step"
+            [class.font-semibold]="step === i + 1"
+            [attr.aria-current]="step === i + 1 ? 'step' : null"
+            (click)="goToStep(i + 1)">
+            {{ label }}
+        </li>
+    </ul>
+
+    <form [formGroup]="formOrder" (ngSubmit)="createOrder()">
+        <div [@stepSlide]="step">
+            <!-- Etapa 1: Itens -->
+            <section *ngIf="step === 1" data-testid="step-items"
+                class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
+                <h2 class="flex items-center gap-2 font-semibold text-gray-800 mb-3">
+                    <span class="material-icons text-primary text-lg">shopping_cart</span>
+                    Seus itens
+                </h2>
+
+                <div *ngIf="!productsCarts?.length" @fadeIn class="text-center py-10">
+                    <span class="material-icons text-gray-300" style="font-size: 64px">remove_shopping_cart</span>
+                    <p class="text-gray-500 mt-2 mb-4">Seu carrinho está vazio.</p>
+                    <button type="button" (click)="navigate('/inicio')" class="btn btn-primary btn-sm rounded-lg">
+                        Ver produtos
+                    </button>
                 </div>
-                <button type="button" (click)="navigate('/meus-enderecos')"
-                    class="text-sm text-primary font-semibold inline-flex items-center gap-1">
-                    <span class="material-icons text-base">add</span>
-                    Gerenciar endereços
-                </button>
-            </div>
 
-            <label class="block text-sm font-medium text-gray-700 mt-4 mb-1" for="observations">Observações</label>
-            <textarea formControlName="observation"
-                class="textarea textarea-bordered w-full rounded-xl"
-                id="observations" placeholder="Instruções especiais, ponto de referência..."
-                rows="2"></textarea>
-        </section>
+                <ng-container *ngIf="productsCarts?.length">
+                    <div class="divide-y divide-gray-100">
+                        <div *ngFor="let product of productsCarts; trackBy: trackByProductId" @listItem
+                            class="flex items-center justify-between py-3 gap-3">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="w-12 h-12 shrink-0 rounded-lg bg-base-200 flex items-center justify-center overflow-hidden">
+                                    <img *ngIf="product.imageUrl" [alt]="product.brand" class="w-full h-full object-contain"
+                                        [src]="product.imageUrl" />
+                                    <span *ngIf="!product.imageUrl" class="material-icons text-gray-300">inventory_2</span>
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="font-semibold text-sm text-gray-800 truncate">
+                                        {{product.type}} {{product.brand}} {{product.category}}
+                                    </p>
+                                    <p class="text-xs text-gray-500">
+                                        {{ previewItem(product)?.unitPrice | currency:'BRL':'symbol':'1.2-2' }} / un.
+                                    </p>
+                                    <p class="font-semibold text-sm transition-opacity duration-200"
+                                        [class.opacity-50]="previewLoading">
+                                        {{ previewItem(product)?.totalPrice | currency:'BRL':'symbol':'1.2-2' }}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1 shrink-0">
+                                <div class="flex items-center rounded-full border border-gray-200">
+                                    <button type="button" class="btn btn-circle btn-ghost btn-xs text-primary"
+                                        [disabled]="(product.quantitySelect ?? 1) <= 1"
+                                        (click)="decreaseQuantity(product)" aria-label="Diminuir quantidade">
+                                        <span class="material-icons text-base">remove</span>
+                                    </button>
+                                    <span class="w-6 text-center text-sm font-semibold inline-block transition-transform duration-150"
+                                        [class.scale-125]="bumpedProductId === product.id">
+                                        {{ product.quantitySelect }}
+                                    </span>
+                                    <button type="button" class="btn btn-circle btn-ghost btn-xs text-primary"
+                                        (click)="increaseQuantity(product)" aria-label="Aumentar quantidade">
+                                        <span class="material-icons text-base">add</span>
+                                    </button>
+                                </div>
+                                <button type="button"
+                                    class="btn btn-circle btn-ghost btn-xs text-gray-400 hover:text-error transition-colors"
+                                    (click)="removeItem(product)" aria-label="Remover item">
+                                    <span class="material-icons text-base">delete_outline</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
+            </section>
 
-        <!-- Método de Pagamento -->
-        <section class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
-            <h2 class="flex items-center gap-2 font-semibold text-gray-800 mb-3">
-                <span class="material-icons text-primary text-lg">payments</span>
-                Método de Pagamento na Entrega
-            </h2>
-            <div class="space-y-3">
-                <label *ngFor="let metodo of paymentMethods"
-                    class="flex items-center gap-3 p-3 border-2 rounded-xl cursor-pointer transition"
-                    [class.border-primary]="formOrder.get('paymentMethod')?.value === metodo.value"
-                    [class.border-gray-200]="formOrder.get('paymentMethod')?.value !== metodo.value">
-                    <input formControlName="paymentMethod" [value]="metodo.value" type="radio"
-                        class="radio radio-primary radio-sm" />
-                    <span class="material-icons text-primary">{{ metodo.icon }}</span>
-                    <span class="flex flex-col">
-                        <span class="font-semibold text-gray-800">{{ metodo.label }}</span>
-                        <span class="text-gray-500 text-xs">{{ metodo.hint }}</span>
+            <!-- Etapa 2: Entrega ou retirada -->
+            <section *ngIf="step === 2" data-testid="step-address"
+                class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
+                <h2 class="flex items-center gap-2 font-semibold text-gray-800 mb-3">
+                    <span class="material-icons text-primary text-lg">
+                        {{ deliveryMode === 'PICKUP' ? 'storefront' : 'local_shipping' }}
                     </span>
-                </label>
-            </div>
-        </section>
+                    Como você quer receber?
+                </h2>
 
-        <!-- Resumo do Pedido -->
-        <section class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
-            <h2 class="flex items-center gap-2 font-semibold text-gray-800 mb-3">
-                <span class="material-icons text-primary text-lg">receipt_long</span>
-                Resumo do Pedido
-            </h2>
+                <!-- Modalidade: controle segmentado com pílula deslizante -->
+                <div class="relative grid grid-cols-2 bg-base-200 rounded-xl p-1 mb-4"
+                    role="radiogroup" aria-label="Modalidade">
+                    <span aria-hidden="true"
+                        class="absolute top-1 bottom-1 left-1 w-[calc(50%-0.25rem)] rounded-lg bg-primary shadow transition-transform duration-300 ease-out"
+                        [class.translate-x-full]="deliveryMode === 'PICKUP'"></span>
+                    <button type="button" data-testid="mode-delivery" (click)="setDeliveryMode('DELIVERY')"
+                        role="radio" [attr.aria-checked]="deliveryMode === 'DELIVERY'"
+                        class="relative z-10 flex items-center justify-center gap-1 rounded-lg py-2 text-sm font-semibold transition-colors duration-300"
+                        [class.text-primary-content]="deliveryMode === 'DELIVERY'"
+                        [class.text-gray-600]="deliveryMode !== 'DELIVERY'">
+                        <span class="material-icons text-base">local_shipping</span>
+                        Entrega
+                    </button>
+                    <button type="button" data-testid="mode-pickup" (click)="setDeliveryMode('PICKUP')"
+                        role="radio" [attr.aria-checked]="deliveryMode === 'PICKUP'"
+                        class="relative z-10 flex items-center justify-center gap-1 rounded-lg py-2 text-sm font-semibold transition-colors duration-300"
+                        [class.text-primary-content]="deliveryMode === 'PICKUP'"
+                        [class.text-gray-600]="deliveryMode !== 'PICKUP'">
+                        <span class="material-icons text-base">storefront</span>
+                        Retirada
+                    </button>
+                </div>
 
-            <div class="grid grid-cols-2 gap-2 mb-4" role="radiogroup" aria-label="Modalidade">
-                <button type="button" data-testid="mode-delivery" (click)="setDeliveryMode('DELIVERY')"
-                    [attr.aria-checked]="deliveryMode === 'DELIVERY'" role="radio"
-                    class="flex items-center justify-center gap-1 rounded-xl py-2 text-sm font-semibold border-2 transition"
-                    [class.bg-primary]="deliveryMode === 'DELIVERY'"
-                    [class.text-primary-content]="deliveryMode === 'DELIVERY'"
-                    [class.border-primary]="deliveryMode === 'DELIVERY'"
-                    [class.border-gray-200]="deliveryMode !== 'DELIVERY'">
-                    <span class="material-icons text-base">local_shipping</span>
-                    Entrega no local
-                </button>
-                <button type="button" data-testid="mode-pickup" (click)="setDeliveryMode('PICKUP')"
-                    [attr.aria-checked]="deliveryMode === 'PICKUP'" role="radio"
-                    class="flex items-center justify-center gap-1 rounded-xl py-2 text-sm font-semibold border-2 transition"
-                    [class.bg-primary]="deliveryMode === 'PICKUP'"
-                    [class.text-primary-content]="deliveryMode === 'PICKUP'"
-                    [class.border-primary]="deliveryMode === 'PICKUP'"
-                    [class.border-gray-200]="deliveryMode !== 'PICKUP'">
-                    <span class="material-icons text-base">storefront</span>
-                    Retirada na loja
-                </button>
-            </div>
-
-            <div class="divide-y divide-gray-100">
-                <div *ngFor="let product of productsCarts" class="flex items-center justify-between py-3 gap-3">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <img *ngIf="product.imageUrl" [alt]="product.brand"
-                            class="w-12 h-12 object-contain rounded-md" [src]="product.imageUrl" />
-                        <div class="min-w-0">
-                            <p class="font-semibold text-sm text-gray-800 truncate">
-                                {{product.type}} {{product.brand}} {{product.category}}
+                <!-- Retirada: onde retirar -->
+                <div *ngIf="deliveryMode === 'PICKUP'" @fadeIn data-testid="pickup-stores" class="space-y-3">
+                    <p class="text-sm text-gray-500">Retire seu pedido em:</p>
+                    <div *ngIf="pickupStoresLoading" class="skeleton h-20 w-full rounded-xl"></div>
+                    <div *ngFor="let loja of visiblePickupStores"
+                        class="flex items-start gap-3 rounded-xl border-2 border-primary bg-base-200 p-3">
+                        <span class="material-icons text-primary">storefront</span>
+                        <div class="text-sm">
+                            <p class="font-semibold text-gray-800">{{ loja.name }}</p>
+                            <p class="text-gray-600">
+                                {{ loja.addressStreetName }}, {{ loja.addressNumber }}
+                                <ng-container *ngIf="loja.addressNeighborhood"> - {{ loja.addressNeighborhood }}</ng-container>
+                                <ng-container *ngIf="loja.cityName"> - {{ loja.cityName }}</ng-container>
                             </p>
-                            <p class="text-xs text-gray-500">
-                                {{ previewItem(product)?.unitPrice | currency:'BRL':'symbol':'1.2-2' }} por unidade
+                            <p *ngIf="loja.openingTime && loja.closingTime" class="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                                <span class="material-icons text-sm">schedule</span>
+                                {{ loja.openingTime }} às {{ loja.closingTime }}
                             </p>
                         </div>
                     </div>
-                    <div class="text-right shrink-0">
-                        <p class="text-xs text-gray-500">Qtd: {{product.quantitySelect}}</p>
-                        <p class="font-semibold text-sm">
-                            {{ previewItem(product)?.totalPrice | currency:'BRL':'symbol':'1.2-2' }}
-                        </p>
+                </div>
+
+                <!-- Entrega: endereço do cliente -->
+                <div *ngIf="deliveryMode === 'DELIVERY'" @fadeIn data-testid="customer-addresses" class="space-y-3">
+                    <div *ngFor="let endereco of addresses"
+                        class="border-2 rounded-xl p-3 flex items-start cursor-pointer transition-all duration-200"
+                        [class.border-primary]="endereco.id === selectedAddressId"
+                        [ngClass]="{ 'bg-primary/5': endereco.id === selectedAddressId }"
+                        [class.border-gray-200]="endereco.id !== selectedAddressId"
+                        (click)="selectAddress(endereco)">
+                        <input class="radio radio-primary radio-sm mt-1"
+                            [id]="'address-' + endereco.id" name="address" type="radio"
+                            [checked]="endereco.id === selectedAddressId" />
+                        <label class="ml-3 block text-sm text-gray-900 cursor-pointer" [for]="'address-' + endereco.id">
+                            <span class="font-semibold">{{endereco.addressName || 'Endereço'}}</span>
+                            <p class="text-gray-600 mt-1">
+                                {{endereco.streetName}}, {{endereco.number}} - {{endereco.neighborhood}}
+                                - {{endereco.cityName}} - CEP: {{endereco.zipCode}}
+                            </p>
+                        </label>
                     </div>
+                    <button type="button" (click)="navigate('/meus-enderecos')"
+                        class="text-sm text-primary font-semibold inline-flex items-center gap-1">
+                        <span class="material-icons text-base">add</span>
+                        Gerenciar endereços
+                    </button>
+                </div>
+
+                <label class="block text-sm font-medium text-gray-700 mt-4 mb-1" for="observations">Observações</label>
+                <textarea formControlName="observation"
+                    class="textarea textarea-bordered w-full rounded-xl"
+                    id="observations" placeholder="Instruções especiais, ponto de referência..."
+                    rows="2"></textarea>
+            </section>
+
+            <!-- Etapa 3: Resumo e pagamento -->
+            <div *ngIf="step === 3" data-testid="step-payment" class="space-y-4">
+                <section class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
+                    <h2 class="flex items-center gap-2 font-semibold text-gray-800 mb-3">
+                        <span class="material-icons text-primary text-lg">receipt_long</span>
+                        Resumo do Pedido
+                    </h2>
+
+                    <div class="divide-y divide-gray-100 text-sm">
+                        <div *ngFor="let product of productsCarts" class="flex justify-between py-2 gap-3">
+                            <span class="text-gray-800 truncate">
+                                <span class="font-semibold text-primary">{{ product.quantitySelect }}x</span>
+                                {{product.type}} {{product.brand}} {{product.category}}
+                            </span>
+                            <span class="font-semibold shrink-0">
+                                {{ previewItem(product)?.totalPrice | currency:'BRL':'symbol':'1.2-2' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mt-3 grid gap-2 text-sm">
+                        <button type="button" *ngIf="deliveryMode === 'PICKUP'" (click)="goToStep(2)"
+                            class="w-full min-w-0 flex items-center gap-2 rounded-lg bg-base-200 px-3 py-2 text-left hover:bg-base-300 transition-colors">
+                            <span class="material-icons text-base text-primary">storefront</span>
+                            <span class="flex-1 min-w-0 truncate">
+                                Retirar em:
+                                <ng-container *ngFor="let loja of visiblePickupStores; let last = last">
+                                    {{ loja.name }} ({{ loja.addressStreetName }}, {{ loja.addressNumber }}){{ last ? '' : '; ' }}
+                                </ng-container>
+                            </span>
+                            <span class="text-xs text-primary font-semibold">Alterar</span>
+                        </button>
+                        <button type="button" *ngIf="deliveryMode === 'DELIVERY' && selectedAddress" (click)="goToStep(2)"
+                            class="w-full min-w-0 flex items-center gap-2 rounded-lg bg-base-200 px-3 py-2 text-left hover:bg-base-300 transition-colors">
+                            <span class="material-icons text-base text-primary">location_on</span>
+                            <span class="flex-1 min-w-0 truncate">
+                                {{ selectedAddress.streetName }}, {{ selectedAddress.number }} - {{ selectedAddress.neighborhood }}
+                            </span>
+                            <span class="text-xs text-primary font-semibold">Alterar</span>
+                        </button>
+                    </div>
+                </section>
+
+                <section class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
+                    <h2 class="flex items-center gap-2 font-semibold text-gray-800 mb-3">
+                        <span class="material-icons text-primary text-lg">payments</span>
+                        Pagamento na entrega
+                    </h2>
+                    <div class="space-y-3">
+                        <label *ngFor="let metodo of paymentMethods"
+                            class="flex items-center gap-3 p-3 border-2 rounded-xl cursor-pointer transition-all duration-200"
+                            [class.border-primary]="formOrder.get('paymentMethod')?.value === metodo.value"
+                            [ngClass]="{ 'bg-primary/5': formOrder.get('paymentMethod')?.value === metodo.value }"
+                            [class.border-gray-200]="formOrder.get('paymentMethod')?.value !== metodo.value">
+                            <input formControlName="paymentMethod" [value]="metodo.value" type="radio" class="sr-only" />
+                            <span class="w-10 h-10 rounded-lg bg-base-200 flex items-center justify-center">
+                                <span class="material-icons text-primary">{{ metodo.icon }}</span>
+                            </span>
+                            <span class="flex flex-col flex-1">
+                                <span class="font-semibold text-gray-800">{{ metodo.label }}</span>
+                                <span class="text-gray-500 text-xs">{{ metodo.hint }}</span>
+                            </span>
+                            <span *ngIf="formOrder.get('paymentMethod')?.value === metodo.value" @popIn
+                                class="material-icons text-primary">check_circle</span>
+                        </label>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <!-- Barra de ação: fixa acima da bottom tab bar no mobile, no fluxo no desktop -->
+        <div *ngIf="productsCarts?.length"
+            class="fixed inset-x-0 bottom-14 z-30 bg-white border-t border-gray-200 shadow-lg px-4 py-3
+                   md:static md:mt-4 md:bg-transparent md:border-0 md:shadow-none md:px-0">
+            <div class="max-w-2xl mx-auto flex items-center gap-3">
+                <div class="flex flex-col min-w-0">
+                    <span class="text-xs text-gray-500">{{ step === 3 ? 'Total' : 'Subtotal' }}</span>
+                    <span class="flex items-center gap-2">
+                        <span *ngIf="previewLoading && !preview" data-testid="subtotal-loading" class="skeleton h-6 w-24"></span>
+                        <span *ngIf="preview" data-testid="order-subtotal"
+                            class="text-lg font-bold text-primary transition-opacity duration-200"
+                            [class.opacity-50]="previewLoading">
+                            {{ preview.subtotal | currency:'BRL':'symbol':'1.2-2' }}
+                        </span>
+                        <span *ngIf="previewLoading && preview" data-testid="subtotal-loading"
+                            class="loading loading-spinner loading-xs text-primary"></span>
+                    </span>
+                </div>
+
+                <div class="ml-auto flex gap-2">
+                    <button *ngIf="step > 1" type="button" (click)="previousStep()"
+                        class="btn btn-outline btn-primary rounded-xl">
+                        Voltar
+                    </button>
+                    <button *ngIf="step < 3" type="button" (click)="nextStep()" class="btn btn-primary rounded-xl px-6">
+                        Continuar
+                        <span class="material-icons text-base">arrow_forward</span>
+                    </button>
+                    <button *ngIf="step === 3" type="submit" [disabled]="isLoading" class="btn btn-primary rounded-xl px-6">
+                        <span *ngIf="isLoading" class="loading loading-spinner loading-sm"></span>
+                        <span *ngIf="!isLoading" class="material-icons text-base">lock</span>
+                        {{ isLoading ? 'Enviando...' : 'Confirmar' }}
+                    </button>
                 </div>
             </div>
-
-            <div class="flex justify-between items-center border-t border-gray-200 pt-3 mt-1">
-                <span class="font-semibold text-gray-800">Subtotal</span>
-                <span class="text-xl font-bold text-primary" data-testid="order-subtotal">
-                    {{ preview?.subtotal | currency:'BRL':'symbol':'1.2-2' }}
-                </span>
-            </div>
-
-            <button (click)="createOrder()" type="submit"
-                class="btn btn-primary w-full rounded-xl mt-4">
-                <span class="material-icons text-base">lock</span>
-                Confirmar Pedido
-            </button>
-        </section>
-    </form>
-
-    <div *ngIf="isLoading" class="fixed inset-0 bg-gray-900/20 backdrop-blur-md flex items-center justify-center z-50">
-        <div class="flex flex-col items-center">
-            <span class="loading loading-spinner loading-lg text-primary"></span>
-            <p class="text-white mt-4 font-medium">Criando pedido...</p>
         </div>
-    </div>
+    </form>
 </div>

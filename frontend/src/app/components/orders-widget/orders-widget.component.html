@@ -31,9 +31,13 @@
             <i class="fa-solid fa-user mr-2 text-gray-500 text-sm"></i>
             {{order.customerName}}
           </p>
-          <p class="flex items-center text-sm text-gray-600">
+          <p *ngIf="order.deliveryMode !== 'PICKUP'" class="flex items-center text-sm text-gray-600">
             <i class="fa-solid fa-house mr-2 text-gray-500 text-sm"></i>
             {{order.streetName}}, {{order.number}} - {{order.complement}}
+          </p>
+          <p *ngIf="order.deliveryMode === 'PICKUP'" class="flex items-center text-sm text-gray-600">
+            <i class="fa-solid fa-store mr-2 text-gray-500 text-sm"></i>
+            Retirada na loja
           </p>
 
           <!-- 💳 Método de pagamento -->

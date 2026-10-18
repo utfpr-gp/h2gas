@@ -15,6 +15,7 @@ public class OrderRequestDTO {
     private String supplierRef;
     private String paymentMethod;
     private String note;
+    @Schema(description = "Endereço de entrega do cliente; obrigatório só para DELIVERY (ignorado em PICKUP)", example = "12")
     private Long addressId;
     private List<OrderItemRequestDTO> items;
 

@@ -3,6 +3,7 @@ package com.h2gas.services;
 import com.h2gas.enums.DeliveryModeEnum;
 import com.h2gas.enums.OrderStatusEnum;
 import com.h2gas.exceptions.BusinessRuleException;
+import com.h2gas.exceptions.ForbiddenResourceException;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.OrderItemRequestDTO;
 import com.h2gas.model.dto.OrderPreviewDTO;
@@ -10,7 +11,10 @@ import com.h2gas.model.dto.OrderPreviewItemDTO;
 import com.h2gas.model.dto.OrderPreviewRequestDTO;
 import com.h2gas.model.dto.OrderRequestDTO;
 import com.h2gas.model.dto.OrderResponseDTO;
+import com.h2gas.model.dto.ReorderItemDTO;
+import com.h2gas.model.dto.ReorderPreviewDTO;
 import com.h2gas.model.entity.Address;
+import com.h2gas.model.entity.CategoryProduct;
 import com.h2gas.model.entity.Order;
 import com.h2gas.model.entity.OrderItem;
 import com.h2gas.model.entity.ProductItem;
@@ -22,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -52,6 +57,8 @@ public class OrderService {
     @Autowired
     private AddressService addressService;
 
+    // RN02: pedido, itens e decremento de estoque entram ou saem juntos
+    @Transactional
     public OrderResponseDTO createOrder(OrderRequestDTO orderRequestDTO) {
         Order order = orderMapper.toRequestEntity(orderRequestDTO);
         order.setItems(null);
@@ -64,7 +71,10 @@ public class OrderService {
         order.setOrderDate(LocalDateTime.now());
         order.setStatus(OrderStatusEnum.PENDING);
         order.setDeliveryMode(resolveDeliveryMode(orderRequestDTO.getDeliveryMode()));
-        order.setDeliveryAddress(resolveDeliveryAddress(orderRequestDTO.getAddressId(), user));
+        // HU05: retirada na loja não tem endereço de entrega
+        order.setDeliveryAddress(order.getDeliveryMode() == DeliveryModeEnum.PICKUP
+                ? null
+                : resolveDeliveryAddress(orderRequestDTO.getAddressId(), user));
         orderRepository.save(order);
 
         for (OrderItemRequestDTO item: orderRequestDTO.getItems()) {
@@ -95,6 +105,48 @@ public class OrderService {
                 .map(OrderPreviewItemDTO::getTotalPrice)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         return new OrderPreviewDTO(items, subtotal);
+    }
+
+    // HU05: só leitura — usa dados e preços atuais do produto, nunca o unitPrice histórico (RN01)
+    @Transactional(readOnly = true)
+    public ReorderPreviewDTO buildReorderPreview(String orderId, User customer) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido não encontrado com esse id: " + orderId));
+        if (order.getCustomer() == null || !order.getCustomer().getId().equals(customer.getId())) {
+            throw new ForbiddenResourceException("Pedido não pertence ao cliente logado.");
+        }
+
+        List<ReorderItemDTO> available = new ArrayList<>();
+        List<ReorderItemDTO> unavailable = new ArrayList<>();
+
+        for (OrderItem item : order.getItems()) {
+            ProductItem product = item.getProduct();
+            if (product == null) {
+                unavailable.add(new ReorderItemDTO(null, null, null, null, null, null, 0, null, null, "PRODUTO_REMOVIDO"));
+            } else if (product.getStockQuantity() == null || product.getStockQuantity() <= 0) {
+                unavailable.add(toReorderItem(product, 0, "SEM_ESTOQUE"));
+            } else {
+                available.add(toReorderItem(product, Math.min(item.getQuantity(), product.getStockQuantity()), null));
+            }
+        }
+
+        return new ReorderPreviewDTO(available, unavailable);
+    }
+
+    private ReorderItemDTO toReorderItem(ProductItem product, int quantity, String unavailableReason) {
+        CategoryProduct category = product.getCategoryProduct();
+        return new ReorderItemDTO(
+                product.getId(),
+                product.getBrand(),
+                category != null ? category.getName() : null,
+                category != null && category.getProductType() != null ? category.getProductType().getName() : null,
+                product.getImageUrl(),
+                product.getSupplier() != null ? product.getSupplier().getId() : null,
+                quantity,
+                product.getPriceDelivery() != null ? product.getPriceDelivery().doubleValue() : null,
+                product.getPricePickup() != null ? product.getPricePickup().doubleValue() : null,
+                unavailableReason
+        );
     }
 
     private DeliveryModeEnum resolveDeliveryMode(String deliveryMode) {

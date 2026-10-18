@@ -4,16 +4,21 @@ import { UserService } from '../../../services/user.service';
 import { CommonModule } from '@angular/common';
 import { User } from '../../../models/user';
 import { ToastrService } from 'ngx-toastr';
-import { OrderResponse } from '../../../models/order.model';
+import { OrderResponse, ReorderItem } from '../../../models/order.model';
+import { CartService } from '../../../services/cart.service';
+import { ProductItem } from '../../../models/product-item';
+import { PaginationComponent } from '../../pagination/pagination.component';
 import { Router } from '@angular/router';
+import { expandCollapse, staggerList } from '../../../animations/checkout.animations';
 
 @Component({
   selector: 'app-order-list',
   imports: [
     CommonModule,
+    PaginationComponent,
   ],
   templateUrl: './order-list.component.html',
-  styleUrl: './order-list.component.css'
+  animations: [staggerList, expandCollapse],
 })
 export class OrderListComponent implements OnInit {
 
@@ -22,11 +27,13 @@ export class OrderListComponent implements OnInit {
     private userService: UserService,
     private toastr: ToastrService,
     private router: Router,
+    private cartService: CartService,
   ) {}
 
   userLogado?: User;
   orders?: OrderResponse[];
   expandedIndex: number | null = null;
+  reorderingId: string | null = null;
 
   currentPage: number = 0;
   totalPages: number = 0;
@@ -88,6 +95,55 @@ export class OrderListComponent implements OnInit {
 
   toggleAccordion(index: number) {
     this.expandedIndex = this.expandedIndex === index ? null : index;
+  }
+
+  // HU05: substitui o carrinho pelo pedido refeito (dados e preços atuais) e vai direto ao checkout
+  reorder(order: OrderResponse) {
+    if (this.reorderingId) {
+      return;
+    }
+    this.reorderingId = order.id;
+    this.orderService.getReorderPreview(order.id).subscribe({
+      next: (preview) => {
+        this.reorderingId = null;
+        const indisponiveis = preview.unavailableItems
+          .map((item) => item.productBrand ?? 'produto removido')
+          .join(', ');
+
+        if (!preview.availableItems.length) {
+          this.toastr.warning(`Nenhum item deste pedido está disponível agora: ${indisponiveis}`);
+          return;
+        }
+
+        if (this.cartService.getCart().length) {
+          this.toastr.info('O carrinho foi substituído pelos itens deste pedido.');
+        }
+        this.cartService.setCart(preview.availableItems.map((item) => this.toCartProduct(item)));
+
+        if (preview.unavailableItems.length) {
+          this.toastr.warning(`Alguns itens não puderam ser adicionados: ${indisponiveis}`);
+        }
+        this.router.navigate(['/resumo-pedido']);
+      },
+      error: (err) => {
+        this.reorderingId = null;
+        this.toastr.error(`Não foi possível refazer este pedido: ${err.error?.error || err.message}`);
+      },
+    });
+  }
+
+  private toCartProduct(item: ReorderItem): ProductItem {
+    return {
+      id: item.productId,
+      brand: item.productBrand,
+      category: item.category,
+      type: item.type,
+      imageUrl: item.imageUrl,
+      supplierId: item.supplierId ?? '',
+      priceDelivery: item.priceDelivery,
+      pricePickup: item.pricePickup,
+      quantitySelect: item.quantity,
+    };
   }
 
   navigate(route: string) {

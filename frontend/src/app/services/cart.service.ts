@@ -48,6 +48,17 @@ export class CartService {
     this.cartProductsSubject.next(cart);
   }
 
+  updateQuantity(productId: number, quantity: number) {
+    const cart = this.cartProductsSubject.value.map(item =>
+      item.id === productId ? { ...item, quantitySelect: Math.max(1, quantity) } : item
+    );
+    this.saveToLocalStorage(cart);
+  }
+
+  removeProduct(productId: number) {
+    this.saveToLocalStorage(this.cartProductsSubject.value.filter(item => item.id !== productId));
+  }
+
   addProduct(product: any) {
     const currentCart = this.cartProductsSubject.value;
     const existing = currentCart.find(p => p.id === product.id);
