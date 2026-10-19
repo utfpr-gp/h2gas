@@ -1,5 +1,7 @@
 package com.h2gas.services;
 
+import com.h2gas.model.dto.CreateProductItemDTO;
+import com.h2gas.exceptions.ForbiddenResourceException;
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.dto.CategoryProductDTO;
 import com.h2gas.model.dto.CityDTO;
@@ -264,6 +266,23 @@ class ProductItemServiceTest {
     }
 
 
+
+    @Test
+    @DisplayName("F7: categoria de outro fornecedor no cadastro de produto é 403, não 500")
+    void deveRetornar403AoUsarCategoriaDeOutroFornecedor() {
+        Supplier logado = createSupplierForTest(1);
+        logado.setName("Fornecedor 403 Teste");
+        supplierRepository.save(logado);
+        CategoryProduct deOutro = createCategoryForTest("13kg", createSupplierForTest(2));
+        CreateProductItemDTO dto = new CreateProductItemDTO();
+        dto.setBrand("Ultragaz");
+        dto.setCategoryProductId(deOutro.getId());
+
+        ForbiddenResourceException erro = assertThrows(ForbiddenResourceException.class,
+                () -> productItemService.createProductItem(dto, null, "Fornecedor 403 Teste"));
+
+        assertEquals("Categoria informada não pertence ao fornecedor logado.", erro.getMessage());
+    }
 
     CategoryProduct createCategoryForTest(String name, Supplier supplier) {
         ProductType productTypeAgua = new ProductType(

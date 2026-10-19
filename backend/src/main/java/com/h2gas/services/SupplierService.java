@@ -1,5 +1,6 @@
 package com.h2gas.services;
 
+import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
@@ -108,7 +109,7 @@ public class SupplierService {
         Address address = null;
 
         if (city == null) {
-            throw new ResourceNotFoundException("City not found");
+            throw new ResourceNotFoundException("Cidade não encontrada.");
         }
         if (supplierDTO.getAddressId() != null) {
              address = addressService.findByIdEntity(supplierDTO.getAddressId());
@@ -136,7 +137,7 @@ public class SupplierService {
 
     public Supplier createSupplier(Supplier supplier) {
 //        if (supplier.getCity() == null || supplier.getAddress() == null) {
-//            throw new BusinessRuleException("City e Address devem estar definidos antes de salvar.");
+//            throw new BusinessRuleException("Cidade e endereço devem estar definidos antes de salvar.");
 //        }
 
         supplier.setActive(false);
@@ -207,7 +208,7 @@ public class SupplierService {
                 long minutes = Long.parseLong(times.get("averageDeliveryTime"));
                 supplier.setAverageDeliveryTime(Duration.ofMinutes(minutes));
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Valor inválido para averageDeliveryTime: " + times.get("averageDeliveryTime"));
+                throw new BusinessRuleException("Tempo médio de entrega inválido: informe os minutos.");
             }
         }
         supplierRepository.save(supplier);

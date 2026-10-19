@@ -1,5 +1,8 @@
 package com.h2gas.services;
 
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+import com.h2gas.exceptions.ForbiddenResourceException;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.CreateProductItemDTO;
 import com.h2gas.model.dto.ProductItemDTO;
@@ -89,7 +92,7 @@ public class ProductItemService {
         CategoryProduct categoryProduct = categoryProductService.findEntityById(dto.getCategoryProductId());
 
         if (!categoryProduct.getSupplier().getId().equals(supplier.getId())) {
-            throw new RuntimeException("Categoria informada não pertence ao fornecedor logado");
+            throw new ForbiddenResourceException("Categoria informada não pertence ao fornecedor logado.");
         }
 
         if (file != null) {
@@ -97,7 +100,7 @@ public class ProductItemService {
                 Map cloudnaryResponse = cloudinaryService.upload(file);
                 productItem.setImageUrl(cloudnaryResponse.get("url").toString());
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Não foi possível enviar a imagem. Tente novamente.", e);
             }
         }
 

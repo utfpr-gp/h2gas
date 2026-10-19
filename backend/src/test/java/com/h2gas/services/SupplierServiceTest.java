@@ -1,5 +1,6 @@
 package com.h2gas.services;
 
+import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.dto.AddressDTO;
 import com.h2gas.model.dto.SupplierCreateDTO;
@@ -352,5 +353,14 @@ class SupplierServiceTest {
 
         assertTrue(result.getContent().stream()
                 .anyMatch(dto -> "Fornecedor Aberto".equals(dto.getName())));
+    }
+
+    @Test
+    @DisplayName("F7: tempo médio de entrega não numérico é 400 com mensagem clara")
+    void deveRejeitarTempoMedioDeEntregaNaoNumericoComMensagemClara() {
+        BusinessRuleException erro = assertThrows(BusinessRuleException.class,
+                () -> supplierService.updateTimesSupplier(validId, java.util.Map.of("averageDeliveryTime", "meia hora")));
+
+        assertEquals("Tempo médio de entrega inválido: informe os minutos.", erro.getMessage());
     }
 }

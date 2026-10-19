@@ -71,6 +71,6 @@ public class UserServiceDBTest {
             userService.findByIdUser(invalidId);
         });
 
-        assertEquals("User not found with id: " + invalidId, exception.getMessage());
+        assertEquals("Usuário não encontrado.", exception.getMessage());
     }
 }

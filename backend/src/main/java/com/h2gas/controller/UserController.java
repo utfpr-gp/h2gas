@@ -63,7 +63,7 @@ public class UserController {
         User user = userMapper.toEntityUser(userService.findByEmail(email));
 
         if (user.getUserType() == UserTypeEnum.ADMIN) {
-            throw new BusinessRuleException("Impossivel alterar senha de um administrador");
+            throw new BusinessRuleException("Não é possível alterar a senha de um administrador.");
         }
 
         String token = GenerateTokenPasswordReset.generateTokenReset();

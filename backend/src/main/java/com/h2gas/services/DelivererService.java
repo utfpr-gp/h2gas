@@ -39,7 +39,7 @@ public class DelivererService {
     @Transactional
     public DelivererDTO createDeliverer(DelivererCreateDTO dto, String supplierId) {
         if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new BusinessRuleException("Email já cadastrado.");
+            throw new BusinessRuleException("E-mail já cadastrado.");
         }
         Supplier supplier = supplierRepository.findById(supplierId)
                 .orElseThrow(() -> new ResourceNotFoundException("Fornecedor não encontrado com id: " + supplierId));

@@ -110,7 +110,7 @@ public class SupplierController {
                                                      @RequestBody Map<String, Boolean> status) {
         boolean novoStatus = status.get("active");
         supplierService.updateStatusSupplier(id, novoStatus);
-        return ResponseEntity.ok(Map.of("message", "Status atualizado com sucesso"));
+        return ResponseEntity.ok(Map.of("message", "Status atualizado."));
     }
 
     @PatchMapping("/{id}/update-times")
@@ -119,7 +119,7 @@ public class SupplierController {
     public ResponseEntity<Map<String, String>> updateSupplierTimes(@PathVariable String id,
                                                                     @RequestBody Map<String, String> times) {
         supplierService.updateTimesSupplier(id, times);
-        return ResponseEntity.ok(Map.of("message", "Horario de funcionamento atualizado com sucesso"));
+        return ResponseEntity.ok(Map.of("message", "Horário de funcionamento atualizado."));
     }
 
     @GetMapping("/{id}")
@@ -144,7 +144,7 @@ public class SupplierController {
                                                               @RequestBody Map<String, Boolean> status) {
         boolean novoStatus = status.get("status");
         supplierService.updateStatusOpenClosed(id, novoStatus);
-        return ResponseEntity.ok(Map.of("message", "Status atualizado com sucesso"));
+        return ResponseEntity.ok(Map.of("message", "Status atualizado."));
     }
 
     @GetMapping("/{id}/active")
