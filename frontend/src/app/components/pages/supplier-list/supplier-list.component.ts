@@ -119,8 +119,8 @@ export class SupplierListComponent implements OnInit {
       next: (response) => {
         this.categories = response;
       },
-      error: () => {
-        this.toastr.error('Erro ao buscar categorias');
+      error: (err) => {
+        this.toastr.error(`Erro ao carregar as categorias: ${backendMessage(err)}`);
       }
     });
   }
@@ -146,7 +146,7 @@ export class SupplierListComponent implements OnInit {
         this.products = response.data
       },
       error: (err) => {
-        this.toastr.error('Erro ao buscar produtos')
+        this.toastr.error(`Erro ao carregar os produtos: ${backendMessage(err)}`)
       }
     });
   }

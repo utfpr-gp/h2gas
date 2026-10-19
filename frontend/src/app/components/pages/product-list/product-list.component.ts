@@ -64,8 +64,8 @@ export class ProductListComponent implements OnInit {
       next: (response) => {
         this.categories = response;
       },
-      error: () => {
-        this.toastr.error('Erro ao buscar categorias');
+      error: (err) => {
+        this.toastr.error(`Erro ao carregar as categorias: ${backendMessage(err)}`);
       }
     });
   }

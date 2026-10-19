@@ -46,7 +46,7 @@ export class AddressFormComponent implements OnInit {
   ngOnInit(): void {
     this.cityService.findAll().subscribe({
       next: (response) => (this.cities = response),
-      error: () => this.toastr.error('Erro ao buscar cidades'),
+      error: (err) => this.toastr.error(`Erro ao carregar as cidades: ${backendMessage(err)}`),
     });
   }
 

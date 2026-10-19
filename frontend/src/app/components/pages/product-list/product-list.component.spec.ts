@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { ProductListComponent } from './product-list.component';
 import { ProductItemService } from '../../../services/product-item.service';
@@ -57,6 +57,14 @@ describe('ProductListComponent', () => {
 
     expect(productItemServiceSpy.getProductsBySupplierId).toHaveBeenCalled();
     expect(toastrSpy.success).not.toHaveBeenCalled();
+  });
+
+  it('deveMostrarCausaAoFalharCarregarCategorias', () => {
+    productTypeServiceSpy.findAll.and.returnValue(throwError(() => ({ status: 0, error: new ProgressEvent('error') })));
+
+    component.loadCategories();
+
+    expect(toastrSpy.error).toHaveBeenCalledWith('Erro ao carregar as categorias: sem conexão com o servidor');
   });
 
   it('deveFiltrarAoSelecionarCategoriaPeloChip', () => {
