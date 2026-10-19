@@ -19,7 +19,6 @@ import { listItem } from '../../../animations/checkout.animations';
 export class DelivererRoutesComponent implements OnInit, OnDestroy {
   routes: OrderResponse[] = [];
   loading = true;
-  confirmingId?: string;
   startingId?: string;
   readonly refreshIntervalMs = 30000;
   readonly paymentLabel = paymentLabel;
@@ -74,32 +73,15 @@ export class DelivererRoutesComponent implements OnInit, OnDestroy {
     }
     this.startingId = order.id;
     this.orderService.startDelivery(order.id).subscribe({
-      next: (updated) => {
+      next: () => {
         this.startingId = undefined;
-        this.routes = this.routes.map((r) => (r.id === order.id ? { ...r, status: updated.status } : r));
         this.toastr.success('Entrega iniciada. Boa rota!');
+        // 3ª revisão (h): com a entrega em rota, o entregador segue no detalhe até confirmar ou cancelar
+        this.open(order);
       },
       error: (err) => {
         this.startingId = undefined;
         this.toastr.error(`Erro ao iniciar a entrega: ${this.backendMessage(err)}`);
-      },
-    });
-  }
-
-  confirm(order: OrderResponse) {
-    if (this.confirmingId) {
-      return;
-    }
-    this.confirmingId = order.id;
-    this.orderService.completeDelivery(order.id).subscribe({
-      next: () => {
-        this.confirmingId = undefined;
-        this.routes = this.routes.filter((r) => r.id !== order.id);
-        this.toastr.success('Entrega confirmada.');
-      },
-      error: (err) => {
-        this.confirmingId = undefined;
-        this.toastr.error(`Erro ao confirmar a entrega: ${this.backendMessage(err)}`);
       },
     });
   }

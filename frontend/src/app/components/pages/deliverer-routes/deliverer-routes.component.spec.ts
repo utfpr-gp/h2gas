@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { Router, provideRouter } from '@angular/router';
+import { of, throwError } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
 import { DelivererRoutesComponent } from './deliverer-routes.component';
@@ -68,38 +68,52 @@ describe('DelivererRoutesComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('Nenhuma entrega no momento');
   });
 
-  it('deveIniciarEntregaDoCardPendente', fakeAsync(() => {
+  it('deveIniciarEntregaDoCardPendenteEAbrirDetalhe', fakeAsync(() => {
+    const navigateSpy = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
     fixture.detectChanges();
-    expect(cards()[1].querySelector('[data-testid=confirm-delivery]')).toBeNull();
 
     (cards()[1].querySelector('[data-testid=start-delivery]') as HTMLButtonElement).click();
     fixture.detectChanges();
     tick(500);
-    fixture.detectChanges();
 
     expect(orderServiceSpy.startDelivery).toHaveBeenCalledOnceWith('r2');
-    expect(cards()[1].textContent).toContain('EM ROTA');
-    expect(cards()[1].querySelector('[data-testid=start-delivery]')).toBeNull();
-    expect(cards()[1].querySelector('[data-testid=confirm-delivery]')).toBeTruthy();
-    expect(cards().length).toBe(2);
+    expect(navigateSpy).toHaveBeenCalledWith(['/entregas', 'r2']);
 
     fixture.destroy();
     discardPeriodicTasks();
   }));
 
-  it('deveConfirmarEntregaDoCardEmRota', fakeAsync(() => {
+  it('deveAvisarENaoAbrirDetalheQuandoBackendRecusarInicio', fakeAsync(() => {
+    const navigateSpy = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    orderServiceSpy.startDelivery.and.returnValue(
+      throwError(() => ({ status: 400, error: { error: 'Finalize a entrega em rota antes de iniciar outra.' } }))
+    );
     fixture.detectChanges();
-    expect(cards()[0].querySelector('[data-testid=start-delivery]')).toBeNull();
 
-    (cards()[0].querySelector('[data-testid=confirm-delivery]') as HTMLButtonElement).click();
-    fixture.detectChanges();
+    (cards()[1].querySelector('[data-testid=start-delivery]') as HTMLButtonElement).click();
     tick(500);
     fixture.detectChanges();
 
-    expect(orderServiceSpy.completeDelivery).toHaveBeenCalledOnceWith('r1');
-    expect(component.routes.map((r) => r.id)).toEqual(['r2']);
-    expect(cards().length).toBe(1);
-    expect(toastrSpy.success).toHaveBeenCalled();
+    expect(toastrSpy.error).toHaveBeenCalledWith('Erro ao iniciar a entrega: Finalize a entrega em rota antes de iniciar outra.');
+    expect(navigateSpy).not.toHaveBeenCalled();
+    expect((cards()[1].querySelector('[data-testid=start-delivery]') as HTMLButtonElement).disabled).toBeFalse();
+
+    fixture.destroy();
+    discardPeriodicTasks();
+  }));
+
+  // 3ª revisão (g): a lista não confirma; o card EM ROTA só leva ao detalhe
+  it('deveAbrirDetalheDoCardEmRotaSemConfirmar', fakeAsync(() => {
+    const navigateSpy = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    fixture.detectChanges();
+    expect(cards()[0].querySelector('[data-testid=start-delivery]')).toBeNull();
+    expect(cards()[0].querySelector('[data-testid=confirm-delivery]')).toBeNull();
+
+    (cards()[0].querySelector('[data-testid=continue-delivery]') as HTMLButtonElement).click();
+    tick(500);
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/entregas', 'r1']);
+    expect(orderServiceSpy.completeDelivery).not.toHaveBeenCalled();
 
     fixture.destroy();
     discardPeriodicTasks();

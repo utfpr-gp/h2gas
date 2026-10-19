@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
 import { DelivererRouteDetailComponent } from './deliverer-route-detail.component';
@@ -14,6 +14,7 @@ describe('DelivererRouteDetailComponent', () => {
   let orderServiceSpy: jasmine.SpyObj<OrderService>;
   let toastrSpy: jasmine.SpyObj<ToastrService>;
   let navigateSpy: jasmine.Spy;
+  let paramMap$: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
 
   const pedido = (status: string) => ({
     id: 'r1', status, paymentMethod: 'PIX', streetName: 'Rua das Flores', number: '300', complement: 'Apto 42',
@@ -38,7 +39,7 @@ describe('DelivererRouteDetailComponent', () => {
         { provide: OrderService, useValue: orderServiceSpy },
         { provide: ToastrService, useValue: toastrSpy },
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: 'r1' }) } } },
+        { provide: ActivatedRoute, useValue: { paramMap: paramMap$ = new BehaviorSubject(convertToParamMap({ id: 'r1' })) } },
         provideNoopAnimations(),
       ],
     }).compileComponents();
@@ -100,6 +101,42 @@ describe('DelivererRouteDetailComponent', () => {
     expect(navigateSpy).toHaveBeenCalledWith(['/entregas']);
   });
 
+  // 3ª revisão (h): com a entrega em rota não há "voltar"; a saída é confirmar ou cancelar
+  it('naoDeveExibirVoltarComEntregaEmRota', async () => {
+    await setup('Em preparacao');
+    expect(byId('back')).toBeTruthy();
+
+    (byId('start-delivery') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(byId('back')).toBeNull();
+  });
+
+  it('deveCarregarOutraEntregaQuandoOParametroMudar', async () => {
+    await setup('Saiu para entrega');
+    orderServiceSpy.myRoutes.and.returnValue(of([{ ...pedido('Saiu para entrega'), id: 'r2', neighborhood: 'Batel' } as OrderResponse]));
+
+    paramMap$.next(convertToParamMap({ id: 'r2' }));
+    fixture.detectChanges();
+
+    expect(component.order?.id).toBe('r2');
+    expect(text()).toContain('Batel');
+  });
+
+  it('deveManterPendenteComVoltarQuandoBackendRecusarInicio', async () => {
+    await setup('Em preparacao');
+    orderServiceSpy.startDelivery.and.returnValue(
+      throwError(() => ({ status: 400, error: { error: 'Finalize a entrega em rota antes de iniciar outra.' } }))
+    );
+
+    (byId('start-delivery') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(toastrSpy.error).toHaveBeenCalledWith('Erro ao iniciar a entrega: Finalize a entrega em rota antes de iniciar outra.');
+    expect(byId('start-delivery')).toBeTruthy();
+    expect(byId('back')).toBeTruthy();
+  });
+
   it('naoDeveCancelarEntregaSemMotivo', async () => {
     await setup('Saiu para entrega');
 
@@ -135,7 +172,7 @@ describe('DelivererRouteDetailComponent', () => {
         { provide: OrderService, useValue: orderServiceSpy },
         { provide: ToastrService, useValue: toastrSpy },
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: 'outro' }) } } },
+        { provide: ActivatedRoute, useValue: { paramMap: paramMap$ = new BehaviorSubject(convertToParamMap({ id: 'outro' })) } },
         provideNoopAnimations(),
       ],
     }).compileComponents();

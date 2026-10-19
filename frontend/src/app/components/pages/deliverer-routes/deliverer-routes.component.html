@@ -54,11 +54,11 @@
                 <span *ngIf="startingId !== order.id" class="material-icons text-base">arrow_forward</span>
             </button>
 
-            <button *ngIf="isInRoute(order)" type="button" data-testid="confirm-delivery" (click)="confirm(order)" [disabled]="confirmingId === order.id"
+            <!-- 3ª revisão (g): a lista não confirma; confirmar e cancelar ficam no detalhe (Figura 17b) -->
+            <button *ngIf="isInRoute(order)" type="button" data-testid="continue-delivery" (click)="open(order)"
                 class="btn btn-primary w-full rounded-xl mt-4">
-                <span *ngIf="confirmingId === order.id" class="loading loading-spinner loading-sm"></span>
-                <span *ngIf="confirmingId !== order.id" class="material-icons text-base">task_alt</span>
-                Confirmar entrega
+                Continuar entrega
+                <span class="material-icons text-base">arrow_forward</span>
             </button>
         </li>
     </ul>

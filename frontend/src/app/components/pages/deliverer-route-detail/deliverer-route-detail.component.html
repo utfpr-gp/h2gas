@@ -1,5 +1,6 @@
 <div class="max-w-md mx-auto px-4 pt-4 pb-28">
-    <button type="button" (click)="back()" class="inline-flex items-center gap-1 text-sm font-semibold text-primary mb-3">
+    <!-- 3ª revisão (h): com a entrega em rota não há "voltar"; a saída é confirmar ou cancelar -->
+    <button *ngIf="!isInRoute" type="button" data-testid="back" (click)="back()" class="inline-flex items-center gap-1 text-sm font-semibold text-primary mb-3">
         <span class="material-icons text-base">arrow_back</span> Minhas Entregas
     </button>
 

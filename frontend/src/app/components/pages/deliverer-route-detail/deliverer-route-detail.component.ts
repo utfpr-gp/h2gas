@@ -36,7 +36,14 @@ export class DelivererRouteDetailComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
+    // paramMap (e não o snapshot): ao concluir, o activeDeliveryGuard pode levar direto a outra
+    // entrega em rota, e o Angular reaproveita esta mesma instância do componente
+    this.route.paramMap.subscribe((params) => this.load(params.get('id')));
+  }
+
+  private load(id: string | null) {
+    this.loading = true;
+    this.order = undefined;
     // my-routes só devolve pedidos do entregador do token; GET /orders/{id} não checa o dono
     this.orderService.myRoutes().subscribe({
       next: (routes) => {
