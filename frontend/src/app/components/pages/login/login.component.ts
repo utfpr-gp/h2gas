@@ -65,6 +65,8 @@ export class LoginComponent {
       next: (response: any) => {
         console.log('Usuario buscado sucesso!', response);
         localStorage.setItem('user', JSON.stringify(response))
+        const firstName = (response?.name || '').trim().split(/\s+/)[0];
+        this.toastr.success(firstName ? `Bem-vindo(a), ${firstName}!` : 'Bem-vindo(a)!');
         // o entregador não tem catálogo: vai direto para as entregas (HU07)
         this.navigate(response.userType === 'DELIVERER' ? '/entregas' : '/inicio')
       }, 

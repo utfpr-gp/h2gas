@@ -53,25 +53,25 @@ describe('LoginComponent', () => {
     expect(localStorage.getItem('h2gas.activeAddress')).toBeNull();
   });
 
-  // F7 §5.10: entrar na tela já é o retorno do login; erro mostra a mensagem do backend
-  it('naoDeveExibirToastAoLogar', () => {
+  // F7 §5.10 (revisão do autor): o login dá boas-vindas; erro mostra a mensagem do backend
+  it('deveDarBoasVindasAoLogar', () => {
     authServiceSpy.loginUser.and.returnValue(of({ token: 'jwt' }) as any);
     const userService = TestBed.inject(UserService) as jasmine.SpyObj<UserService>;
-    userService.getMe.and.returnValue(of({ id: 'u2', userType: 'CUSTOMER' } as any));
+    userService.getMe.and.returnValue(of({ id: 'u2', name: 'Cliente Teste E2E', userType: 'CUSTOMER' } as any));
 
     component.loginform.setValue({ email: 'cliente@teste.com', password: '123456' });
     component.login();
 
-    expect(toastrSpy.success).not.toHaveBeenCalled();
+    expect(toastrSpy.success).toHaveBeenCalledOnceWith('Bem-vindo(a), Cliente!');
   });
 
   it('deveMostrarMensagemDoBackendAoFalharLogin', () => {
-    authServiceSpy.loginUser.and.returnValue(throwError(() => ({ status: 401, error: { message: 'E-mail ou senha inválidos' } })) as any);
+    authServiceSpy.loginUser.and.returnValue(throwError(() => ({ status: 401, error: { status: 401, error: 'Unauthorized', message: 'E-mail ou senha inválidos.' } })) as any);
 
     component.loginform.setValue({ email: 'cliente@teste.com', password: 'errada' });
     component.login();
 
-    expect(toastrSpy.error).toHaveBeenCalledOnceWith('Não foi possível entrar: E-mail ou senha inválidos');
+    expect(toastrSpy.error).toHaveBeenCalledOnceWith('Não foi possível entrar: E-mail ou senha inválidos.');
   });
 
   it('deveRedirecionarEntregadorParaEntregas', () => {
