@@ -11,6 +11,7 @@ import { CommonModule } from '@angular/common';
 import { User } from '../../../models/user';
 import { ProductItem } from '../../../models/product-item';
 import { ActivatedRoute, Router } from '@angular/router';
+import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
   selector: 'app-product-item-form',
@@ -75,12 +76,11 @@ export class ProductItemFormComponent implements OnInit {
       next: (response) => {
         console.log('Produto buscado com sucesso!', response);
         this.formProductItem.patchValue(response);
-        this.toastr.success('Produto buscado com sucesso!');
         this.selectedImage = response.imageUrl!
       },
       error: (err) => {
         console.error('Erro ao buscar:', err.error.message);
-        this.toastr.error(`Erro ao buscar: ${err.error.message}`)
+        this.toastr.error(`Erro ao carregar o produto: ${backendMessage(err)}`)
       },
     })
   }
@@ -109,7 +109,7 @@ export class ProductItemFormComponent implements OnInit {
 
   updateProduct() {
     if (this.formProductItem.invalid) {
-      this.toastr.warning("Confira os campos vazios")
+      this.toastr.warning('Preencha os campos obrigatórios.')
       return;
     }
 
@@ -119,13 +119,13 @@ export class ProductItemFormComponent implements OnInit {
       next: (response) => {
         console.log("Atulizado com sucesso!!");
         this.isLoading = false;
-        this.toastr.success("Produto atualizado com sucesso!!");
+        this.toastr.success('Produto atualizado.');
         this.navigateRoute('/product-items')
       },
       error: (err) => {
         console.error("Erros ao atualizar!!");
         this.isLoading = false;
-        this.toastr.error("Erros ao atualizar produtos!!");
+        this.toastr.error(`Erro ao atualizar o produto: ${backendMessage(err)}`);
       },
     }) 
   }
@@ -139,10 +139,9 @@ export class ProductItemFormComponent implements OnInit {
         this.categoryProduct = response.data;
         console.log(this.categoryProduct);
         
-        this.toastr.success("Encontrado todas as categorias de produtos")        
       },
       error: (err) => {
-        this.toastr.error(`Erro ao encontrar as categorias de produtos: ${err.error.message}`)        
+        this.toastr.error(`Erro ao carregar as categorias: ${backendMessage(err)}`)        
       },
     })
   }
@@ -150,7 +149,7 @@ export class ProductItemFormComponent implements OnInit {
   saveItemProduct() {
     this.isLoading = true;
     if (!this.formProductItem.valid) {
-      this.toastr.warning("Confira os campos vazios")
+      this.toastr.warning('Preencha os campos obrigatórios.')
       return;
     }
     
@@ -164,13 +163,13 @@ export class ProductItemFormComponent implements OnInit {
       next: (value) => {
         console.log("salvo com sucesso!!");
         this.isLoading = false;
-        this.toastr.success("Produto salvo com sucesso!!");
+        this.toastr.success('Produto cadastrado.');
         this.navigateRoute('/product-items')
       },
       error: (err) => {
         console.error("Erros ao salvar!!");
         this.isLoading = false;
-        this.toastr.error("Erros ao salvar produtos!!");
+        this.toastr.error(`Erro ao cadastrar o produto: ${backendMessage(err)}`);
       },
     })
   }

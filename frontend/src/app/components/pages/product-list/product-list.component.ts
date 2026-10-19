@@ -12,6 +12,7 @@ import { PaginationComponent } from '../../pagination/pagination.component';
 import { ProductTypeService } from '../../../services/product-type.service';
 import { CategoryChipBarComponent } from '../../category-chip-bar/category-chip-bar.component';
 import { ProductCardComponent } from '../../product-card/product-card.component';
+import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
   selector: 'app-product-list',
@@ -90,20 +91,16 @@ export class ProductListComponent implements OnInit {
           this.pageSizeProducts = response.size;
           this.totalPagesProducts = response.totalPages;
           this.totalElementsProducts = response.totalElements;
-
-          if (page === 0) {
-            this.toastr.success('Produtos carregados com sucesso!');
-          }
         },
         error: (err) => {
           console.error('Erro ao buscar produtos:', err.error?.message || err.message);
-          this.toastr.error(`Erro ao buscar produtos: ${err.error?.message || err.message}`);
+          this.toastr.error(`Erro ao buscar produtos: ${backendMessage(err)}`);
         },
       });
   }
 
   addToCart(product: ProductItem) {
     this.cartService.addProduct({ ...product, quantitySelect: 1 });
-    this.toastr.success('Produto adicionado ao carrinho!');
+    this.toastr.success('Produto adicionado ao carrinho.');
   }
 }

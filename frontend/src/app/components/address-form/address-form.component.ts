@@ -7,6 +7,7 @@ import { AddressService } from '../../services/address.service';
 import { CityService } from '../../services/city.service';
 import { Address } from '../../models/address';
 import { City } from '../../models/city';
+import { backendMessage } from '../../utils/backend-message';
 
 @Component({
   selector: 'app-address-form',
@@ -82,11 +83,10 @@ export class AddressFormComponent implements OnInit {
         this.form.get('streetName')?.setValue(response.logradouro);
         this.form.get('neighborhood')?.setValue(response.bairro);
         this.form.get('cityId')?.setValue(cidade.id);
-        this.toastr.success('Cep buscado com sucesso');
       },
       error: (err) => {
         this.isLoadingCep = false;
-        this.toastr.error(`Erro ao buscar cep: ${err}`);
+        this.toastr.error(`Erro ao buscar o CEP: ${backendMessage(err)}`);
       },
     });
   }
@@ -94,7 +94,7 @@ export class AddressFormComponent implements OnInit {
   salvar() {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
-      this.toastr.warning('Confira as informações do endereço!');
+      this.toastr.warning('Confira os dados do endereço.');
       return;
     }
 
@@ -105,12 +105,12 @@ export class AddressFormComponent implements OnInit {
     this.addressService.create(payload).subscribe({
       next: (response) => {
         this.isSaving = false;
-        this.toastr.success('Endereço salvo com sucesso!');
+        this.toastr.success('Endereço salvo.');
         this.saved.emit({ ...payload, ...response, cityName: cidade?.name });
       },
       error: (err) => {
         this.isSaving = false;
-        this.toastr.error(`Erro ao salvar endereço: ${err.error?.message || err.message}`);
+        this.toastr.error(`Erro ao salvar endereço: ${backendMessage(err)}`);
       },
     });
   }

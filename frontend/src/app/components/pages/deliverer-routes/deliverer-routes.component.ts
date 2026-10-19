@@ -7,6 +7,7 @@ import { OrderService } from '../../../services/order.service';
 import { OrderResponse } from '../../../models/order.model';
 import { paymentLabel } from '../../../models/payment-label';
 import { listItem } from '../../../animations/checkout.animations';
+import { backendMessage } from '../../../utils/backend-message';
 
 // HU07 (Figura 17a): central de despacho do entregador, só com as rotas dele
 @Component({
@@ -48,7 +49,7 @@ export class DelivererRoutesComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.loading = false;
-        this.toastr.error(`Erro ao buscar suas entregas: ${this.backendMessage(err)}`);
+        this.toastr.error(`Erro ao buscar suas entregas: ${backendMessage(err)}`);
       },
     });
   }
@@ -81,13 +82,8 @@ export class DelivererRoutesComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.startingId = undefined;
-        this.toastr.error(`Erro ao iniciar a entrega: ${this.backendMessage(err)}`);
+        this.toastr.error(`Erro ao iniciar a entrega: ${backendMessage(err)}`);
       },
     });
-  }
-
-  // o GlobalExceptionHandler devolve { error } para regra de negócio e { message } para os demais erros
-  private backendMessage(err: any): string {
-    return err?.error?.error || err?.error?.message || err?.message || 'erro inesperado';
   }
 }

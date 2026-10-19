@@ -89,6 +89,22 @@ describe('OrderListComponent', () => {
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/resumo-pedido']);
   });
 
+  // F7 §5.10: busca não gera toast; uma ação gera um toast só
+  it('naoDeveExibirToastDeSucessoAoBuscar', () => {
+    expect(orderServiceSpy.findByCustomerId).toHaveBeenCalled();
+    expect(toastrSpy.success).not.toHaveBeenCalled();
+  });
+
+  it('deveExibirUmUnicoAvisoAoRefazerComItensIndisponiveis', () => {
+    cartServiceSpy.getCart.and.returnValue([{ id: 99 } as any]);
+    previewRetorna({ availableItems: [botijao], unavailableItems: [agua] });
+
+    component.reorder(pedido);
+
+    expect(toastrSpy.info).not.toHaveBeenCalled();
+    expect(toastrSpy.warning).toHaveBeenCalledOnceWith(jasmine.stringMatching(/carrinho.*Minalba/i));
+  });
+
   it('deveNavegarParaResumoPedidoAposRecompra', () => {
     previewRetorna({ availableItems: [botijao], unavailableItems: [] });
 

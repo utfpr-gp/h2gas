@@ -5,6 +5,7 @@ import { OrderService } from '../../../services/order.service';
 import { DeliveryHistoryItem } from '../../../models/delivery-history';
 import { paymentLabel } from '../../../models/payment-label';
 import { listItem } from '../../../animations/checkout.animations';
+import { backendMessage } from '../../../utils/backend-message';
 
 interface DayGroup {
   label: string;
@@ -39,7 +40,7 @@ export class DelivererHistoryComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
-        this.toastr.error(`Erro ao buscar o histórico: ${err?.error?.error || err?.error?.message || err?.message || 'erro inesperado'}`);
+        this.toastr.error(`Erro ao buscar o histórico: ${backendMessage(err)}`);
       },
     });
   }

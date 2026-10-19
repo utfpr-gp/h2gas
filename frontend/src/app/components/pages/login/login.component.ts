@@ -7,6 +7,7 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../services/auth.service';
 import { CartService } from '../../../services/cart.service';
 import { LocationContextService } from '../../../services/location-context.service';
+import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
   selector: 'app-login',
@@ -48,15 +49,13 @@ export class LoginComponent {
     this.authService.loginUser(this.loginform.value).subscribe({
       next: (response: any) => {
         this.loading = false;
-        console.log('Usuario logado com sucesso!', response);
-        this.toastr.success('Usuario logado com sucesso!');
         localStorage.setItem('access_token', response.token)
         this.getAndSaveMe();
       }, 
       error: (err) => {
         this.loading = false;
         console.error('Erro ao logar:', err);
-        this.toastr.error(`Erro ao efetuar o login: ${err.error.message}`)
+        this.toastr.error(`Não foi possível entrar: ${backendMessage(err)}`)
       }
     })
   }
@@ -71,7 +70,7 @@ export class LoginComponent {
       }, 
       error: (err) => {
         console.error('Erro ao buscar o usuario logado:', err);
-        this.toastr.error(`Erro ao buscar o usuario: ${err.error.message}`)
+        this.toastr.error(`Erro ao carregar seus dados: ${backendMessage(err)}`)
       }
     })
   }

@@ -6,6 +6,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { NgxMaskDirective } from 'ngx-mask';
 import { ToastrService } from 'ngx-toastr';
+import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
   selector: 'app-customer-panel',
@@ -41,7 +42,7 @@ export class CustomerPanelComponent implements OnInit {
   update() {
     if (this.registerFormUser.invalid) {
       this.registerFormUser.markAllAsTouched();
-      this.toastr.warning('Conferir informações!!');
+      this.toastr.warning('Confira os dados informados.');
       return;
     }
 
@@ -50,10 +51,10 @@ export class CustomerPanelComponent implements OnInit {
     this.userService.updateUser(this.userLogado?.id!, userEdit).subscribe({
       next: (response) => {
         localStorage.setItem('user', JSON.stringify(response));
-        this.toastr.success('Informações editadas com sucesso!');
+        this.toastr.success('Dados atualizados.');
       },
       error: (err) => {
-        this.toastr.error(`Erro ao editar informações de Usuário: ${err.error?.message || err.message}`);
+        this.toastr.error(`Erro ao salvar seus dados: ${backendMessage(err)}`);
       },
     });
   }

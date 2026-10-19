@@ -17,6 +17,7 @@ import { fadeIn, listItem, popIn, stepSlide } from '../../../animations/checkout
 import { LocationContextService } from '../../../services/location-context.service';
 import { SupplierService } from '../../../services/supplier.service';
 import { Supplier } from '../../../models/supplier';
+import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
   selector: 'app-order-resume',
@@ -180,7 +181,7 @@ export class OrderResumeComponent implements OnInit {
       },
       error: (err) => {
         this.pickupStoresLoading = false;
-        this.toastr.error(`Erro ao buscar o endereço da loja: ${this.backendMessage(err)}`);
+        this.toastr.error(`Erro ao buscar o endereço da loja: ${backendMessage(err)}`);
       },
     });
   }
@@ -210,7 +211,7 @@ export class OrderResumeComponent implements OnInit {
         if (requestId === this.previewRequestId) {
           this.previewLoading = false;
         }
-        this.toastr.error(`Erro ao calcular o subtotal: ${this.backendMessage(err)}`);
+        this.toastr.error(`Erro ao calcular o subtotal: ${backendMessage(err)}`);
       },
     });
   }
@@ -235,7 +236,7 @@ export class OrderResumeComponent implements OnInit {
         this.selectedAddressId = ativo?.id;
       },
       error: (err) => {
-        this.toastr.error(`Erro ao buscar endereços: ${this.backendMessage(err)}`);
+        this.toastr.error(`Erro ao buscar endereços: ${backendMessage(err)}`);
       },
     });
   }
@@ -251,12 +252,12 @@ export class OrderResumeComponent implements OnInit {
     }
 
     if (!this.formOrder.valid) {
-      this.toastr.error("Por favor selecione um meio de pagamento!!");
+      this.toastr.warning('Selecione a forma de pagamento.');
       return;
     }
 
     if (this.deliveryMode === 'DELIVERY' && this.selectedAddressId == null) {
-      this.toastr.error("Selecione o endereço de entrega.");
+      this.toastr.warning('Selecione o endereço de entrega.');
       return;
     }
   
@@ -294,15 +295,10 @@ export class OrderResumeComponent implements OnInit {
         setTimeout(() => this.navigate('/meus-pedidos'), 1500);
       },
       error: err => {
-        this.toastr.error(`Falha ao realizar o pedido: ${this.backendMessage(err)}`);
+        this.toastr.error(`Não foi possível finalizar o pedido: ${backendMessage(err)}`);
         this.isLoading = false;
       }
     });
-  }
-
-  // o GlobalExceptionHandler devolve { error } para regra de negócio e { message } para os demais erros
-  private backendMessage(err: any): string {
-    return err?.error?.error || err?.error?.message || err?.message || 'erro inesperado';
   }
 
   navigate(route: string) {

@@ -13,6 +13,7 @@ import { Address } from '../../../models/address';
 import { AddressService } from '../../../services/address.service';
 import { UserService } from '../../../services/user.service';
 import { User } from '../../../models/user';
+import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
   selector: 'app-distribuitor-create',
@@ -127,7 +128,6 @@ export class DistribuitorFormComponent implements OnInit {
           this.toastr.warning(`No momento ainda não atendemos a cidade de ${response.localidade}.`);
           return;
         }
-        this.toastr.success('Cep buscado com sucesso');
         this.registerFormAddress.get('streetName')?.setValue(response.logradouro)
 
         // this.registerFormAddress.get('cityName')?.setValue(response.localidade)
@@ -136,14 +136,14 @@ export class DistribuitorFormComponent implements OnInit {
       },
       error: (err) => {
         console.log(err);
-        this.toastr.error(`Erro ao buscar cep: ${err}`)
+        this.toastr.error(`Erro ao buscar o CEP: ${backendMessage(err)}`)
       }
     })
   }
 
   salvarAddress() {
     if (!this.cidadeEncontrada) {
-      this.toastr.warning(`Infelizmente ainda não atendemos sua cidade.`);
+      this.toastr.warning('Ainda não atendemos a sua cidade.');
       return;
     }
 
@@ -154,12 +154,12 @@ export class DistribuitorFormComponent implements OnInit {
         next: (response) => {
           console.log(response);
           this.address = response;
-          this.toastr.success('Seu endereço foi salvo com sucesso');
+          this.toastr.success('Endereço salvo.');
           this.closeAddressModal();
         },
         error: (err) => {
           console.log(err);
-          this.toastr.error(`Erro ao salvar endereço: ${err.error.message}`);
+          this.toastr.error(`Erro ao salvar endereço: ${backendMessage(err)}`);
         },
       });
     } else if (this.registerFormAddress.valid && this.address) {
@@ -176,12 +176,12 @@ export class DistribuitorFormComponent implements OnInit {
     this.addressService.update(id, this.registerFormAddress.value).subscribe({
       next: (response) => {
         console.log(response);
-        this.toastr.success('Seu endereço foi editado com sucesso');
+        this.toastr.success('Endereço atualizado.');
         this.closeAddressModal();
       },
       error: (err) => {
         console.log(err);
-        this.toastr.error(`Erro ao editar endereço: ${err.error.message}`);
+        this.toastr.error(`Erro ao editar endereço: ${backendMessage(err)}`);
       },
     })
   }
@@ -194,7 +194,7 @@ export class DistribuitorFormComponent implements OnInit {
       },
       error: (err) => {
         console.log(err);
-        // this.toastr.error(`Erro ao buscar endereço: ${err.error.message}`);
+        // this.toastr.error(`Erro ao buscar endereço: ${backendMessage(err)}`);
       },
     })
   }
@@ -205,11 +205,10 @@ export class DistribuitorFormComponent implements OnInit {
 
         console.log('Distribuidor buscado com sucesso!', response);
         this.registerFormSupplier.patchValue(response);
-        this.toastr.success('Distribuidor buscado com sucesso!');
       },
       error: (err) => {
         console.error('Erro ao buscar:', err.error.message);
-        this.toastr.error(`Erro ao buscar: ${err.error.message}`)
+        this.toastr.error(`Erro ao carregar a distribuidora: ${backendMessage(err)}`)
       }
     })
   }
@@ -219,7 +218,7 @@ export class DistribuitorFormComponent implements OnInit {
 
     if (this.registerFormSupplier.invalid) {
       this.registerFormSupplier.markAllAsTouched();
-      this.toastr.warning('Conferir informações!!')
+      this.toastr.warning('Confira os dados informados.')
       return;
     }
 
@@ -232,13 +231,13 @@ export class DistribuitorFormComponent implements OnInit {
     this.supplierService.create(this.supplier!!).subscribe({
       next: (response) => {
 
-        console.log('Usuário criado com sucesso!', response);
-        this.toastr.success('Usuário criado com sucesso!');
+        console.log('Conta criada.', response);
+        this.toastr.success('Conta criada.');
         this.navigateRoute('/aguardando-aprovacao')
       },
       error: (err) => {
         console.error('Erro ao buscar:', err.error.message);
-        this.toastr.error(`Erro ao buscar cidades: ${err.error.message}`)
+        this.toastr.error(`Erro ao buscar cidades: ${backendMessage(err)}`)
       }
     })
   }
@@ -247,7 +246,7 @@ export class DistribuitorFormComponent implements OnInit {
 
     if (this.registerFormSupplier.invalid) {
       this.registerFormSupplier.markAllAsTouched();
-      this.toastr.warning('Conferir informações!!')
+      this.toastr.warning('Confira os dados informados.')
       return;
     }
 
@@ -259,12 +258,12 @@ export class DistribuitorFormComponent implements OnInit {
       next: (response) => {
 
         console.log('Dsitriuidora editada com sucesso!', response);
-        this.toastr.success('Distriuidora editada com sucesso!!');
+        this.toastr.success('Distribuidora atualizada.');
         this.navigateRoute('/dashboard-fornecedor')
       },
       error: (err) => {
         console.error('Erro ao buscar:', err.error.message);
-        this.toastr.error(`Erro ao buscar cidades: ${err.error.message}`)
+        this.toastr.error(`Erro ao buscar cidades: ${backendMessage(err)}`)
       }
     })
   }

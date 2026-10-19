@@ -14,6 +14,7 @@ import { DelivererService } from '../../../services/deliverer.service';
 import { Deliverer } from '../../../models/deliverer';
 import { OrderStatusTimelineComponent } from '../../order-status-timeline/order-status-timeline.component';
 import { fadeIn, staggerList } from '../../../animations/checkout.animations';
+import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
   selector: 'app-received-orders',
@@ -143,7 +144,7 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
       : this.orderService.findBySupplierId(supplierId, this.statusFilter);
     request.subscribe({
       next: (response) => this.applyOrders(response.data),
-      error: (err) => this.toastr.error(`Erro ao buscar os pedidos: ${this.backendMessage(err)}`),
+      error: (err) => this.toastr.error(`Erro ao buscar os pedidos: ${backendMessage(err)}`),
     });
   }
 
@@ -164,14 +165,14 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
     this.showSupplier = checked.target.checked;
     this.supplierService.openDistribuidor({ status: this.showSupplier }, this.userLogado?.supplierId!).subscribe({
       next: () => this.toastr.success(this.showSupplier ? 'Distribuidora aberta.' : 'Distribuidora fechada.'),
-      error: (err) => this.toastr.error(`Erro ao abrir distribuidora: ${this.backendMessage(err)}`),
+      error: (err) => this.toastr.error(`Erro ao abrir distribuidora: ${backendMessage(err)}`),
     });
   }
 
   getOpenStatus() {
     this.supplierService.getOpen(this.userLogado?.supplierId!).subscribe({
       next: (response) => this.showSupplier = response,
-      error: (err) => this.toastr.error(`Erro ao buscar a distribuidora: ${this.backendMessage(err)}`),
+      error: (err) => this.toastr.error(`Erro ao buscar a distribuidora: ${backendMessage(err)}`),
     });
   }
 
@@ -192,7 +193,7 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
           this.removeOrder(order);
         }
       },
-      error: (err) => this.toastr.error(`Erro ao atualizar o pedido: ${this.backendMessage(err)}`),
+      error: (err) => this.toastr.error(`Erro ao atualizar o pedido: ${backendMessage(err)}`),
     });
   }
 
@@ -208,7 +209,7 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.loadingDeliverers = false;
-        this.toastr.error(`Erro ao buscar entregadores: ${this.backendMessage(err)}`);
+        this.toastr.error(`Erro ao buscar entregadores: ${backendMessage(err)}`);
       },
     });
   }
@@ -240,7 +241,7 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.dispatching = false;
-        this.toastr.error(`Erro ao despachar: ${this.backendMessage(err)}`);
+        this.toastr.error(`Erro ao despachar: ${backendMessage(err)}`);
       },
     });
   }
@@ -281,7 +282,7 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.canceling = false;
-        this.toastr.error(`Erro ao cancelar: ${this.backendMessage(err)}`);
+        this.toastr.error(`Erro ao cancelar: ${backendMessage(err)}`);
       },
     });
   }
@@ -291,11 +292,6 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
     if (this.selectedOrder?.id === order.id) {
       this.selectedOrder = this.pendingOrders[0] || this.orders?.[0];
     }
-  }
-
-  // o GlobalExceptionHandler devolve { error } para regra de negócio e { message } para os demais erros
-  private backendMessage(err: any): string {
-    return err?.error?.error || err?.error?.message || err?.message || 'erro inesperado';
   }
 
   navigateEdit(id?: string) {

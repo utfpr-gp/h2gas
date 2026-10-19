@@ -8,6 +8,7 @@ import { OrderService } from '../../../services/order.service';
 import { OrderResponse } from '../../../models/order.model';
 import { paymentLabel } from '../../../models/payment-label';
 import { fadeIn } from '../../../animations/checkout.animations';
+import { backendMessage } from '../../../utils/backend-message';
 
 // HU07 (Figura 17b): detalhe da entrega com trajeto, contato do cliente e ações do entregador
 @Component({
@@ -58,7 +59,7 @@ export class DelivererRouteDetailComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
-        this.toastr.error(`Erro ao carregar a entrega: ${this.backendMessage(err)}`);
+        this.toastr.error(`Erro ao carregar a entrega: ${backendMessage(err)}`);
       },
     });
   }
@@ -107,7 +108,7 @@ export class DelivererRouteDetailComponent implements OnInit {
       },
       error: (err) => {
         this.busy = false;
-        this.toastr.error(`Erro ao iniciar a entrega: ${this.backendMessage(err)}`);
+        this.toastr.error(`Erro ao iniciar a entrega: ${backendMessage(err)}`);
       },
     });
   }
@@ -125,7 +126,7 @@ export class DelivererRouteDetailComponent implements OnInit {
       },
       error: (err) => {
         this.busy = false;
-        this.toastr.error(`Erro ao confirmar a entrega: ${this.backendMessage(err)}`);
+        this.toastr.error(`Erro ao confirmar a entrega: ${backendMessage(err)}`);
       },
     });
   }
@@ -154,7 +155,7 @@ export class DelivererRouteDetailComponent implements OnInit {
       },
       error: (err) => {
         this.busy = false;
-        this.toastr.error(`Erro ao cancelar a entrega: ${this.backendMessage(err)}`);
+        this.toastr.error(`Erro ao cancelar a entrega: ${backendMessage(err)}`);
       },
     });
   }
@@ -164,10 +165,5 @@ export class DelivererRouteDetailComponent implements OnInit {
     const query = encodeURIComponent(this.address);
     this.mapUrl = this.sanitizer.bypassSecurityTrustResourceUrl(`https://maps.google.com/maps?q=${query}&output=embed`);
     this.mapsLink = `https://www.google.com/maps/dir/?api=1&destination=${query}&travelmode=driving`;
-  }
-
-  // o GlobalExceptionHandler devolve { error } para regra de negócio e { message } para os demais erros
-  private backendMessage(err: any): string {
-    return err?.error?.error || err?.error?.message || err?.message || 'erro inesperado';
   }
 }

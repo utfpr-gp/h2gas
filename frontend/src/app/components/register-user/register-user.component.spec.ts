@@ -73,6 +73,6 @@ describe('RegisterUserComponent', () => {
 
     expect(component.isLoadingRegister).toBeFalse();
     expect(userServiceSpy.createUser).not.toHaveBeenCalled();
-    expect(toastrSpy.warning).toHaveBeenCalledWith('Confira as suas senhas!');
+    expect(toastrSpy.warning).toHaveBeenCalledWith('As senhas não conferem.');
   });
 });

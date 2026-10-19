@@ -10,6 +10,7 @@ import { ProductItem } from '../../../models/product-item';
 import { PaginationComponent } from '../../pagination/pagination.component';
 import { Router } from '@angular/router';
 import { expandCollapse, staggerList } from '../../../animations/checkout.animations';
+import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
   selector: 'app-order-list',
@@ -67,11 +68,10 @@ export class OrderListComponent implements OnInit {
         this.totalPages = response.totalPages;
         this.hasNext = response.hasNext;
         this.hasPrevious = response.hasPrevious;
-        this.toastr.success("Pedidos buscados com sucesso");
       },
       error: (err) => {
         console.error(err);
-        this.toastr.error(`Erro ao buscar os pedidos: ${err.error.message}`);
+        this.toastr.error(`Erro ao buscar os pedidos: ${backendMessage(err)}`);
       },
     });
   }
@@ -115,19 +115,20 @@ export class OrderListComponent implements OnInit {
           return;
         }
 
-        if (this.cartService.getCart().length) {
-          this.toastr.info('O carrinho foi substituído pelos itens deste pedido.');
-        }
+        const carrinhoSubstituido = this.cartService.getCart().length > 0;
         this.cartService.setCart(preview.availableItems.map((item) => this.toCartProduct(item)));
 
+        // F7 §5.10: uma ação, um toast — o aviso de itens indisponíveis já diz que o carrinho mudou
         if (preview.unavailableItems.length) {
-          this.toastr.warning(`Alguns itens não puderam ser adicionados: ${indisponiveis}`);
+          this.toastr.warning(`Carrinho atualizado com este pedido, sem os itens indisponíveis: ${indisponiveis}`);
+        } else if (carrinhoSubstituido) {
+          this.toastr.info('O carrinho foi substituído pelos itens deste pedido.');
         }
         this.router.navigate(['/resumo-pedido']);
       },
       error: (err) => {
         this.reorderingId = null;
-        this.toastr.error(`Não foi possível refazer este pedido: ${err.error?.error || err.message}`);
+        this.toastr.error(`Não foi possível refazer este pedido: ${backendMessage(err)}`);
       },
     });
   }

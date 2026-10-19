@@ -65,7 +65,7 @@ export class MenuComponent implements OnInit {
   onQuantityInput(cartProduct?: ProductItem) {
     if (cartProduct!.quantitySelect! < this.min) {
       cartProduct!.quantitySelect = this.min;
-      this.toastr.warning("Por favor coloque um valor positivo!!");
+      this.toastr.warning('Informe um valor positivo.');
     }
   }
 

@@ -7,6 +7,7 @@ import { SupplierService } from '../../../services/supplier.service';
 import { UserService } from '../../../services/user.service';
 import { User } from '../../../models/user';
 import { Supplier } from '../../../models/supplier';
+import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
   selector: 'app-configuration',
@@ -71,11 +72,10 @@ export class ConfigurationComponent {
           closingTime: response.closingTime,
           averageDeliveryTime: response.averageDeliveryTime
         });
-        this.toastr.success('Distribuidor buscado com sucesso!');
       },
       error: (err) => {
         console.error('Erro ao buscar:', err.error.message);
-        this.toastr.error(`Erro ao buscar: ${err.error.message}`)
+        this.toastr.error(`Erro ao carregar a configuração: ${backendMessage(err)}`)
       }
     })
   }
@@ -86,7 +86,7 @@ export class ConfigurationComponent {
       this.configurationService.saveSettings(this.settings);
       console.log(this.settings);
     } else {
-      this.toastr.warning("Digite um valor maior que 0")
+      this.toastr.warning('Informe um valor maior que zero.')
       console.error("Formulário inválido!");
     }
     
@@ -106,7 +106,7 @@ export class ConfigurationComponent {
       error: (err) => {
         
         console.error('Erro ao atualizar:', err.error.message);
-        this.toastr.error(`Erro ao atualizar: ${err.error.message}`)
+        this.toastr.error(`Erro ao salvar a configuração: ${backendMessage(err)}`)
       },
     })
 

@@ -16,6 +16,7 @@ import { ProductType } from '../../../models/product-type';
 import { CategoryChipBarComponent } from '../../category-chip-bar/category-chip-bar.component';
 import { ProductCardComponent } from '../../product-card/product-card.component';
 import { SupplierCardComponent } from '../../supplier-card/supplier-card.component';
+import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
   selector: 'app-supplier-list',
@@ -86,11 +87,10 @@ export class SupplierListComponent implements OnInit {
         this.totalPages = response.totalPages;
         this.totalElements = response.totalElements;
         console.log(this.suppliers);
-        this.toastr.success('Fornecedores buscados com sucesso!');
       },
       error: (err) => {
         console.error('Erro ao buscar:', err.error?.message || err.message);
-        this.toastr.error(`Erro ao buscar fornecedores: ${err.error?.message || err.message}`)
+        this.toastr.error(`Erro ao buscar fornecedores: ${backendMessage(err)}`)
       },
     });
   }
@@ -172,11 +172,10 @@ export class SupplierListComponent implements OnInit {
   
         this.searchDone = this.suppliers && this.suppliers.length > 0;
   
-        this.toastr.success('Fornecedores buscados com sucesso!');
       },
       error: (err) => {
         console.error('Erro ao buscar:', err.error.message);
-        this.toastr.error(`Erro ao buscar fornecedores: ${err.error.message}`);
+        this.toastr.error(`Erro ao buscar fornecedores: ${backendMessage(err)}`);
         this.searchDone = false;
       },
     });
@@ -184,7 +183,7 @@ export class SupplierListComponent implements OnInit {
 
   addToCart(product: ProductItem) {
     this.cartService.addProduct({ ...product, quantitySelect: 1 });
-    this.toastr.success('Produto adicionado ao carrinho!');
+    this.toastr.success('Produto adicionado ao carrinho.');
   }
 
 }

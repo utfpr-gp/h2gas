@@ -4,6 +4,7 @@ import { AuthService } from '../../../services/auth.service';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ToastrService } from 'ngx-toastr';
+import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
   selector: 'app-forgot-password',
@@ -34,7 +35,7 @@ export class ForgotPasswordComponent {
 
   submit() {
     if (this.form.invalid) {
-      this.toastr.warning("Por favor insira um email valido!!");
+      this.toastr.warning('Informe um e-mail válido.');
       return;
     }
 
@@ -52,7 +53,7 @@ export class ForgotPasswordComponent {
         this.loading = false;
         this.errorMessage = 'Erro ao enviar link de recuperação. Tente novamente.';   
         console.error(err);
-        this.toastr.error(`Erro ao enviar link de recuperação: ${err.error.error}`) 
+        this.toastr.error(`Erro ao enviar o link de recuperação: ${backendMessage(err)}`) 
       },
     });
   }

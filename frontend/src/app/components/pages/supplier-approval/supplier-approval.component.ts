@@ -5,6 +5,7 @@ import { Supplier } from '../../../models/supplier';
 import { SupplierService } from '../../../services/supplier.service';
 import { ToastrService } from 'ngx-toastr';
 import { MenuComponent } from '../../menu/menu.component';
+import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
   selector: 'app-supplier-approval',
@@ -52,12 +53,11 @@ export class SupplierApprovalComponent implements OnInit {
         this.suppliers = response.data
         console.log(this.suppliers);
         
-        this.toastr.success('Fornecedores buscados com sucesso!');
       },
       error: (err) => {
         
         console.error('Erro ao buscar:', err.error.message);
-        this.toastr.error(`Erro ao buscar fornecedores: ${err.error.message}`)
+        this.toastr.error(`Erro ao buscar fornecedores: ${backendMessage(err)}`)
       },
     })
   }
@@ -85,7 +85,7 @@ export class SupplierApprovalComponent implements OnInit {
       error: (err) => {
         
         console.error('Erro ao atualizar:', err.error.message);
-        this.toastr.error(`Erro ao buscar fornecedores: ${err.error.message}`)
+        this.toastr.error(`Erro ao buscar fornecedores: ${backendMessage(err)}`)
       },
     })
 

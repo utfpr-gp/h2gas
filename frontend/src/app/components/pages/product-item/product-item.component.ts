@@ -11,6 +11,7 @@ import { firstValueFrom } from 'rxjs';
 import { User } from '../../../models/user';
 import { UserService } from '../../../services/user.service';
 import { ConfigurationService } from '../../../services/configuration.service';
+import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
   selector: 'app-product-item',
@@ -91,15 +92,12 @@ export class ProductItemComponent implements OnInit {
       next: (response) => {
         console.log('Buscado com sucesso', response);
         this.itemProducts = response.data
-        if (this.itemProducts.length > 0) {
-          this.toastr.success('Produtos buscado com sucesso!');          
-        }
         this.countingDisponivel();
       },
       error: (err) => {
         
         console.error('Erro ao buscar:', err.error.message);
-        this.toastr.error(`Erro ao buscar produtos: ${err.error.message}`)
+        this.toastr.error(`Erro ao buscar produtos: ${backendMessage(err)}`)
       },
     })
   }
@@ -112,12 +110,12 @@ export class ProductItemComponent implements OnInit {
     
     this.productItemService.delete(this.idProductRow!).subscribe({
       next: async (response) => {
-        this.toastr.success("Produto deletado com sucesso!!");
+        this.toastr.success('Produto excluído.');
         await this.findProdutos();
         this.countingDisponivel();
       },
       error: (err) => {
-        this.toastr.error(`Erro ao deletar produto!! ${err.error?.message}`);
+        this.toastr.error(`Erro ao excluir o produto: ${backendMessage(err)}`);
         console.error(err);
       },
     })

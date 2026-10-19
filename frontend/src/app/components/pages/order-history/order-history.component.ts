@@ -10,6 +10,7 @@ import { OrdersWidgetComponent } from '../../orders-widget/orders-widget.compone
 import { OrderResponse } from '../../../models/order.model';
 import { OrderStatus } from '../../../models/order-status.enum';
 import { User } from '../../../models/user';
+import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
   selector: 'app-order-history',
@@ -81,13 +82,13 @@ export class OrderHistoryComponent {
     this.supplierService.openDistribuidor(data, this.userLogado?.supplierId!).subscribe({
       next: (value) => {
         if (this.showSupplier) {
-          this.toastr.success("Distribuidora aberta com sucesso!!");          
+          this.toastr.success('Distribuidora aberta.');          
         } else {
-          this.toastr.success("Distribuidora fechada com sucesso!!");          
+          this.toastr.success('Distribuidora fechada.');          
         }
       },
       error: (err) => {
-        this.toastr.error(`Erro ao abrir distribuidora: ${err.error.message} `);
+        this.toastr.error(`Erro ao abrir a distribuidora: ${backendMessage(err)}`);
       },
     })
 
@@ -100,11 +101,10 @@ export class OrderHistoryComponent {
         this.orders = response.data;
         console.log(this.orders);
 
-        this.toastr.success("Pedidos buscado com sucesso");
       },
       error: (err) => {
         console.error(err)
-        this.toastr.error(`Erro ao buscar os pedidos: ${err.error.message}`);
+        this.toastr.error(`Erro ao buscar os pedidos: ${backendMessage(err)}`);
       },
     })
   }
@@ -117,11 +117,10 @@ export class OrderHistoryComponent {
         this.orders = response.data;
         console.log(this.orders);
 
-        this.toastr.success("Pedidos buscado com sucesso");
       },
       error: (err) => {
         console.error(err)
-        this.toastr.error(`Erro ao buscar os pedidos: ${err.error.message}`);
+        this.toastr.error(`Erro ao buscar os pedidos: ${backendMessage(err)}`);
       },
     })
   }
@@ -132,7 +131,6 @@ export class OrderHistoryComponent {
       next: (response) => {
         console.log('Distribuidora buscada com sucesso!', response);
         this.showSupplier = response;
-        this.toastr.success('Distribuidora buscada com sucesso!');
       },
       error: (err) => {
         console.error('Erro ao buscar:', err.error.message);
@@ -150,13 +148,13 @@ export class OrderHistoryComponent {
     this.orderService.updateStatusOrder(data, order.id).subscribe({
       next: (response: any) => {
         order.status = response.status
-        this.toastr.success(`Status do pedido atualizado para: ${response.status}`)        
+        this.toastr.success(`Pedido atualizado para: ${response.status}`)        
         if (order.status === 'Cancelado' || order.status === 'Entregue') {
           this.orders = this.orders?.filter(o => o.id !== order.id);
         }
       },
       error: (err) => {
-        this.toastr.error(`Erro ao salvar categoria: ${err.error.message}`)        
+        this.toastr.error(`Erro ao atualizar o pedido: ${backendMessage(err)}`)        
         console.error(err);
       },
     })
