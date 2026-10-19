@@ -212,7 +212,14 @@ busca, e "Meus Dados"/ícone de usuário pobres. Ordem: **depois da HU11**.
 do autor: **um toast por vez** (o novo substitui o atual, nunca empilha),
 **topo central sempre** (celular e desktop — não briga com a tab bar, a
 barra do checkout nem a barra fixa do detalhe do entregador), **sucesso
-só em ação do usuário** e **sem toast no login**. A parte de toasts sai
+só em ação do usuário** e ~~sem toast no login~~ — **revisto pelo autor
+no teste: o login dá boas-vindas** ("Bem-vindo(a), <primeiro nome>!").
+Achado no mesmo teste: senha errada devolvia **500 "Internal Server
+Error"** — o `GlobalExceptionHandler` não tratava `AuthenticationException`
+(caía no genérico) e o helper lia `error` (nome do status) antes de
+`message` no `ErrorResponse`. Agora: **401 "E-mail ou senha inválidos."**
+(sem dizer qual dos dois errou), login documentado no Swagger e o helper
+usa `message` quando o corpo é um `ErrorResponse`. A parte de toasts sai
 antes da HU11, na branch da HU08; menu/avatar e Meus Dados seguem
 depois da HU11.
 - `toastr.config.ts` (`TOASTR_OPTIONS`, usado por `ToastrModule.forRoot`
@@ -232,12 +239,14 @@ depois da HU11.
 - **Regra de uso**: toast de sucesso só em **ação do usuário** (salvar,
   excluir, editar, aprovar, despachar, cancelar, iniciar/confirmar/
   devolver entrega, abrir/fechar loja, adicionar ao carrinho, trocar o
-  endereço de entrega). **Leitura/busca e login não geram toast.** Uma
+  endereço de entrega) e boas-vindas no login. **Leitura/busca não gera
+  toast.** Uma
   ação gera **um** toast: onde saíam dois em sequência, vira uma
   mensagem só (`order-list.reorder`). Texto curto, sem "!!", com
   ortografia revisada.
 - **Erro** sempre com a mensagem do backend, por um helper único
-  `utils/backend-message.ts` (`err.error.error` → `err.error.message` →
+  `utils/backend-message.ts` (`message` do `ErrorResponse` →
+  `err.error.error` → `err.error.message` →
   "sem conexão com o servidor" no status 0 → texto padrão), que
   substitui as cópias privadas de `backendMessage` e os
   `${err.error.message}` que viravam "undefined".
@@ -246,8 +255,8 @@ depois da HU11.
   `supplier-approval`, `product-list`, `product-item`,
   `product-item-form` (2×), `category-products`, `configuration`,
   `city-register`, `order-history` (3×), `distribuitor-form` (2×,
-  inclui "Cep buscado"), `address-form` ("Cep buscado") e `login`
-  ("Usuario logado"). `distributor-management` é código morto (fora).
+  inclui "Cep buscado") e `address-form` ("Cep buscado"). O
+  "Usuario logado com sucesso!" do `login` vira "Bem-vindo(a), <nome>!". `distributor-management` é código morto (fora).
 
 **Menu do usuário (`menu`):**
 - O ícone genérico de pessoa vira **avatar com as iniciais** do usuário
@@ -311,13 +320,17 @@ depois da HU11.
     `deveExibirUmUnicoAvisoAoRefazerComItensIndisponiveis`),
     `product-list.component.spec.ts`
     (`naoDeveExibirToastDeSucessoAoBuscar`) e
-    `login.component.spec.ts` (`naoDeveExibirToastAoLogar`).
+    `login.component.spec.ts` (`deveDarBoasVindasAoLogar`,
+    `deveMostrarMensagemDoBackendAoFalharLogin`);
+    `AuthenticationControllerTest`
+    (`deveRetornar401ComMensagemClaraQuandoSenhaErrada`).
 11. Config global — `toastr.config.spec.ts`:
     `deveConfigurarToastrComOpcoesGlobais` e
     `deveSubstituirToastAtualPeloNovo` (ToastrModule real: dois toasts
     seguidos deixam só o último no DOM).
 11b. `backend-message.spec.ts` — `deveUsarErrorDoBackend`,
-    `deveUsarMessageQuandoNaoHaError`, `deveAvisarSemConexaoNoStatusZero`,
+    `deveUsarMessageDoErrorResponse`, `deveUsarMessageQuandoNaoHaError`,
+    `deveAvisarSemConexaoNoStatusZero`,
     `deveUsarTextoPadraoSemCorpo`.
 
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
@@ -343,8 +356,9 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
 **Fatia 3 — toasts (antecipada, na branch da HU08):**
 - [x] Um toast por vez, no topo central, com visual por tokens.
-- [x] Nenhum toast de sucesso em busca/leitura nem no login (lista da
-      §5.10); uma ação gera um toast só.
+- [x] Nenhum toast de sucesso em busca/leitura (lista da §5.10); login
+      com boas-vindas; uma ação gera um toast só.
+- [x] Senha errada devolve 401 "E-mail ou senha inválidos." (não 500).
 - [x] Erros com a mensagem do backend pelo helper único.
 - [x] Testes da seção 7 (itens 10, 11 e 11b) verdes; specs antigos
       falhando não aumentam; teste manual no Chromium.
