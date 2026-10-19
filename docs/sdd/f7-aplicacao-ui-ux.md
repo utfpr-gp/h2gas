@@ -396,7 +396,7 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 - [x] Um toast por vez, no topo central, com visual por tokens.
 - [x] Nenhum toast de sucesso em busca/leitura (lista da §5.10); login
       com boas-vindas; uma ação gera um toast só.
-- [ ] Sem mensagem genérica: toasts com a causa, 500 sem detalhe técnico,
+- [x] Sem mensagem genérica: toasts com a causa, 500 sem detalhe técnico,
       403/400/502 nos casos da §5.10, mensagens do backend em português.
 - [x] Senha errada devolve 401 "E-mail ou senha inválidos." (não 500).
 - [x] Erros com a mensagem do backend pelo helper único.
