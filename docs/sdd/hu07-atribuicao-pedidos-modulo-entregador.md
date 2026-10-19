@@ -31,6 +31,20 @@ logística de campo.
 > tem **mapa embutido** (iframe sem chave de API) e o link "Abrir no
 > Maps"; (f) entram o **histórico** (17c) e a **barra de abas**
 > Entregas/Histórico; ficam fora troco e aba Perfil.
+>
+> **Terceira revisão (2026-10-18)**: no teste manual o entregador
+> confirmava a entrega pela lista sem nunca abrir o detalhe (mapa,
+> contato). A Figura 17a só tem "Iniciar Entrega" nos cards; o confirmar
+> é do detalhe (17b). Decisões do autor: (g) a lista **não confirma**
+> entrega — o card EM ROTA só leva ao detalhe ("Continuar entrega");
+> (h) ao **iniciar**, o entregador vai para o detalhe e **fica preso**
+> nele até confirmar ou cancelar: lista, histórico e o detalhe de outro
+> pedido redirecionam para a entrega em rota, e o detalhe em rota não tem
+> "voltar"; (i) **uma entrega em rota por vez** — o TCC não proíbe
+> simultâneas, mas trata "Em rota" como ocupado (Figura 15); o backend
+> recusa iniciar outra enquanto houver uma em rota. Atribuir a quem está
+> em rota continua permitido (decisão (a)). Se dados antigos tiverem
+> várias em rota, a trava prende na de despacho mais antigo.
 
 - **Cenário 1 — Encaminhamento**: Dado um pedido pronto, Quando o
   fornecedor aciona o despacho, Então permite atribuir a entrega a um
@@ -39,7 +53,13 @@ logística de campo.
 - **Cenário 2 — Rota em campo**: Dado o acesso do entregador no módulo
   móvel, Quando visualiza suas tarefas, Então exibe apenas suas rotas
   (PENDENTE e EM ROTA), o detalhe com trajeto e contato do cliente, **e**
-  disponibiliza botões para iniciar e confirmar a entrega.
+  disponibiliza botões para iniciar e confirmar a entrega — iniciar no
+  card ou no detalhe, confirmar **só no detalhe**.
+- **Cenário 2b — Entrega em andamento**: Dado um entregador com uma
+  entrega em rota, Quando tenta abrir a lista, o histórico ou outro
+  pedido, Então volta ao detalhe da entrega em rota até confirmá-la ou
+  cancelá-la; E Quando tenta iniciar outra entrega, Então o backend
+  recusa (400) pedindo que finalize a atual.
 - **Cenário 3 — Recusa**: Dado um pedido atribuído a ele, Quando o
   entregador cancela a entrega informando o motivo, Então o pedido volta
   ao fornecedor (em preparo, sem entregador), que vê o motivo e pode
@@ -145,6 +165,8 @@ logística de campo.
 - `PATCH /api/orders/{id}/start-delivery` (`DELIVERER`):
   - pedido inexistente → 404; não atribuído a este entregador → 403;
   - status ≠ `IN_PREPARATION` → 400;
+  - entregador já tem outro pedido `OUT_FOR_DELIVERY` → 400 ("Finalize a
+    entrega em rota antes de iniciar outra.") — terceira revisão (i);
   - grava `OUT_FOR_DELIVERY` e `dispatchedAt = now`.
 - `PATCH /api/orders/{id}/complete-delivery` (`DELIVERER`):
   - 404; não atribuído a este entregador (ou sem entregador) → 403;
@@ -199,8 +221,10 @@ logística de campo.
     Histórico;
   - `deliverer-routes` (`/entregas`, Figura 17a): contagem de pendentes e
     um card por pedido (bairro/endereço, itens, pagamento). Card
-    PENDENTE tem **"Iniciar Entrega →"**; card EM ROTA tem **"Confirmar
-    entrega"**; tocar no card abre o detalhe; atualização a cada 30 s;
+    PENDENTE tem **"Iniciar Entrega →"**, que inicia e **leva ao
+    detalhe**; card EM ROTA tem **"Continuar entrega →"**, que só abre o
+    detalhe (a lista não confirma); tocar no card abre o detalhe;
+    atualização a cada 30 s;
   - `deliverer-route-detail` (`/entregas/:id`, Figura 17b): **mapa
     embutido** (iframe `maps.google.com/maps?q=<endereço>&output=embed`,
     sanitizado), endereço completo com **"Abrir no Maps"**
@@ -208,6 +232,15 @@ logística de campo.
     e WhatsApp (`wa.me`), itens, pagamento, total e os botões **Iniciar
     Entrega** ou **Confirmar Entrega** (conforme o status) e **Cancelar
     Entrega** (modal com motivo obrigatório, padrão do modal da HU06);
+    com a entrega em rota o "voltar" some (a saída é confirmar ou
+    cancelar);
+  - `activeDeliveryGuard` (terceira revisão (h)) em `/entregas`,
+    `/entregas/historico` e `/entregas/:id`: para `DELIVERER`, busca
+    `myRoutes()`; havendo pedido "Saiu para entrega" (o backend ordena o
+    de despacho mais antigo primeiro), redireciona para
+    `/entregas/<id>` dele, exceto se já for esse o destino. `ADMIN` não é
+    preso; erro ao buscar não bloqueia a navegação (a tela mostra o
+    próprio erro);
   - `deliverer-history` (`/entregas/historico`, Figura 17c): "Entregas
     hoje N", grupos por dia, selo Entregue/Cancelado, endereço, itens,
     pagamento e valor ("—" quando recusada).
@@ -230,7 +263,12 @@ logística de campo.
    `deveRecusarAtalhoDeEnvioParaPedidoDeEntrega`;
    início: `deveIniciarEntregaEGravarDispatchedAt`,
    `deveRejeitarInicioDePedidoDeOutroEntregador` (403),
-   `deveRejeitarInicioForaDeEmPreparacao`; conclusão:
+   `deveRejeitarInicioForaDeEmPreparacao`,
+   `deveRejeitarInicioComOutraEntregaEmRota`,
+   `devePermitirIniciarNovaEntregaDepoisDeConcluirAAnterior`,
+   `devePermitirIniciarNovaEntregaDepoisDeCancelarAAnterior`,
+   `devePermitirOutroEntregadorIniciarComColegaEmRota`,
+   `deveAtribuirPedidoAEntregadorEmRotaSemIniciar`; conclusão:
    `deveConcluirEntregaEGravarDeliveredAt`,
    `deveRejeitarConclusaoDePedidoDeOutroEntregador` (403),
    `deveRejeitarConclusaoForaDeOutForDelivery`; recusa:
@@ -246,6 +284,7 @@ logística de campo.
 4. `OrderControllerTest` — `deveRetornar200AoDespacharComEntregador`,
    `deveRetornarRotasDoEntregadorAutenticado`,
    `deveRetornar200AoIniciarEntrega`,
+   `deveRetornar400AoIniciarComOutraEntregaEmRota`,
    `deveRetornar200AoConfirmarEntrega`,
    `deveRetornar400AoCancelarEntregaSemMotivo`,
    `deveRetornar200AoCancelarEntregaComMotivo`,
@@ -271,14 +310,32 @@ logística de campo.
    `deveListarRotasDoEntregadorLogado`,
    `deveMostrarEstadoVazioSemRotas`,
    `deveAtualizarRotasPeriodicamente`,
-   `deveIniciarEntregaDoCardPendente`,
-   `deveConfirmarEntregaDoCardEmRota`.
+   `deveIniciarEntregaDoCardPendenteEAbrirDetalhe`,
+   `deveAbrirDetalheDoCardEmRotaSemConfirmar` (substitui
+   `deveConfirmarEntregaDoCardEmRota`, terceira revisão (g)),
+   `deveAvisarENaoAbrirDetalheQuandoBackendRecusarInicio`.
 9. `deliverer-route-detail.component.spec.ts` —
    `deveExibirEnderecoEContatoDoCliente`,
    `deveMontarMapaELinkAbrirNoMaps`,
    `deveIniciarEPoisConfirmarEntrega`,
    `naoDeveCancelarEntregaSemMotivo`,
-   `deveCancelarEntregaComMotivoEVoltarParaLista`.
+   `deveCancelarEntregaComMotivoEVoltarParaLista`,
+   `naoDeveExibirVoltarComEntregaEmRota`,
+   `deveManterPendenteComVoltarQuandoBackendRecusarInicio`,
+   `deveCarregarOutraEntregaQuandoOParametroMudar` (o guard pode levar de
+   uma entrega a outra reaproveitando o componente).
+9b. `active-delivery.guard.spec.ts` —
+   `deveRedirecionarParaEntregaEmRota`,
+   `devePermitirDetalheDaEntregaEmRota`,
+   `deveRedirecionarDetalheDeOutroPedidoParaEntregaEmRota`,
+   `devePermitirNavegarSemEntregaEmRota`,
+   `naoDevePrenderAdministrador`,
+   `naoDeveBloquearQuandoFalharAoBuscarRotas`.
+9c. `deliverer-flow.spec.ts` (rotas e guard reais) —
+   `deveIrAoDetalheAoIniciarEFicarPresoNele`,
+   `deveVoltarParaListaAoConfirmarSemIniciarAProximaSozinho`,
+   `deveIrDiretoParaOutraEntregaJaEmRotaAoConfirmar`,
+   `deveLiberarListaEHistoricoSemEntregaEmRota`.
 10. `deliverer-history.component.spec.ts` —
     `deveExibirEntregasDeHojeEGruposPorDia`,
     `deveMarcarEntregaRecusadaComoCancelada`.
@@ -326,6 +383,11 @@ Regra herdada: specs antigos falhando no frontend não aumentam (22).
 - [x] Histórico do entregador lista entregues e recusadas, por dia, com
       "Entregas hoje".
 - [x] Rotas novas documentadas no Swagger; migração `V7` aplicada.
+- [x] Terceira revisão: lista sem confirmar (card EM ROTA abre o
+      detalhe); iniciar leva ao detalhe; entregador preso ao detalhe da
+      entrega em rota (`activeDeliveryGuard`, sem "voltar"); backend
+      recusa iniciar uma segunda entrega em rota (400, Swagger
+      atualizado); testes da seção 6 verdes.
 - [x] Telas no padrão F7 (Figuras 15 e 17), mobile-first, com mapa
       embutido e "Abrir no Maps" no detalhe e barra de abas.
 - [x] Testes da seção 6 verdes; `mvn test` e `ng test` (≤ 22 falhas
@@ -336,3 +398,8 @@ Regra herdada: specs antigos falhando no frontend não aumentam (22).
 
 > Verificado em 2026-10-18: backend 166 testes (o único erro é `BackendApplicationTests.contextLoads`,
 > que precisa do MySQL local e já falhava fora do Docker); frontend 192 testes com as 22 falhas antigas.
+>
+> Terceira revisão verificada em 2026-10-18: backend 172 testes (só o
+> `contextLoads` antigo falha fora do Docker); frontend 207 testes com as
+> 22 falhas antigas; aprovada pelo autor após teste manual com o
+> entregador Carlos (5 entregas pendentes no banco local).
