@@ -5,6 +5,7 @@ import { RegisterComponent } from './components/pages/register/register.componen
 import { RegisterSupplierComponent } from './components/pages/register-supplier/register-supplier.component';
 import { CityRegisterComponent } from './components/pages/city-register/city-register.component';
 import { authGuard } from './guards/auth.guard';
+import { activeDeliveryGuard } from './guards/active-delivery.guard';
 import { addressDefinedGuard } from './guards/address-defined.guard';
 import { FirstAccessAddressComponent } from './components/pages/first-access-address/first-access-address.component';
 import { SupplierApprovalComponent } from './components/pages/supplier-approval/supplier-approval.component';
@@ -147,19 +148,19 @@ export const routes: Routes = [
     {
         path: 'entregas',
         component: DelivererRoutesComponent,
-        canActivate: [authGuard],
+        canActivate: [authGuard, activeDeliveryGuard],
         data: {roles: ['ADMIN', 'DELIVERER']}
     },
     {
         path: 'entregas/historico',
         component: DelivererHistoryComponent,
-        canActivate: [authGuard],
+        canActivate: [authGuard, activeDeliveryGuard],
         data: {roles: ['ADMIN', 'DELIVERER']}
     },
     {
         path: 'entregas/:id',
         component: DelivererRouteDetailComponent,
-        canActivate: [authGuard],
+        canActivate: [authGuard, activeDeliveryGuard],
         data: {roles: ['ADMIN', 'DELIVERER']}
     },
     {
