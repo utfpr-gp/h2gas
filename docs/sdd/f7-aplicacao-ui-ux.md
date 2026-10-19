@@ -258,6 +258,33 @@ depois da HU11.
   inclui "Cep buscado") e `address-form` ("Cep buscado"). O
   "Usuario logado com sucesso!" do `login` vira "Bem-vindo(a), <nome>!". `distributor-management` é código morto (fora).
 
+**Mensagens genéricas (varredura de 2026-10-19, pedido do autor):**
+- Front: os toasts "Erro ao buscar categorias" (`supplier-list`,
+  `product-list`), "Erro ao buscar produtos" (`supplier-list`) e "Erro
+  ao buscar cidades" (`address-form`) descartavam o erro — passam a
+  mostrar a causa pelo `backendMessage`.
+- Backend, 500 genérico: o `GlobalExceptionHandler` devolvia
+  `ex.getMessage()` cru (texto de Java/SQL no toast). Passa a responder
+  "Erro interno. Tente novamente em instantes." e registrar o detalhe só
+  no log. `ResponseStatusException` ganha tratamento próprio (status e
+  motivo dela).
+- Backend, status errado: categoria de outro fornecedor no cadastro de
+  produto (`ProductItemService`) era `RuntimeException` (500) → **403**
+  (`ForbiddenResourceException`); tempo médio de entrega não numérico
+  (`SupplierService`) era `IllegalArgumentException` com nome de campo
+  (500) → **400** "Tempo médio de entrega inválido: informe os minutos.";
+  falha no envio de imagem ao Cloudinary (`ProductItemService`,
+  `UploadController`) → **502** "Não foi possível enviar a imagem. Tente
+  novamente.".
+- Backend, inglês e grafia: "User not found…"/"City not found"/"Address
+  not found"/"Error generating token" → "Usuário não encontrado.",
+  "Cidade não encontrada.", "Endereço não encontrado.", "Não foi possível
+  gerar o acesso."; "Impossivel alterar senha de um administrador" →
+  "Não é possível alterar a senha de um administrador."; "Horario…" →
+  "Horário…"; "Email já cadastrado." → "E-mail já cadastrado."; "City e
+  Address devem estar definidos…" → "Cidade e endereço devem estar
+  definidos antes de salvar.".
+
 **Menu do usuário (`menu`):**
 - O ícone genérico de pessoa vira **avatar com as iniciais** do usuário
   (círculo `bg-secondary`/`text-secondary-content`, 2 letras).
@@ -333,6 +360,17 @@ depois da HU11.
     `deveAvisarSemConexaoNoStatusZero`,
     `deveUsarTextoPadraoSemCorpo`.
 
+11c. Mensagens genéricas — `GlobalExceptionHandlerTest`
+    (`deveEsconderDetalheTecnicoNoErroInterno`,
+    `deveUsarStatusEMotivoDaResponseStatusException`);
+    `ProductItemServiceTest`
+    (`deveRetornar403AoUsarCategoriaDeOutroFornecedor`);
+    `SupplierServiceTest`
+    (`deveRejeitarTempoMedioDeEntregaNaoNumericoComMensagemClara`);
+    `UserServiceTest` (`deveAvisarUsuarioNaoEncontradoEmPortugues`);
+    `product-list.component.spec.ts`
+    (`deveMostrarCausaAoFalharCarregarCategorias`).
+
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
 ## 8. Definição de Pronto
@@ -358,6 +396,8 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 - [x] Um toast por vez, no topo central, com visual por tokens.
 - [x] Nenhum toast de sucesso em busca/leitura (lista da §5.10); login
       com boas-vindas; uma ação gera um toast só.
+- [ ] Sem mensagem genérica: toasts com a causa, 500 sem detalhe técnico,
+      403/400/502 nos casos da §5.10, mensagens do backend em português.
 - [x] Senha errada devolve 401 "E-mail ou senha inválidos." (não 500).
 - [x] Erros com a mensagem do backend pelo helper único.
 - [x] Testes da seção 7 (itens 10, 11 e 11b) verdes; specs antigos
