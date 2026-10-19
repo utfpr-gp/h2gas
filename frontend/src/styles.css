@@ -66,6 +66,22 @@
   @apply bg-red-100 text-red-800;
 }
 
+/* HU08: card do pedido cujo status acabou de mudar em tempo real (destaque curto) */
+.status-updated {
+  animation: statusUpdated 2s ease-out;
+}
+
+@keyframes statusUpdated {
+  0%,
+  30% {
+    box-shadow: 0 0 0 3px var(--color-secondary);
+    background-color: var(--color-base-200);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
 .status-falhou {
   @apply bg-gray-200 text-gray-800;
 }
