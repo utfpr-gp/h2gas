@@ -3,6 +3,7 @@ import { appConfig } from './app/app.config';
 import { AppComponent } from './app/app.component';
 import { importProvidersFrom } from '@angular/core';
 import { ToastrModule } from 'ngx-toastr';
+import { TOASTR_OPTIONS } from './app/toastr.config';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { authInterceptor } from './app/interceptors/auth.interceptor';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -17,7 +18,7 @@ bootstrapApplication(AppComponent, {
   providers: [
     ...(appConfig.providers || []),
     importProvidersFrom(
-      ToastrModule.forRoot(),
+      ToastrModule.forRoot(TOASTR_OPTIONS),
     ),
     provideAnimations(),
     provideNgxMask(),
