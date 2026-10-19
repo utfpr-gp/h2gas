@@ -342,12 +342,17 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 - [x] Seletor de endereço do `order-resume` no padrão.
 
 **Fatia 3 — toasts (antecipada, na branch da HU08):**
-- [ ] Um toast por vez, no topo central, com visual por tokens.
-- [ ] Nenhum toast de sucesso em busca/leitura nem no login (lista da
+- [x] Um toast por vez, no topo central, com visual por tokens.
+- [x] Nenhum toast de sucesso em busca/leitura nem no login (lista da
       §5.10); uma ação gera um toast só.
-- [ ] Erros com a mensagem do backend pelo helper único.
-- [ ] Testes da seção 7 (itens 10, 11 e 11b) verdes; specs antigos
+- [x] Erros com a mensagem do backend pelo helper único.
+- [x] Testes da seção 7 (itens 10, 11 e 11b) verdes; specs antigos
       falhando não aumentam; teste manual no Chromium.
+
+> Verificado em 2026-10-18: `ng test` 205 ok e as 22 falhas antigas;
+> E2E no Chromium (celular 420 px e desktop 1280 px): login errado 2×
+> mostra 1 toast, um aviso seguinte substitui o erro, toast no topo
+> central, login certo e "Meus Pedidos" sem toast.
 
 **Fatia 3 — Meus Dados e menu do usuário (depois da HU11):**
 - [ ] Avatar com iniciais e dropdown do usuário no padrão.
