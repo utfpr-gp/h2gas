@@ -300,6 +300,10 @@ public class OrderService {
         if (order.getStatus() != OrderStatusEnum.IN_PREPARATION) {
             throw new BusinessRuleException("Só é possível iniciar a entrega de pedidos em preparação.");
         }
+        // HU07 (3ª revisão): uma entrega em rota por vez; atribuir a quem está em rota continua permitido
+        if (orderRepository.existsByDelivererIdAndStatus(delivererId, OrderStatusEnum.OUT_FOR_DELIVERY)) {
+            throw new BusinessRuleException("Finalize a entrega em rota antes de iniciar outra.");
+        }
         order.setStatus(OrderStatusEnum.OUT_FOR_DELIVERY);
         order.setDispatchedAt(LocalDateTime.now());
         return orderMapper.toResponseDto(orderRepository.save(order));

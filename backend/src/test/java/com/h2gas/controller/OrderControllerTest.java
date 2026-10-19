@@ -1,5 +1,6 @@
 package com.h2gas.controller;
 
+import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.configuration.security.SecurityConfigurations;
 import com.h2gas.configuration.security.SecurityFilter;
 import com.h2gas.configuration.security.TokenService;
@@ -256,6 +257,20 @@ class OrderControllerTest {
         mockMvc.perform(patch("/api/orders/pedido-rota/start-delivery"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("Saiu para entrega"));
+    }
+
+    @Test
+    void deveRetornar400AoIniciarComOutraEntregaEmRota() throws Exception {
+        autenticarComo(UserTypeEnum.DELIVERER, "usuario-entregador");
+        Deliverer entregador = new Deliverer();
+        entregador.setId(9L);
+        when(delivererService.findByUserId("usuario-entregador")).thenReturn(entregador);
+        when(orderService.startDelivery("pedido-novo", 9L))
+                .thenThrow(new BusinessRuleException("Finalize a entrega em rota antes de iniciar outra."));
+
+        mockMvc.perform(patch("/api/orders/pedido-novo/start-delivery"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Finalize a entrega em rota antes de iniciar outra."));
     }
 
     @Test

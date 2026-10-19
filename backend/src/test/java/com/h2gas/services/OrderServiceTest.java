@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalTime;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -732,6 +733,72 @@ class OrderServiceTest {
     }
 
     @Test
+    @DisplayName("HU07 (3ª revisão): entregador com uma entrega em rota não inicia outra")
+    void deveRejeitarInicioComOutraEntregaEmRota() {
+        Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
+        pedidoEmRota(entregadorId);
+        String segundo = pedidoAtribuido(entregadorId);
+
+        BusinessRuleException erro = assertThrows(BusinessRuleException.class,
+                () -> orderService.startDelivery(segundo, entregadorId));
+
+        assertEquals("Finalize a entrega em rota antes de iniciar outra.", erro.getMessage());
+        assertEquals(OrderStatusEnum.IN_PREPARATION, orderRepository.findById(segundo).orElseThrow().getStatus());
+    }
+
+    @Test
+    @DisplayName("HU07 (3ª revisão): depois de confirmar a entrega em rota, o entregador inicia a próxima")
+    void devePermitirIniciarNovaEntregaDepoisDeConcluirAAnterior() {
+        Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
+        String primeiro = pedidoEmRota(entregadorId);
+        String proximo = pedidoAtribuido(entregadorId);
+        orderService.completeDelivery(primeiro, entregadorId);
+
+        orderService.startDelivery(proximo, entregadorId);
+
+        assertEquals(OrderStatusEnum.OUT_FOR_DELIVERY, orderRepository.findById(proximo).orElseThrow().getStatus());
+    }
+
+    @Test
+    @DisplayName("HU07 (3ª revisão): depois de cancelar a entrega em rota, o entregador inicia a próxima")
+    void devePermitirIniciarNovaEntregaDepoisDeCancelarAAnterior() {
+        Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
+        String primeiro = pedidoEmRota(entregadorId);
+        String proximo = pedidoAtribuido(entregadorId);
+        orderService.cancelDelivery(primeiro, entregadorId, "Moto quebrou");
+
+        orderService.startDelivery(proximo, entregadorId);
+
+        assertEquals(OrderStatusEnum.OUT_FOR_DELIVERY, orderRepository.findById(proximo).orElseThrow().getStatus());
+    }
+
+    @Test
+    @DisplayName("HU07 (3ª revisão): a entrega em rota de um entregador não impede outro entregador de iniciar")
+    void devePermitirOutroEntregadorIniciarComColegaEmRota() {
+        Long carlos = entregadorDe(validSupplierId, "carlos@teste.com");
+        Long ana = entregadorDe(validSupplierId, "ana@teste.com");
+        pedidoEmRota(carlos);
+        String deAna = pedidoAtribuido(ana);
+
+        orderService.startDelivery(deAna, ana);
+
+        assertEquals(OrderStatusEnum.OUT_FOR_DELIVERY, orderRepository.findById(deAna).orElseThrow().getStatus());
+    }
+
+    @Test
+    @DisplayName("HU07 (3ª revisão): a regra vale só para iniciar — o fornecedor ainda atribui a quem está em rota")
+    void deveAtribuirPedidoAEntregadorEmRotaSemIniciar() {
+        Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
+        pedidoEmRota(entregadorId);
+
+        String segundo = pedidoAtribuido(entregadorId);
+
+        Order atribuido = orderRepository.findById(segundo).orElseThrow();
+        assertEquals(OrderStatusEnum.IN_PREPARATION, atribuido.getStatus());
+        assertEquals(entregadorId, atribuido.getDeliverer().getId());
+    }
+
+    @Test
     @DisplayName("HU07: recusa devolve o pedido ao fornecedor, sem cancelar nem mexer no estoque")
     void deveCancelarEntregaDevolvendoPedidoAoFornecedor() {
         Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
@@ -888,13 +955,18 @@ class OrderServiceTest {
         Long carlos = entregadorDe(validSupplierId, "carlos@teste.com");
         Long ana = entregadorDe(validSupplierId, "ana@teste.com");
         String pendente = pedidoAtribuido(carlos);
-        String primeiro = pedidoEmRota(carlos);
-        String segundo = pedidoEmRota(carlos);
-        pedidoEmRota(ana);
         String jaEntregue = pedidoEmRota(carlos);
         orderService.completeDelivery(jaEntregue, carlos);
         String recusado = pedidoEmRota(carlos);
         orderService.cancelDelivery(recusado, carlos, "Moto quebrou");
+        String primeiro = pedidoEmRota(carlos);
+        // 3ª revisão: só uma em rota por vez; duas em rota só existem em dados de antes da regra
+        String segundo = pedidoAtribuido(carlos);
+        Order legado = orderRepository.findById(segundo).orElseThrow();
+        legado.setStatus(OrderStatusEnum.OUT_FOR_DELIVERY);
+        legado.setDispatchedAt(LocalDateTime.now().plusMinutes(1));
+        orderRepository.save(legado);
+        pedidoEmRota(ana);
 
         List<OrderResponseDTO> rotas = orderService.findActiveByDeliverer(carlos);
 

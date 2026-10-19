@@ -281,7 +281,7 @@ public class OrderController {
             description = "O entregador logado inicia um pedido atribuído a ele e em preparação: vai a OUT_FOR_DELIVERY e registra dispatchedAt")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Entrega iniciada"),
-            @ApiResponse(responseCode = "400", description = "Pedido não está em preparação"),
+            @ApiResponse(responseCode = "400", description = "Pedido não está em preparação ou o entregador já tem outra entrega em rota"),
             @ApiResponse(responseCode = "403", description = "Sem token válido, papel sem permissão ou pedido de outro entregador"),
             @ApiResponse(responseCode = "404", description = "Pedido inexistente ou usuário não é entregador")
     })
