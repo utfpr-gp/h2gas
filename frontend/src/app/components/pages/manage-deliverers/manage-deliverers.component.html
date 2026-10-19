@@ -1,0 +1,79 @@
+<div class="max-w-3xl mx-auto px-4 pt-6 pb-24 md:pb-10">
+    <h1 class="text-2xl font-bold text-gray-800">Entregadores</h1>
+    <p class="text-sm text-gray-500 mb-5">Cadastre quem faz as entregas da sua loja e veja quem está em rota.</p>
+
+    <!-- Cadastro -->
+    <section class="bg-white rounded-xl shadow-md border border-gray-200 p-4 mb-5">
+        <h2 class="flex items-center gap-2 font-semibold text-gray-800 mb-3">
+            <span class="material-icons text-primary text-lg">person_add</span>
+            Novo entregador
+        </h2>
+        <form [formGroup]="form" (ngSubmit)="save()" class="grid sm:grid-cols-2 gap-3" novalidate>
+            <label class="block text-sm text-gray-700">
+                Nome
+                <input formControlName="name" autocomplete="off"
+                    class="input w-full rounded-xl mt-1 border border-gray-300 bg-white" [class.input-error]="invalid('name')" />
+                <span *ngIf="invalid('name')" class="text-xs text-error">Informe o nome.</span>
+            </label>
+            <label class="block text-sm text-gray-700">
+                Telefone
+                <input formControlName="phoneNumber" type="tel" inputmode="tel" autocomplete="off"
+                    class="input w-full rounded-xl mt-1 border border-gray-300 bg-white" [class.input-error]="invalid('phoneNumber')" />
+                <span *ngIf="invalid('phoneNumber')" class="text-xs text-error">Informe o telefone.</span>
+            </label>
+            <label class="block text-sm text-gray-700">
+                E-mail (login)
+                <input formControlName="email" type="email" autocomplete="off"
+                    class="input w-full rounded-xl mt-1 border border-gray-300 bg-white" [class.input-error]="invalid('email')" />
+                <span *ngIf="invalid('email')" class="text-xs text-error">Informe um e-mail válido.</span>
+            </label>
+            <label class="block text-sm text-gray-700">
+                Senha inicial
+                <input formControlName="password" type="password" autocomplete="new-password"
+                    class="input w-full rounded-xl mt-1 border border-gray-300 bg-white" [class.input-error]="invalid('password')" />
+                <span *ngIf="invalid('password')" class="text-xs text-error">Mínimo de 6 caracteres.</span>
+            </label>
+            <label class="block text-sm text-gray-700 sm:col-span-2">
+                Veículo e placa <span class="text-gray-400">(opcional)</span>
+                <input formControlName="vehicleInfo" placeholder="Ex.: Moto - ABC-1234" autocomplete="off"
+                    class="input w-full rounded-xl mt-1 border border-gray-300 bg-white" />
+            </label>
+            <button type="submit" [disabled]="saving" class="btn btn-primary rounded-xl sm:col-span-2">
+                <span *ngIf="saving" class="loading loading-spinner loading-sm"></span>
+                Cadastrar entregador
+            </button>
+        </form>
+    </section>
+
+    <!-- Frota -->
+    <section>
+        <h2 class="text-sm font-bold uppercase tracking-wide text-gray-500 mb-2">Sua frota ({{ deliverers.length }})</h2>
+
+        <div *ngIf="loading" class="skeleton h-20 w-full rounded-xl"></div>
+
+        <p *ngIf="!loading && !deliverers.length" @fadeIn
+            class="text-center text-sm text-gray-500 bg-white rounded-xl border border-gray-200 py-8 px-4">
+            Nenhum entregador ainda. Cadastre o primeiro acima para poder despachar pedidos.
+        </p>
+
+        <ul class="space-y-3">
+            <li *ngFor="let deliverer of deliverers" data-testid="deliverer-row" @fadeIn
+                class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex items-center gap-3">
+                <span class="w-10 h-10 shrink-0 rounded-full bg-primary text-primary-content flex items-center justify-center font-bold">
+                    {{ deliverer.name.charAt(0).toUpperCase() }}
+                </span>
+                <span class="min-w-0 flex-1">
+                    <span class="block font-semibold text-gray-800 truncate">{{ deliverer.name }}</span>
+                    <span class="block text-xs text-gray-500 truncate">
+                        {{ deliverer.vehicleInfo || 'Veículo não informado' }} · {{ deliverer.phoneNumber }}
+                    </span>
+                </span>
+                <span data-testid="deliverer-status"
+                    class="shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold"
+                    [ngClass]="deliverer.busy ? 'bg-warning/20 text-gray-800' : 'bg-success/15 text-success'">
+                    {{ deliverer.busy ? 'Em rota' : 'Disponível' }}
+                </span>
+            </li>
+        </ul>
+    </section>
+</div>

@@ -5,6 +5,7 @@ import { RegisterComponent } from './components/pages/register/register.componen
 import { RegisterSupplierComponent } from './components/pages/register-supplier/register-supplier.component';
 import { CityRegisterComponent } from './components/pages/city-register/city-register.component';
 import { authGuard } from './guards/auth.guard';
+import { activeDeliveryGuard } from './guards/active-delivery.guard';
 import { addressDefinedGuard } from './guards/address-defined.guard';
 import { FirstAccessAddressComponent } from './components/pages/first-access-address/first-access-address.component';
 import { SupplierApprovalComponent } from './components/pages/supplier-approval/supplier-approval.component';
@@ -22,6 +23,10 @@ import { ManageAddressesComponent } from './components/pages/manage-addresses/ma
 import { ReceivedOrdersComponent } from './components/pages/received-orders/received-orders.component';
 import { AwaitingApprovalComponent } from './components/pages/awaiting-approval/awaiting-approval.component';
 import { OrderHistoryComponent } from './components/pages/order-history/order-history.component';
+import { ManageDeliverersComponent } from './components/pages/manage-deliverers/manage-deliverers.component';
+import { DelivererRoutesComponent } from './components/pages/deliverer-routes/deliverer-routes.component';
+import { DelivererRouteDetailComponent } from './components/pages/deliverer-route-detail/deliverer-route-detail.component';
+import { DelivererHistoryComponent } from './components/pages/deliverer-history/deliverer-history.component';
 import { ForgotPasswordComponent } from './components/pages/forgot-password/forgot-password.component';
 import { CheckEmailComponent } from './components/pages/check-email/check-email.component';
 import { ResetPasswordComponent } from './components/pages/reset-password/reset-password.component';
@@ -139,6 +144,30 @@ export const routes: Routes = [
         component: AwaitingApprovalComponent,
         canActivate: [authGuard],
         data: {roles: ['ADMIN', 'SUPPLIER']}
+    },
+    {
+        path: 'entregas',
+        component: DelivererRoutesComponent,
+        canActivate: [authGuard, activeDeliveryGuard],
+        data: {roles: ['ADMIN', 'DELIVERER']}
+    },
+    {
+        path: 'entregas/historico',
+        component: DelivererHistoryComponent,
+        canActivate: [authGuard, activeDeliveryGuard],
+        data: {roles: ['ADMIN', 'DELIVERER']}
+    },
+    {
+        path: 'entregas/:id',
+        component: DelivererRouteDetailComponent,
+        canActivate: [authGuard, activeDeliveryGuard],
+        data: {roles: ['ADMIN', 'DELIVERER']}
+    },
+    {
+        path: 'entregadores',
+        component: ManageDeliverersComponent,
+        canActivate: [authGuard],
+        data: {roles: ['SUPPLIER']}
     },
     {
         path: 'historico-pedidos', 

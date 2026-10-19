@@ -4,6 +4,7 @@
       <div class="flex items-center gap-2">
         <!-- Botão do menu mobile -->
         <button
+          *ngIf="!isDeliverer"
           (click)="toggleMobileMenu()"
           class="lg:hidden text-white hover:bg-white/10 p-2 rounded-md focus:outline-none"
         >
@@ -12,7 +13,7 @@
   
         <!-- Logo -->
         <div class="flex items-center">
-            <a  href="/inicio" class="hover:bg-white/10 px-3 py-2 rounded-md">
+            <a [href]="isDeliverer ? '/entregas' : '/inicio'" aria-label="Ir para a tela inicial" class="hover:bg-white/10 px-3 py-2 rounded-md">
                 <div class="h-9 w-9 rounded-full flex items-center justify-center mr-2">
                     <img src="../assets/logo-sem-titulo.png" alt="logo" />
                   </div>
@@ -39,7 +40,7 @@
       <!-- MENU DESKTOP + CARRINHO (compartilhado) -->
       <div class="flex items-center gap-2 relative z-40">
         <!-- MENU DESKTOP -->
-        <nav class="hidden lg:flex items-center gap-2">
+        <nav *ngIf="!isDeliverer" class="hidden lg:flex items-center gap-2">
           <a
             href="/inicio"
             class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
@@ -86,6 +87,14 @@
           </div>
   
           <a
+            *ngIf="user?.userType === 'SUPPLIER'"
+            href="/entregadores"
+            class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
+          >
+            <i class="fa-solid fa-motorcycle"></i><span class="ml-2">Entregadores</span>
+          </a>
+
+          <a
             *ngIf="user?.userType === 'ADMIN' || user?.userType === 'CUSTOMER'"
             href="/meus-pedidos"
             class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
@@ -111,7 +120,7 @@
         </nav>
   
         <!-- Drawer do carrinho (funciona em desktop e mobile) -->
-        <div class="drawer drawer-end">
+        <div *ngIf="!isDeliverer" class="drawer drawer-end">
           <input id="cart-drawer" type="checkbox" class="drawer-toggle" />
   
           <!-- Botões que abrem o carrinho -->
@@ -305,6 +314,7 @@
       class="absolute top-16 left-0 w-full bg-primary text-white flex flex-col p-4 space-y-3 shadow-lg lg:hidden z-40"
     >
       <a href="/inicio" class="hover:bg-white/10 px-3 py-2 rounded-md">Início</a>
+      <a *ngIf="user?.userType === 'SUPPLIER'" href="/entregadores" class="hover:bg-white/10 px-3 py-2 rounded-md">Entregadores</a>
   
       <ng-container *ngIf="user?.userType === 'ADMIN' || user?.userType === 'SUPPLIER'">
         <button
@@ -331,3 +341,4 @@
   </div>
 
   <app-bottom-tab-bar *ngIf="user?.userType === 'CUSTOMER'"></app-bottom-tab-bar>
+  <app-deliverer-tab-bar *ngIf="isDeliverer"></app-deliverer-tab-bar>

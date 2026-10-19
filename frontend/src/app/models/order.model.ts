@@ -69,7 +69,12 @@ export interface OrderResponse {
     neighborhood:string;
     deliveryMode?: DeliveryMode;
     customerPhone?: string;
+    delivererName?: string;
     cancellationReason?: string;
+    cityName?: string;
+    deliveredAt?: string;
+    lastRefusalReason?: string;
+    lastRefusalBy?: string;
 }
 
 export interface CancelOrderResponse {

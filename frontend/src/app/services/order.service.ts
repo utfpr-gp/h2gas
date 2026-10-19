@@ -5,6 +5,7 @@ import { CancelOrderResponse, OrderPreview, OrderPreviewRequest, OrderRequest, O
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { PaginatedResponse } from '../models/paginated-response';
+import { DeliveryHistory } from '../models/delivery-history';
 
 @Injectable({
   providedIn: 'root'
@@ -22,6 +23,30 @@ export class OrderService extends AbstractService<OrderResponse> {
 
   previewOrder(data: OrderPreviewRequest): Observable<OrderPreview> {
     return this.http.post<OrderPreview>(`${this.baseUrl}/preview`, data);
+  }
+
+  assignDeliverer(orderId: string, delivererId: number): Observable<OrderResponse> {
+    return this.http.patch<OrderResponse>(`${this.baseUrl}/${orderId}/assign-deliverer`, { delivererId });
+  }
+
+  myRoutes(): Observable<OrderResponse[]> {
+    return this.http.get<OrderResponse[]>(`${this.baseUrl}/my-routes`);
+  }
+
+  startDelivery(orderId: string): Observable<OrderResponse> {
+    return this.http.patch<OrderResponse>(`${this.baseUrl}/${orderId}/start-delivery`, {});
+  }
+
+  cancelDelivery(orderId: string, reason: string): Observable<OrderResponse> {
+    return this.http.patch<OrderResponse>(`${this.baseUrl}/${orderId}/cancel-delivery`, { reason });
+  }
+
+  deliveryHistory(): Observable<DeliveryHistory> {
+    return this.http.get<DeliveryHistory>(`${this.baseUrl}/my-deliveries/history`);
+  }
+
+  completeDelivery(orderId: string): Observable<OrderResponse> {
+    return this.http.patch<OrderResponse>(`${this.baseUrl}/${orderId}/complete-delivery`, {});
   }
 
   cancelOrder(orderId: string, reason: string): Observable<CancelOrderResponse> {

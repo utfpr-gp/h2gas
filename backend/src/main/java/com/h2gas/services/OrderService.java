@@ -6,6 +6,8 @@ import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ForbiddenResourceException;
 import com.h2gas.exceptions.ResourceNotFoundException;
+import com.h2gas.model.dto.DeliveryHistoryDTO;
+import com.h2gas.model.dto.DeliveryHistoryItemDTO;
 import com.h2gas.model.dto.OrderItemRequestDTO;
 import com.h2gas.model.dto.OrderPreviewDTO;
 import com.h2gas.model.dto.OrderPreviewItemDTO;
@@ -16,12 +18,15 @@ import com.h2gas.model.dto.ReorderItemDTO;
 import com.h2gas.model.dto.ReorderPreviewDTO;
 import com.h2gas.model.entity.Address;
 import com.h2gas.model.entity.CategoryProduct;
+import com.h2gas.model.entity.Deliverer;
+import com.h2gas.model.entity.DeliveryRefusal;
 import com.h2gas.model.entity.Order;
 import com.h2gas.model.entity.OrderItem;
 import com.h2gas.model.entity.ProductItem;
 import com.h2gas.model.entity.Supplier;
 import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.OrderMapper;
+import com.h2gas.model.repository.DeliveryRefusalRepository;
 import com.h2gas.model.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -30,10 +35,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class OrderService {
@@ -57,6 +66,15 @@ public class OrderService {
 
     @Autowired
     private AddressService addressService;
+
+    @Autowired
+    private DelivererService delivererService;
+
+    private final DeliveryRefusalRepository deliveryRefusalRepository;
+
+    public OrderService(DeliveryRefusalRepository deliveryRefusalRepository) {
+        this.deliveryRefusalRepository = deliveryRefusalRepository;
+    }
 
     // RN02: pedido, itens e decremento de estoque entram ou saem juntos
     @Transactional
@@ -247,9 +265,142 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
+    // HU07: despacho = atribuir (ou trocar) o entregador; o pedido segue em preparo até o entregador iniciar
+    @Transactional
+    public OrderResponseDTO assignDeliverer(String orderId, Long delivererId, User actor) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido com " + orderId + " não encontrado"));
+        boolean isAdmin = actor.getUserType() == UserTypeEnum.ADMIN;
+        if (!isAdmin && (order.getSupplier() == null || !order.getSupplier().getId().equals(actor.getId()))) {
+            throw new ForbiddenResourceException("Pedido não pertence ao fornecedor logado.");
+        }
+        if (order.getStatus() != OrderStatusEnum.IN_PREPARATION) {
+            throw new BusinessRuleException("Só é possível atribuir entregador a pedidos em preparação.");
+        }
+        if (order.getDeliveryMode() != DeliveryModeEnum.DELIVERY) {
+            throw new BusinessRuleException("Pedido de retirada não tem entregador.");
+        }
+
+        Deliverer deliverer = delivererService.findEntityById(delivererId);
+        if (!deliverer.getSupplier().getId().equals(order.getSupplier().getId())) {
+            throw new BusinessRuleException("Entregador não pertence ao fornecedor do pedido.");
+        }
+        if (!deliverer.isActive()) {
+            throw new BusinessRuleException("Entregador inativo.");
+        }
+
+        order.setDeliverer(deliverer);
+        return orderMapper.toResponseDto(orderRepository.save(order));
+    }
+
+    // HU07: o entregador toca "Iniciar Entrega"; é aqui que o pedido sai em rota
+    @Transactional
+    public OrderResponseDTO startDelivery(String orderId, Long delivererId) {
+        Order order = findOrderOfDeliverer(orderId, delivererId);
+        if (order.getStatus() != OrderStatusEnum.IN_PREPARATION) {
+            throw new BusinessRuleException("Só é possível iniciar a entrega de pedidos em preparação.");
+        }
+        // HU07 (3ª revisão): uma entrega em rota por vez; atribuir a quem está em rota continua permitido
+        if (orderRepository.existsByDelivererIdAndStatus(delivererId, OrderStatusEnum.OUT_FOR_DELIVERY)) {
+            throw new BusinessRuleException("Finalize a entrega em rota antes de iniciar outra.");
+        }
+        order.setStatus(OrderStatusEnum.OUT_FOR_DELIVERY);
+        order.setDispatchedAt(LocalDateTime.now());
+        return orderMapper.toResponseDto(orderRepository.save(order));
+    }
+
+    // HU07: a rota é só do entregador autenticado (o id vem do token, nunca de parâmetro livre);
+    // em rota primeiro (despacho mais antigo), depois os pendentes de início (pedido mais antigo)
+    @Transactional(readOnly = true)
+    public List<OrderResponseDTO> findActiveByDeliverer(Long delivererId) {
+        List<Order> emRota = orderRepository.findByDelivererIdAndStatusOrderByDispatchedAtAsc(delivererId, OrderStatusEnum.OUT_FOR_DELIVERY);
+        List<Order> pendentes = orderRepository.findByDelivererIdAndStatusOrderByCreatedAtAsc(delivererId, OrderStatusEnum.IN_PREPARATION);
+        return Stream.concat(emRota.stream(), pendentes.stream())
+                .map(orderMapper::toResponseDto)
+                .toList();
+    }
+
+    // HU07 (Figura 17c): entregues e recusadas do entregador logado, da mais recente para a mais antiga
+    @Transactional(readOnly = true)
+    public DeliveryHistoryDTO findDeliveryHistory(Long delivererId) {
+        List<Order> delivered = orderRepository.findByDelivererIdAndStatusOrderByDeliveredAtDesc(delivererId, OrderStatusEnum.DELIVERED);
+        List<DeliveryRefusal> refusals = deliveryRefusalRepository.findByDelivererIdOrderByCreatedAtDesc(delivererId);
+
+        List<DeliveryHistoryItemDTO> items = Stream.concat(
+                        delivered.stream().map(order -> historyItem(order, "DELIVERED", order.getDeliveredAt(), order.getTotalPrice())),
+                        refusals.stream().map(refusal -> historyItem(refusal.getOrder(), "REFUSED", refusal.getCreatedAt(), null)))
+                .sorted(Comparator.comparing(DeliveryHistoryItemDTO::getOccurredAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .toList();
+        int deliveredToday = (int) delivered.stream()
+                .filter(order -> order.getDeliveredAt() != null && order.getDeliveredAt().toLocalDate().equals(LocalDate.now()))
+                .count();
+        return new DeliveryHistoryDTO(deliveredToday, items);
+    }
+
+    private DeliveryHistoryItemDTO historyItem(Order order, String kind, LocalDateTime occurredAt, BigDecimal totalPrice) {
+        Address address = order.getDeliveryAddress();
+        String summary = order.getItems() == null ? "" : order.getItems().stream()
+                .map(item -> item.getQuantity() + "x " + item.getProduct().getBrand() + " " + item.getProduct().getCategoryProduct().getName())
+                .collect(Collectors.joining(", "));
+        return new DeliveryHistoryItemDTO(order.getId(), kind, occurredAt,
+                address == null ? null : address.getStreetName(),
+                address == null ? null : address.getNumber(),
+                address == null ? null : address.getNeighborhood(),
+                address == null || address.getCity() == null ? null : address.getCity().getName(),
+                summary, order.getPaymentMethod(), totalPrice);
+    }
+
+    // HU07: o entregador recusa; o pedido volta ao fornecedor (não é cancelado ao cliente, estoque intacto)
+    @Transactional
+    public OrderResponseDTO cancelDelivery(String orderId, Long delivererId, String reason) {
+        if (reason == null || reason.isBlank()) {
+            throw new BusinessRuleException("Informe o motivo para cancelar a entrega.");
+        }
+        Order order = findOrderOfDeliverer(orderId, delivererId);
+        if (order.getStatus() != OrderStatusEnum.IN_PREPARATION && order.getStatus() != OrderStatusEnum.OUT_FOR_DELIVERY) {
+            throw new BusinessRuleException("Só é possível cancelar a entrega de pedidos atribuídos e ainda não entregues.");
+        }
+        DeliveryRefusal refusal = deliveryRefusalRepository.save(
+                new DeliveryRefusal(null, order, order.getDeliverer(), reason.trim(), LocalDateTime.now()));
+        if (order.getRefusals() == null) {
+            order.setRefusals(new ArrayList<>());
+        }
+        order.getRefusals().add(0, refusal);
+        order.setDeliverer(null);
+        order.setDispatchedAt(null);
+        order.setStatus(OrderStatusEnum.IN_PREPARATION);
+        return orderMapper.toResponseDto(orderRepository.save(order));
+    }
+
+    // HU07: confirmação da entrega com um toque pelo entregador
+    @Transactional
+    public OrderResponseDTO completeDelivery(String orderId, Long delivererId) {
+        Order order = findOrderOfDeliverer(orderId, delivererId);
+        if (order.getStatus() != OrderStatusEnum.OUT_FOR_DELIVERY) {
+            throw new BusinessRuleException("Só é possível concluir pedidos que estão em rota.");
+        }
+        order.setStatus(OrderStatusEnum.DELIVERED);
+        order.setDeliveredAt(LocalDateTime.now());
+        return orderMapper.toResponseDto(orderRepository.save(order));
+    }
+
+    private Order findOrderOfDeliverer(String orderId, Long delivererId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido com " + orderId + " não encontrado"));
+        if (order.getDeliverer() == null || !order.getDeliverer().getId().equals(delivererId)) {
+            throw new ForbiddenResourceException("Pedido não está atribuído a este entregador.");
+        }
+        return order;
+    }
+
     public String updateOrderStatus(String id, String newStatus) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido com " + id + " não encontrado"));
+
+        // pedido de entrega só sai da loja por despacho com entregador (HU07); retirada segue por aqui
+        if (OrderStatusEnum.OUT_FOR_DELIVERY.name().equals(newStatus) && order.getDeliveryMode() == DeliveryModeEnum.DELIVERY) {
+            throw new BusinessRuleException("Use o despacho com entregador.");
+        }
 
         order.setStatus(OrderStatusEnum.valueOf(newStatus));
         orderRepository.save(order);

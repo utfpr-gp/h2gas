@@ -10,6 +10,8 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { OrderStatus } from '../../../models/order-status.enum';
 import { SupplierService } from '../../../services/supplier.service';
+import { DelivererService } from '../../../services/deliverer.service';
+import { Deliverer } from '../../../models/deliverer';
 import { OrderStatusTimelineComponent } from '../../order-status-timeline/order-status-timeline.component';
 import { fadeIn, staggerList } from '../../../animations/checkout.animations';
 
@@ -33,6 +35,7 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
     private toastr: ToastrService,
     private router: Router,
     private supplierService: SupplierService,
+    private delivererService: DelivererService,
   ) { }
 
   userLogado?: User;
@@ -47,6 +50,13 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
   cancelReason = '';
   canceling = false;
   showDetailMobile = false;
+
+  // HU07: despacho com entregador (Figura 15)
+  dispatchTarget?: OrderResponse;
+  deliverers: Deliverer[] = [];
+  loadingDeliverers = false;
+  selectedDelivererId?: number;
+  dispatching = false;
   readonly refreshIntervalMs = 30000;
   private knownOrderIds = new Set<string>();
   private newOrderIds = new Set<string>();
@@ -101,6 +111,15 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
     if (order) {
       this.newOrderIds.delete(order.id);
     }
+  }
+
+  // pedido de entrega em preparo sai por despacho com entregador; retirada segue com o atalho
+  actionsFor(order: OrderResponse): { label: string; icon: string; color: string; action: string }[] {
+    const actions = this.actionsByStatus[order.status as OrderStatus] ?? [];
+    return actions.map((action) =>
+      action.action === 'OUT_FOR_DELIVERY' && order.deliveryMode !== 'PICKUP'
+        ? { ...action, label: order.delivererName ? 'Trocar entregador' : 'Despachar', action: 'DISPATCH' }
+        : action);
   }
 
   // na retirada, "saiu para entrega" e "entregue" mudam de sentido
@@ -161,6 +180,10 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
       this.openCancel(order);
       return;
     }
+    if (action === 'DISPATCH') {
+      this.openDispatch(order);
+      return;
+    }
     this.orderService.updateStatusOrder({ orderStatus: action }, order.id).subscribe({
       next: (response: any) => {
         order.status = response.status;
@@ -171,6 +194,60 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
       },
       error: (err) => this.toastr.error(`Erro ao atualizar o pedido: ${this.backendMessage(err)}`),
     });
+  }
+
+  openDispatch(order: OrderResponse) {
+    this.dispatchTarget = order;
+    this.selectedDelivererId = undefined;
+    this.deliverers = [];
+    this.loadingDeliverers = true;
+    this.delivererService.listMine().subscribe({
+      next: (frota) => {
+        this.deliverers = frota.filter((d) => d.active);
+        this.loadingDeliverers = false;
+      },
+      error: (err) => {
+        this.loadingDeliverers = false;
+        this.toastr.error(`Erro ao buscar entregadores: ${this.backendMessage(err)}`);
+      },
+    });
+  }
+
+  closeDispatch() {
+    this.dispatchTarget = undefined;
+    this.selectedDelivererId = undefined;
+  }
+
+  selectDeliverer(deliverer: Deliverer) {
+    this.selectedDelivererId = deliverer.id;
+  }
+
+  confirmDispatch() {
+    if (!this.dispatchTarget || this.selectedDelivererId == null || this.dispatching) {
+      return;
+    }
+    const order = this.dispatchTarget;
+    this.dispatching = true;
+    this.orderService.assignDeliverer(order.id, this.selectedDelivererId).subscribe({
+      next: (response) => {
+        this.dispatching = false;
+        order.status = response.status;
+        order.delivererName = response.delivererName;
+        order.lastRefusalReason = undefined;
+        order.lastRefusalBy = undefined;
+        this.closeDispatch();
+        this.toastr.success(`${response.delivererName} foi atribuído ao pedido. Ele inicia a entrega pelo app.`);
+      },
+      error: (err) => {
+        this.dispatching = false;
+        this.toastr.error(`Erro ao despachar: ${this.backendMessage(err)}`);
+      },
+    });
+  }
+
+  goToDeliverers() {
+    this.closeDispatch();
+    this.router.navigate(['/entregadores']);
   }
 
   // Cenário 2: cancelar só com justificativa

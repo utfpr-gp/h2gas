@@ -1,10 +1,15 @@
 package com.h2gas.controller;
 
 import com.h2gas.enums.OrderStatusEnum;
+import com.h2gas.model.dto.AssignDelivererRequestDTO;
+import com.h2gas.model.dto.CancelDeliveryRequestDTO;
 import com.h2gas.model.dto.CancelOrderRequestDTO;
+import com.h2gas.model.dto.DeliveryHistoryDTO;
 import com.h2gas.model.dto.CancelOrderResponseDTO;
 import com.h2gas.model.dto.OrderPreviewDTO;
 import com.h2gas.model.entity.Order;
+import com.h2gas.model.entity.Deliverer;
+import com.h2gas.services.DelivererService;
 import com.h2gas.services.OrderNotificationService;
 import com.h2gas.model.dto.OrderPreviewRequestDTO;
 import com.h2gas.model.dto.OrderRequestDTO;
@@ -45,6 +50,9 @@ public class OrderController {
 
     @Autowired
     private OrderNotificationService orderNotificationService;
+
+    @Autowired
+    private DelivererService delivererService;
 
     @GetMapping("/{id}")
     @ResponseBody
@@ -214,5 +222,113 @@ public class OrderController {
         Order cancelado = orderService.cancelOrder(id, request.getReason(), usuarioLogado);
         boolean customerNotified = orderNotificationService.notifyCancellation(cancelado);
         return ResponseEntity.ok(new CancelOrderResponseDTO(cancelado.getStatus().getStatus(), customerNotified));
+    }
+
+    @Operation(summary = "Despacha o pedido atribuindo um entregador (fornecedor)",
+            description = "Só pedido de entrega em preparação (IN_PREPARATION) do próprio fornecedor (ou ADMIN). "
+                    + "O entregador precisa ser ativo e da frota do fornecedor. Apenas atribui: o pedido segue em preparação até o "
+                    + "entregador iniciar a entrega (start-delivery). Chamar de novo troca o entregador. "
+                    + "Entregador já em rota pode receber outro pedido")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Pedido despachado"),
+            @ApiResponse(responseCode = "400", description = "Pedido fora de preparação ou de retirada; entregador de outro fornecedor ou inativo"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido, papel sem permissão ou pedido de outro fornecedor"),
+            @ApiResponse(responseCode = "404", description = "Pedido ou entregador inexistente")
+    })
+    @PatchMapping("/{id}/assign-deliverer")
+    @ResponseBody
+    @RolesAllowed({"ADMIN", "SUPPLIER"})
+    public ResponseEntity<OrderResponseDTO> assignDeliverer(
+            @Parameter(description = "ID do pedido") @PathVariable String id,
+            @Valid @RequestBody AssignDelivererRequestDTO request) {
+        return ResponseEntity.ok(orderService.assignDeliverer(id, request.getDelivererId(), loggedUser()));
+    }
+
+    @Operation(summary = "Rotas ativas do entregador logado",
+            description = "Pedidos atribuídos ao entregador autenticado: em rota (OUT_FOR_DELIVERY, do despacho mais antigo) e depois os "
+                    + "pendentes de início (IN_PREPARATION, do pedido mais antigo); o status distingue EM ROTA de PENDENTE. "
+                    + "O entregador vem do token; não há parâmetro para consultar rotas de outro")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Rotas do entregador"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido ou papel diferente de DELIVERER"),
+            @ApiResponse(responseCode = "404", description = "Usuário logado não é um entregador cadastrado")
+    })
+    @GetMapping("/my-routes")
+    @ResponseBody
+    @RolesAllowed("DELIVERER")
+    public ResponseEntity<List<OrderResponseDTO>> myRoutes() {
+        Deliverer entregador = delivererService.findByUserId(loggedUser().getId());
+        return ResponseEntity.ok(orderService.findActiveByDeliverer(entregador.getId()));
+    }
+
+    @Operation(summary = "Histórico de entregas do entregador logado",
+            description = "Entregas que o entregador concluiu (DELIVERED) e as que recusou (REFUSED), da mais recente à mais antiga, "
+                    + "com a contagem de entregas concluídas hoje. O entregador vem do token")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Histórico do entregador"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido ou papel diferente de DELIVERER"),
+            @ApiResponse(responseCode = "404", description = "Usuário logado não é um entregador cadastrado")
+    })
+    @GetMapping("/my-deliveries/history")
+    @ResponseBody
+    @RolesAllowed("DELIVERER")
+    public ResponseEntity<DeliveryHistoryDTO> myDeliveryHistory() {
+        Deliverer entregador = delivererService.findByUserId(loggedUser().getId());
+        return ResponseEntity.ok(orderService.findDeliveryHistory(entregador.getId()));
+    }
+
+    @Operation(summary = "Inicia a entrega (entregador)",
+            description = "O entregador logado inicia um pedido atribuído a ele e em preparação: vai a OUT_FOR_DELIVERY e registra dispatchedAt")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Entrega iniciada"),
+            @ApiResponse(responseCode = "400", description = "Pedido não está em preparação ou o entregador já tem outra entrega em rota"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido, papel sem permissão ou pedido de outro entregador"),
+            @ApiResponse(responseCode = "404", description = "Pedido inexistente ou usuário não é entregador")
+    })
+    @PatchMapping("/{id}/start-delivery")
+    @ResponseBody
+    @RolesAllowed("DELIVERER")
+    public ResponseEntity<OrderResponseDTO> startDelivery(@Parameter(description = "ID do pedido") @PathVariable String id) {
+        Deliverer entregador = delivererService.findByUserId(loggedUser().getId());
+        return ResponseEntity.ok(orderService.startDelivery(id, entregador.getId()));
+    }
+
+    @Operation(summary = "Cancela a entrega (entregador)",
+            description = "O entregador logado recusa um pedido atribuído a ele, com motivo obrigatório. O pedido volta a "
+                    + "IN_PREPARATION sem entregador para o fornecedor despachar de novo; o pedido não é cancelado ao cliente")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Entrega devolvida ao fornecedor"),
+            @ApiResponse(responseCode = "400", description = "Motivo ausente ou maior que 500 caracteres; pedido já entregue ou cancelado"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido, papel sem permissão ou pedido de outro entregador"),
+            @ApiResponse(responseCode = "404", description = "Pedido inexistente ou usuário não é entregador")
+    })
+    @PatchMapping("/{id}/cancel-delivery")
+    @ResponseBody
+    @RolesAllowed("DELIVERER")
+    public ResponseEntity<OrderResponseDTO> cancelDelivery(
+            @Parameter(description = "ID do pedido") @PathVariable String id,
+            @Valid @RequestBody CancelDeliveryRequestDTO request) {
+        Deliverer entregador = delivererService.findByUserId(loggedUser().getId());
+        return ResponseEntity.ok(orderService.cancelDelivery(id, entregador.getId(), request.getReason()));
+    }
+
+    @Operation(summary = "Confirma a entrega (entregador)",
+            description = "O entregador logado confirma um pedido atribuído a ele e em rota: vai a DELIVERED e registra deliveredAt")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Entrega confirmada"),
+            @ApiResponse(responseCode = "400", description = "Pedido não está em rota"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido, papel sem permissão ou pedido de outro entregador"),
+            @ApiResponse(responseCode = "404", description = "Pedido inexistente ou usuário não é entregador")
+    })
+    @PatchMapping("/{id}/complete-delivery")
+    @ResponseBody
+    @RolesAllowed("DELIVERER")
+    public ResponseEntity<OrderResponseDTO> completeDelivery(@Parameter(description = "ID do pedido") @PathVariable String id) {
+        Deliverer entregador = delivererService.findByUserId(loggedUser().getId());
+        return ResponseEntity.ok(orderService.completeDelivery(id, entregador.getId()));
+    }
+
+    private User loggedUser() {
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 }

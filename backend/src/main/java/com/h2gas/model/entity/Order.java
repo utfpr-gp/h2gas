@@ -53,6 +53,11 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items;
 
+    // HU07: recusas de entrega, da mais recente para a mais antiga (só leitura)
+    @OneToMany(mappedBy = "order")
+    @OrderBy("createdAt DESC")
+    private List<DeliveryRefusal> refusals;
+
     private String note;
 
     private LocalDateTime deliveryDate;

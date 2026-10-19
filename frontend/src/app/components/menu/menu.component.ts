@@ -10,13 +10,15 @@ import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { LocationContextService } from '../../services/location-context.service';
 import { BottomTabBarComponent } from '../bottom-tab-bar/bottom-tab-bar.component';
+import { DelivererTabBarComponent } from '../deliverer-tab-bar/deliverer-tab-bar.component';
 
 @Component({
   selector: 'app-menu',
   imports: [
     CommonModule,
     FormsModule,
-    BottomTabBarComponent
+    BottomTabBarComponent,
+    DelivererTabBarComponent
   ],
   templateUrl: './menu.component.html',
   styleUrl: './menu.component.css'
@@ -80,6 +82,11 @@ export class MenuComponent implements OnInit {
     }
   }
 
+
+  // HU07: o entregador só vê a marca e "Sair" (sem catálogo, carrinho ou links do cliente)
+  get isDeliverer(): boolean {
+    return this.user?.userType === 'DELIVERER';
+  }
 
   unitPriceForMode(product: ProductItem): number | undefined {
     return this.deliveryMode === 'PICKUP' ? product.pricePickup : product.priceDelivery;
