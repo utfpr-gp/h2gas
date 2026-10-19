@@ -24,6 +24,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -114,6 +115,18 @@ class AuthenticationControllerTest {
                         .content(objectMapper.writeValueAsString(authDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").exists());
+    }
+
+    @Test
+    void deveRetornar401ComMensagemClaraQuandoSenhaErrada() throws Exception {
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new BadCredentialsException("Bad credentials"));
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AuthenticationDTO("teste@exemplo.com", "errada"))))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value("E-mail ou senha inválidos."));
     }
 
     @Test
