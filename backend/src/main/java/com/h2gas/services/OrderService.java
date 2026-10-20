@@ -1,5 +1,6 @@
 package com.h2gas.services;
 
+import com.h2gas.events.OrderStatusChangedEvent;
 import com.h2gas.enums.DeliveryModeEnum;
 import com.h2gas.enums.OrderStatusEnum;
 import com.h2gas.enums.UserTypeEnum;
@@ -28,6 +29,7 @@ import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.OrderMapper;
 import com.h2gas.model.repository.DeliveryRefusalRepository;
 import com.h2gas.model.repository.OrderRepository;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -72,8 +74,11 @@ public class OrderService {
 
     private final DeliveryRefusalRepository deliveryRefusalRepository;
 
-    public OrderService(DeliveryRefusalRepository deliveryRefusalRepository) {
+    private final ApplicationEventPublisher eventPublisher;
+
+    public OrderService(DeliveryRefusalRepository deliveryRefusalRepository, ApplicationEventPublisher eventPublisher) {
         this.deliveryRefusalRepository = deliveryRefusalRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     // RN02: pedido, itens e decremento de estoque entram ou saem juntos
@@ -262,7 +267,9 @@ public class OrderService {
         }
         order.setStatus(OrderStatusEnum.CANCELED);
         order.setCancellationReason(reason.trim());
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+        publishStatusChange(saved);
+        return saved;
     }
 
     // HU07: despacho = atribuir (ou trocar) o entregador; o pedido segue em preparo até o entregador iniciar
@@ -306,7 +313,9 @@ public class OrderService {
         }
         order.setStatus(OrderStatusEnum.OUT_FOR_DELIVERY);
         order.setDispatchedAt(LocalDateTime.now());
-        return orderMapper.toResponseDto(orderRepository.save(order));
+        Order saved = orderRepository.save(order);
+        publishStatusChange(saved);
+        return orderMapper.toResponseDto(saved);
     }
 
     // HU07: a rota é só do entregador autenticado (o id vem do token, nunca de parâmetro livre);
@@ -381,7 +390,16 @@ public class OrderService {
         }
         order.setStatus(OrderStatusEnum.DELIVERED);
         order.setDeliveredAt(LocalDateTime.now());
-        return orderMapper.toResponseDto(orderRepository.save(order));
+        Order saved = orderRepository.save(order);
+        publishStatusChange(saved);
+        return orderMapper.toResponseDto(saved);
+    }
+
+    // HU08: avisa a tela do cliente (via SSE, depois do commit). A recusa do entregador
+    // (cancelDelivery) e o despacho (assignDeliverer) não passam por aqui, por decisão do script.
+    private void publishStatusChange(Order order) {
+        eventPublisher.publishEvent(new OrderStatusChangedEvent(
+                order.getId(), order.getCustomer().getId(), order.getStatus().getStatus()));
     }
 
     private Order findOrderOfDeliverer(String orderId, Long delivererId) {
@@ -393,6 +411,7 @@ public class OrderService {
         return order;
     }
 
+    @Transactional
     public String updateOrderStatus(String id, String newStatus) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido com " + id + " não encontrado"));
@@ -403,7 +422,7 @@ public class OrderService {
         }
 
         order.setStatus(OrderStatusEnum.valueOf(newStatus));
-        orderRepository.save(order);
+        publishStatusChange(orderRepository.save(order));
         return order.getStatus().getStatus();
     }
 

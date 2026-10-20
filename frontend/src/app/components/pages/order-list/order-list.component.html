@@ -25,7 +25,8 @@
     </p>
 
     <div class="space-y-3" [@staggerList]="orders?.length">
-        <article *ngFor="let order of orders; let i = index"
+        <article *ngFor="let order of orders; let i = index" data-testid="order-card"
+            [class.status-updated]="highlightedOrderId === order.id"
             class="bg-white rounded-xl shadow-md border border-gray-200 p-4 transition-shadow duration-200 hover:shadow-lg">
             <div class="flex items-start justify-between gap-2">
                 <div class="min-w-0">
@@ -34,7 +35,7 @@
                         Pedido #{{ currentPage * pageSize + i + 1 }} · {{ order.orderDate | date:'dd/MM/yyyy HH:mm' }}
                     </p>
                 </div>
-                <span class="status-badge shrink-0" [ngClass]="getClasStatus(order.status)">{{ order.status }}</span>
+                <span data-testid="order-status" class="status-badge shrink-0" [ngClass]="getClasStatus(order.status)">{{ order.status }}</span>
             </div>
 
             <div class="flex items-start gap-2 mt-3 text-sm text-gray-700">

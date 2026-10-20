@@ -8,6 +8,7 @@ import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.dto.DelivererCreateDTO;
 import com.h2gas.model.dto.DeliveryHistoryDTO;
 import com.h2gas.model.dto.DeliveryHistoryItemDTO;
+import com.h2gas.events.OrderStatusChangedEvent;
 import com.h2gas.model.dto.OrderItemRequestDTO;
 import com.h2gas.model.dto.OrderPreviewDTO;
 import com.h2gas.model.dto.OrderPreviewRequestDTO;
@@ -25,6 +26,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,7 +45,13 @@ import static org.junit.jupiter.api.Assertions.*;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 //@TestPropertySource(properties = "jwt.secret=segredoFake123")
 @Transactional
+@RecordApplicationEvents
 class OrderServiceTest {
+
+    // HU08: o serviço publica o evento de domínio; o envio SSE (após o commit) é testado no listener
+    @Autowired
+    private ApplicationEvents applicationEvents;
+
 
     @Autowired
     private OrderService orderService;
@@ -587,6 +596,84 @@ class OrderServiceTest {
         orderService.updateOrderStatus(orderId, "CONFIRMED");
         orderService.updateOrderStatus(orderId, "IN_PREPARATION");
         return orderId;
+    }
+
+    private List<OrderStatusChangedEvent> eventosDeStatus() {
+        return applicationEvents.stream(OrderStatusChangedEvent.class).toList();
+    }
+
+    private String clienteDoPedido(String orderId) {
+        return orderRepository.findById(orderId).orElseThrow().getCustomer().getId();
+    }
+
+    @Test
+    @DisplayName("HU08: atualizar o status publica o evento para o cliente do pedido")
+    void devePublicarEventoAoAtualizarStatus() {
+        String orderId = orderService.createOrder(novoPedido(validCustomerAddressId)).getId();
+        applicationEvents.clear();
+
+        orderService.updateOrderStatus(orderId, "CONFIRMED");
+
+        assertEquals(List.of(new OrderStatusChangedEvent(orderId, clienteDoPedido(orderId), "Confirmado")), eventosDeStatus());
+    }
+
+    @Test
+    @DisplayName("HU08: cancelar o pedido publica o evento com status Cancelado")
+    void devePublicarEventoAoCancelarPedido() {
+        String orderId = pedidoEmPreparo("DELIVERY");
+        applicationEvents.clear();
+
+        orderService.cancelOrder(orderId, "Sem gás hoje", fornecedorDoPedido());
+
+        assertEquals(List.of(new OrderStatusChangedEvent(orderId, clienteDoPedido(orderId), "Cancelado")), eventosDeStatus());
+    }
+
+    @Test
+    @DisplayName("HU08: o entregador iniciar publica Saiu para entrega")
+    void devePublicarEventoAoIniciarEntrega() {
+        Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
+        String orderId = pedidoAtribuido(entregadorId);
+        applicationEvents.clear();
+
+        orderService.startDelivery(orderId, entregadorId);
+
+        assertEquals(List.of(new OrderStatusChangedEvent(orderId, clienteDoPedido(orderId), "Saiu para entrega")), eventosDeStatus());
+    }
+
+    @Test
+    @DisplayName("HU08: o entregador concluir publica Entregue")
+    void devePublicarEventoAoConcluirEntrega() {
+        Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
+        String orderId = pedidoEmRota(entregadorId);
+        applicationEvents.clear();
+
+        orderService.completeDelivery(orderId, entregadorId);
+
+        assertEquals(List.of(new OrderStatusChangedEvent(orderId, clienteDoPedido(orderId), "Entregue")), eventosDeStatus());
+    }
+
+    @Test
+    @DisplayName("HU08 (decisão a): a recusa do entregador não é publicada ao cliente")
+    void naoDevePublicarEventoAoRecusarEntrega() {
+        Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
+        String orderId = pedidoEmRota(entregadorId);
+        applicationEvents.clear();
+
+        orderService.cancelDelivery(orderId, entregadorId, "Moto quebrou");
+
+        assertTrue(eventosDeStatus().isEmpty());
+    }
+
+    @Test
+    @DisplayName("HU08: despachar só atribui, sem mudar o status, e não publica")
+    void naoDevePublicarEventoAoAtribuirEntregador() {
+        String orderId = pedidoEmPreparo("DELIVERY");
+        Long entregadorId = entregadorDe(validSupplierId, "carlos@teste.com");
+        applicationEvents.clear();
+
+        orderService.assignDeliverer(orderId, entregadorId, fornecedorDoPedido());
+
+        assertTrue(eventosDeStatus().isEmpty());
     }
 
     @Test

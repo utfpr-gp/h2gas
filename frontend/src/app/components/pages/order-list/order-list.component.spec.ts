@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { of, Subject } from 'rxjs';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
@@ -8,6 +8,7 @@ import { OrderListComponent } from './order-list.component';
 import { OrderService } from '../../../services/order.service';
 import { UserService } from '../../../services/user.service';
 import { CartService } from '../../../services/cart.service';
+import { OrderStatusChange, OrderTrackingService } from '../../../services/order-tracking.service';
 import { OrderResponse, ReorderItem, ReorderPreview } from '../../../models/order.model';
 
 describe('OrderListComponent', () => {
@@ -17,8 +18,10 @@ describe('OrderListComponent', () => {
   let cartServiceSpy: jasmine.SpyObj<CartService>;
   let toastrSpy: jasmine.SpyObj<ToastrService>;
   let routerSpy: jasmine.SpyObj<Router>;
+  let trackingSpy: jasmine.SpyObj<OrderTrackingService>;
+  let statusChange$: Subject<OrderStatusChange>;
 
-  const pedido = { id: 'pedido-1', supplierName: 'Fornecedor', orderItems: [] } as unknown as OrderResponse;
+  const pedido = { id: 'pedido-1', supplierName: 'Fornecedor', status: 'Em preparacao', orderItems: [] } as unknown as OrderResponse;
 
   const botijao: ReorderItem = {
     productId: 5, productBrand: 'Ultragaz', category: 'P13', type: 'Gás', imageUrl: 'img.png',
@@ -36,8 +39,10 @@ describe('OrderListComponent', () => {
   beforeEach(async () => {
     orderServiceSpy = jasmine.createSpyObj('OrderService', ['findByCustomerId', 'getReorderPreview']);
     orderServiceSpy.findByCustomerId.and.returnValue(of({
-      data: [pedido], page: 0, totalPages: 1, hasNext: false, hasPrevious: false,
+      data: [{ ...pedido }], page: 0, totalPages: 1, hasNext: false, hasPrevious: false,
     } as any));
+    statusChange$ = new Subject<OrderStatusChange>();
+    trackingSpy = jasmine.createSpyObj('OrderTrackingService', ['connect', 'disconnect'], { onStatusChange: statusChange$.asObservable() });
     cartServiceSpy = jasmine.createSpyObj('CartService', ['getCart', 'setCart']);
     cartServiceSpy.getCart.and.returnValue([]);
     toastrSpy = jasmine.createSpyObj('ToastrService', ['success', 'warning', 'error', 'info']);
@@ -53,6 +58,7 @@ describe('OrderListComponent', () => {
         { provide: UserService, useValue: userServiceSpy },
         { provide: ToastrService, useValue: toastrSpy },
         { provide: Router, useValue: routerSpy },
+        { provide: OrderTrackingService, useValue: trackingSpy },
         provideNoopAnimations(),
       ],
     }).compileComponents();
@@ -64,6 +70,50 @@ describe('OrderListComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  // HU08 — atualização em tempo real via SSE
+  const badge = () => fixture.nativeElement.querySelector('[data-testid=order-status]') as HTMLElement;
+  const card = () => fixture.nativeElement.querySelector('[data-testid=order-card]') as HTMLElement;
+
+  it('deveConectarAoCanalDoClienteAoAbrirATela', () => {
+    expect(trackingSpy.connect).toHaveBeenCalledOnceWith('user-1');
+  });
+
+  it('deveAtualizarStatusDoPedidoEmTempoRealSemRefetchCompleto', () => {
+    expect(badge().textContent).toContain('Em preparacao');
+
+    statusChange$.next({ orderId: 'pedido-1', status: 'Saiu para entrega' });
+    fixture.detectChanges();
+
+    expect(badge().textContent).toContain('Saiu para entrega');
+    expect(orderServiceSpy.findByCustomerId).toHaveBeenCalledTimes(1);
+  });
+
+  it('deveDestacarCardAtualizado', fakeAsync(() => {
+    statusChange$.next({ orderId: 'pedido-1', status: 'Entregue' });
+    fixture.detectChanges();
+    expect(card().classList).toContain('status-updated');
+
+    tick(2000);
+    fixture.detectChanges();
+    expect(card().classList).not.toContain('status-updated');
+  }));
+
+  it('deveIgnorarEventoDePedidoForaDaPagina', () => {
+    statusChange$.next({ orderId: 'pedido-de-outra-pagina', status: 'Entregue' });
+    fixture.detectChanges();
+
+    expect(badge().textContent).toContain('Em preparacao');
+    expect(card().classList).not.toContain('status-updated');
+  });
+
+  it('deveFecharEventSourceAoDestruirComponente', () => {
+    fixture.destroy();
+
+    expect(trackingSpy.disconnect).toHaveBeenCalled();
+    statusChange$.next({ orderId: 'pedido-1', status: 'Entregue' });
+    expect(component.orders?.[0].status as string).toBe('Em preparacao');
   });
 
   it('deveSubstituirCarrinhoComItensDisponiveisAoClicarPedirNovamente', () => {

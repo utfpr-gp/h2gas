@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { OrderService } from '../../../services/order.service';
 import { UserService } from '../../../services/user.service';
 import { CommonModule } from '@angular/common';
@@ -6,6 +7,7 @@ import { User } from '../../../models/user';
 import { ToastrService } from 'ngx-toastr';
 import { OrderResponse, ReorderItem } from '../../../models/order.model';
 import { CartService } from '../../../services/cart.service';
+import { OrderStatusChange, OrderTrackingService } from '../../../services/order-tracking.service';
 import { ProductItem } from '../../../models/product-item';
 import { PaginationComponent } from '../../pagination/pagination.component';
 import { Router } from '@angular/router';
@@ -21,7 +23,7 @@ import { backendMessage } from '../../../utils/backend-message';
   templateUrl: './order-list.component.html',
   animations: [staggerList, expandCollapse],
 })
-export class OrderListComponent implements OnInit {
+export class OrderListComponent implements OnInit, OnDestroy {
 
   constructor(
     private orderService: OrderService,
@@ -29,12 +31,18 @@ export class OrderListComponent implements OnInit {
     private toastr: ToastrService,
     private router: Router,
     private cartService: CartService,
+    private orderTracking: OrderTrackingService,
   ) {}
 
   userLogado?: User;
   orders?: OrderResponse[];
   expandedIndex: number | null = null;
   reorderingId: string | null = null;
+  // HU08: card que acabou de mudar de status (destaque curto, sem toast)
+  highlightedOrderId: string | null = null;
+  readonly highlightMs = 2000;
+  private statusSub?: Subscription;
+  private highlightTimer?: ReturnType<typeof setTimeout>;
 
   currentPage: number = 0;
   totalPages: number = 0;
@@ -46,6 +54,27 @@ export class OrderListComponent implements OnInit {
     this.userLogado = this.userService.getUserLocalStorage();
 
     this.getOrders();
+
+    // HU08: o status muda na tela sem refazer a busca; pedido fora da página atual é ignorado
+    this.statusSub = this.orderTracking.onStatusChange.subscribe((change) => this.applyStatusChange(change));
+    this.orderTracking.connect(this.userLogado!.id!);
+  }
+
+  ngOnDestroy(): void {
+    this.statusSub?.unsubscribe();
+    this.orderTracking.disconnect();
+    clearTimeout(this.highlightTimer);
+  }
+
+  private applyStatusChange({ orderId, status }: OrderStatusChange) {
+    const order = this.orders?.find((o) => o.id === orderId);
+    if (!order) {
+      return;
+    }
+    order.status = status as OrderResponse['status'];
+    this.highlightedOrderId = orderId;
+    clearTimeout(this.highlightTimer);
+    this.highlightTimer = setTimeout(() => (this.highlightedOrderId = null), this.highlightMs);
   }
 
   statuses = [
