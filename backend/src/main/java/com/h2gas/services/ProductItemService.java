@@ -142,8 +142,7 @@ public class ProductItemService {
         }
 
         productItemUpdate.setBrand(productItemDto.getBrand());
-        productItemUpdate.setPriceDelivery(productItemDto.getPriceDelivery());
-        productItemUpdate.setPricePickup(productItemDto.getPricePickup());
+        createProductItemMapper.applyPrices(productItemUpdate, productItemDto);
         productItemUpdate.setDescription(productItemDto.getDescription());
         productItemUpdate.setStockQuantity(productItemDto.getStockQuantity());
         productItemRepository.save(productItemUpdate);

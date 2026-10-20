@@ -12,10 +12,23 @@ public class CreateProductItemMapper {
     private ModelMapper modelMapper;
 
     public CreateProductItemDTO toDto(ProductItem data) {
-        return modelMapper.map(data, CreateProductItemDTO.class);
+        CreateProductItemDTO dto = modelMapper.map(data, CreateProductItemDTO.class);
+        dto.setPrice(data.getPricePickup());
+        if (data.getPriceDelivery() != null && data.getPricePickup() != null) {
+            dto.setShippingFee(data.getPriceDelivery().subtract(data.getPricePickup()));
+        }
+        return dto;
     }
 
     public ProductItem toEntity(CreateProductItemDTO dto) {
-        return modelMapper.map(dto, ProductItem.class);
+        ProductItem productItem = modelMapper.map(dto, ProductItem.class);
+        applyPrices(productItem, dto);
+        return productItem;
+    }
+
+    // HU10: retirada = Preço; entrega = Preço + frete (as colunas do banco seguem as mesmas)
+    public void applyPrices(ProductItem productItem, CreateProductItemDTO dto) {
+        productItem.setPricePickup(dto.getPrice());
+        productItem.setPriceDelivery(dto.getPrice().add(dto.getShippingFee()));
     }
 }

@@ -49,12 +49,12 @@ public class ProductItemController {
     }
 
     @Operation(summary = "Cadastra um produto do fornecedor logado",
-            description = "Exige os dois preços, separados: priceDelivery (Preço com Entrega) e pricePickup (Preço para Retirada). "
-                    + "Preços iguais viram a etiqueta Entrega Grátis na leitura. A categoria precisa ser do próprio fornecedor. "
+            description = "Exige price (Preço, valor de retirada) e shippingFee (Preço de frete). Entrega = price + shippingFee; "
+                    + "frete zero vira a etiqueta Entrega Grátis na leitura. A categoria precisa ser do próprio fornecedor. "
                     + "multipart/form-data: parte 'product' (JSON) e parte 'file' (imagem)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Produto cadastrado"),
-            @ApiResponse(responseCode = "400", description = "Preço ausente ou negativo, marca/categoria ausentes ou estoque negativo"),
+            @ApiResponse(responseCode = "400", description = "Preço ou frete ausente/negativo, marca/categoria ausentes ou estoque negativo"),
             @ApiResponse(responseCode = "403", description = "Sem token válido, papel sem permissão ou categoria de outro fornecedor"),
             @ApiResponse(responseCode = "404", description = "Categoria inexistente"),
             @ApiResponse(responseCode = "502", description = "Falha ao enviar a imagem")
@@ -89,7 +89,7 @@ public class ProductItemController {
     }
 
     @Operation(summary = "Edita um produto do fornecedor logado",
-            description = "Atualiza marca, os dois preços (priceDelivery e pricePickup), estoque e descrição. Só o dono do produto "
+            description = "Atualiza marca, price e shippingFee (retirada = price; entrega = price + shippingFee), estoque e descrição. Só o dono do produto "
                     + "(ou ADMIN) edita, e a categoria nova precisa ser do mesmo fornecedor")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Produto atualizado"),

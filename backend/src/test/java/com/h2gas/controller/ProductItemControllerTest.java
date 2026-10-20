@@ -139,46 +139,46 @@ class ProductItemControllerTest {
     }
 
     @Test
-    void deveRejeitarCriacaoSemPrecoDeEntrega() throws Exception {
+    void deveRejeitarCriacaoSemPreco() throws Exception {
         autenticarFornecedor();
 
-        postarProduto(produtoJson(",\"pricePickup\":100.00")).andExpect(status().isBadRequest());
+        postarProduto(produtoJson(",\"shippingFee\":20.00")).andExpect(status().isBadRequest());
 
         verify(productItemService, never()).createProductItem(any(), any(), any());
     }
 
     @Test
-    void deveRejeitarCriacaoSemPrecoDeRetirada() throws Exception {
+    void deveRejeitarCriacaoSemFrete() throws Exception {
         autenticarFornecedor();
 
-        postarProduto(produtoJson(",\"priceDelivery\":120.00")).andExpect(status().isBadRequest());
+        postarProduto(produtoJson(",\"price\":100.00")).andExpect(status().isBadRequest());
 
         verify(productItemService, never()).createProductItem(any(), any(), any());
     }
 
     @Test
-    void deveRejeitarCriacaoComPrecoNegativo() throws Exception {
+    void deveRejeitarCriacaoComFreteNegativo() throws Exception {
         autenticarFornecedor();
 
-        postarProduto(produtoJson(",\"priceDelivery\":-1.00,\"pricePickup\":100.00")).andExpect(status().isBadRequest());
+        postarProduto(produtoJson(",\"price\":100.00,\"shippingFee\":-1.00")).andExpect(status().isBadRequest());
 
         verify(productItemService, never()).createProductItem(any(), any(), any());
     }
 
     @Test
-    void deveAceitarCriacaoComAmbosOsPrecosValidos() throws Exception {
+    void deveAceitarCriacaoComPrecoEFreteValidos() throws Exception {
         autenticarFornecedor();
         ProductItemDTO criado = new ProductItemDTO();
         criado.setBrand("Ultragaz");
         when(productItemService.createProductItem(any(), any(), any())).thenReturn(criado);
 
-        postarProduto(produtoJson(",\"priceDelivery\":120.00,\"pricePickup\":100.00")).andExpect(status().isOk());
+        postarProduto(produtoJson(",\"price\":100.00,\"shippingFee\":20.00")).andExpect(status().isOk());
 
         verify(productItemService).createProductItem(any(), any(), any());
     }
 
     @Test
-    void deveRejeitarEdicaoSemPrecos() throws Exception {
+    void deveRejeitarEdicaoSemPrecoEFrete() throws Exception {
         autenticarFornecedor();
 
         mockMvc.perform(put("/api/product-items/12").contentType("application/json").content(produtoJson("")))
@@ -188,12 +188,12 @@ class ProductItemControllerTest {
     }
 
     @Test
-    void deveAceitarEdicaoComAmbosOsPrecosValidos() throws Exception {
+    void deveAceitarEdicaoComFreteZero() throws Exception {
         autenticarFornecedor();
         when(productItemService.updateProductItem(eq(12L), any(), any())).thenReturn(new ProductItemDTO());
 
         mockMvc.perform(put("/api/product-items/12").contentType("application/json")
-                        .content(produtoJson(",\"priceDelivery\":120.00,\"pricePickup\":120.00")))
+                        .content(produtoJson(",\"price\":120.00,\"shippingFee\":0")))
                 .andExpect(status().isOk());
 
         verify(productItemService).updateProductItem(eq(12L), any(), any());

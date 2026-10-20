@@ -22,6 +22,10 @@ public class ProductItemMapper {
         if (data.getPricePickup() != null) {
             productItemDTO.setPricePickup(data.getPricePickup().doubleValue());
         }
+        if (data.getPriceDelivery() != null && data.getPricePickup() != null) {
+            productItemDTO.setPrice(data.getPricePickup().doubleValue());
+            productItemDTO.setShippingFee(data.getPriceDelivery().subtract(data.getPricePickup()).doubleValue());
+        }
         productItemDTO.setFreeDelivery(data.getPriceDelivery() != null && data.getPricePickup() != null
                 && data.getPriceDelivery().compareTo(data.getPricePickup()) == 0);
 

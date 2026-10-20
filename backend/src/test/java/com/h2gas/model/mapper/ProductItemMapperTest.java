@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ProductItemMapperTest {
@@ -49,14 +50,23 @@ class ProductItemMapperTest {
     }
 
     @Test
+    @DisplayName("HU10: expõe o Preço (retirada) e o frete (entrega − retirada) derivados dos dois valores")
+    void deveExporPrecoEFreteDerivadosDosDoisPrecos() {
+        ProductItemDTO dto = novoMapper().toDto(produto("110.00", "95.00"));
+
+        assertEquals(95.0, dto.getPrice());
+        assertEquals(15.0, dto.getShippingFee());
+    }
+
+    @Test
     @DisplayName("HU10: preços iguais (mesmo com escala diferente) sinalizam Entrega Grátis")
-    void deveSinalizarFreteGratisQuandoPrecosForemIguais() {
+    void deveSinalizarFreteGratisQuandoOFreteForZero() {
         assertTrue(novoMapper().toDto(produto("110.00", "110.0")).isFreeDelivery());
     }
 
     @Test
     @DisplayName("HU10: preços diferentes não sinalizam Entrega Grátis")
-    void naoDeveSinalizarFreteGratisQuandoPrecosDiferentes() {
+    void naoDeveSinalizarFreteGratisQuandoHouverFrete() {
         assertFalse(novoMapper().toDto(produto("110.00", "95.00")).isFreeDelivery());
     }
 
@@ -65,6 +75,8 @@ class ProductItemMapperTest {
     void naoDeveQuebrarQuandoAlgumPrecoForNulo() {
         assertFalse(novoMapper().toDto(produto("110.00", null)).isFreeDelivery());
         assertFalse(novoMapper().toDto(produto(null, null)).isFreeDelivery());
+        assertNull(novoMapper().toDto(produto("110.00", null)).getShippingFee());
+        assertNull(novoMapper().toDto(produto(null, null)).getPrice());
     }
 
     @Test

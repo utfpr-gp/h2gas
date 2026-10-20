@@ -14,6 +14,9 @@ public class ProductItemDTO {
     private String brand;
     private Double priceDelivery;
     private Double pricePickup;
+    // HU10: contrato do fornecedor, derivado dos dois valores (price = retirada; shippingFee = entrega − retirada)
+    private Double price;
+    private Double shippingFee;
     // HU10: computado na leitura (priceDelivery == pricePickup); nunca persistido
     private boolean freeDelivery;
     private String category;
