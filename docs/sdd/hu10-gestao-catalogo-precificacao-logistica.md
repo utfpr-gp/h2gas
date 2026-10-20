@@ -27,8 +27,11 @@ operação de acordo com o custo logístico individual de cada item.
 > estoque, 3. Imagem), mantendo as duas páginas atuais (lista e
 > formulário); (b) o campo **SKU** da figura **não entra** (o Apêndice A
 > não o pede e exigiria migração); (c) a etiqueta "Entrega Grátis" aparece
-> para o **cliente e para o fornecedor**, e o formulário **avisa ao vivo**
-> quando os dois preços são iguais.
+> para o **cliente e para o fornecedor**, e o formulário tem um checkbox
+> **"Entrega Grátis"** (3ª revisão, a pedido do autor, no lugar do aviso
+> ao vivo): marcado, o preço com entrega passa a acompanhar o de
+> retirada; o modelo de dados não muda (preços iguais = Entrega Grátis,
+> computado na API).
 
 - **Cenário 1 — Precificação dividida**: Dado o formulário de novo
   produto, Quando o fornecedor preenche os dados financeiros, Então o
@@ -121,9 +124,13 @@ Detalhamento operacional (não cria cenário novo):
   (sem HEX novo, `rounded-xl`):
   - **1. Informações básicas**: Marca, Categoria, Descrição;
   - **2. Preços e estoque**: "Preço com Entrega" e "Preço para Retirada"
-    (obrigatórios, `min(0)`, lado a lado) e Estoque; **aviso ao vivo**
-    "Preços iguais: este produto terá Entrega Grátis" quando os dois
-    forem iguais e preenchidos;
+    (obrigatórios, `min(0)`, lado a lado) e Estoque; checkbox **"Entrega
+    Grátis"** entre os preços: ao marcar, o preço com entrega copia o de
+    retirada, fica **somente leitura** e continua acompanhando-o se a
+    retirada mudar; ao desmarcar, volta a ser editável (mantendo o
+    valor); na edição de produto com preços já iguais ele já vem
+    marcado. O estado do checkbox não vai para a API (só os dois
+    preços);
   - **3. Imagem**: área arrasta-e-solta (`dragover`/`drop`) além do
     clique, com pré-visualização e remover;
   - no **cadastro** a imagem é obrigatória (a API exige a parte `file`):
@@ -164,8 +171,12 @@ Detalhamento operacional (não cria cenário novo):
 4. `product-item-form.component.spec.ts` —
    `deveExigirAmbosOsCamposDePrecoParaSubmeter`,
    `deveEnviarPriceDeliveryEPricePickupAoSalvar`,
-   `deveAvisarEntregaGratisQuandoPrecosForemIguais`,
-   `naoDeveAvisarQuandoPrecosDiferentes`,
+   `deveCopiarPrecoDeRetiradaAoMarcarEntregaGratis`,
+   `deveAcompanharAMudancaDaRetiradaEnquantoMarcado`,
+   `deveLiberarPrecoDeEntregaAoDesmarcar`,
+   `deveEnviarPrecosIguaisSemOCampoAuxiliarAoSalvar`,
+   `deveMarcarEntregaGratisNaEdicaoQuandoPrecosJaSaoIguais`,
+   `naoDeveMarcarEntregaGratisNaEdicaoComPrecosDiferentes`,
    `deveAceitarImagemSoltaNaAreaDeUpload`,
    `deveVoltarParaListaAoCancelar`, `deveExigirImagemNoCadastro`,
    `deveIgnorarArquivoQueNaoEImagem`, `deveCarregarOsDoisPrecosNaEdicao`,
@@ -199,7 +210,7 @@ Regra herdada: specs antigos falhando no frontend não aumentam (21).
 - [x] `ProductItemDTO` expõe `freeDelivery` computado.
 - [x] Rotas `POST`/`PUT` documentadas no Swagger.
 - [x] Formulário em seções (Figura 16) com dois preços obrigatórios,
-      aviso de Entrega Grátis ao vivo, upload arrasta-e-solta e Cancelar.
+      checkbox "Entrega Grátis", upload arrasta-e-solta e Cancelar.
 - [x] Selo "Entrega Grátis" na vitrine do cliente e na gestão do
       fornecedor.
 - [x] Testes da seção 6 verdes; `mvn test` e `ng test` (≤ 21 falhas
