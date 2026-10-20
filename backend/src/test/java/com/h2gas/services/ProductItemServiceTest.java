@@ -258,7 +258,7 @@ class ProductItemServiceTest {
         String categoria = categoryProduct.getProductType().getName();
         Pageable pageable = PageRequest.of(0, 10);
         Page<ProductItemDTO> result = productItemService.findProductsFiltered(
-                supplier.getId(), "copap", categoria, pageable);
+                supplier.getId(), "copap", categoria, false, pageable);
 
         List<ProductItemDTO> content = result.getContent();
         assertEquals(1, content.size());

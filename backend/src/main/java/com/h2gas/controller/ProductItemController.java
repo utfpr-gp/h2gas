@@ -96,16 +96,26 @@ public class ProductItemController {
             @Parameter(description = "Página") @RequestParam(value = "page", required = false) Integer page,
             @Parameter(description = "Tamanho da página") @RequestParam(value = "size", required = false) Integer size,
             @Parameter(description = "Filtra pela marca do produto") @RequestParam(value = "search", required = false) String search,
-            @Parameter(description = "Filtra pelo nome da categoria (ex.: Gás, Água)") @RequestParam(value = "category", required = false) String category
+            @Parameter(description = "Filtra pelo nome da categoria (ex.: Gás, Água)") @RequestParam(value = "category", required = false) String category,
+            @Parameter(description = "Oculta produtos com estoque zero (RN02). Para CUSTOMER é sempre aplicado, mesmo que o parâmetro seja false; "
+                    + "fornecedor e admin veem os zerados por padrão, para repor") @RequestParam(value = "onlyAvailable", defaultValue = "false") boolean onlyAvailable
     ) {
         Pageable pageable = PaginationUtil.getPageableRequest(page, size);
-        Page<ProductItemDTO> result = productItemService.findProductsFiltered(supplierId, search, category, pageable);
+        Page<ProductItemDTO> result = productItemService.findProductsFiltered(supplierId, search, category, onlyAvailable || isCustomer(), pageable);
         PageResponse<ProductItemDTO> response = new PageResponse<>(result);
         return ResponseEntity.ok(response);
     }
 
+    // RN02 decidida no backend: o cliente nunca vê produto zerado, qualquer que seja o parâmetro enviado
+    private boolean isCustomer() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication != null && authentication.getAuthorities().stream()
+                .anyMatch(authority -> "ROLE_CUSTOMER".equals(authority.getAuthority()));
+    }
+
     @Operation(summary = "Lista produtos disponíveis na plataforma",
-            description = "Retorna produtos de fornecedores ativos e abertos, opcionalmente filtrados por cidade do endereço ativo do cliente (RN05), por categoria e ordenados por preço de entrega")
+            description = "Retorna produtos de fornecedores ativos e abertos com estoque disponível (RN02: item zerado não aparece), "
+                    + "opcionalmente filtrados por cidade do endereço ativo do cliente (RN05), por categoria e ordenados por preço de entrega")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista paginada de produtos disponíveis")
     })
