@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.util.Optional;
@@ -38,8 +37,9 @@ public class LoginTokenService {
         this.environment = environment;
     }
 
-    // responde sempre igual: e-mail inexistente não gera código nem revela a ausência da conta
-    @Transactional
+    // responde sempre igual: e-mail inexistente não gera código nem revela a ausência da conta.
+    // Sem transação envolvendo o método: o save confirma sozinho e o envio do e-mail (I/O externo,
+    // que pode demorar segundos para falhar) acontece com o código já gravado.
     public void requestToken(String email) {
         Optional<User> userOptional = userRepository.findByEmail(email);
         if (userOptional.isEmpty()) {
