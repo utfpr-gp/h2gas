@@ -60,7 +60,8 @@ public class LoginTokenService {
         sendCode(user, code);
     }
 
-    @Transactional
+    // sem transação única de propósito: a contagem de tentativas precisa ficar gravada mesmo
+    // quando a validação termina em exceção (cada save do repositório confirma por si)
     public String validateAndLogin(String email, String code) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new BusinessRuleException(INVALID_CODE));
