@@ -3,7 +3,9 @@ package com.h2gas.controller;
 import com.h2gas.configuration.security.SecurityConfigurations;
 import com.h2gas.configuration.security.SecurityFilter;
 import com.h2gas.configuration.security.TokenService;
+import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.dto.ProductItemDTO;
+import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.CreateProductItemMapper;
 import com.h2gas.model.mapper.ProductItemMapper;
 import com.h2gas.model.repository.UserRepository;
@@ -14,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -28,9 +31,12 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ProductItemController.class)
@@ -113,5 +119,83 @@ class ProductItemControllerTest {
                 .andExpect(status().isOk());
 
         verify(productItemService).findProductsFiltered(eq("forn-1"), any(), any(), eq(false), any());
+    }
+
+    private void autenticarFornecedor() {
+        User fornecedor = new User(null, "Fornecedor", "fornecedor@teste.com", "41999999999", "12345678900", "senha", UserTypeEnum.SUPPLIER);
+        fornecedor.setId("forn-1");
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                fornecedor, null, List.of(new SimpleGrantedAuthority("ROLE_SUPPLIER"))));
+    }
+
+    private String produtoJson(String precos) {
+        return "{\"brand\":\"Ultragaz\",\"categoryProductId\":3,\"stockQuantity\":10,\"description\":\"Botijão\"" + precos + "}";
+    }
+
+    private org.springframework.test.web.servlet.ResultActions postarProduto(String json) throws Exception {
+        return mockMvc.perform(multipart("/api/product-items")
+                .file(new MockMultipartFile("product", "", "application/json", json.getBytes()))
+                .file(new MockMultipartFile("file", "foto.jpg", "image/jpeg", new byte[]{1, 2, 3})));
+    }
+
+    @Test
+    void deveRejeitarCriacaoSemPreco() throws Exception {
+        autenticarFornecedor();
+
+        postarProduto(produtoJson(",\"shippingFee\":20.00")).andExpect(status().isBadRequest());
+
+        verify(productItemService, never()).createProductItem(any(), any(), any());
+    }
+
+    @Test
+    void deveRejeitarCriacaoSemFrete() throws Exception {
+        autenticarFornecedor();
+
+        postarProduto(produtoJson(",\"price\":100.00")).andExpect(status().isBadRequest());
+
+        verify(productItemService, never()).createProductItem(any(), any(), any());
+    }
+
+    @Test
+    void deveRejeitarCriacaoComFreteNegativo() throws Exception {
+        autenticarFornecedor();
+
+        postarProduto(produtoJson(",\"price\":100.00,\"shippingFee\":-1.00")).andExpect(status().isBadRequest());
+
+        verify(productItemService, never()).createProductItem(any(), any(), any());
+    }
+
+    @Test
+    void deveAceitarCriacaoComPrecoEFreteValidos() throws Exception {
+        autenticarFornecedor();
+        ProductItemDTO criado = new ProductItemDTO();
+        criado.setBrand("Ultragaz");
+        when(productItemService.createProductItem(any(), any(), any())).thenReturn(criado);
+
+        postarProduto(produtoJson(",\"price\":100.00,\"shippingFee\":20.00")).andExpect(status().isOk());
+
+        verify(productItemService).createProductItem(any(), any(), any());
+    }
+
+    @Test
+    void deveRejeitarEdicaoSemPrecoEFrete() throws Exception {
+        autenticarFornecedor();
+
+        mockMvc.perform(put("/api/product-items/12").contentType("application/json").content(produtoJson("")))
+                .andExpect(status().isBadRequest());
+
+        verify(productItemService, never()).updateProductItem(any(), any(), any());
+    }
+
+    @Test
+    void deveAceitarEdicaoComFreteZero() throws Exception {
+        autenticarFornecedor();
+        when(productItemService.updateProductItem(eq(12L), any(), any())).thenReturn(new ProductItemDTO());
+
+        mockMvc.perform(put("/api/product-items/12").contentType("application/json")
+                        .content(produtoJson(",\"price\":120.00,\"shippingFee\":0")))
+                .andExpect(status().isOk());
+
+        verify(productItemService).updateProductItem(eq(12L), any(), any());
     }
 }

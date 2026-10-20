@@ -5,10 +5,10 @@
 | Campo | Valor |
 |---|---|
 | ID | HU10 |
-| Perfil | Fornecedor (SUPPLIER) |
+| Perfil | Fornecedor (SUPPLIER); cliente (CUSTOMER) vê a etiqueta |
 | Prioridade MoSCoW | Must have |
-| Dependências | F3 (`priceDelivery`/`pricePickup`), HU03 (mesmo padrão já aplicado do lado do cliente) |
-| Referência no TCC | Apêndice A.1 — HU10 |
+| Dependências | F3 (colunas `priceDelivery`/`pricePickup`), HU03 (cards do cliente já mostram os dois valores), HU09 (RN02 e `onlyAvailable`), F7 (padrão visual) |
+| Referência no TCC | Apêndice A.1 — HU10 (p. 53); Figura 16 (p. 41) |
 
 ## 2. História de Usuário
 
@@ -18,173 +18,222 @@ operação de acordo com o custo logístico individual de cada item.
 
 ## 3. Critérios de Aceitação (BDD)
 
-*(correção de rotulagem: a versão anterior usava "Preço de Retirada"/
-"Preço de Entrega" e "frete grátis" — o texto real do Apêndice A, pág.
-53, usa "Preço para Retirada"/"Preço com Entrega" e "Entrega Grátis". O
-conteúdo técnico não mudou, só os rótulos exatos exibidos ao usuário.)*
+> Revisado em 2026-10-20 sobre a `develop` com HU01–HU09 mergeadas. A
+> versão anterior dizia que o backend "não compila desde o F3" — hoje ele
+> compila: a HU03/HU09 deixaram uma **ponte provisória** com um `price`
+> único que grava o mesmo valor nas duas colunas, e é essa ponte que a
+> HU10 remove. Decisões do autor: (a) da Figura 16 entra **só o
+> formulário em seções**, mantendo as duas páginas atuais; (b) o campo
+> **SKU** **não entra**; (c) a etiqueta "Entrega Grátis" aparece para o
+> **cliente e para o fornecedor**.
+>
+> **Revisão final (a pedido do autor)**: o fornecedor informa apenas
+> **"Preço"** e **"Preço do frete"** — não mais "Preço para Retirada" e
+> "Preço com Entrega" (texto do Apêndice A, que passa a ser **reinterpretado**
+> neste ponto). Por baixo nada migra: **retirada = Preço** e **entrega =
+> Preço + frete**, derivados na API, de modo que os cards, o carrinho, o
+> checkout e o cálculo do pedido (HU03/HU05, RN01) seguem iguais. **Frete
+> = 0 é Entrega Grátis**, e o formulário tem uma opção visível **"Frete
+> grátis"** (checkbox) que zera o Preço do frete; ela não é um terceiro
+> dado: é só o atalho para frete 0 (o modelo continua `price` +
+> `shippingFee`).
 
 - **Cenário 1 — Precificação dividida**: Dado o formulário de novo
   produto, Quando o fornecedor preenche os dados financeiros, Então o
-  sistema exige a inserção obrigatória e separada dos campos "Preço para
-  Retirada" e "Preço com Entrega".
+  sistema exige a inserção obrigatória e separada de **"Preço"** e
+  **"Preço do frete"** (reinterpretação dos dois preços do Apêndice A:
+  Preço = retirada; Preço + frete = entrega).
 - **Cenário 2 — Regra de Entrega Grátis**: Dado a edição de um item,
-  Quando o fornecedor informa valores idênticos para retirada e entrega,
-  Então o sistema salva a configuração e o front-end passa a renderizar a
-  etiqueta de "Entrega Grátis" para aquele produto.
+  Quando o fornecedor informa **frete zero** (preço de entrega igual ao de
+  retirada), Então o sistema salva a configuração e o front-end passa a
+  renderizar a etiqueta de "Entrega Grátis" para aquele produto.
 
-## 4. Estado atual (achado crítico — última ponta solta do F3)
+Detalhamento operacional (não cria cenário novo):
 
-O F3 dividiu `ProductItem.price` em `priceDelivery`/`pricePickup` no
-schema e na entidade, mas **o formulário de cadastro/edição de produto do
-fornecedor nunca foi atualizado** — é a última ponta solta dessa
-migração (a primeira foi `OrderItemService`, corrigida na HU03):
+- **1a — Obrigatório no backend**: os dois valores são validados na API
+  (`@Valid`, 400 com a mensagem do campo), não só no formulário.
+- **1b — Prévia**: o formulário mostra ao vivo "Retirada: R$ x · Entrega:
+  R$ y", para o fornecedor ver o que o cliente vai pagar.
+- **2a — Etiqueta computada**: "Entrega Grátis" = frete zero (`priceDelivery
+  == pricePickup`), calculada na leitura, nunca gravada.
+- **2b — Editar com segurança**: o fornecedor só edita produto da própria
+  loja (403 nos demais) e só move o produto para categoria dele.
 
-- `CreateProductItemDTO` ainda tem um único campo `private BigDecimal price;`.
-- `ProductItemService.updateProductItem` ainda chama
-  `productItemUpdate.setPrice(productItemDto.getPrice())` — **não
-  compila** desde o F3.
-- `ProductItemService.createProductItem` usa `CreateProductItemMapper`
-  (baseado em `ModelMapper`, mapeamento por reflexão/nome de campo) — como
-  `price` não bate mais com nenhum campo da entidade, o mapeamento
-  **compila, mas silenciosamente deixa `priceDelivery`/`pricePickup`
-  nulos**, o que falha só no `INSERT` (colunas `NOT NULL`) — um bug mais
-  perigoso que os de compilação, porque não aparece até rodar.
-- `ProductItemDTO` (resposta) também ainda tem `Double price` — o mesmo
-  problema silencioso do `ModelMapper` acontece na leitura.
-- `product-item-form.component.ts` (frontend) só tem um campo de preço
-  (`price: [0.0, [Validators.required]]`).
-- Nenhum endpoint de criação/edição de produto usa `@Valid` hoje — "o
-  sistema exige" do Cenário 1 precisa ser reforçado, não só assumido.
+## 4. Estado atual (achados)
+
+- **Ponte provisória do `price` único** (HU03/HU09 só tornaram o backend
+  compilável): `CreateProductItemDTO.price`; `CreateProductItemMapper`
+  copia `price` para `priceDelivery` **e** `pricePickup`;
+  `ProductItemService.updateProductItem` faz o mesmo; `ProductItemDTO`
+  ainda expõe `price` (= `priceDelivery`). Ou seja, hoje é **impossível**
+  cadastrar preços diferentes — o Cenário 1 não é atendido.
+- Frontend: `product-item-form` tem um campo "Preço (R$)" (`price`); o
+  modelo `ProductItem` ainda tem `price`; a lista de gestão
+  (`product-item`) mostra um preço só. O `product-card` (vitrine) já
+  exibe Entrega e Retirada (HU03), mas sem etiqueta.
+- **Nenhum endpoint de criação/edição usa `@Valid`**, e o handler global
+  de `MethodArgumentNotValidException` **já existe** (400 com
+  `campo: mensagem`) — basta anotar. Criar com `categoryProductId` nulo
+  hoje estoura 500.
+- **Defeito na edição (achado novo)**: `ProductItemMapper.toDto` preenche
+  `categoryProductId` com o id do **tipo** (`ProductType`: Gás/Água), não
+  o da categoria do fornecedor. O formulário de edição carrega esse valor
+  e o reenvia; `updateProductItem` então troca a categoria do produto
+  para a de **mesmo id** (sem checar o dono) sempre que ele difere do id
+  real. Corrige-se no mapper (e o `ProductItemDTO` ganha o id correto).
+- **Sem checagem de dono na edição**: `PUT /api/product-items/{id}` não
+  verifica se o produto é do fornecedor logado (a criação checa a
+  categoria). Entra no escopo só a **edição** (é a rota que a HU10 altera);
+  `DELETE` e `GET /{id}` com a mesma lacuna ficam fora.
+- **Rotas sem OpenAPI**: `POST` e `PUT` de produto não têm
+  `@Operation`/`@ApiResponses` (CLAUDE.md exige em rota nova ou alterada).
+- Figura 16 (TCC): tela dividida "Meus Produtos" + "Cadastrar Novo
+  Produto", com seções e campo SKU; mostra **um** preço de venda — o texto
+  do Apêndice A (dois preços) é o que vale para a HU10.
 
 ## 5. Contrato Técnico
 
 ### 5.1 Backend
 
-**`CreateProductItemDTO.java`**:
-```java
-private Long id;
-private String brand;
-
-@NotNull(message = "Preço de entrega é obrigatório")
-@DecimalMin(value = "0.0", message = "Preço de entrega não pode ser negativo")
-private BigDecimal priceDelivery;
-
-@NotNull(message = "Preço de retirada é obrigatório")
-@DecimalMin(value = "0.0", message = "Preço de retirada não pode ser negativo")
-private BigDecimal pricePickup;
-
-private Long categoryProductId;
-private String imageUrl;
-private Integer stockQuantity;
-private String description;
-```
-
-**`ProductItemDTO.java`** — `Double price` vira:
-```java
-private Double priceDelivery;
-private Double pricePickup;
-private boolean freeDelivery; // computado, não persistido
-```
-
-**`ProductItemMapper.toDto`** — como `freeDelivery` não tem campo
-correspondente na entidade, `ModelMapper` não o preenche sozinho; setar
-explicitamente:
-```java
-productItemDTO.setFreeDelivery(
-    data.getPriceDelivery() != null && data.getPricePickup() != null
-        && data.getPriceDelivery().compareTo(data.getPricePickup()) == 0
-);
-```
-**Decisão**: `freeDelivery` é sempre **computado na leitura**, nunca
-persistido como coluna — evita o risco de ficar desatualizado se um dos
-preços mudar depois (o TCC usa "pode sinalizar", não exige persistência).
-
-**`ProductItemService.updateProductItem`** — corrigir a quebra do F3:
-```java
-productItemUpdate.setPriceDelivery(productItemDto.getPriceDelivery());
-productItemUpdate.setPricePickup(productItemDto.getPricePickup());
-```
-
-**`ProductItemController.java`** — endpoints de criação e edição passam a
-validar o DTO:
-```java
-@PostMapping
-public ResponseEntity<ProductItemDTO> createCategoryProduct(
-        @RequestPart("product") @Valid CreateProductItemDTO productItemDTO,
-        @RequestPart("file") MultipartFile file) { ... }
-
-@PutMapping("/{id}")
-public ResponseEntity<ProductItemDTO> update(
-        @PathVariable Long id, @Valid @RequestBody CreateProductItemDTO dto) { ... }
-```
-(confirmar o handler global de `MethodArgumentNotValidException` — se não
-existir um `@ExceptionHandler` centralizado retornando 400 com a mensagem
-de validação, adicionar um mínimo em `exceptions/` seguindo o padrão já
-usado para `BusinessRuleException`/`ResourceNotFoundException`.)
+- `CreateProductItemDTO` (todos com `@Schema`):
+  - `@NotNull @DecimalMin("0.0") BigDecimal price` — "Preço" (valor para
+    retirada);
+  - `@NotNull @DecimalMin("0.0") BigDecimal shippingFee` — "Preço de
+    frete" (acréscimo da entrega; zero = Entrega Grátis);
+  - `@NotBlank String brand`, `@NotNull Long categoryProductId`,
+    `@Min(0) Integer stockQuantity` (evita 500 e estoque negativo);
+  - `priceDelivery`/`pricePickup` deixam de fazer parte da entrada.
+- **Derivação (sem migração)** em `CreateProductItemMapper.toEntity` e no
+  `updateProductItem`: `pricePickup = price`; `priceDelivery = price +
+  shippingFee`. As colunas e tudo que as lê continuam como estão.
+- `ProductItemDTO` (resposta): mantém `priceDelivery` e `pricePickup`
+  (cards, carrinho e checkout dependem deles) e ganha `price`
+  (`= pricePickup`) e `shippingFee` (`= priceDelivery − pricePickup`) para
+  o formulário de edição; `boolean freeDelivery` computado (frete zero);
+  `categoryProductId` é o da **categoria do fornecedor**.
+- `ProductItemMapper.toDto`: nenhum preço nulo quebra o mapeamento
+  (`price`/`shippingFee`/`freeDelivery` ficam nulos/falsos).
+- `ProductItemService.updateProductItem(id, dto, actor)`: produto de
+  outro fornecedor → 403 (ADMIN pode); categoria nova precisa ser do mesmo
+  fornecedor do produto (inclusive categoria sem fornecedor → 403).
+- `ProductItemController`: `POST` (`@RequestPart("product") @Valid`) e
+  `PUT /{id}` (`@Valid @RequestBody`) validam o DTO; **OpenAPI** nas duas
+  (POST: 200/400/403/404/502; PUT: 200/400/403/404).
+- Sem migração: as colunas já existem e já são `NOT NULL`.
 
 ### 5.2 Frontend
 
-**`product-item-form.component.ts`**:
-```ts
-this.form = this.fb.group({
-  // ...
-  priceDelivery: [0.0, [Validators.required, Validators.min(0)]],
-  pricePickup: [0.0, [Validators.required, Validators.min(0)]],
-});
-```
-
-**`product-item-form.component.html`** — dois campos numéricos lado a
-lado ("Preço de Entrega" / "Preço de Retirada"), ambos obrigatórios.
-
-**Cards de produto** (já ajustados na HU03 para exibir os dois preços) —
-adicionar badge condicional:
-```html
-<span *ngIf="product.freeDelivery" class="badge badge-success">Entrega Grátis</span>
-```
+- `models/product-item.ts`: adiciona `price?` e `shippingFee?` (preço de
+  retirada e acréscimo de entrega) e mantém `priceDelivery`/`pricePickup`/
+  `freeDelivery?` para leitura.
+- `product-item-form` em seções, como a Figura 16, nos tokens F7 (sem HEX
+  novo, `rounded-xl`):
+  - **1. Informações básicas**: Marca, Categoria, Descrição;
+  - **2. Preços e estoque**: **"Preço (R$)"** e **"Preço do frete (R$)"**
+    (obrigatórios, `min(0)`, lado a lado) e Estoque; abaixo, a **prévia**
+    "Retirada: R$ x · Entrega: R$ y" ao vivo; entre os campos e a
+    prévia, o checkbox **"Frete grátis"**: marcado, o Preço do frete vira
+    0 e o campo fica **somente leitura**; desmarcado, o frete é limpo e
+    volta a ser editável. O checkbox reflete o valor: frete 0 (digitado
+    ou vindo da API na edição) o deixa marcado. Ele não vai para a API;
+  - **3. Imagem**: arrasta-e-solta (`dragover`/`drop`) além do clique,
+    com pré-visualização e remover;
+  - no **cadastro** a imagem é obrigatória (a API exige `file`): sem ela
+    avisa "Selecione uma imagem do produto."; na edição a imagem não muda;
+  - **Cancelar** (volta para `/product-items`) e **Salvar Produto**; erros
+    do backend pelo helper `backendMessage`;
+  - envia só `price` e `shippingFee` (nunca `priceDelivery`/`pricePickup`);
+    na edição carrega `price` e `shippingFee` da API.
+- `product-card` (vitrine do cliente): selo **"Entrega Grátis"** quando
+  `freeDelivery`, e continua exibindo Entrega e Retirada.
+- `product-item` (gestão do fornecedor): cada linha mostra Entrega e
+  Retirada e o selo "Entrega Grátis".
 
 ## 6. Plano de Testes (TDD)
 
 **Backend:**
-1. `ProductItemServiceTest` — atualizar testes que usavam `.setPrice`;
-   novos: `deveAtualizarAmbosPrecosAoEditarProduto`,
-   `deveCriarProdutoComPrecoDeEntregaEDeRetirada`.
-2. `ProductItemMapperTest` (ou dentro do service test) —
-   `deveSinalizarFreteGratisQuandoPrecosForemIguais`,
-   `naoDeveSinalizarFreteGratisQuandoPrecosDiferentes`,
-   `naoDeveQuebrarQuandoAlgumPrecoForNulo`.
-3. `ProductItemControllerTest` —
-   `deveRejeitarCriacaoSemPrecoDeEntrega` (400),
-   `deveRejeitarCriacaoComPrecoNegativo` (400),
-   `deveAceitarCriacaoComAmbosOsPrecosValidos`.
+1. `ProductItemServiceTest` — atualizar os que usavam preços únicos; novos:
+   `deveDerivarPrecoDeEntregaSomandoOFrete`,
+   `deveSinalizarEntregaGratisQuandoOFreteForZero`,
+   `deveAtualizarPrecoEFreteAoEditarProduto`,
+   `deveRejeitarEdicaoDeProdutoDeOutroFornecedor` (403),
+   `deveRejeitarMoverProdutoParaCategoriaDeOutroFornecedor` (403),
+   `deveRejeitarMoverProdutoParaCategoriaSemFornecedor` (403),
+   `deveManterCategoriaQuandoEdicaoReenviaOMesmoId`.
+2. `ProductItemMapperTest` — `deveExporPrecoEFreteDerivadosDosDoisPrecos`,
+   `deveSinalizarFreteGratisQuandoOFreteForZero`,
+   `naoDeveSinalizarFreteGratisQuandoHouverFrete`,
+   `naoDeveQuebrarQuandoAlgumPrecoForNulo`,
+   `deveExporOIdDaCategoriaDoFornecedor`.
+3. `ProductItemControllerTest` — `deveRejeitarCriacaoSemPreco` (400),
+   `deveRejeitarCriacaoSemFrete` (400),
+   `deveRejeitarCriacaoComFreteNegativo` (400),
+   `deveRejeitarEdicaoSemPrecoEFrete` (400),
+   `deveAceitarCriacaoComPrecoEFreteValidos`,
+   `deveAceitarEdicaoComFreteZero`.
 
 **Frontend:**
 4. `product-item-form.component.spec.ts` —
-   `deveExigirAmbosOsCamposDePrecoParaSubmeter`,
-   `deveEnviarPriceDeliveryEPricePickupAoSalvar`.
-5. Teste de card — `deveExibirBadgeDeFreteGratisQuandoPrecosIguais`,
-   `naoDeveExibirBadgeQuandoPrecosDiferentes`.
+   `deveExigirPrecoEFreteParaSubmeter`, `naoDeveAceitarValorNegativo`,
+   `deveEnviarPriceEShippingFeeAoSalvar`,
+   `deveMostrarPreviaDeRetiradaEEntrega`,
+   `deveZerarOFreteAoMarcarFreteGratis`,
+   `deveLiberarOFreteAoDesmarcarFreteGratis`,
+   `deveMarcarFreteGratisNaEdicaoQuandoOFreteForZero`,
+   `naoDeveMarcarFreteGratisQuandoHouverFrete`,
+   `deveEnviarFreteZeroAoSalvarComFreteGratis`,
+   `deveAceitarImagemSoltaNaAreaDeUpload`,
+   `deveVoltarParaListaAoCancelar`, `deveExigirImagemNoCadastro`,
+   `deveIgnorarArquivoQueNaoEImagem`, `deveCarregarPrecoEFreteNaEdicao`,
+   `deveSalvarAEdicaoSemExigirNovaImagem`.
+5. `product-card.component.spec.ts` —
+   `deveExibirBadgeDeFreteGratisQuandoFreteZero`,
+   `naoDeveExibirBadgeQuandoHouverFrete`.
+6. `product-item.component.spec.ts` —
+   `deveExibirOsDoisPrecosEBadgeNaGestao`.
+
+Regra herdada: specs antigos falhando no frontend não aumentam (19).
 
 ## 7. Fora de Escopo
 
-- Persistir o flag de frete grátis como coluna — decisão explícita de
-  mantê-lo computado (§5.1).
-- Regras de desconto, precificação dinâmica ou promoções — a HU10 trata
-  só do par fixo entrega/retirada.
-- Retroativamente corrigir dados de produtos já existentes no banco além
-  do que o F3 já migrou (`price` → ambas as colunas com o mesmo valor
-  inicial) — isso já foi coberto na migração `V2` do F3.
+- Campo **SKU / Código de Referência** da Figura 16 (exigiria migração
+  V8) e a **tela dividida** lista + formulário.
+- **Migrar o banco** para `price` + `shipping_fee`: as colunas
+  `price_delivery`/`price_pickup` ficam, e o par `price`/`shippingFee` é
+  só o contrato do fornecedor.
+- Persistir "frete grátis" como coluna — fica computado.
+- Descontos, precificação dinâmica e promoções.
+- Exigir preço maior que zero (mantém `>= 0`).
+- Checagem de dono em `DELETE` e `GET /{id}` de produto (dívida das
+  rotas antigas) e troca de imagem na edição.
+- Correção retroativa de produtos no banco: os atuais já têm entrega >=
+  retirada, então o frete derivado nunca é negativo.
 
 ## 8. Definição de Pronto
 
-- [ ] Backend volta a compilar (`ProductItemService` corrigido).
-- [ ] Criação/edição de produto exige e persiste `priceDelivery` e
-      `pricePickup` separadamente, com validação (`@Valid`, 400 se
-      ausente/negativo).
-- [ ] `ProductItemDTO` deixa de expor `price`; expõe `freeDelivery`
-      computado.
-- [ ] Formulário do fornecedor tem dois campos de preço obrigatórios.
-- [ ] Badge de frete grátis aparece quando os preços são iguais.
-- [ ] Todos os testes da seção 6 passando.
-- [ ] Revisado e aprovado. Isso fecha o sub-projeto Logística/Dashboard
-      do Fornecedor (HU06, HU09, HU10). Próximo script é HU07, início de
-      Entregador + Tempo Real.
+- [x] Cadastro e edição exigem `price` e `shippingFee` separados, com
+      validação na API (400 se ausente ou negativo), e gravam
+      `pricePickup = price` e `priceDelivery = price + shippingFee`.
+- [x] Editar produto não troca a categoria por engano e só vale para
+      produto do próprio fornecedor (403 nos demais).
+- [x] `ProductItemDTO` expõe `price`, `shippingFee` e `freeDelivery`
+      computados, sem quebrar `priceDelivery`/`pricePickup`.
+- [x] Rotas `POST`/`PUT` documentadas no Swagger.
+- [x] Formulário em seções (Figura 16) com "Preço" e "Preço do frete"
+      obrigatórios, prévia de Retirada/Entrega, checkbox "Frete grátis",
+      upload arrasta-e-solta e Cancelar.
+- [x] Selo "Entrega Grátis" na vitrine do cliente e na gestão do
+      fornecedor; cards, carrinho e checkout continuam com Entrega e
+      Retirada.
+- [x] Testes da seção 6 verdes; `mvn test` e `ng test` (≤ 19 falhas
+      antigas); sem HEX novo.
+- [x] Commits pequenos por fatia (CLAUDE.md, seção Git).
+- [x] Testado de ponta a ponta (API e interface).
+- [ ] Revisado e aprovado. Fecha os 10 Must-have; o próximo é a HU11
+      (autenticação por token), início do Should-have.
+
+> Verificado em 2026-10-20: backend 228 testes (único erro: `BackendApplicationTests.contextLoads`, que precisa do MySQL local);
+> frontend 262 testes com 19 falhas antigas (duas a menos: os specs do formulário e da gestão passaram a ter providers); E2E com 25 checagens
+> (400 sem/negativo, 403 produto e categoria de outro fornecedor ou sem fornecedor, derivação retirada = preço e entrega = preço + frete no banco,
+> prévia e checkbox "Frete grátis", corpo do POST com `price`/`shippingFee`, edição com frete zero e `freeDelivery` na API). O upload de imagem do cadastro
+> não foi exercitado de verdade: o Cloudinary local tem credencial inválida (`Invalid Signature`), então o POST foi interceptado no navegador.

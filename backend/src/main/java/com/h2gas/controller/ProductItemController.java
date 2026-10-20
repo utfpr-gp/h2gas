@@ -3,6 +3,7 @@ package com.h2gas.controller;
 
 import com.h2gas.model.dto.*;
 import com.h2gas.model.entity.Supplier;
+import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.CreateProductItemMapper;
 import com.h2gas.model.mapper.ProductItemMapper;
 import com.h2gas.response.PageResponse;
@@ -14,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.security.RolesAllowed;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -46,11 +48,22 @@ public class ProductItemController {
         return ResponseEntity.ok(productItemDTO);
     }
 
+    @Operation(summary = "Cadastra um produto do fornecedor logado",
+            description = "Exige price (Preço, valor de retirada) e shippingFee (Preço do frete). Entrega = price + shippingFee; "
+                    + "frete zero vira a etiqueta Entrega Grátis na leitura. A categoria precisa ser do próprio fornecedor. "
+                    + "multipart/form-data: parte 'product' (JSON) e parte 'file' (imagem)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Produto cadastrado"),
+            @ApiResponse(responseCode = "400", description = "Preço ou frete ausente/negativo, marca/categoria ausentes ou estoque negativo"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido, papel sem permissão ou categoria de outro fornecedor"),
+            @ApiResponse(responseCode = "404", description = "Categoria inexistente"),
+            @ApiResponse(responseCode = "502", description = "Falha ao enviar a imagem")
+    })
     @PostMapping
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER"})
     public ResponseEntity<ProductItemDTO> createCategoryProduct(
-            @RequestPart("product") CreateProductItemDTO productItemDTO,
+            @RequestPart("product") @Valid CreateProductItemDTO productItemDTO,
             @RequestPart("file") MultipartFile file
     ) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -75,11 +88,22 @@ public class ProductItemController {
         return ResponseEntity.ok(id);
     }
 
+    @Operation(summary = "Edita um produto do fornecedor logado",
+            description = "Atualiza marca, price e shippingFee (retirada = price; entrega = price + shippingFee), estoque e descrição. Só o dono do produto "
+                    + "(ou ADMIN) edita, e a categoria nova precisa ser do mesmo fornecedor")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Produto atualizado"),
+            @ApiResponse(responseCode = "400", description = "Preço ausente ou negativo, marca/categoria ausentes ou estoque negativo"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido, papel sem permissão, produto ou categoria de outro fornecedor"),
+            @ApiResponse(responseCode = "404", description = "Produto ou categoria inexistente")
+    })
     @PutMapping("/{id}")
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER"})
-    public ResponseEntity<ProductItemDTO> update(@PathVariable Long id, @RequestBody CreateProductItemDTO dto) {
-        ProductItemDTO updated = productItemService.updateProductItem(id, dto);
+    public ResponseEntity<ProductItemDTO> update(@Parameter(description = "ID do produto") @PathVariable Long id,
+                                                 @Valid @RequestBody CreateProductItemDTO dto) {
+        User actor = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        ProductItemDTO updated = productItemService.updateProductItem(id, dto, actor);
         return ResponseEntity.ok(updated);
     }
 

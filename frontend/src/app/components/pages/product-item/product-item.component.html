@@ -124,8 +124,15 @@
                 {{ produto.brand }}
               </div>
               <div>
-                <span class="block font-medium text-gray-500">Preço:</span>
-                <span class="text-blue-700 font-bold">R$ {{ produto.price }}</span>
+                <span class="block font-medium text-gray-500">Preços:</span>
+                <span data-testid="manage-price-delivery" class="block text-blue-700 font-bold">
+                  Entrega {{ produto.priceDelivery | currency:'BRL':'symbol':'1.2-2' }}
+                </span>
+                <span data-testid="manage-price-pickup" class="block text-blue-700 font-bold">
+                  Retirada {{ produto.pricePickup | currency:'BRL':'symbol':'1.2-2' }}
+                </span>
+                <span *ngIf="produto.freeDelivery" data-testid="manage-free-delivery"
+                  class="inline-block mt-1 bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded">Entrega Grátis</span>
               </div>
               <div>
                 <span class="block font-medium text-gray-500">Estoque:</span>

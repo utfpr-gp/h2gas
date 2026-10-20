@@ -2,6 +2,7 @@ package com.h2gas.services;
 
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
+import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.exceptions.ForbiddenResourceException;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.CreateProductItemDTO;
@@ -118,21 +119,30 @@ public class ProductItemService {
         productItemRepository.delete(productItem);
     }
 
-    public ProductItemDTO updateProductItem(Long id, CreateProductItemDTO productItemDto) {
+    public ProductItemDTO updateProductItem(Long id, CreateProductItemDTO productItemDto, User actor) {
         ProductItem productItemUpdate = productItemRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Produto com " + id + " não encontrado"));
+
+        // HU10: só o dono (ou ADMIN) edita; a categoria nova também precisa ser do dono do produto
+        boolean isAdmin = actor.getUserType() == UserTypeEnum.ADMIN;
+        String ownerId = productItemUpdate.getSupplier().getId();
+        if (!isAdmin && !ownerId.equals(actor.getId())) {
+            throw new ForbiddenResourceException("Produto não pertence ao fornecedor logado.");
+        }
 
         if (productItemDto.getCategoryProductId() != null &&
                 !productItemDto.getCategoryProductId().equals(productItemUpdate.getCategoryProduct().getId())) {
             CategoryProduct categoryProduct = categoryProductService.findEntityById(
                     productItemDto.getCategoryProductId()
             );
+            if (categoryProduct.getSupplier() == null || !categoryProduct.getSupplier().getId().equals(ownerId)) {
+                throw new ForbiddenResourceException("Categoria informada não pertence ao fornecedor do produto.");
+            }
             productItemUpdate.setCategoryProduct(categoryProduct);
         }
 
         productItemUpdate.setBrand(productItemDto.getBrand());
-        productItemUpdate.setPriceDelivery(productItemDto.getPrice());
-        productItemUpdate.setPricePickup(productItemDto.getPrice());
+        createProductItemMapper.applyPrices(productItemUpdate, productItemDto);
         productItemUpdate.setDescription(productItemDto.getDescription());
         productItemUpdate.setStockQuantity(productItemDto.getStockQuantity());
         productItemRepository.save(productItemUpdate);

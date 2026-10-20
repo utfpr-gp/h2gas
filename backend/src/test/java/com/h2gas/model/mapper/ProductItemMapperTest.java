@@ -12,6 +12,9 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.math.BigDecimal;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ProductItemMapperTest {
 
@@ -30,5 +33,58 @@ class ProductItemMapperTest {
 
         assertEquals(110.00, dto.getPriceDelivery());
         assertEquals(95.00, dto.getPricePickup());
+    }
+
+    private ProductItemMapper novoMapper() {
+        ProductItemMapper mapper = new ProductItemMapper();
+        ReflectionTestUtils.setField(mapper, "modelMapper", new MapperConfig().modelMapper());
+        return mapper;
+    }
+
+    private ProductItem produto(String entrega, String retirada) {
+        ProductItem productItem = new ProductItem();
+        productItem.setPriceDelivery(entrega == null ? null : new BigDecimal(entrega));
+        productItem.setPricePickup(retirada == null ? null : new BigDecimal(retirada));
+        productItem.setCategoryProduct(new CategoryProduct(77L, "Gás azul", new ProductType(1L, "Gás", null), null, null));
+        return productItem;
+    }
+
+    @Test
+    @DisplayName("HU10: expõe o Preço (retirada) e o frete (entrega − retirada) derivados dos dois valores")
+    void deveExporPrecoEFreteDerivadosDosDoisPrecos() {
+        ProductItemDTO dto = novoMapper().toDto(produto("110.00", "95.00"));
+
+        assertEquals(95.0, dto.getPrice());
+        assertEquals(15.0, dto.getShippingFee());
+    }
+
+    @Test
+    @DisplayName("HU10: preços iguais (mesmo com escala diferente) sinalizam Entrega Grátis")
+    void deveSinalizarFreteGratisQuandoOFreteForZero() {
+        assertTrue(novoMapper().toDto(produto("110.00", "110.0")).isFreeDelivery());
+    }
+
+    @Test
+    @DisplayName("HU10: preços diferentes não sinalizam Entrega Grátis")
+    void naoDeveSinalizarFreteGratisQuandoHouverFrete() {
+        assertFalse(novoMapper().toDto(produto("110.00", "95.00")).isFreeDelivery());
+    }
+
+    @Test
+    @DisplayName("HU10: preço nulo não quebra o mapeamento nem sinaliza Entrega Grátis")
+    void naoDeveQuebrarQuandoAlgumPrecoForNulo() {
+        assertFalse(novoMapper().toDto(produto("110.00", null)).isFreeDelivery());
+        assertFalse(novoMapper().toDto(produto(null, null)).isFreeDelivery());
+        assertNull(novoMapper().toDto(produto("110.00", null)).getShippingFee());
+        assertNull(novoMapper().toDto(produto(null, null)).getPrice());
+    }
+
+    @Test
+    @DisplayName("HU10: categoryProductId é o id da categoria do fornecedor, não o do tipo (Gás/Água)")
+    void deveExporOIdDaCategoriaDoFornecedor() {
+        ProductItemDTO dto = novoMapper().toDto(produto("110.00", "95.00"));
+
+        assertEquals(77L, dto.getCategoryProductId());
+        assertEquals("Gás", dto.getType());
     }
 }
