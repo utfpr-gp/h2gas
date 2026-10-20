@@ -19,15 +19,12 @@ describe('ProductItemFormComponent', () => {
   const el = () => fixture.nativeElement as HTMLElement;
   const byId = (id: string) => el().querySelector(`[data-testid=${id}]`) as HTMLElement | null;
   const arquivo = new File(['x'], 'botijao.jpg', { type: 'image/jpeg' });
-  let productEdicao: Record<string, unknown> = {};
 
   const preencher = (over: Record<string, unknown> = {}) =>
     component.formProductItem.patchValue({
       brand: 'Ultragaz', categoryProductId: 3, description: 'Botijão 13kg',
-      priceDelivery: 120, pricePickup: 100, stockQuantity: 10, ...over,
+      price: 100, shippingFee: 20, stockQuantity: 10, ...over,
     });
-
-  beforeEach(() => { productEdicao = {}; });
 
   const setup = async (id: string | null = null) => {
     productItemServiceSpy = jasmine.createSpyObj('ProductItemService', ['createWithFile', 'update', 'findById']);
@@ -35,7 +32,7 @@ describe('ProductItemFormComponent', () => {
     productItemServiceSpy.update.and.returnValue(of({} as any));
     productItemServiceSpy.findById.and.returnValue(of({
       id: 5, brand: 'Liquigás', categoryProductId: 3, description: 'Edição', priceDelivery: 95, pricePickup: 80,
-      stockQuantity: 4, imageUrl: 'http://img/x.jpg', freeDelivery: false, ...productEdicao,
+      price: 80, shippingFee: 15, stockQuantity: 4, imageUrl: 'http://img/x.jpg', freeDelivery: false,
     } as any));
     const categoryServiceSpy = jasmine.createSpyObj('CategoryProductService', ['findBySupplierId']);
     categoryServiceSpy.findBySupplierId.and.returnValue(of({ data: [{ id: 3, name: 'Gás 13kg', type: 'Gás' }] } as any));
@@ -69,15 +66,15 @@ describe('ProductItemFormComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('deveExigirAmbosOsCamposDePrecoParaSubmeter', async () => {
+  it('deveExigirPrecoEFreteParaSubmeter', async () => {
     await setup();
     component.file = arquivo;
 
-    preencher({ priceDelivery: null });
+    preencher({ price: null });
     expect(component.formProductItem.invalid).toBeTrue();
     component.saveItemProduct();
 
-    preencher({ priceDelivery: 120, pricePickup: null });
+    preencher({ price: 100, shippingFee: null });
     expect(component.formProductItem.invalid).toBeTrue();
     component.saveItemProduct();
 
@@ -86,16 +83,16 @@ describe('ProductItemFormComponent', () => {
     expect(component.isLoading).toBeFalse();
   });
 
-  it('naoDeveAceitarPrecoNegativo', async () => {
+  it('naoDeveAceitarValorNegativo', async () => {
     await setup();
 
-    preencher({ priceDelivery: -1 });
-    expect(component.formProductItem.get('priceDelivery')!.hasError('min')).toBeTrue();
-    preencher({ priceDelivery: 120, pricePickup: -5 });
-    expect(component.formProductItem.get('pricePickup')!.hasError('min')).toBeTrue();
+    preencher({ price: -1 });
+    expect(component.formProductItem.get('price')!.hasError('min')).toBeTrue();
+    preencher({ price: 100, shippingFee: -5 });
+    expect(component.formProductItem.get('shippingFee')!.hasError('min')).toBeTrue();
   });
 
-  it('deveEnviarPriceDeliveryEPricePickupAoSalvar', async () => {
+  it('deveEnviarPriceEShippingFeeAoSalvar', async () => {
     await setup();
     component.file = arquivo;
     preencher();
@@ -103,9 +100,10 @@ describe('ProductItemFormComponent', () => {
     component.saveItemProduct();
 
     const enviado = productItemServiceSpy.createWithFile.calls.mostRecent().args[0] as any;
-    expect(enviado.priceDelivery).toBe(120);
-    expect(enviado.pricePickup).toBe(100);
-    expect('price' in enviado).toBeFalse();
+    expect(enviado.price).toBe(100);
+    expect(enviado.shippingFee).toBe(20);
+    expect('priceDelivery' in enviado).toBeFalse();
+    expect('pricePickup' in enviado).toBeFalse();
     expect(productItemServiceSpy.createWithFile.calls.mostRecent().args[1]).toBe(arquivo);
     expect(navigateSpy).toHaveBeenCalledWith(['/product-items']);
   });
@@ -121,78 +119,47 @@ describe('ProductItemFormComponent', () => {
     expect(component.isLoading).toBeFalse();
   });
 
-  const checkbox = () => byId('free-delivery-checkbox') as HTMLInputElement;
-  const campoEntrega = () => byId('price-delivery-input') as HTMLInputElement;
-
-  it('deveCopiarPrecoDeRetiradaAoMarcarEntregaGratis', async () => {
+  it('deveMostrarPreviaDeRetiradaEEntrega', async () => {
     await setup();
-    preencher({ priceDelivery: 120, pricePickup: 100 });
-    fixture.detectChanges();
-    expect(campoEntrega().readOnly).toBeFalse();
 
-    checkbox().click();
+    preencher({ price: 100, shippingFee: 20 });
     fixture.detectChanges();
 
-    expect(component.formProductItem.getRawValue().priceDelivery).toBe(100);
-    expect(campoEntrega().readOnly).toBeTrue();
+    const previa = byId('price-preview')!.textContent!;
+    expect(previa).toContain('Retirada');
+    expect(previa).toMatch(/100[.,]00/);
+    expect(previa).toContain('Entrega');
+    expect(previa).toMatch(/120[.,]00/);
   });
 
-  it('deveAcompanharAMudancaDaRetiradaEnquantoMarcado', async () => {
+  it('naoDeveMostrarPreviaSemOsDoisValores', async () => {
     await setup();
-    preencher({ priceDelivery: 120, pricePickup: 100 });
-    checkbox().click();
 
-    component.formProductItem.get('pricePickup')!.setValue(80);
+    preencher({ price: 100, shippingFee: null });
     fixture.detectChanges();
 
-    expect(component.formProductItem.getRawValue().priceDelivery).toBe(80);
+    expect(byId('price-preview')).toBeNull();
   });
 
-  it('deveLiberarPrecoDeEntregaAoDesmarcar', async () => {
+  it('deveAvisarEntregaGratisQuandoOFreteForZero', async () => {
     await setup();
-    preencher({ priceDelivery: 120, pricePickup: 100 });
-    checkbox().click();
+
+    preencher({ price: 100, shippingFee: 0 });
     fixture.detectChanges();
 
-    checkbox().click();
-    fixture.detectChanges();
-
-    expect(campoEntrega().readOnly).toBeFalse();
-    expect(component.formProductItem.getRawValue().priceDelivery).toBe(100);
-    component.formProductItem.get('pricePickup')!.setValue(70);
-    expect(component.formProductItem.getRawValue().priceDelivery).toBe(100);
+    expect(byId('free-delivery-hint')!.textContent).toContain('Entrega Grátis');
   });
 
-  it('deveEnviarPrecosIguaisSemOCampoAuxiliarAoSalvar', async () => {
+  it('naoDeveAvisarQuandoHouverFrete', async () => {
     await setup();
-    component.file = arquivo;
-    preencher({ priceDelivery: 120, pricePickup: 100 });
-    checkbox().click();
 
-    component.saveItemProduct();
-
-    const enviado = productItemServiceSpy.createWithFile.calls.mostRecent().args[0] as any;
-    expect(enviado.priceDelivery).toBe(100);
-    expect(enviado.pricePickup).toBe(100);
-    expect('freeDelivery' in enviado).toBeFalse();
-    expect('price' in enviado).toBeFalse();
-  });
-
-  it('deveMarcarEntregaGratisNaEdicaoQuandoPrecosJaSaoIguais', async () => {
-    productEdicao = { priceDelivery: 90, pricePickup: 90, freeDelivery: true };
-    await setup('5');
+    preencher({ price: 100, shippingFee: 20 });
     fixture.detectChanges();
+    expect(byId('free-delivery-hint')).toBeNull();
 
-    expect(checkbox().checked).toBeTrue();
-    expect(campoEntrega().readOnly).toBeTrue();
-  });
-
-  it('naoDeveMarcarEntregaGratisNaEdicaoComPrecosDiferentes', async () => {
-    await setup('5');
+    preencher({ price: 100, shippingFee: null });
     fixture.detectChanges();
-
-    expect(checkbox().checked).toBeFalse();
-    expect(campoEntrega().readOnly).toBeFalse();
+    expect(byId('free-delivery-hint')).toBeNull();
   });
 
   it('deveAceitarImagemSoltaNaAreaDeUpload', async () => {
@@ -225,26 +192,26 @@ describe('ProductItemFormComponent', () => {
     expect(navigateSpy).toHaveBeenCalledWith(['/product-items']);
   });
 
-  it('deveCarregarOsDoisPrecosNaEdicao', async () => {
+  it('deveCarregarPrecoEFreteNaEdicao', async () => {
     await setup('5');
 
-    expect(component.formProductItem.value.priceDelivery).toBe(95);
-    expect(component.formProductItem.value.pricePickup).toBe(80);
+    expect(component.formProductItem.value.price).toBe(80);
+    expect(component.formProductItem.value.shippingFee).toBe(15);
     expect(component.formProductItem.value.categoryProductId).toBe(3);
   });
 
   it('deveSalvarAEdicaoSemExigirNovaImagem', async () => {
     await setup('5');
-    preencher({ priceDelivery: 90, pricePickup: 90 });
+    preencher({ price: 90, shippingFee: 0 });
 
     component.updateProduct();
 
     const enviado = productItemServiceSpy.update.calls.mostRecent().args[1] as any;
     expect(productItemServiceSpy.update.calls.mostRecent().args[0]).toBe(5);
-    expect(enviado.priceDelivery).toBe(90);
-    expect(enviado.pricePickup).toBe(90);
-    expect('price' in enviado).toBeFalse();
-    expect('freeDelivery' in enviado).toBeFalse();
+    expect(enviado.price).toBe(90);
+    expect(enviado.shippingFee).toBe(0);
+    expect('priceDelivery' in enviado).toBeFalse();
+    expect('pricePickup' in enviado).toBeFalse();
     expect(navigateSpy).toHaveBeenCalledWith(['/product-items']);
   });
 });

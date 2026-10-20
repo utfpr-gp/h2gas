@@ -52,20 +52,11 @@ export class ProductItemFormComponent implements OnInit {
   ) {
     this.formProductItem = this.fb.group({
       brand: ['', [Validators.required]],
-      priceDelivery: [null, [Validators.required, Validators.min(0)]],
-      pricePickup: [null, [Validators.required, Validators.min(0)]],
+      price: [null, [Validators.required, Validators.min(0)]],
+      shippingFee: [null, [Validators.required, Validators.min(0)]],
       stockQuantity: [0, [Validators.required, Validators.min(0)]],
       description: ['', [Validators.required]],
-      categoryProductId: [null, [Validators.required]],
-      // só da tela (não vai para a API): preços iguais = Entrega Grátis; deve ficar depois dos preços
-      freeDelivery: [false]
-    });
-
-    this.formProductItem.get('freeDelivery')!.valueChanges.subscribe((marcado) => {
-      if (marcado) this.matchDeliveryToPickup();
-    });
-    this.formProductItem.get('pricePickup')!.valueChanges.subscribe(() => {
-      if (this.formProductItem.get('freeDelivery')!.value) this.matchDeliveryToPickup();
+      categoryProductId: [null, [Validators.required]]
     });
   }
 
@@ -99,19 +90,21 @@ export class ProductItemFormComponent implements OnInit {
   file?: File;
   dragging = false;
 
-  // HU10: Entrega Grátis = preço com entrega igual ao de retirada
-  private matchDeliveryToPickup() {
-    this.formProductItem.get('priceDelivery')!.setValue(this.formProductItem.get('pricePickup')!.value, { emitEvent: false });
+  private isFilled(value: unknown): boolean {
+    return value !== null && value !== undefined && value !== '';
   }
 
+  // HU10: prévia do que o cliente paga — retirada = Preço; entrega = Preço + frete
+  get pricePreview(): { pickup: number; delivery: number } | null {
+    const { price, shippingFee } = this.formProductItem.value;
+    if (!this.isFilled(price) || !this.isFilled(shippingFee)) return null;
+    return { pickup: Number(price), delivery: Number(price) + Number(shippingFee) };
+  }
+
+  // frete zero = Entrega Grátis (só avisa com o frete preenchido)
   get isFreeDelivery(): boolean {
-    return !!this.formProductItem.get('freeDelivery')!.value;
-  }
-
-  // o campo auxiliar do checkbox não faz parte do contrato da API
-  private payload(): ProductItem {
-    const { freeDelivery, ...product } = this.formProductItem.getRawValue();
-    return product as ProductItem;
+    const { shippingFee } = this.formProductItem.value;
+    return this.isFilled(shippingFee) && Number(shippingFee) === 0;
   }
 
   onFileSelected(event: Event) {
@@ -166,7 +159,7 @@ export class ProductItemFormComponent implements OnInit {
       return;
     }
 
-    this.productItemSave = this.payload();
+    this.productItemSave = this.formProductItem.value;
 
     this.productItemService.update(this.idEdit, this.productItemSave!).subscribe({
       next: (response) => {
@@ -211,7 +204,7 @@ export class ProductItemFormComponent implements OnInit {
     }
     this.isLoading = true;
 
-    this.productItemSave = this.payload();
+    this.productItemSave = this.formProductItem.value;
 
     // if (this.productItemSave) {
     //   this.productItemSave.supplierId = this.user?.supplierId ?? '';

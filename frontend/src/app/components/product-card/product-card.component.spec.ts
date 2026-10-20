@@ -34,7 +34,7 @@ describe('ProductCardComponent', () => {
     );
   });
 
-  it('deveExibirBadgeDeFreteGratisQuandoPrecosIguais', () => {
+  it('deveExibirBadgeDeFreteGratisQuandoFreteZero', () => {
     component.product = { id: 10, brand: 'Ultragaz', priceDelivery: 100, pricePickup: 100, freeDelivery: true } as ProductItem;
     fixture.detectChanges();
 
@@ -43,7 +43,7 @@ describe('ProductCardComponent', () => {
     expect(selo.textContent).toContain('Entrega Grátis');
   });
 
-  it('naoDeveExibirBadgeQuandoPrecosDiferentes', () => {
+  it('naoDeveExibirBadgeQuandoHouverFrete', () => {
     component.product = { id: 10, brand: 'Ultragaz', priceDelivery: 110, pricePickup: 95, freeDelivery: false } as ProductItem;
     fixture.detectChanges();
 

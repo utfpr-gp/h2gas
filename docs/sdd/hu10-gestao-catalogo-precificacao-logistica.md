@@ -142,7 +142,7 @@ Detalhamento operacional (não cria cenário novo):
 - `product-card` (vitrine do cliente): selo **"Entrega Grátis"** quando
   `freeDelivery`, e continua exibindo Entrega e Retirada.
 - `product-item` (gestão do fornecedor): cada linha mostra Entrega e
-  Retirada, o frete e o selo "Entrega Grátis".
+  Retirada e o selo "Entrega Grátis".
 
 ## 6. Plano de Testes (TDD)
 
@@ -203,23 +203,29 @@ Regra herdada: specs antigos falhando no frontend não aumentam (19).
 
 ## 8. Definição de Pronto
 
-- [ ] Cadastro e edição exigem `price` e `shippingFee` separados, com
+- [x] Cadastro e edição exigem `price` e `shippingFee` separados, com
       validação na API (400 se ausente ou negativo), e gravam
       `pricePickup = price` e `priceDelivery = price + shippingFee`.
-- [ ] Editar produto não troca a categoria por engano e só vale para
+- [x] Editar produto não troca a categoria por engano e só vale para
       produto do próprio fornecedor (403 nos demais).
-- [ ] `ProductItemDTO` expõe `price`, `shippingFee` e `freeDelivery`
+- [x] `ProductItemDTO` expõe `price`, `shippingFee` e `freeDelivery`
       computados, sem quebrar `priceDelivery`/`pricePickup`.
-- [ ] Rotas `POST`/`PUT` documentadas no Swagger.
-- [ ] Formulário em seções (Figura 16) com "Preço" e "Preço de frete"
+- [x] Rotas `POST`/`PUT` documentadas no Swagger.
+- [x] Formulário em seções (Figura 16) com "Preço" e "Preço de frete"
       obrigatórios, prévia de Retirada/Entrega, aviso de frete zero,
       upload arrasta-e-solta e Cancelar.
-- [ ] Selo "Entrega Grátis" na vitrine do cliente e na gestão do
+- [x] Selo "Entrega Grátis" na vitrine do cliente e na gestão do
       fornecedor; cards, carrinho e checkout continuam com Entrega e
       Retirada.
-- [ ] Testes da seção 6 verdes; `mvn test` e `ng test` (≤ 19 falhas
+- [x] Testes da seção 6 verdes; `mvn test` e `ng test` (≤ 19 falhas
       antigas); sem HEX novo.
-- [ ] Commits pequenos por fatia (CLAUDE.md, seção Git).
-- [ ] Testado de ponta a ponta (API e interface).
+- [x] Commits pequenos por fatia (CLAUDE.md, seção Git).
+- [x] Testado de ponta a ponta (API e interface).
 - [ ] Revisado e aprovado. Fecha os 10 Must-have; o próximo é a HU11
       (autenticação por token), início do Should-have.
+
+> Verificado em 2026-10-20: backend 228 testes (único erro: `BackendApplicationTests.contextLoads`, que precisa do MySQL local);
+> frontend 259 testes com 19 falhas antigas (duas a menos: os specs do formulário e da gestão passaram a ter providers); E2E com 23 checagens
+> (400 sem/negativo, 403 produto e categoria de outro fornecedor ou sem fornecedor, derivação retirada = preço e entrega = preço + frete no banco,
+> prévia e aviso de frete zero, corpo do POST com `price`/`shippingFee`, edição com frete zero e `freeDelivery` na API). O upload de imagem do cadastro
+> não foi exercitado de verdade: o Cloudinary local tem credencial inválida (`Invalid Signature`), então o POST foi interceptado no navegador.
