@@ -84,6 +84,16 @@ describe('LoginComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/entregas']);
   });
 
+  it('deveRedirecionarFornecedorParaDashboard', () => {
+    const userService = TestBed.inject(UserService) as jasmine.SpyObj<UserService>;
+    userService.getMe.and.returnValue(of({ id: 'u3', userType: 'SUPPLIER' } as any));
+    const router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+
+    component.getAndSaveMe();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/dashboard']);
+  });
+
   it('deveManterInicioParaOsDemaisPerfis', () => {
     const userService = TestBed.inject(UserService) as jasmine.SpyObj<UserService>;
     userService.getMe.and.returnValue(of({ id: 'u2', userType: 'CUSTOMER' } as any));

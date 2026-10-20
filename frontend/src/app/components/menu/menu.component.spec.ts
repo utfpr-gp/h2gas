@@ -85,6 +85,25 @@ describe('MenuComponent', () => {
     contadores.forEach((contador) => expect(contador.textContent?.trim()).toBe('2'));
   });
 
+  it('deveExibirDashboardPedidosEProdutosParaFornecedor', () => {
+    localStorage.setItem('user', JSON.stringify({ id: 'f1', name: 'Gás Centro', userType: 'SUPPLIER' }));
+    fixture = TestBed.createComponent(MenuComponent);
+    fixture.detectChanges();
+    const nav = (fixture.nativeElement as HTMLElement).querySelector('nav') as HTMLElement;
+
+    const hrefs = Array.from(nav.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+    expect(hrefs).toContain('/dashboard');
+    expect(hrefs).toContain('/dashboard-fornecedor');
+    expect(nav.textContent).toContain('Dashboard');
+    expect(nav.textContent).toContain('Pedidos');
+    expect(nav.textContent).toContain('Produtos');
+  });
+
+  it('naoDeveExibirDashboardParaCliente', () => {
+    const hrefs = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('a')).map((a) => a.getAttribute('href'));
+    expect(hrefs).not.toContain('/dashboard');
+  });
+
   it('naoDeveExibirAbasDoEntregadorParaCliente', () => {
     expect(fixture.nativeElement.querySelector('app-deliverer-tab-bar')).toBeNull();
   });
