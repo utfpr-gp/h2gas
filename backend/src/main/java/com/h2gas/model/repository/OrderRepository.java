@@ -17,7 +17,7 @@ public interface OrderRepository extends JpaRepository<Order, String> {
     Page<Order> findBySupplierIdOrderByCreatedAtDesc(String id, Pageable pageable);
     Page<Order> findByStatus(OrderStatusEnum status, Pageable pageable);
     // HU09: pedidos do mês com itens e produtos já carregados (a agregação é feita em Java)
-    @EntityGraph(attributePaths = {"items", "items.product", "items.product.categoryProduct"})
+    @EntityGraph(attributePaths = {"items", "items.product", "items.product.categoryProduct", "items.product.categoryProduct.productType"})
     @Query("SELECT o FROM Order o WHERE o.supplier.id = :supplierId AND o.createdAt >= :start AND o.createdAt < :end")
     List<Order> findForDashboard(@Param("supplierId") String supplierId,
                                  @Param("start") LocalDateTime start,

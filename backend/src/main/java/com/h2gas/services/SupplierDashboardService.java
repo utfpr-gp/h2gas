@@ -2,6 +2,7 @@ package com.h2gas.services;
 
 import com.h2gas.enums.OrderStatusEnum;
 import com.h2gas.exceptions.BusinessRuleException;
+import com.h2gas.model.dto.CategorySalesDTO;
 import com.h2gas.model.dto.PaymentShareDTO;
 import com.h2gas.model.dto.ProductSalesDTO;
 import com.h2gas.model.dto.RevenuePointDTO;
@@ -62,6 +63,7 @@ public class SupplierDashboardService {
         dashboard.setRevenueByDay(revenueByDay(orders, month));
         dashboard.setSalesByProduct(salesByProduct(orders));
         dashboard.setPaymentBreakdown(paymentBreakdown(orders));
+        dashboard.setSalesByCategory(salesByCategory(orders));
         return dashboard;
     }
 
@@ -122,6 +124,28 @@ public class SupplierDashboardService {
                         entry.getValue().stream().map(i -> i.getTotalPrice() == null ? BigDecimal.ZERO : i.getTotalPrice()).reduce(BigDecimal.ZERO, BigDecimal::add)))
                 .sorted(Comparator.comparingLong(ProductSalesDTO::getQuantity).reversed().thenComparing(ProductSalesDTO::getProductName))
                 .limit(TOP_PRODUCTS)
+                .toList();
+    }
+
+    // categoria = tipo de produto (Gás, Água…); percentual sobre a receita dos itens dos pedidos contados
+    private List<CategorySalesDTO> salesByCategory(List<Order> orders) {
+        Map<String, List<OrderItem>> byCategory = orders.stream()
+                .filter(o -> o.getItems() != null)
+                .flatMap(o -> o.getItems().stream())
+                .collect(Collectors.groupingBy(item -> item.getProduct().getCategoryProduct().getProductType().getName()));
+        BigDecimal total = byCategory.values().stream().flatMap(List::stream)
+                .map(i -> i.getTotalPrice() == null ? BigDecimal.ZERO : i.getTotalPrice())
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        return byCategory.entrySet().stream()
+                .map(entry -> {
+                    BigDecimal revenue = entry.getValue().stream()
+                            .map(i -> i.getTotalPrice() == null ? BigDecimal.ZERO : i.getTotalPrice())
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                    double percent = total.signum() == 0 ? 0
+                            : revenue.multiply(BigDecimal.valueOf(100)).divide(total, 1, RoundingMode.HALF_UP).doubleValue();
+                    return new CategorySalesDTO(entry.getKey(), entry.getValue().stream().mapToLong(OrderItem::getQuantity).sum(), revenue, percent);
+                })
+                .sorted(Comparator.comparing(CategorySalesDTO::getRevenue).reversed().thenComparing(CategorySalesDTO::getCategoryName))
                 .toList();
     }
 

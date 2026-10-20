@@ -3,6 +3,7 @@ package com.h2gas.services;
 import com.h2gas.enums.OrderStatusEnum;
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.exceptions.BusinessRuleException;
+import com.h2gas.model.dto.CategorySalesDTO;
 import com.h2gas.model.dto.PaymentShareDTO;
 import com.h2gas.model.dto.SupplierDashboardDTO;
 import com.h2gas.model.entity.*;
@@ -282,6 +283,24 @@ class SupplierDashboardServiceTest {
         assertEquals(0, new BigDecimal("200.00").compareTo(pagamentos.get(0).getRevenue()));
         assertEquals("DINHEIRO", pagamentos.get(1).getMethod());
         assertEquals(25.0, pagamentos.get(1).getPercent());
+    }
+
+    @Test
+    @DisplayName("HU09: vendas por categoria (tipo de produto) com percentual da receita, sem cancelados")
+    void deveAgruparVendasPorCategoriaComPercentualDaReceita() {
+        pedido(fornecedor, OrderStatusEnum.DELIVERED, "PIX", "300.00", dia(mes, 1), botijao, 3);
+        pedido(fornecedor, OrderStatusEnum.DELIVERED, "PIX", "100.00", dia(mes, 2), galao, 2);
+        pedido(fornecedor, OrderStatusEnum.CANCELED, "PIX", "900.00", dia(mes, 3), galao, 9);
+
+        List<CategorySalesDTO> categorias = dashboard().getSalesByCategory();
+
+        assertEquals(2, categorias.size());
+        assertEquals("Gás", categorias.get(0).getCategoryName());
+        assertEquals(3, categorias.get(0).getQuantity());
+        assertEquals(0, new BigDecimal("300.00").compareTo(categorias.get(0).getRevenue()));
+        assertEquals(75.0, categorias.get(0).getPercent());
+        assertEquals("Água", categorias.get(1).getCategoryName());
+        assertEquals(25.0, categorias.get(1).getPercent());
     }
 
     @Test

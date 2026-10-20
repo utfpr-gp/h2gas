@@ -54,4 +54,7 @@ public class SupplierDashboardDTO {
 
     @Schema(description = "Formas de pagamento, da mais usada para a menos")
     private List<PaymentShareDTO> paymentBreakdown;
+
+    @Schema(description = "Vendas por tipo de produto (Gás, Água…), da maior receita para a menor")
+    private List<CategorySalesDTO> salesByCategory;
 }
