@@ -129,8 +129,9 @@ Detalhamento operacional (não cria cenário novo):
     unidades; nome = `marca + categoria`;
   - `PaymentShareDTO(method, orders, revenue, percent)` — percent sobre o
     total de pedidos do mês.
-- `SupplierService.buildDashboard(supplierId, YearMonth month)`
-  (`@Transactional(readOnly = true)`):
+- `SupplierDashboardService.buildDashboard(supplierId, YearMonth month)`
+  (`@Transactional(readOnly = true)`, injeção por construtor; serviço
+  próprio para não inchar o `SupplierService`, que é todo por campo):
   - **pedido contado** = status ≠ `CANCELED`, criado no mês;
   - `totalRevenue` = soma de `totalPrice`; `averageTicket` = receita ÷
     pedidos (2 casas, `HALF_UP`); variação % = `(atual − anterior) ÷
@@ -175,7 +176,7 @@ Detalhamento operacional (não cria cenário novo):
    `deveOcultarProdutosZeradosNaVitrineAberta`.
 2. `ProductItemControllerTest` — `deveForcarOnlyAvailableParaCliente`,
    `devePermitirFornecedorVerProdutosZerados`.
-3. `SupplierServiceTest` (dados de teste com `createdAt`,
+3. `SupplierDashboardServiceTest` (dados de teste com `createdAt`,
    `dispatchedAt`, `deliveredAt` gravados à mão) —
    `deveSomarReceitaExcluindoPedidosCancelados`,
    `deveCalcularTicketMedio`, `deveCalcularVariacaoSobreMesAnterior`,
@@ -187,7 +188,7 @@ Detalhamento operacional (não cria cenário novo):
    `deveRetornarTempoMedioNuloSemEntregasComHorarios`,
    `deveListarTop5ProdutosPorUnidades`,
    `deveAgruparPagamentosComPercentual`,
-   `naoDeveMisturarPedidosDeOutroFornecedor`.
+   `naoDeveMisturarPedidosDeOutroFornecedor`, `deveRejeitarMesFuturo`.
 4. `SupplierControllerTest` —
    `deveRetornar200ComDashboardDoFornecedorLogado`,
    `deveRetornar400ParaMesFuturoOuInvalido`.
