@@ -23,7 +23,7 @@ describe('ProductCardComponent', () => {
   });
 
   it('deveEmitirProdutoComQuantidadeUmAoClicarEmAdicionar', () => {
-    component.product = { id: 10, brand: 'Ultragaz', price: 120 } as ProductItem;
+    component.product = { id: 10, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as ProductItem;
     fixture.detectChanges();
     spyOn(component.addToCart, 'emit');
 
@@ -32,6 +32,22 @@ describe('ProductCardComponent', () => {
     expect(component.addToCart.emit).toHaveBeenCalledWith(
       jasmine.objectContaining({ id: 10, quantitySelect: 1 })
     );
+  });
+
+  it('deveExibirBadgeDeFreteGratisQuandoPrecosIguais', () => {
+    component.product = { id: 10, brand: 'Ultragaz', priceDelivery: 100, pricePickup: 100, freeDelivery: true } as ProductItem;
+    fixture.detectChanges();
+
+    const selo = fixture.nativeElement.querySelector('[data-testid="free-delivery"]') as HTMLElement;
+    expect(selo).toBeTruthy();
+    expect(selo.textContent).toContain('Entrega Grátis');
+  });
+
+  it('naoDeveExibirBadgeQuandoPrecosDiferentes', () => {
+    component.product = { id: 10, brand: 'Ultragaz', priceDelivery: 110, pricePickup: 95, freeDelivery: false } as ProductItem;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="free-delivery"]')).toBeNull();
   });
 
   it('deveExibirAmbosPrecosSimultaneamente', () => {
