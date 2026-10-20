@@ -103,4 +103,19 @@ describe('LoginComponent', () => {
 
     expect(router.navigate).toHaveBeenCalledWith(['/inicio']);
   });
+
+  it('deveLevarParaOLoginPorCodigo', () => {
+    const router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+
+    (fixture.nativeElement.querySelector('[data-testid=code-login]') as HTMLButtonElement).click();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/login/token']);
+  });
+
+  it('naoDeveTerDoctypeNemHexLiteralNoTemplate', () => {
+    const html = (fixture.nativeElement as HTMLElement).innerHTML;
+
+    expect(html).not.toContain('<body');
+    expect(html).not.toMatch(/#0E2068|#3B82F6/i);
+  });
 });

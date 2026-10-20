@@ -40,6 +40,7 @@ import { ContactComponent } from './components/pages/contact/contact.component';
 export const routes: Routes = [
     {path: '', component: InitialScreenComponent},
     {path: 'login', component: LoginTokenComponent},
+    {path: 'login/token', redirectTo: 'login', pathMatch: 'full'},
     {path: 'login/senha', component: LoginComponent},
     {path: 'register', component: RegisterComponent},
     { path: 'unauthorized', component: UnauthorizedComponent },
