@@ -49,7 +49,7 @@ public class ProductItemController {
     }
 
     @Operation(summary = "Cadastra um produto do fornecedor logado",
-            description = "Exige price (Preço, valor de retirada) e shippingFee (Preço de frete). Entrega = price + shippingFee; "
+            description = "Exige price (Preço, valor de retirada) e shippingFee (Preço do frete). Entrega = price + shippingFee; "
                     + "frete zero vira a etiqueta Entrega Grátis na leitura. A categoria precisa ser do próprio fornecedor. "
                     + "multipart/form-data: parte 'product' (JSON) e parte 'file' (imagem)")
     @ApiResponses({

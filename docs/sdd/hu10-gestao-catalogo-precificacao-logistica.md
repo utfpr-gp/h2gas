@@ -28,7 +28,7 @@ operação de acordo com o custo logístico individual de cada item.
 > **cliente e para o fornecedor**.
 >
 > **Revisão final (a pedido do autor)**: o fornecedor informa apenas
-> **"Preço"** e **"Preço de frete"** — não mais "Preço para Retirada" e
+> **"Preço"** e **"Preço do frete"** — não mais "Preço para Retirada" e
 > "Preço com Entrega" (texto do Apêndice A, que passa a ser **reinterpretado**
 > neste ponto). Por baixo nada migra: **retirada = Preço** e **entrega =
 > Preço + frete**, derivados na API, de modo que os cards, o carrinho, o
@@ -38,7 +38,7 @@ operação de acordo com o custo logístico individual de cada item.
 - **Cenário 1 — Precificação dividida**: Dado o formulário de novo
   produto, Quando o fornecedor preenche os dados financeiros, Então o
   sistema exige a inserção obrigatória e separada de **"Preço"** e
-  **"Preço de frete"** (reinterpretação dos dois preços do Apêndice A:
+  **"Preço do frete"** (reinterpretação dos dois preços do Apêndice A:
   Preço = retirada; Preço + frete = entrega).
 - **Cenário 2 — Regra de Entrega Grátis**: Dado a edição de um item,
   Quando o fornecedor informa **frete zero** (preço de entrega igual ao de
@@ -126,7 +126,7 @@ Detalhamento operacional (não cria cenário novo):
 - `product-item-form` em seções, como a Figura 16, nos tokens F7 (sem HEX
   novo, `rounded-xl`):
   - **1. Informações básicas**: Marca, Categoria, Descrição;
-  - **2. Preços e estoque**: **"Preço (R$)"** e **"Preço de frete (R$)"**
+  - **2. Preços e estoque**: **"Preço (R$)"** e **"Preço do frete (R$)"**
     (obrigatórios, `min(0)`, lado a lado) e Estoque; abaixo, a **prévia**
     "Retirada: R$ x · Entrega: R$ y" ao vivo e, quando o frete é 0, um
     aviso curto "Frete zero: este produto terá a etiqueta Entrega
@@ -211,7 +211,7 @@ Regra herdada: specs antigos falhando no frontend não aumentam (19).
 - [x] `ProductItemDTO` expõe `price`, `shippingFee` e `freeDelivery`
       computados, sem quebrar `priceDelivery`/`pricePickup`.
 - [x] Rotas `POST`/`PUT` documentadas no Swagger.
-- [x] Formulário em seções (Figura 16) com "Preço" e "Preço de frete"
+- [x] Formulário em seções (Figura 16) com "Preço" e "Preço do frete"
       obrigatórios, prévia de Retirada/Entrega, aviso de frete zero,
       upload arrasta-e-solta e Cancelar.
 - [x] Selo "Entrega Grátis" na vitrine do cliente e na gestão do

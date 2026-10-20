@@ -28,9 +28,9 @@ public class CreateProductItemDTO {
     @Schema(description = "Preço do produto (R$); é o valor para retirada", example = "100.00", requiredMode = Schema.RequiredMode.REQUIRED)
     private BigDecimal price;
 
-    @NotNull(message = "Preço de frete é obrigatório")
-    @DecimalMin(value = "0.0", message = "Preço de frete não pode ser negativo")
-    @Schema(description = "Preço de frete (R$), somado ao preço na entrega. Zero = Entrega Grátis", example = "20.00",
+    @NotNull(message = "Preço do frete é obrigatório")
+    @DecimalMin(value = "0.0", message = "Preço do frete não pode ser negativo")
+    @Schema(description = "Preço do frete (R$), somado ao preço na entrega. Zero = Entrega Grátis", example = "20.00",
             requiredMode = Schema.RequiredMode.REQUIRED)
     private BigDecimal shippingFee;
 
