@@ -28,6 +28,7 @@ import { DelivererRoutesComponent } from './components/pages/deliverer-routes/de
 import { DelivererRouteDetailComponent } from './components/pages/deliverer-route-detail/deliverer-route-detail.component';
 import { DelivererHistoryComponent } from './components/pages/deliverer-history/deliverer-history.component';
 import { SupplierDashboardComponent } from './components/pages/supplier-dashboard/supplier-dashboard.component';
+import { LoginTokenComponent } from './components/pages/login-token/login-token.component';
 import { ForgotPasswordComponent } from './components/pages/forgot-password/forgot-password.component';
 import { CheckEmailComponent } from './components/pages/check-email/check-email.component';
 import { ResetPasswordComponent } from './components/pages/reset-password/reset-password.component';
@@ -38,7 +39,8 @@ import { ContactComponent } from './components/pages/contact/contact.component';
 
 export const routes: Routes = [
     {path: '', component: InitialScreenComponent},
-    {path: 'login', component: LoginComponent},
+    {path: 'login', component: LoginTokenComponent},
+    {path: 'login/senha', component: LoginComponent},
     {path: 'register', component: RegisterComponent},
     { path: 'unauthorized', component: UnauthorizedComponent },
     {
