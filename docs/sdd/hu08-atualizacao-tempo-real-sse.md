@@ -179,18 +179,22 @@ Regra herdada: specs antigos falhando no frontend não aumentam (22).
 
 ## 8. Definição de Pronto
 
-- [ ] `updateOrderStatus`, `cancelOrder`, `startDelivery` e
+- [x] `updateOrderStatus`, `cancelOrder`, `startDelivery` e
       `completeDelivery` publicam, **após o commit**, `order-status-changed`
       no canal `customer:{id}`; recusa e despacho não publicam.
-- [ ] Assinar canal de outro cliente ou fora da convenção devolve 403;
+- [x] Assinar canal de outro cliente ou fora da convenção devolve 403;
       Swagger do SSE atualizado.
-- [ ] `order-list` troca o status e destaca o card afetado sem recarregar
+- [x] `order-list` troca o status e destaca o card afetado sem recarregar
       a página nem refazer a busca; conexão fechada ao sair da tela.
-- [ ] nginx de produção repassa o stream sem buffer.
-- [ ] Testes da seção 6 verdes; `mvn test` e `ng test` (≤ 22 falhas
+- [x] nginx de produção repassa o stream sem buffer.
+- [x] Testes da seção 6 verdes; `mvn test` e `ng test` (≤ 22 falhas
       antigas).
-- [ ] Testado de ponta a ponta (cliente com a tela aberta enquanto o
+- [x] Testado de ponta a ponta (cliente com a tela aberta enquanto o
       fornecedor e o entregador mudam o status).
-- [ ] Commits pequenos por fatia (CLAUDE.md, seção Git).
+- [x] Commits pequenos por fatia (CLAUDE.md, seção Git).
 - [ ] Revisado e aprovado — fecha os 10 Must-have (HU01-HU10) e a
       Fundação (F1-F5). Próximo é HU11, início do Should-have.
+
+> Verificado em 2026-10-19: backend 187 testes (único erro: `BackendApplicationTests.contextLoads`, que precisa do MySQL local);
+> frontend 229 testes com as 22 falhas antigas; E2E com o cliente em `/meus-pedidos` enquanto fornecedor e entregador mudavam o status
+> (16 checagens: troca em ~40 ms sem refresh nem nova busca, destaque do card, despacho e recusa sem evento, canal alheio 403).
