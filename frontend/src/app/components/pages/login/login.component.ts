@@ -7,6 +7,7 @@ import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../services/auth.service';
 import { CartService } from '../../../services/cart.service';
 import { LocationContextService } from '../../../services/location-context.service';
+import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
   selector: 'app-login',
@@ -48,15 +49,13 @@ export class LoginComponent {
     this.authService.loginUser(this.loginform.value).subscribe({
       next: (response: any) => {
         this.loading = false;
-        console.log('Usuario logado com sucesso!', response);
-        this.toastr.success('Usuario logado com sucesso!');
         localStorage.setItem('access_token', response.token)
         this.getAndSaveMe();
       }, 
       error: (err) => {
         this.loading = false;
         console.error('Erro ao logar:', err);
-        this.toastr.error(`Erro ao efetuar o login: ${err.error.message}`)
+        this.toastr.error(`Não foi possível entrar: ${backendMessage(err)}`)
       }
     })
   }
@@ -66,12 +65,14 @@ export class LoginComponent {
       next: (response: any) => {
         console.log('Usuario buscado sucesso!', response);
         localStorage.setItem('user', JSON.stringify(response))
+        const firstName = (response?.name || '').trim().split(/\s+/)[0];
+        this.toastr.success(firstName ? `Bem-vindo(a), ${firstName}!` : 'Bem-vindo(a)!');
         // o entregador não tem catálogo: vai direto para as entregas (HU07)
         this.navigate(response.userType === 'DELIVERER' ? '/entregas' : '/inicio')
       }, 
       error: (err) => {
         console.error('Erro ao buscar o usuario logado:', err);
-        this.toastr.error(`Erro ao buscar o usuario: ${err.error.message}`)
+        this.toastr.error(`Erro ao carregar seus dados: ${backendMessage(err)}`)
       }
     })
   }

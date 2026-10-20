@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { ProductListComponent } from './product-list.component';
 import { ProductItemService } from '../../../services/product-item.service';
@@ -15,6 +15,7 @@ describe('ProductListComponent', () => {
   let productItemServiceSpy: jasmine.SpyObj<ProductItemService>;
   let productTypeServiceSpy: jasmine.SpyObj<ProductTypeService>;
   let cartServiceSpy: jasmine.SpyObj<CartService>;
+  let toastrSpy: jasmine.SpyObj<ToastrService>;
 
   const emptyPage = { data: [], page: 0, size: 10, totalElements: 0, totalPages: 0, hasNext: false, hasPrevious: false };
 
@@ -33,7 +34,7 @@ describe('ProductListComponent', () => {
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => 'fixture-supplier-hu02' } } } },
         { provide: ProductItemService, useValue: productItemServiceSpy },
         { provide: ProductTypeService, useValue: productTypeServiceSpy },
-        { provide: ToastrService, useValue: jasmine.createSpyObj('ToastrService', ['success', 'error', 'warning']) },
+        { provide: ToastrService, useValue: toastrSpy = jasmine.createSpyObj('ToastrService', ['success', 'error', 'warning']) },
         { provide: CartService, useValue: cartServiceSpy },
       ]
     })
@@ -46,6 +47,24 @@ describe('ProductListComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  // F7 §5.10: carregar o catálogo não gera toast
+  it('naoDeveExibirToastDeSucessoAoBuscar', () => {
+    productItemServiceSpy.getProductsBySupplierId.and.returnValue(of({ ...emptyPage, data: [{ id: 1, brand: 'Ultragaz' }], totalElements: 1, totalPages: 1 } as any));
+
+    component.ngOnInit();
+
+    expect(productItemServiceSpy.getProductsBySupplierId).toHaveBeenCalled();
+    expect(toastrSpy.success).not.toHaveBeenCalled();
+  });
+
+  it('deveMostrarCausaAoFalharCarregarCategorias', () => {
+    productTypeServiceSpy.findAll.and.returnValue(throwError(() => ({ status: 0, error: new ProgressEvent('error') })));
+
+    component.loadCategories();
+
+    expect(toastrSpy.error).toHaveBeenCalledWith('Erro ao carregar as categorias: sem conexão com o servidor');
   });
 
   it('deveFiltrarAoSelecionarCategoriaPeloChip', () => {

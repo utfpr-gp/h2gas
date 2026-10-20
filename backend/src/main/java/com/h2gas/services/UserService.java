@@ -54,12 +54,12 @@ public class UserService {
     public UserDto findByIdUser(String id) {
         Optional<User> userEntityOptional = userRepository.findById(id);
         return userEntityOptional.map(userMapper::toDto).orElseThrow(()
-                -> new ResourceNotFoundException("User not found with id: " + id));
+                -> new ResourceNotFoundException("Usuário não encontrado."));
     }
 
     public User findEntityByIdUser(String id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
     }
 
     public UserDto findByName(String name) {
@@ -87,12 +87,12 @@ public class UserService {
 
     public UserDto update(String id, UserDto userDto) {
         User userEdit = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
 
         userEdit.setName(userDto.getName());
         if (userRepository.existsByEmail(userDto.getEmail()) &&
                 !userEdit.getEmail().equals(userDto.getEmail())) {
-            throw new BusinessRuleException("Email já cadastrado.");
+            throw new BusinessRuleException("E-mail já cadastrado.");
         }
 
         userEdit.setEmail(userDto.getEmail());
@@ -109,7 +109,7 @@ public class UserService {
     @Transactional
     public UserDto create(RegisterDTO data) {
         if (userRepository.existsByEmail(data.getEmail())) {
-            throw new BusinessRuleException("Email já cadastrado.");
+            throw new BusinessRuleException("E-mail já cadastrado.");
         }
 
         String encryptedPassword = new BCryptPasswordEncoder().encode(data.getPassword());
@@ -134,7 +134,7 @@ public class UserService {
 
             if (data.getAddress() != null) {
                 City city = cityRepository.findById(data.getAddress().getCityId())
-                        .orElseThrow(() -> new ResourceNotFoundException("City not found"));
+                        .orElseThrow(() -> new ResourceNotFoundException("Cidade não encontrada."));
                 supplier.setCity(city);
 
                 Supplier savedSupplier = supplierService.createSupplier(supplier);
@@ -160,7 +160,7 @@ public class UserService {
 
             if (data.getAddress() != null) {
                 City city = cityRepository.findById(data.getAddress().getCityId())
-                        .orElseThrow(() -> new ResourceNotFoundException("City not found"));
+                        .orElseThrow(() -> new ResourceNotFoundException("Cidade não encontrada."));
                 addressService.createAddress(data.getAddress(), user, city);
             }
 

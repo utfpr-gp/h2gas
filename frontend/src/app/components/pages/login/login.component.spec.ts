@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
 import { LoginComponent } from './login.component';
@@ -14,6 +14,7 @@ describe('LoginComponent', () => {
   let fixture: ComponentFixture<LoginComponent>;
   let authServiceSpy: jasmine.SpyObj<AuthService>;
   let locationContextService: LocationContextService;
+  let toastrSpy: jasmine.SpyObj<ToastrService>;
 
   beforeEach(async () => {
     localStorage.clear();
@@ -24,7 +25,7 @@ describe('LoginComponent', () => {
       providers: [
         { provide: UserService, useValue: jasmine.createSpyObj('UserService', ['getMe']) },
         { provide: AuthService, useValue: authServiceSpy },
-        { provide: ToastrService, useValue: jasmine.createSpyObj('ToastrService', ['success', 'error']) },
+        { provide: ToastrService, useValue: toastrSpy = jasmine.createSpyObj('ToastrService', ['success', 'error']) },
         { provide: CartService, useValue: jasmine.createSpyObj('CartService', ['setCart']) },
         { provide: Router, useValue: jasmine.createSpyObj('Router', ['navigate']) },
       ],
@@ -50,6 +51,27 @@ describe('LoginComponent', () => {
 
     expect(locationContextService.current()).toBeNull();
     expect(localStorage.getItem('h2gas.activeAddress')).toBeNull();
+  });
+
+  // F7 §5.10 (revisão do autor): o login dá boas-vindas; erro mostra a mensagem do backend
+  it('deveDarBoasVindasAoLogar', () => {
+    authServiceSpy.loginUser.and.returnValue(of({ token: 'jwt' }) as any);
+    const userService = TestBed.inject(UserService) as jasmine.SpyObj<UserService>;
+    userService.getMe.and.returnValue(of({ id: 'u2', name: 'Cliente Teste E2E', userType: 'CUSTOMER' } as any));
+
+    component.loginform.setValue({ email: 'cliente@teste.com', password: '123456' });
+    component.login();
+
+    expect(toastrSpy.success).toHaveBeenCalledOnceWith('Bem-vindo(a), Cliente!');
+  });
+
+  it('deveMostrarMensagemDoBackendAoFalharLogin', () => {
+    authServiceSpy.loginUser.and.returnValue(throwError(() => ({ status: 401, error: { status: 401, error: 'Unauthorized', message: 'E-mail ou senha inválidos.' } })) as any);
+
+    component.loginform.setValue({ email: 'cliente@teste.com', password: 'errada' });
+    component.login();
+
+    expect(toastrSpy.error).toHaveBeenCalledOnceWith('Não foi possível entrar: E-mail ou senha inválidos.');
   });
 
   it('deveRedirecionarEntregadorParaEntregas', () => {

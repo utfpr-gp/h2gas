@@ -78,7 +78,7 @@ public class AddressService {
         Address address = addressMapper.toEntity(addressDTO);
 
         if (city == null) {
-            throw new ResourceNotFoundException("City not found");
+            throw new ResourceNotFoundException("Cidade não encontrada.");
         }
 
         address.setUser(user);

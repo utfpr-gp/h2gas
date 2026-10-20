@@ -94,7 +94,7 @@ class DelivererServiceTest {
 
         BusinessRuleException ex = assertThrows(BusinessRuleException.class,
                 () -> delivererService.createDeliverer(dto("Outro Carlos", "carlos@teste.com"), fornecedor.getId()));
-        assertEquals("Email já cadastrado.", ex.getMessage());
+        assertEquals("E-mail já cadastrado.", ex.getMessage());
     }
 
     @Test

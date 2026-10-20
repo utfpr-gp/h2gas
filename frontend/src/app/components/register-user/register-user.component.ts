@@ -8,6 +8,7 @@ import { Router } from '@angular/router';
 import { User } from '../../models/user';
 import { UserService } from '../../services/user.service';
 import { NgxMaskDirective } from 'ngx-mask';
+import { backendMessage } from '../../utils/backend-message';
 
 @Component({
   selector: 'app-register-user',
@@ -60,7 +61,7 @@ export class RegisterUserComponent implements OnInit {
   register() {
     if (this.registerForm.invalid) {
       this.registerForm.markAllAsTouched();
-      this.toastr.warning('Conferir informações!!')
+      this.toastr.warning('Confira os dados informados.')
       return;
     }
 
@@ -77,18 +78,18 @@ export class RegisterUserComponent implements OnInit {
       this.userService.createUser(objRegister).subscribe({
         next: (response) => {
           this.isLoadingRegister = false;
-          console.log('Usuário criado com sucesso!', response);
-          this.toastr.success('Usuário criado com sucesso!');
+          console.log('Conta criada.', response);
+          this.toastr.success('Conta criada.');
           this.navigateRoute('/login')
         },
         error: (error) => {
           this.isLoadingRegister = false;
           console.error('Erro ao criar usuário:', error);
-          this.toastr.error(`Erro ao criar usuário: ${error.error.message}`)
+          this.toastr.error(`Erro ao criar a conta: ${backendMessage(error)}`)
         }
       })
     } else {
-      this.toastr.warning('Confira as suas senhas!')
+      this.toastr.warning('As senhas não conferem.')
       return;
     }
   }

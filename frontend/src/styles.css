@@ -172,6 +172,89 @@ body {
   }
 }
 
+/* F7 §5.10 — toasts: um por vez, topo central, card nos tokens (estrutura do toastr.css mantida) */
+#toast-container.toast-top-center {
+  top: 0.75rem;
+  width: 100%;
+  padding: 0 0.75rem;
+  pointer-events: none;
+}
+
+#toast-container > .ngx-toastr {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: min(92vw, 420px);
+  margin: 0 auto;
+  padding: 0.875rem 2.5rem 0.875rem 0.875rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-base-300);
+  border-left: 4px solid var(--toast-color);
+  background-color: var(--color-base-100);
+  background-image: none;
+  color: var(--color-base-content);
+  box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.15), 0 4px 10px -6px rgb(0 0 0 / 0.1);
+  opacity: 1;
+  pointer-events: auto;
+  animation: fadeIn 0.2s ease-out both;
+}
+
+#toast-container > .ngx-toastr:hover {
+  box-shadow: 0 12px 28px -6px rgb(0 0 0 / 0.2);
+  opacity: 1;
+}
+
+#toast-container > .ngx-toastr::before {
+  font-family: 'Material Icons';
+  font-size: 1.375rem;
+  line-height: 1;
+  color: var(--toast-color);
+  flex-shrink: 0;
+  -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
+}
+
+#toast-container > .toast-success { --toast-color: var(--color-success); }
+#toast-container > .toast-success::before { content: 'check_circle'; }
+#toast-container > .toast-error { --toast-color: var(--color-error); }
+#toast-container > .toast-error::before { content: 'error'; }
+#toast-container > .toast-warning { --toast-color: var(--color-warning); }
+#toast-container > .toast-warning::before { content: 'warning'; }
+#toast-container > .toast-info { --toast-color: var(--color-info); }
+#toast-container > .toast-info::before { content: 'info'; }
+
+#toast-container .toast-title {
+  font-weight: 600;
+  margin-bottom: 0.125rem;
+}
+
+#toast-container .toast-message {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+#toast-container .toast-close-button {
+  position: absolute;
+  top: 0.625rem;
+  right: 0.75rem;
+  color: var(--color-neutral);
+  text-shadow: none;
+  opacity: 0.7;
+  font-weight: 400;
+}
+
+#toast-container .toast-close-button:hover {
+  color: var(--color-base-content);
+  opacity: 1;
+}
+
+#toast-container .toast-progress {
+  background-color: var(--toast-color);
+  opacity: 0.6;
+  height: 3px;
+}
+
 html {
   scroll-behavior: smooth;
 }

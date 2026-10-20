@@ -10,6 +10,7 @@ import { CategoryProduct } from '../../../models/category-product';
 import { DeleteConfirmationModalComponent } from '../../delete-confirmation-modal/delete-confirmation-modal.component';
 import { User } from '../../../models/user';
 import { UserService } from '../../../services/user.service';
+import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
   selector: 'app-category-products',
@@ -85,7 +86,7 @@ export class CategoryProductsComponent implements OnInit {
         // this.toastr.success("Encontrado tipos com sucesso")        
       },
       error: (err) => {
-        this.toastr.error(`Erro ao encontrar os tipos de produtos: ${err.error.message}`)        
+        this.toastr.error(`Erro ao carregar os tipos de produto: ${backendMessage(err)}`)        
       },
     })
   }
@@ -105,10 +106,9 @@ export class CategoryProductsComponent implements OnInit {
     this.categoryService.findBySupplierId(this.userLogado?.supplierId!).subscribe({
       next: (response) => {
         this.categories = response.data;
-        this.toastr.success("Encontrado todas as categorias de produtos")        
       },
       error: (err) => {
-        this.toastr.error(`Erro ao encontrar as categorias de produtos: ${err.error.message}`)        
+        this.toastr.error(`Erro ao carregar as categorias: ${backendMessage(err)}`)        
       },
     })
   }
@@ -127,13 +127,13 @@ export class CategoryProductsComponent implements OnInit {
 
     this.categoryService.create(this.category!!).subscribe({
       next: (value) => {
-        this.toastr.success("Categoria salva com sucesso")        
+        this.toastr.success('Categoria salva.')        
         this.getAllCategories();
         this.toggleFormulario();
       },
       error: (err) => {
         
-        this.toastr.error(`Erro ao salvar categoria: ${err.error.message}`)        
+        this.toastr.error(`Erro ao salvar categoria: ${backendMessage(err)}`)        
       }
     })
   }
@@ -143,12 +143,12 @@ export class CategoryProductsComponent implements OnInit {
     this.categoryService.delete(this.idCategoryRow!!).subscribe({
       next: (value) => {
         
-        this.toastr.success("Categoria deletada com sucesso")        
+        this.toastr.success('Categoria excluída.')        
         this.getAllCategories();
       },
       error: (err) => {
         
-        this.toastr.error(`Erro ao deletar categoria: ${err.error.message}`)        
+        this.toastr.error(`Erro ao excluir a categoria: ${backendMessage(err)}`)        
       }
     })
   }
@@ -159,7 +159,7 @@ export class CategoryProductsComponent implements OnInit {
       this.formCategory.markAllAsTouched();
       return;
     } else if (this.category == this.formCategory.value) {
-      this.toastr.warning("Dados sem alteração!!")        
+      this.toastr.warning('Nenhuma alteração para salvar.')        
       return;
     }
 
@@ -168,13 +168,13 @@ export class CategoryProductsComponent implements OnInit {
     this.categoryService.update(this.idCategoryRow!!, this.category!!).subscribe({
       next: (value) => {
         
-        this.toastr.success("Categoria atualizada com sucesso")        
+        this.toastr.success('Categoria atualizada.')        
         this.getAllCategories();
         this.toggleFormulario();
       },
       error: (err) => {
         
-        this.toastr.error(`Erro ao atualizar categoria: ${err.error.message}`)        
+        this.toastr.error(`Erro ao atualizar categoria: ${backendMessage(err)}`)        
       }
     })
   }

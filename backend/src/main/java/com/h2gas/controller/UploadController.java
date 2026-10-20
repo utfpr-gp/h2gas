@@ -1,5 +1,7 @@
 package com.h2gas.controller;
 
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 import com.cloudinary.Cloudinary;
 import com.h2gas.services.CloudinaryService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,7 +31,7 @@ public class UploadController {
             Map result = cloudinaryService.upload(file);
             return ResponseEntity.ok(result);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Não foi possível enviar a imagem. Tente novamente.", e);
         }
     }
 

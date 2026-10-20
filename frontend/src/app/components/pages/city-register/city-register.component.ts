@@ -9,6 +9,7 @@ import { City } from '../../../models/city';
 import { DeleteConfirmationModalComponent } from '../../delete-confirmation-modal/delete-confirmation-modal.component';
 import { DynamicTableComponent } from '../../dynamic-table/dynamic-table.component';
 import { MenuComponent } from '../../menu/menu.component';
+import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
   selector: 'app-city-register',
@@ -82,12 +83,11 @@ export class CityRegisterComponent implements OnInit {
     this.cityService.findAll().subscribe({
       next: (response) => {
         this.cityTabble = response
-        this.toastr.success('Busca de cidades completas!');
       },
       error: (error) => {
         
         console.error('Erro ao buscar:', error.error.message);
-        this.toastr.error(`Erro ao buscar cidades: ${error.error.message}`)
+        this.toastr.error(`Erro ao buscar cidades: ${backendMessage(error)}`)
       },
     })
   }
@@ -97,13 +97,13 @@ export class CityRegisterComponent implements OnInit {
     this.cityService.create(this.city!!).subscribe({
       next: (response) => {
         console.log('Criado cidade com sucesso', response);
-        this.toastr.success('Criado cidade com sucesso!');
+        this.toastr.success('Cidade cadastrada.');
         this.getCities();
         this.closeModal();
       },
       error: (error) => {
         console.error('Erro ao criar cidade:', error.error.message);
-        this.toastr.error(`Erro ao criar cidade: ${error.error.message}`)
+        this.toastr.error(`Erro ao cadastrar a cidade: ${backendMessage(error)}`)
       },
     })
   }
@@ -125,12 +125,12 @@ export class CityRegisterComponent implements OnInit {
       this.cityService.delete(this.idSelectCity).subscribe({
         next: (response) => {
           console.log('Cidade excluída com sucesso.', response);
-          this.toastr.success('Cidade excluída com sucesso!');
+          this.toastr.success('Cidade excluída.');
           this.getCities();
         },
         error: (error) => {
           console.error('Erro ao excluir cidade: ', error);
-          this.toastr.error(`Erro ao excluir cidade: ${error}`)
+          this.toastr.error(`Erro ao excluir a cidade: ${backendMessage(error)}`)
         },
       })
     }

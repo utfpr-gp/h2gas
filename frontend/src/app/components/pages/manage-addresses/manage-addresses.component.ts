@@ -6,6 +6,7 @@ import { UserService } from '../../../services/user.service';
 import { LocationContextService } from '../../../services/location-context.service';
 import { AddressFormComponent } from '../../address-form/address-form.component';
 import { Address } from '../../../models/address';
+import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
   selector: 'app-manage-addresses',
@@ -33,7 +34,7 @@ export class ManageAddressesComponent implements OnInit {
   load() {
     this.addressService.findAllByUser(this.userId!).subscribe({
       next: (response) => (this.addresses = response),
-      error: (err) => this.toastr.error(`Erro ao buscar endereços: ${err.error?.message || err.message}`),
+      error: (err) => this.toastr.error(`Erro ao buscar endereços: ${backendMessage(err)}`),
     });
   }
 

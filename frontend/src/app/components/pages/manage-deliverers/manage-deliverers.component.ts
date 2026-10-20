@@ -5,6 +5,7 @@ import { ToastrService } from 'ngx-toastr';
 import { DelivererService } from '../../../services/deliverer.service';
 import { Deliverer } from '../../../models/deliverer';
 import { fadeIn } from '../../../animations/checkout.animations';
+import { backendMessage } from '../../../utils/backend-message';
 
 // HU07: o fornecedor cadastra e acompanha a própria frota
 @Component({
@@ -47,7 +48,7 @@ export class ManageDeliverersComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
-        this.toastr.error(`Erro ao buscar entregadores: ${this.backendMessage(err)}`);
+        this.toastr.error(`Erro ao buscar entregadores: ${backendMessage(err)}`);
       },
     });
   }
@@ -74,7 +75,7 @@ export class ManageDeliverersComponent implements OnInit {
       },
       error: (err) => {
         this.saving = false;
-        this.toastr.error(`Erro ao cadastrar entregador: ${this.backendMessage(err)}`);
+        this.toastr.error(`Erro ao cadastrar entregador: ${backendMessage(err)}`);
       },
     });
   }
@@ -82,10 +83,5 @@ export class ManageDeliverersComponent implements OnInit {
   invalid(field: string): boolean {
     const control = this.form.get(field);
     return !!control && control.invalid && control.touched;
-  }
-
-  // o GlobalExceptionHandler devolve { error } para regra de negócio e { message } para os demais erros
-  private backendMessage(err: any): string {
-    return err?.error?.error || err?.error?.message || err?.message || 'erro inesperado';
   }
 }

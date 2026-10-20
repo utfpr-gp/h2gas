@@ -207,31 +207,83 @@ Pedido do autor em 2026-10-15, depois de testar a HU05: toasts com
 visual padrão do `ngx-toastr` destoando do F7, toast de "sucesso" a cada
 busca, e "Meus Dados"/ícone de usuário pobres. Ordem: **depois da HU11**.
 
-**Toasts (global):**
-- `ToastrModule.forRoot` (hoje sem opções, em `src/main.ts`) passa a
-  configurar: `timeOut: 3000`, `progressBar: true`,
-  `preventDuplicates: true`, `maxOpened: 3`, `newestOnTop: true`,
-  `closeButton: true`, `positionClass` no topo central.
-- No mobile (< `md`), o container vai para o rodapé, **acima da bottom
-  tab bar** (mesmo deslocamento da barra de ação do checkout da HU05).
-- Visual em `styles.css` sobrescrevendo `.ngx-toastr`/`.toast-success`/
-  `.toast-error`/`.toast-warning`/`.toast-info`: card branco
-  `rounded-xl` com sombra, faixa lateral e ícone na cor semântica
-  (`success`, `error`, `warning`, `info` — tokens já existentes no tema
-  desde a HU05), título/texto em `base-content`. Sem HEX novo. O
-  `node_modules/ngx-toastr/toastr.css` continua importado (estrutura),
-  só a aparência muda.
+**Toasts (global)** — revisado em 2026-10-18, no teste da HU08 (dois
+"Pedidos buscados com sucesso" empilhados na tela do cliente). Decisões
+do autor: **um toast por vez** (o novo substitui o atual, nunca empilha),
+**topo central sempre** (celular e desktop — não briga com a tab bar, a
+barra do checkout nem a barra fixa do detalhe do entregador), **sucesso
+só em ação do usuário** e ~~sem toast no login~~ — **revisto pelo autor
+no teste: o login dá boas-vindas** ("Bem-vindo(a), <primeiro nome>!").
+Achado no mesmo teste: senha errada devolvia **500 "Internal Server
+Error"** — o `GlobalExceptionHandler` não tratava `AuthenticationException`
+(caía no genérico) e o helper lia `error` (nome do status) antes de
+`message` no `ErrorResponse`. Agora: **401 "E-mail ou senha inválidos."**
+(sem dizer qual dos dois errou), login documentado no Swagger e o helper
+usa `message` quando o corpo é um `ErrorResponse`. A parte de toasts sai
+antes da HU11, na branch da HU08; menu/avatar e Meus Dados seguem
+depois da HU11.
+- `toastr.config.ts` (`TOASTR_OPTIONS`, usado por `ToastrModule.forRoot`
+  em `src/main.ts`): `positionClass: 'toast-top-center'`,
+  `maxOpened: 1`, `autoDismiss: true`, `preventDuplicates: true`,
+  `resetTimeoutOnDuplicate: true`, `timeOut: 3500`,
+  `extendedTimeOut: 1500`, `closeButton: true`, `progressBar: true`,
+  `tapToDismiss: true`, `newestOnTop: true`.
+- Visual em `styles.css` sobrescrevendo `#toast-container`/`.ngx-toastr`/
+  `.toast-success`/`.toast-error`/`.toast-warning`/`.toast-info`: card
+  branco `rounded-xl` com sombra, largura `min(92vw, 420px)`, abaixo da
+  navbar, faixa lateral e ícone Material (`check_circle`, `error`,
+  `warning`, `info`) na cor semântica (tokens `success`/`error`/
+  `warning`/`info`), texto em `base-content`, barra de progresso na cor
+  do tipo. Sem HEX novo. O `node_modules/ngx-toastr/toastr.css` continua
+  importado (estrutura), só a aparência muda.
 - **Regra de uso**: toast de sucesso só em **ação do usuário** (salvar,
-  excluir, confirmar, aprovar). **Leitura/busca não gera toast.** Erro
-  sempre com a mensagem do backend quando houver
-  (`err.error?.error || err.error?.message`).
-- Toasts de busca a remover (levantamento de 2026-10-15):
+  excluir, editar, aprovar, despachar, cancelar, iniciar/confirmar/
+  devolver entrega, abrir/fechar loja, adicionar ao carrinho, trocar o
+  endereço de entrega) e boas-vindas no login. **Leitura/busca não gera
+  toast.** Uma
+  ação gera **um** toast: onde saíam dois em sequência, vira uma
+  mensagem só (`order-list.reorder`). Texto curto, sem "!!", com
+  ortografia revisada.
+- **Erro** sempre com a mensagem do backend, por um helper único
+  `utils/backend-message.ts` (`message` do `ErrorResponse` →
+  `err.error.error` → `err.error.message` →
+  "sem conexão com o servidor" no status 0 → texto padrão), que
+  substitui as cópias privadas de `backendMessage` e os
+  `${err.error.message}` que viravam "undefined".
+- Toasts de busca a remover (levantamento de 2026-10-18):
   `order-list` ("Pedidos buscados"), `supplier-list` (2×),
-  `supplier-approval`, `received-orders` (3×), `order-history` (3×),
-  `product-item`, `product-item-form` (2×), `category-products`,
-  `configuration`, `city-register`, `distribuitor-form` (2×, inclui
-  "Cep buscado") e `address-form` ("Cep buscado").
-  `distributor-management` é código morto (fora).
+  `supplier-approval`, `product-list`, `product-item`,
+  `product-item-form` (2×), `category-products`, `configuration`,
+  `city-register`, `order-history` (3×), `distribuitor-form` (2×,
+  inclui "Cep buscado") e `address-form` ("Cep buscado"). O
+  "Usuario logado com sucesso!" do `login` vira "Bem-vindo(a), <nome>!". `distributor-management` é código morto (fora).
+
+**Mensagens genéricas (varredura de 2026-10-19, pedido do autor):**
+- Front: os toasts "Erro ao buscar categorias" (`supplier-list`,
+  `product-list`), "Erro ao buscar produtos" (`supplier-list`) e "Erro
+  ao buscar cidades" (`address-form`) descartavam o erro — passam a
+  mostrar a causa pelo `backendMessage`.
+- Backend, 500 genérico: o `GlobalExceptionHandler` devolvia
+  `ex.getMessage()` cru (texto de Java/SQL no toast). Passa a responder
+  "Erro interno. Tente novamente em instantes." e registrar o detalhe só
+  no log. `ResponseStatusException` ganha tratamento próprio (status e
+  motivo dela).
+- Backend, status errado: categoria de outro fornecedor no cadastro de
+  produto (`ProductItemService`) era `RuntimeException` (500) → **403**
+  (`ForbiddenResourceException`); tempo médio de entrega não numérico
+  (`SupplierService`) era `IllegalArgumentException` com nome de campo
+  (500) → **400** "Tempo médio de entrega inválido: informe os minutos.";
+  falha no envio de imagem ao Cloudinary (`ProductItemService`,
+  `UploadController`) → **502** "Não foi possível enviar a imagem. Tente
+  novamente.".
+- Backend, inglês e grafia: "User not found…"/"City not found"/"Address
+  not found"/"Error generating token" → "Usuário não encontrado.",
+  "Cidade não encontrada.", "Endereço não encontrado.", "Não foi possível
+  gerar o acesso."; "Impossivel alterar senha de um administrador" →
+  "Não é possível alterar a senha de um administrador."; "Horario…" →
+  "Horário…"; "Email já cadastrado." → "E-mail já cadastrado."; "City e
+  Address devem estar definidos…" → "Cidade e endereço devem estar
+  definidos antes de salvar.".
 
 **Menu do usuário (`menu`):**
 - O ícone genérico de pessoa vira **avatar com as iniciais** do usuário
@@ -260,7 +312,8 @@ busca, e "Meus Dados"/ícone de usuário pobres. Ordem: **depois da HU11**.
 - `distributor-management` (código morto).
 - Modalidade de entrega/retirada lado a lado nos cards (isso é HU03).
 - Filtro por sub-categoria nos chips (já era fora de escopo do HU02).
-- Fatia 3: trocar a biblioteca de toast; foto de perfil (upload) no
+- Fatia 3: trocar a biblioteca de toast; fila de toasts (com um por vez,
+  o novo substitui o atual); foto de perfil (upload) no
   avatar; telas de admin/fornecedor além do menu (fatia final de
   varredura); autenticação (HU11); variáveis estruturais do tema DaisyUI
   (`--radius-*`, `--size-*`, `--border` — dívida registrada na HU05,
@@ -289,11 +342,34 @@ busca, e "Meus Dados"/ícone de usuário pobres. Ordem: **depois da HU11**.
 9. `customer-panel.component.spec.ts` —
    `deveExibirAvatarComIniciaisENome`,
    `deveDesabilitarSalvarSemAlteracoes`.
-10. Amostra da regra de toast — `order-list.component.spec.ts` e
-    `supplier-list.component.spec.ts`:
-    `naoDeveExibirToastDeSucessoAoBuscar`.
-11. Config global — spec que verifica as opções do `ToastrModule`
-    (`deveConfigurarToastrComOpcoesGlobais`).
+10. Amostra da regra de toast — `order-list.component.spec.ts`
+    (`naoDeveExibirToastDeSucessoAoBuscar`,
+    `deveExibirUmUnicoAvisoAoRefazerComItensIndisponiveis`),
+    `product-list.component.spec.ts`
+    (`naoDeveExibirToastDeSucessoAoBuscar`) e
+    `login.component.spec.ts` (`deveDarBoasVindasAoLogar`,
+    `deveMostrarMensagemDoBackendAoFalharLogin`);
+    `AuthenticationControllerTest`
+    (`deveRetornar401ComMensagemClaraQuandoSenhaErrada`).
+11. Config global — `toastr.config.spec.ts`:
+    `deveConfigurarToastrComOpcoesGlobais` e
+    `deveSubstituirToastAtualPeloNovo` (ToastrModule real: dois toasts
+    seguidos deixam só o último no DOM).
+11b. `backend-message.spec.ts` — `deveUsarErrorDoBackend`,
+    `deveUsarMessageDoErrorResponse`, `deveUsarMessageQuandoNaoHaError`,
+    `deveAvisarSemConexaoNoStatusZero`,
+    `deveUsarTextoPadraoSemCorpo`.
+
+11c. Mensagens genéricas — `GlobalExceptionHandlerTest`
+    (`deveEsconderDetalheTecnicoNoErroInterno`,
+    `deveUsarStatusEMotivoDaResponseStatusException`);
+    `ProductItemServiceTest`
+    (`deveRetornar403AoUsarCategoriaDeOutroFornecedor`);
+    `SupplierServiceTest`
+    (`deveRejeitarTempoMedioDeEntregaNaoNumericoComMensagemClara`);
+    `UserServiceTest` (`deveAvisarUsuarioNaoEncontradoEmPortugues`);
+    `product-list.component.spec.ts`
+    (`deveMostrarCausaAoFalharCarregarCategorias`).
 
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
@@ -316,14 +392,27 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 - [x] `customer-panel` reescrito no padrão; CSS de 317 linhas removido.
 - [x] Seletor de endereço do `order-resume` no padrão.
 
-**Fatia 3 (toasts, Meus Dados, menu do usuário) — depois da HU11:**
-- [ ] Toasts com opções globais e visual por tokens; acima da tab bar no
-      mobile.
-- [ ] Nenhum toast de sucesso em busca/leitura (lista da §5.10).
+**Fatia 3 — toasts (antecipada, na branch da HU08):**
+- [x] Um toast por vez, no topo central, com visual por tokens.
+- [x] Nenhum toast de sucesso em busca/leitura (lista da §5.10); login
+      com boas-vindas; uma ação gera um toast só.
+- [x] Sem mensagem genérica: toasts com a causa, 500 sem detalhe técnico,
+      403/400/502 nos casos da §5.10, mensagens do backend em português.
+- [x] Senha errada devolve 401 "E-mail ou senha inválidos." (não 500).
+- [x] Erros com a mensagem do backend pelo helper único.
+- [x] Testes da seção 7 (itens 10, 11 e 11b) verdes; specs antigos
+      falhando não aumentam; teste manual no Chromium.
+
+> Verificado em 2026-10-18: `ng test` 205 ok e as 22 falhas antigas;
+> E2E no Chromium (celular 420 px e desktop 1280 px): login errado 2×
+> mostra 1 toast, um aviso seguinte substitui o erro, toast no topo
+> central, login certo e "Meus Pedidos" sem toast.
+
+**Fatia 3 — Meus Dados e menu do usuário (depois da HU11):**
 - [ ] Avatar com iniciais e dropdown do usuário no padrão.
 - [ ] `customer-panel` com cabeçalho de avatar e estados de carregando/
       salvando.
-- [ ] Testes da seção 7 (itens 8-11) verdes; specs antigos falhando não
+- [ ] Testes da seção 7 (itens 8-9) verdes; specs antigos falhando não
       aumentam; teste manual.
 
 **Pendente (próximas fatias):**
