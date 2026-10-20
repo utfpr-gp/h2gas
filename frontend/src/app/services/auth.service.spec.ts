@@ -1,19 +1,23 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { AuthService } from './auth.service';
 import { LocationContextService } from './location-context.service';
+import { environment } from '../../environments/environment';
 
 describe('AuthService', () => {
   let service: AuthService;
   let locationContextService: LocationContextService;
+  let httpMock: HttpTestingController;
 
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient()],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     });
     service = TestBed.inject(AuthService);
+    httpMock = TestBed.inject(HttpTestingController);
     locationContextService = TestBed.inject(LocationContextService);
   });
 
@@ -32,5 +36,24 @@ describe('AuthService', () => {
     expect(localStorage.getItem('user')).toBeNull();
     expect(locationContextService.current()).toBeNull();
     expect(localStorage.getItem('h2gas.activeAddress')).toBeNull();
+  });
+
+  it('deveSolicitarCodigoDeAcesso', () => {
+    service.requestLoginToken('cliente@h2gas.local').subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/auth/login/token/request`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ email: 'cliente@h2gas.local' });
+    req.flush(null);
+  });
+
+  it('deveValidarCodigoEReceberToken', () => {
+    service.validateLoginToken('cliente@h2gas.local', '123456')
+      .subscribe((resposta) => expect(resposta.token).toBe('jwt-do-codigo'));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/auth/login/token/validate`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ email: 'cliente@h2gas.local', code: '123456' });
+    req.flush({ token: 'jwt-do-codigo' });
   });
 });
