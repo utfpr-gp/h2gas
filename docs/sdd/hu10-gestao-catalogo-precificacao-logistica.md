@@ -191,20 +191,26 @@ Regra herdada: specs antigos falhando no frontend não aumentam (21).
 
 ## 8. Definição de Pronto
 
-- [ ] Cadastro e edição exigem e persistem `priceDelivery` e
+- [x] Cadastro e edição exigem e persistem `priceDelivery` e
       `pricePickup` separados, com validação na API (400 se ausente ou
       negativo) e `price` removido do contrato.
-- [ ] Editar produto não troca a categoria por engano e só vale para
+- [x] Editar produto não troca a categoria por engano e só vale para
       produto do próprio fornecedor (403 nos demais).
-- [ ] `ProductItemDTO` expõe `freeDelivery` computado.
-- [ ] Rotas `POST`/`PUT` documentadas no Swagger.
-- [ ] Formulário em seções (Figura 16) com dois preços obrigatórios,
+- [x] `ProductItemDTO` expõe `freeDelivery` computado.
+- [x] Rotas `POST`/`PUT` documentadas no Swagger.
+- [x] Formulário em seções (Figura 16) com dois preços obrigatórios,
       aviso de Entrega Grátis ao vivo, upload arrasta-e-solta e Cancelar.
-- [ ] Selo "Entrega Grátis" na vitrine do cliente e na gestão do
+- [x] Selo "Entrega Grátis" na vitrine do cliente e na gestão do
       fornecedor.
-- [ ] Testes da seção 6 verdes; `mvn test` e `ng test` (≤ 21 falhas
+- [x] Testes da seção 6 verdes; `mvn test` e `ng test` (≤ 21 falhas
       antigas); sem HEX novo.
-- [ ] Commits pequenos por fatia (CLAUDE.md, seção Git).
-- [ ] Testado de ponta a ponta (API e interface).
+- [x] Commits pequenos por fatia (CLAUDE.md, seção Git).
+- [x] Testado de ponta a ponta (API e interface).
 - [ ] Revisado e aprovado. Fecha os 10 Must-have; o próximo é a HU11
       (autenticação por token), início do Should-have.
+
+> Verificado em 2026-10-20: backend 227 testes (único erro: `BackendApplicationTests.contextLoads`, que precisa do MySQL local);
+> frontend 258 testes com 19 falhas antigas (duas a menos: os specs do formulário e da gestão passaram a ter providers); E2E com 19 checagens
+> (400 sem/negativo, 403 produto e categoria de outro fornecedor ou sem fornecedor, categoria preservada na edição, `freeDelivery` na API,
+> corpo do POST da tela com `priceDelivery`/`pricePickup` e sem `price`, selo na gestão). O upload de imagem do cadastro não foi exercitado de verdade:
+> o Cloudinary local tem credencial inválida (`Invalid Signature`), então o POST foi interceptado no navegador.
