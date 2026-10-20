@@ -22,7 +22,7 @@
         </button>
       </div>
 
-      <h1 class="text-xl font-bold text-gray-800">{{ tittleRegister || 'Crie sua conta' }}</h1>
+      <h1 class="text-xl font-bold text-gray-800">{{ title }}</h1>
       <p class="text-sm text-gray-500">Preencha seus dados para começar a usar a plataforma</p>
 
       <form [formGroup]="registerForm" (ngSubmit)="register()" class="mt-5 space-y-4">

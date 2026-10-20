@@ -34,7 +34,7 @@ describe('RegisterUserComponent', () => {
     fixture = TestBed.createComponent(RegisterUserComponent);
     component = fixture.componentInstance;
     component.userType = 'CUSTOMER';
-    component.tittleRegister = 'Crie sua conta';
+    component.tittleRegister = 'Você esta a um passo de se tornar nosso cliente';
     fixture.detectChanges();
   });
 
@@ -80,5 +80,16 @@ describe('RegisterUserComponent', () => {
 
     expect(html).not.toContain('<body');
     expect(html).not.toMatch(/#0E2068|#3B82F6/i);
+  });
+
+  it('deveTrocarOTituloAoEscolherOPerfil', () => {
+    expect(el().querySelector('h1')!.textContent).toContain('cliente');
+
+    (byId('profile-supplier') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const titulo = el().querySelector('h1')!.textContent!;
+    expect(titulo).toContain('fornecedor');
+    expect(titulo).not.toContain('nosso cliente');
   });
 });

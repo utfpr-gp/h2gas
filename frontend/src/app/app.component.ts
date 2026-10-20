@@ -22,6 +22,7 @@ export class AppComponent {
   hiddenMenuRoutes = [
     '/',
     '/login', 
+    '/login/senha',
     '/register', 
     '/register-supplier', 
     '/unauthorized', 
