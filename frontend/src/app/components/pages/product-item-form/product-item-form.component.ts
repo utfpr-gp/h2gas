@@ -56,8 +56,17 @@ export class ProductItemFormComponent implements OnInit {
       pricePickup: [null, [Validators.required, Validators.min(0)]],
       stockQuantity: [0, [Validators.required, Validators.min(0)]],
       description: ['', [Validators.required]],
-      categoryProductId: [null, [Validators.required]]
-    })
+      categoryProductId: [null, [Validators.required]],
+      // só da tela (não vai para a API): preços iguais = Entrega Grátis; deve ficar depois dos preços
+      freeDelivery: [false]
+    });
+
+    this.formProductItem.get('freeDelivery')!.valueChanges.subscribe((marcado) => {
+      if (marcado) this.matchDeliveryToPickup();
+    });
+    this.formProductItem.get('pricePickup')!.valueChanges.subscribe(() => {
+      if (this.formProductItem.get('freeDelivery')!.value) this.matchDeliveryToPickup();
+    });
   }
 
 
@@ -90,11 +99,19 @@ export class ProductItemFormComponent implements OnInit {
   file?: File;
   dragging = false;
 
-  // HU10: preços iguais viram Entrega Grátis; avisa ao vivo, só com os dois preenchidos
-  get freeDeliveryHint(): boolean {
-    const { priceDelivery, pricePickup } = this.formProductItem.value;
-    return priceDelivery != null && pricePickup != null && priceDelivery !== '' && pricePickup !== ''
-      && Number(priceDelivery) === Number(pricePickup);
+  // HU10: Entrega Grátis = preço com entrega igual ao de retirada
+  private matchDeliveryToPickup() {
+    this.formProductItem.get('priceDelivery')!.setValue(this.formProductItem.get('pricePickup')!.value, { emitEvent: false });
+  }
+
+  get isFreeDelivery(): boolean {
+    return !!this.formProductItem.get('freeDelivery')!.value;
+  }
+
+  // o campo auxiliar do checkbox não faz parte do contrato da API
+  private payload(): ProductItem {
+    const { freeDelivery, ...product } = this.formProductItem.getRawValue();
+    return product as ProductItem;
   }
 
   onFileSelected(event: Event) {
@@ -149,7 +166,7 @@ export class ProductItemFormComponent implements OnInit {
       return;
     }
 
-    this.productItemSave = this.formProductItem.value;
+    this.productItemSave = this.payload();
 
     this.productItemService.update(this.idEdit, this.productItemSave!).subscribe({
       next: (response) => {
@@ -194,7 +211,7 @@ export class ProductItemFormComponent implements OnInit {
     }
     this.isLoading = true;
 
-    this.productItemSave = this.formProductItem.value;
+    this.productItemSave = this.payload();
 
     // if (this.productItemSave) {
     //   this.productItemSave.supplierId = this.user?.supplierId ?? '';

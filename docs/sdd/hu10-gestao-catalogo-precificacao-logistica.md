@@ -221,7 +221,7 @@ Regra herdada: specs antigos falhando no frontend não aumentam (21).
       (autenticação por token), início do Should-have.
 
 > Verificado em 2026-10-20: backend 227 testes (único erro: `BackendApplicationTests.contextLoads`, que precisa do MySQL local);
-> frontend 258 testes com 19 falhas antigas (duas a menos: os specs do formulário e da gestão passaram a ter providers); E2E com 19 checagens
+> frontend 261 testes com 19 falhas antigas (duas a menos: os specs do formulário e da gestão passaram a ter providers); E2E com 23 checagens
 > (400 sem/negativo, 403 produto e categoria de outro fornecedor ou sem fornecedor, categoria preservada na edição, `freeDelivery` na API,
 > corpo do POST da tela com `priceDelivery`/`pricePickup` e sem `price`, selo na gestão). O upload de imagem do cadastro não foi exercitado de verdade:
 > o Cloudinary local tem credencial inválida (`Invalid Signature`), então o POST foi interceptado no navegador.

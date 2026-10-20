@@ -19,6 +19,7 @@ describe('ProductItemFormComponent', () => {
   const el = () => fixture.nativeElement as HTMLElement;
   const byId = (id: string) => el().querySelector(`[data-testid=${id}]`) as HTMLElement | null;
   const arquivo = new File(['x'], 'botijao.jpg', { type: 'image/jpeg' });
+  let productEdicao: Record<string, unknown> = {};
 
   const preencher = (over: Record<string, unknown> = {}) =>
     component.formProductItem.patchValue({
@@ -26,13 +27,15 @@ describe('ProductItemFormComponent', () => {
       priceDelivery: 120, pricePickup: 100, stockQuantity: 10, ...over,
     });
 
+  beforeEach(() => { productEdicao = {}; });
+
   const setup = async (id: string | null = null) => {
     productItemServiceSpy = jasmine.createSpyObj('ProductItemService', ['createWithFile', 'update', 'findById']);
     productItemServiceSpy.createWithFile.and.returnValue(of({} as any));
     productItemServiceSpy.update.and.returnValue(of({} as any));
     productItemServiceSpy.findById.and.returnValue(of({
       id: 5, brand: 'Liquigás', categoryProductId: 3, description: 'Edição', priceDelivery: 95, pricePickup: 80,
-      stockQuantity: 4, imageUrl: 'http://img/x.jpg',
+      stockQuantity: 4, imageUrl: 'http://img/x.jpg', freeDelivery: false, ...productEdicao,
     } as any));
     const categoryServiceSpy = jasmine.createSpyObj('CategoryProductService', ['findBySupplierId']);
     categoryServiceSpy.findBySupplierId.and.returnValue(of({ data: [{ id: 3, name: 'Gás 13kg', type: 'Gás' }] } as any));
@@ -118,31 +121,78 @@ describe('ProductItemFormComponent', () => {
     expect(component.isLoading).toBeFalse();
   });
 
-  it('deveAvisarEntregaGratisQuandoPrecosForemIguais', async () => {
+  const checkbox = () => byId('free-delivery-checkbox') as HTMLInputElement;
+  const campoEntrega = () => byId('price-delivery-input') as HTMLInputElement;
+
+  it('deveCopiarPrecoDeRetiradaAoMarcarEntregaGratis', async () => {
     await setup();
-
-    preencher({ priceDelivery: 100, pricePickup: 100 });
-    fixture.detectChanges();
-
-    expect(byId('free-delivery-hint')!.textContent).toContain('Entrega Grátis');
-  });
-
-  it('naoDeveAvisarQuandoPrecosDiferentes', async () => {
-    await setup();
-
     preencher({ priceDelivery: 120, pricePickup: 100 });
     fixture.detectChanges();
+    expect(campoEntrega().readOnly).toBeFalse();
 
-    expect(byId('free-delivery-hint')).toBeNull();
-  });
-
-  it('naoDeveAvisarComPrecosVazios', async () => {
-    await setup();
-
-    preencher({ priceDelivery: null, pricePickup: null });
+    checkbox().click();
     fixture.detectChanges();
 
-    expect(byId('free-delivery-hint')).toBeNull();
+    expect(component.formProductItem.getRawValue().priceDelivery).toBe(100);
+    expect(campoEntrega().readOnly).toBeTrue();
+  });
+
+  it('deveAcompanharAMudancaDaRetiradaEnquantoMarcado', async () => {
+    await setup();
+    preencher({ priceDelivery: 120, pricePickup: 100 });
+    checkbox().click();
+
+    component.formProductItem.get('pricePickup')!.setValue(80);
+    fixture.detectChanges();
+
+    expect(component.formProductItem.getRawValue().priceDelivery).toBe(80);
+  });
+
+  it('deveLiberarPrecoDeEntregaAoDesmarcar', async () => {
+    await setup();
+    preencher({ priceDelivery: 120, pricePickup: 100 });
+    checkbox().click();
+    fixture.detectChanges();
+
+    checkbox().click();
+    fixture.detectChanges();
+
+    expect(campoEntrega().readOnly).toBeFalse();
+    expect(component.formProductItem.getRawValue().priceDelivery).toBe(100);
+    component.formProductItem.get('pricePickup')!.setValue(70);
+    expect(component.formProductItem.getRawValue().priceDelivery).toBe(100);
+  });
+
+  it('deveEnviarPrecosIguaisSemOCampoAuxiliarAoSalvar', async () => {
+    await setup();
+    component.file = arquivo;
+    preencher({ priceDelivery: 120, pricePickup: 100 });
+    checkbox().click();
+
+    component.saveItemProduct();
+
+    const enviado = productItemServiceSpy.createWithFile.calls.mostRecent().args[0] as any;
+    expect(enviado.priceDelivery).toBe(100);
+    expect(enviado.pricePickup).toBe(100);
+    expect('freeDelivery' in enviado).toBeFalse();
+    expect('price' in enviado).toBeFalse();
+  });
+
+  it('deveMarcarEntregaGratisNaEdicaoQuandoPrecosJaSaoIguais', async () => {
+    productEdicao = { priceDelivery: 90, pricePickup: 90, freeDelivery: true };
+    await setup('5');
+    fixture.detectChanges();
+
+    expect(checkbox().checked).toBeTrue();
+    expect(campoEntrega().readOnly).toBeTrue();
+  });
+
+  it('naoDeveMarcarEntregaGratisNaEdicaoComPrecosDiferentes', async () => {
+    await setup('5');
+    fixture.detectChanges();
+
+    expect(checkbox().checked).toBeFalse();
+    expect(campoEntrega().readOnly).toBeFalse();
   });
 
   it('deveAceitarImagemSoltaNaAreaDeUpload', async () => {
@@ -194,6 +244,7 @@ describe('ProductItemFormComponent', () => {
     expect(enviado.priceDelivery).toBe(90);
     expect(enviado.pricePickup).toBe(90);
     expect('price' in enviado).toBeFalse();
+    expect('freeDelivery' in enviado).toBeFalse();
     expect(navigateSpy).toHaveBeenCalledWith(['/product-items']);
   });
 });
