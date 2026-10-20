@@ -33,7 +33,10 @@ operação de acordo com o custo logístico individual de cada item.
 > neste ponto). Por baixo nada migra: **retirada = Preço** e **entrega =
 > Preço + frete**, derivados na API, de modo que os cards, o carrinho, o
 > checkout e o cálculo do pedido (HU03/HU05, RN01) seguem iguais. **Frete
-> = 0 é Entrega Grátis** (o checkbox da revisão anterior sai).
+> = 0 é Entrega Grátis**, e o formulário tem uma opção visível **"Frete
+> grátis"** (checkbox) que zera o Preço do frete; ela não é um terceiro
+> dado: é só o atalho para frete 0 (o modelo continua `price` +
+> `shippingFee`).
 
 - **Cenário 1 — Precificação dividida**: Dado o formulário de novo
   produto, Quando o fornecedor preenche os dados financeiros, Então o
@@ -128,9 +131,11 @@ Detalhamento operacional (não cria cenário novo):
   - **1. Informações básicas**: Marca, Categoria, Descrição;
   - **2. Preços e estoque**: **"Preço (R$)"** e **"Preço do frete (R$)"**
     (obrigatórios, `min(0)`, lado a lado) e Estoque; abaixo, a **prévia**
-    "Retirada: R$ x · Entrega: R$ y" ao vivo e, quando o frete é 0, um
-    aviso curto "Frete zero: este produto terá a etiqueta Entrega
-    Grátis";
+    "Retirada: R$ x · Entrega: R$ y" ao vivo; entre os campos e a
+    prévia, o checkbox **"Frete grátis"**: marcado, o Preço do frete vira
+    0 e o campo fica **somente leitura**; desmarcado, o frete é limpo e
+    volta a ser editável. O checkbox reflete o valor: frete 0 (digitado
+    ou vindo da API na edição) o deixa marcado. Ele não vai para a API;
   - **3. Imagem**: arrasta-e-solta (`dragover`/`drop`) além do clique,
     com pré-visualização e remover;
   - no **cadastro** a imagem é obrigatória (a API exige `file`): sem ela
@@ -172,8 +177,11 @@ Detalhamento operacional (não cria cenário novo):
    `deveExigirPrecoEFreteParaSubmeter`, `naoDeveAceitarValorNegativo`,
    `deveEnviarPriceEShippingFeeAoSalvar`,
    `deveMostrarPreviaDeRetiradaEEntrega`,
-   `deveAvisarEntregaGratisQuandoOFreteForZero`,
-   `naoDeveAvisarQuandoHouverFrete`,
+   `deveZerarOFreteAoMarcarFreteGratis`,
+   `deveLiberarOFreteAoDesmarcarFreteGratis`,
+   `deveMarcarFreteGratisNaEdicaoQuandoOFreteForZero`,
+   `naoDeveMarcarFreteGratisQuandoHouverFrete`,
+   `deveEnviarFreteZeroAoSalvarComFreteGratis`,
    `deveAceitarImagemSoltaNaAreaDeUpload`,
    `deveVoltarParaListaAoCancelar`, `deveExigirImagemNoCadastro`,
    `deveIgnorarArquivoQueNaoEImagem`, `deveCarregarPrecoEFreteNaEdicao`,
@@ -212,7 +220,7 @@ Regra herdada: specs antigos falhando no frontend não aumentam (19).
       computados, sem quebrar `priceDelivery`/`pricePickup`.
 - [x] Rotas `POST`/`PUT` documentadas no Swagger.
 - [x] Formulário em seções (Figura 16) com "Preço" e "Preço do frete"
-      obrigatórios, prévia de Retirada/Entrega, aviso de frete zero,
+      obrigatórios, prévia de Retirada/Entrega, checkbox "Frete grátis",
       upload arrasta-e-solta e Cancelar.
 - [x] Selo "Entrega Grátis" na vitrine do cliente e na gestão do
       fornecedor; cards, carrinho e checkout continuam com Entrega e
@@ -227,5 +235,5 @@ Regra herdada: specs antigos falhando no frontend não aumentam (19).
 > Verificado em 2026-10-20: backend 228 testes (único erro: `BackendApplicationTests.contextLoads`, que precisa do MySQL local);
 > frontend 259 testes com 19 falhas antigas (duas a menos: os specs do formulário e da gestão passaram a ter providers); E2E com 23 checagens
 > (400 sem/negativo, 403 produto e categoria de outro fornecedor ou sem fornecedor, derivação retirada = preço e entrega = preço + frete no banco,
-> prévia e aviso de frete zero, corpo do POST com `price`/`shippingFee`, edição com frete zero e `freeDelivery` na API). O upload de imagem do cadastro
+> prévia e checkbox "Frete grátis", corpo do POST com `price`/`shippingFee`, edição com frete zero e `freeDelivery` na API). O upload de imagem do cadastro
 > não foi exercitado de verdade: o Cloudinary local tem credencial inválida (`Invalid Signature`), então o POST foi interceptado no navegador.
