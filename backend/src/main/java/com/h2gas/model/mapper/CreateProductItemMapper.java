@@ -12,15 +12,10 @@ public class CreateProductItemMapper {
     private ModelMapper modelMapper;
 
     public CreateProductItemDTO toDto(ProductItem data) {
-        CreateProductItemDTO dto = modelMapper.map(data, CreateProductItemDTO.class);
-        dto.setPrice(data.getPriceDelivery());
-        return dto;
+        return modelMapper.map(data, CreateProductItemDTO.class);
     }
 
     public ProductItem toEntity(CreateProductItemDTO dto) {
-        ProductItem productItem = modelMapper.map(dto, ProductItem.class);
-        productItem.setPriceDelivery(dto.getPrice());
-        productItem.setPricePickup(dto.getPrice());
-        return productItem;
+        return modelMapper.map(dto, ProductItem.class);
     }
 }

@@ -284,6 +284,114 @@ class ProductItemServiceTest {
         assertEquals("Categoria informada não pertence ao fornecedor logado.", erro.getMessage());
     }
 
+    private CreateProductItemDTO dtoDeProduto(Long categoriaId, String entrega, String retirada) {
+        CreateProductItemDTO dto = new CreateProductItemDTO();
+        dto.setBrand("Ultragaz");
+        dto.setCategoryProductId(categoriaId);
+        dto.setPriceDelivery(new BigDecimal(entrega));
+        dto.setPricePickup(new BigDecimal(retirada));
+        dto.setStockQuantity(7);
+        dto.setDescription("Botijão de teste");
+        return dto;
+    }
+
+    @Test
+    @DisplayName("HU10: cria produto com preço de entrega e de retirada diferentes")
+    void deveCriarProdutoComPrecoDeEntregaEDeRetiradaDiferentes() {
+        Supplier logado = createSupplierForTest(1);
+        logado.setName("Fornecedor Preços Teste");
+        supplierRepository.save(logado);
+        CategoryProduct categoria = createCategoryForTest("13kg", logado);
+
+        ProductItemDTO criado = productItemService.createProductItem(
+                dtoDeProduto(categoria.getId(), "120.00", "100.00"), null, "Fornecedor Preços Teste");
+
+        ProductItem salvo = productItemRepository.findById(criado.getId()).orElseThrow();
+        assertEquals(0, new BigDecimal("120.00").compareTo(salvo.getPriceDelivery()));
+        assertEquals(0, new BigDecimal("100.00").compareTo(salvo.getPricePickup()));
+        assertEquals(120.0, criado.getPriceDelivery());
+        assertEquals(100.0, criado.getPricePickup());
+        assertFalse(criado.isFreeDelivery());
+    }
+
+    @Test
+    @DisplayName("HU10: preços iguais ao criar sinalizam Entrega Grátis")
+    void deveSinalizarEntregaGratisAoCriarComPrecosIguais() {
+        Supplier logado = createSupplierForTest(1);
+        logado.setName("Fornecedor Grátis Teste");
+        supplierRepository.save(logado);
+        CategoryProduct categoria = createCategoryForTest("13kg", logado);
+
+        ProductItemDTO criado = productItemService.createProductItem(
+                dtoDeProduto(categoria.getId(), "100.00", "100.00"), null, "Fornecedor Grátis Teste");
+
+        assertTrue(criado.isFreeDelivery());
+    }
+
+    @Test
+    @DisplayName("HU10: editar grava os dois preços separados")
+    void deveAtualizarAmbosPrecosAoEditarProduto() {
+        ProductItem produto = productItemRepository.findById(validIdItemProduct).orElseThrow();
+        Supplier dono = produto.getSupplier();
+
+        ProductItemDTO atualizado = productItemService.updateProductItem(validIdItemProduct,
+                dtoDeProduto(produto.getCategoryProduct().getId(), "130.00", "110.00"), dono);
+
+        ProductItem salvo = productItemRepository.findById(validIdItemProduct).orElseThrow();
+        assertEquals(0, new BigDecimal("130.00").compareTo(salvo.getPriceDelivery()));
+        assertEquals(0, new BigDecimal("110.00").compareTo(salvo.getPricePickup()));
+        assertEquals(130.0, atualizado.getPriceDelivery());
+        assertEquals(110.0, atualizado.getPricePickup());
+    }
+
+    @Test
+    @DisplayName("HU10: preços idênticos na edição passam a sinalizar Entrega Grátis")
+    void deveSinalizarEntregaGratisAoEditarComPrecosIguais() {
+        ProductItem produto = productItemRepository.findById(validIdItemProduct).orElseThrow();
+
+        ProductItemDTO atualizado = productItemService.updateProductItem(validIdItemProduct,
+                dtoDeProduto(produto.getCategoryProduct().getId(), "99.90", "99.90"), produto.getSupplier());
+
+        assertTrue(atualizado.isFreeDelivery());
+    }
+
+    @Test
+    @DisplayName("HU10: fornecedor não edita produto de outro fornecedor")
+    void deveRejeitarEdicaoDeProdutoDeOutroFornecedor() {
+        ProductItem produto = productItemRepository.findById(validIdItemProduct).orElseThrow();
+        Supplier intruso = createSupplierForTest(2);
+
+        assertThrows(ForbiddenResourceException.class, () -> productItemService.updateProductItem(validIdItemProduct,
+                dtoDeProduto(produto.getCategoryProduct().getId(), "1.00", "1.00"), intruso));
+        assertEquals(0, new BigDecimal("150.00").compareTo(
+                productItemRepository.findById(validIdItemProduct).orElseThrow().getPriceDelivery()));
+    }
+
+    @Test
+    @DisplayName("HU10: não move o produto para categoria de outro fornecedor")
+    void deveRejeitarMoverProdutoParaCategoriaDeOutroFornecedor() {
+        ProductItem produto = productItemRepository.findById(validIdItemProduct).orElseThrow();
+        CategoryProduct deOutro = createCategoryForTest("outra", createSupplierForTest(2));
+
+        assertThrows(ForbiddenResourceException.class, () -> productItemService.updateProductItem(validIdItemProduct,
+                dtoDeProduto(deOutro.getId(), "150.00", "150.00"), produto.getSupplier()));
+        assertEquals(produto.getCategoryProduct().getId(),
+                productItemRepository.findById(validIdItemProduct).orElseThrow().getCategoryProduct().getId());
+    }
+
+    @Test
+    @DisplayName("HU10: reenviar o categoryProductId devolvido pela API mantém a categoria")
+    void deveManterCategoriaQuandoEdicaoReenviaOMesmoId() {
+        ProductItem produto = productItemRepository.findById(validIdItemProduct).orElseThrow();
+        Long categoriaAntes = produto.getCategoryProduct().getId();
+        ProductItemDTO lido = productItemService.findById(validIdItemProduct);
+
+        productItemService.updateProductItem(validIdItemProduct,
+                dtoDeProduto(lido.getCategoryProductId(), "150.00", "140.00"), produto.getSupplier());
+
+        assertEquals(categoriaAntes, productItemRepository.findById(validIdItemProduct).orElseThrow().getCategoryProduct().getId());
+    }
+
     CategoryProduct createCategoryForTest(String name, Supplier supplier) {
         ProductType productTypeAgua = new ProductType(
                 null,

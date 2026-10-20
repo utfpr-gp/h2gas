@@ -3,6 +3,7 @@ package com.h2gas.controller;
 
 import com.h2gas.model.dto.*;
 import com.h2gas.model.entity.Supplier;
+import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.CreateProductItemMapper;
 import com.h2gas.model.mapper.ProductItemMapper;
 import com.h2gas.response.PageResponse;
@@ -79,7 +80,8 @@ public class ProductItemController {
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER"})
     public ResponseEntity<ProductItemDTO> update(@PathVariable Long id, @RequestBody CreateProductItemDTO dto) {
-        ProductItemDTO updated = productItemService.updateProductItem(id, dto);
+        User actor = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        ProductItemDTO updated = productItemService.updateProductItem(id, dto, actor);
         return ResponseEntity.ok(updated);
     }
 
