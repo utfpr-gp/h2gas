@@ -135,7 +135,7 @@ public class ProductItemService {
             CategoryProduct categoryProduct = categoryProductService.findEntityById(
                     productItemDto.getCategoryProductId()
             );
-            if (!categoryProduct.getSupplier().getId().equals(ownerId)) {
+            if (categoryProduct.getSupplier() == null || !categoryProduct.getSupplier().getId().equals(ownerId)) {
                 throw new ForbiddenResourceException("Categoria informada não pertence ao fornecedor do produto.");
             }
             productItemUpdate.setCategoryProduct(categoryProduct);

@@ -380,6 +380,16 @@ class ProductItemServiceTest {
     }
 
     @Test
+    @DisplayName("HU10: categoria legada sem fornecedor não é aceita como destino (403, não 500)")
+    void deveRejeitarMoverProdutoParaCategoriaSemFornecedor() {
+        ProductItem produto = productItemRepository.findById(validIdItemProduct).orElseThrow();
+        CategoryProduct semDono = createCategoryForTest("legada", null);
+
+        assertThrows(ForbiddenResourceException.class, () -> productItemService.updateProductItem(validIdItemProduct,
+                dtoDeProduto(semDono.getId(), "150.00", "150.00"), produto.getSupplier()));
+    }
+
+    @Test
     @DisplayName("HU10: reenviar o categoryProductId devolvido pela API mantém a categoria")
     void deveManterCategoriaQuandoEdicaoReenviaOMesmoId() {
         ProductItem produto = productItemRepository.findById(validIdItemProduct).orElseThrow();
