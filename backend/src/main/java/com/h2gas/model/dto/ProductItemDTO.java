@@ -12,9 +12,10 @@ import java.time.LocalDateTime;
 public class ProductItemDTO {
     private Long id;
     private String brand;
-    private Double price;
     private Double priceDelivery;
     private Double pricePickup;
+    // HU10: computado na leitura (priceDelivery == pricePickup); nunca persistido
+    private boolean freeDelivery;
     private String category;
     private String type;
     private String supllierName;

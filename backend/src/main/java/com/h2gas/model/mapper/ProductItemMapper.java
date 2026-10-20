@@ -17,20 +17,23 @@ public class ProductItemMapper {
     public ProductItemDTO toDto(ProductItem data) {
         ProductItemDTO productItemDTO = modelMapper.map(data, ProductItemDTO.class);
         if (data.getPriceDelivery() != null) {
-            productItemDTO.setPrice(data.getPriceDelivery().doubleValue());
             productItemDTO.setPriceDelivery(data.getPriceDelivery().doubleValue());
         }
         if (data.getPricePickup() != null) {
             productItemDTO.setPricePickup(data.getPricePickup().doubleValue());
         }
+        productItemDTO.setFreeDelivery(data.getPriceDelivery() != null && data.getPricePickup() != null
+                && data.getPriceDelivery().compareTo(data.getPricePickup()) == 0);
+
         if (data.getCategoryProduct().getName() != null) {
             productItemDTO.setCategory(data.getCategoryProduct().getName());
         }
 
         if (data.getCategoryProduct().getProductType().getName() != null) {
             productItemDTO.setType(data.getCategoryProduct().getProductType().getName());
-            productItemDTO.setCategoryProductId(data.getCategoryProduct().getProductType().getId());
         }
+        // id da categoria do fornecedor (e não o do tipo): o formulário de edição reenvia esse valor
+        productItemDTO.setCategoryProductId(data.getCategoryProduct().getId());
 
         if (data.getSupplier() != null) {
             productItemDTO.setSupllierName(data.getSupplier().getName());
