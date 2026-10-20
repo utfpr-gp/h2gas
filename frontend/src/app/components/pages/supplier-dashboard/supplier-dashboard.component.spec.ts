@@ -44,6 +44,10 @@ describe('SupplierDashboardComponent', () => {
       { method: 'PIX', orders: 63, revenue: 3400, percent: 75 },
       { method: 'DINHEIRO', orders: 21, revenue: 1123, percent: 25 },
     ],
+    salesByCategory: [
+      { categoryName: 'Gás', quantity: 58, revenue: 7250, percent: 75 },
+      { categoryName: 'Água', quantity: 29, revenue: 435, percent: 25 },
+    ],
     ...over,
   });
 
@@ -113,6 +117,32 @@ describe('SupplierDashboardComponent', () => {
     expect(pagamentos[1].textContent).toContain('Dinheiro');
   });
 
+  it('deveRenderizarPizzaDeVendasPorCategoria', async () => {
+    await setup();
+
+    const fatias = all('category-slice');
+    expect(fatias.length).toBe(2);
+    expect(fatias[0].getAttribute('stroke-dasharray')).toBe('75 25');
+    expect(fatias[1].getAttribute('stroke-dasharray')).toBe('25 75');
+    expect(fatias[1].getAttribute('stroke-dashoffset')).toBe('-50');
+    const legenda = all('category-legend-row');
+    expect(legenda.length).toBe(2);
+    expect(legenda[0].textContent).toContain('Gás');
+    expect(legenda[0].textContent).toContain('75');
+    expect(legenda[0].textContent).toMatch(/R\$\s7\.250,00/);
+    expect(legenda[1].textContent).toContain('Água');
+  });
+
+  it('deveOcultarPizzaSemVendas', async () => {
+    await setup(of(dashboard({
+      totalRevenue: 0, totalOrders: 0, averageTicket: null, salesByCategory: [], salesByProduct: [], paymentBreakdown: [],
+      revenueByDay: [{ day: '2026-10-01', revenue: 0 }],
+    })));
+
+    expect(all('category-slice').length).toBe(0);
+    expect(byId('category-pie')).toBeNull();
+  });
+
   it('deveExibirTracoQuandoTempoMedioForNulo', async () => {
     await setup(of(dashboard({ averageDeliveryMinutes: null, averageTicket: null, revenueChangePercent: null })));
 
@@ -138,7 +168,7 @@ describe('SupplierDashboardComponent', () => {
     await setup(of(dashboard({
       totalRevenue: 0, totalOrders: 0, averageTicket: null, receivable: 0, deliveredOrders: 0,
       averageDeliveryMinutes: null, revenueChangePercent: null, ordersChangePercent: null,
-      revenueByDay: [{ day: '2026-10-01', revenue: 0 }], salesByProduct: [], paymentBreakdown: [],
+      revenueByDay: [{ day: '2026-10-01', revenue: 0 }], salesByProduct: [], paymentBreakdown: [], salesByCategory: [],
     })));
 
     expect(fixture.nativeElement.textContent).toContain('Sem vendas neste mês');

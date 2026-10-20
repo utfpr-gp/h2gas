@@ -94,6 +94,28 @@
                 </div>
             </section>
 
+            <section data-testid="category-pie" *ngIf="categorySlices.length" class="bg-white rounded-xl shadow-md border border-gray-200 p-4 mt-5" aria-label="Vendas por categoria">
+                <h2 class="font-bold text-gray-800">Vendas por categoria</h2>
+                <div class="mt-4 flex flex-col sm:flex-row items-center gap-6">
+                    <svg viewBox="-1.5 -1.5 39 39" class="w-44 h-44 shrink-0" role="img" aria-label="Pizza com a participação de cada categoria na receita do mês">
+                        <circle cx="18" cy="18" r="15.9155" fill="none" class="text-gray-100" stroke="currentColor" stroke-width="6"></circle>
+                        <circle *ngFor="let slice of categorySlices" data-testid="category-slice" cx="18" cy="18" r="15.9155" fill="none"
+                            stroke="currentColor" stroke-width="6" [ngClass]="slice.strokeClass"
+                            [attr.stroke-dasharray]="slice.dasharray" [attr.stroke-dashoffset]="slice.dashoffset">
+                            <title>{{ slice.name }}: {{ slice.percent | number:'1.0-1' }}%</title>
+                        </circle>
+                    </svg>
+                    <ul class="w-full sm:max-w-md space-y-2">
+                        <li *ngFor="let slice of categorySlices" data-testid="category-legend-row" class="flex items-center justify-between gap-3 text-sm">
+                            <span class="flex items-center gap-2 text-gray-800">
+                                <span class="w-3 h-3 rounded-full" [ngClass]="slice.dotClass"></span>{{ slice.name }}
+                            </span>
+                            <span class="text-gray-500">{{ slice.percent | number:'1.0-1' }}% · {{ slice.quantity }} un · {{ slice.revenue | currency:'BRL':'symbol':'1.2-2' }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
             <div class="grid lg:grid-cols-2 gap-5 mt-5">
                 <section class="bg-white rounded-xl shadow-md border border-gray-200 p-4" aria-label="Vendas por produto">
                     <h2 class="font-bold text-gray-800">Vendas por produto</h2>

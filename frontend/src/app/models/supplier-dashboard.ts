@@ -17,6 +17,13 @@ export interface PaymentShare {
   percent: number;
 }
 
+export interface CategorySales {
+  categoryName: string;
+  quantity: number;
+  revenue: number;
+  percent: number;
+}
+
 export interface SupplierDashboard {
   month: string;
   totalRevenue: number;
@@ -32,4 +39,5 @@ export interface SupplierDashboard {
   revenueByDay: RevenuePoint[];
   salesByProduct: ProductSales[];
   paymentBreakdown: PaymentShare[];
+  salesByCategory: CategorySales[];
 }

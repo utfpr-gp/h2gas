@@ -237,7 +237,7 @@ Regra herdada: specs antigos falhando no frontend não aumentam (22).
       do fornecedor logado (nunca de outro), documentado no Swagger.
 - [x] Tela `/dashboard` mostra KPIs, vendas por dia, vendas por produto,
       pagamentos e tempo médio de entrega, com seletor de mês.
-- [ ] Pizza "Vendas por categoria" na tela, com os mesmos dados do backend.
+- [x] Pizza "Vendas por categoria" na tela, com os mesmos dados do backend.
 - [x] Fornecedor entra pelo dashboard após o login; menu com Dashboard |
       Pedidos | Produtos.
 - [x] Testes da seção 6 verdes; `mvn test` e `ng test` (≤ 22 falhas
@@ -247,7 +247,7 @@ Regra herdada: specs antigos falhando no frontend não aumentam (22).
       estados variados e produto zerado).
 - [ ] Revisado e aprovado antes de HU10 começar.
 
-> Verificado em 2026-10-19: backend 208 testes (único erro: `BackendApplicationTests.contextLoads`, que precisa do MySQL local);
+> Verificado em 2026-10-19 (pizza por categoria incluída depois: backend 209 testes, frontend 243 com as mesmas 21 falhas antigas): backend 208 testes (único erro: `BackendApplicationTests.contextLoads`, que precisa do MySQL local);
 > frontend 241 testes com 21 falhas antigas (uma a menos: o spec do `SupplierService` passou a ter `HttpClient`); E2E com 18 checagens
 > (produto zerado some para o cliente mesmo com `onlyAvailable=false` e continua para o fornecedor; dashboard do fornecedor logado,
 > soma diária = receita, variação sobre o mês anterior, mês futuro/inválido 400, isolamento entre fornecedores, login em `/dashboard`).

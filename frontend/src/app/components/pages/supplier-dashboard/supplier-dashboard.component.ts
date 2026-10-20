@@ -6,6 +6,26 @@ import { SupplierDashboard } from '../../../models/supplier-dashboard';
 import { paymentLabel } from '../../../models/payment-label';
 import { fadeIn } from '../../../animations/checkout.animations';
 
+interface PieSlice {
+  name: string;
+  percent: number;
+  revenue: number;
+  quantity: number;
+  dasharray: string;
+  dashoffset: number;
+  strokeClass: string;
+  dotClass: string;
+}
+
+// classes literais (o Tailwind só gera o que encontra escrito); cores do tema, sem HEX
+const PIE_COLORS = [
+  { stroke: 'text-primary', dot: 'bg-primary' },
+  { stroke: 'text-amber-500', dot: 'bg-amber-500' },
+  { stroke: 'text-sky-500', dot: 'bg-sky-500' },
+  { stroke: 'text-emerald-500', dot: 'bg-emerald-500' },
+  { stroke: 'text-rose-400', dot: 'bg-rose-400' },
+];
+
 interface MonthOption {
   value: string;
   label: string;
@@ -51,6 +71,27 @@ export class SupplierDashboardComponent implements OnInit {
         this.loading = false;
         this.toastr.error(`Erro ao carregar o dashboard: ${err?.error?.error || err?.error?.message || err?.message || 'erro inesperado'}`);
       },
+    });
+  }
+
+  // pizza em SVG: círculo de raio 15,9155 tem circunferência 100, então o % vira o traço direto;
+  // começa no topo (offset inicial 25) e cada fatia recua a soma das anteriores
+  get categorySlices(): PieSlice[] {
+    let accumulated = 0;
+    return (this.dashboard?.salesByCategory ?? []).map((category, index) => {
+      const color = PIE_COLORS[index % PIE_COLORS.length];
+      const slice: PieSlice = {
+        name: category.categoryName,
+        percent: category.percent,
+        revenue: category.revenue,
+        quantity: category.quantity,
+        dasharray: `${category.percent} ${100 - category.percent}`,
+        dashoffset: 25 - accumulated,
+        strokeClass: color.stroke,
+        dotClass: color.dot,
+      };
+      accumulated += category.percent;
+      return slice;
     });
   }
 
