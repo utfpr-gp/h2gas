@@ -18,6 +18,7 @@ public interface ProductItemRepository extends JpaRepository<ProductItem, Long> 
         WHERE p.supplier.active = true AND p.supplier.open = true
           AND (:cityId IS NULL OR p.supplier.city.id = :cityId)
           AND (:category IS NULL OR LOWER(p.categoryProduct.productType.name) = LOWER(:category))
+          AND p.stockQuantity > 0
         """)
     Page<ProductItem> findAvailableProducts(@Param("cityId") Long cityId,
                                              @Param("category") String category,
@@ -32,9 +33,11 @@ public interface ProductItemRepository extends JpaRepository<ProductItem, Long> 
         WHERE p.supplier.id = :supplierId
           AND (:category IS NULL OR LOWER(p.categoryProduct.productType.name) = LOWER(:category))
           AND (:search IS NULL OR LOWER(p.brand) LIKE LOWER(CONCAT('%', :search, '%')))
+          AND (:onlyAvailable = FALSE OR p.stockQuantity > 0)
         """)
     Page<ProductItem> findBySupplierIdFiltered(@Param("supplierId") String supplierId,
                                                 @Param("category") String category,
                                                 @Param("search") String search,
+                                                @Param("onlyAvailable") boolean onlyAvailable,
                                                 Pageable pageable);
 }

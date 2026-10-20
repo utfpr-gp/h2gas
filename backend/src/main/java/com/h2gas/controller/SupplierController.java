@@ -1,8 +1,11 @@
 package com.h2gas.controller;
 
+import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.model.dto.*;
+import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.SupplierMapper;
 import com.h2gas.response.PageResponse;
+import com.h2gas.services.SupplierDashboardService;
 import com.h2gas.services.SupplierService;
 import com.h2gas.util.PaginationUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,8 +18,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.YearMonth;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 
@@ -30,6 +36,37 @@ public class SupplierController {
 
     @Autowired
     private SupplierMapper supplierMapper;
+
+    private final SupplierDashboardService supplierDashboardService;
+
+    public SupplierController(SupplierDashboardService supplierDashboardService) {
+        this.supplierDashboardService = supplierDashboardService;
+    }
+
+    @Operation(summary = "Dashboard do fornecedor logado",
+            description = "Indicadores do mês (receita, pedidos, ticket médio, variação sobre o mês anterior, receita a receber, "
+                    + "pendentes, em rota, concluídas, tempo médio de entrega, vendas por dia, por produto e por forma de pagamento). "
+                    + "O fornecedor vem do token; não há parâmetro para consultar o de outro")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Indicadores do mês"),
+            @ApiResponse(responseCode = "400", description = "Mês em formato inválido (use YYYY-MM) ou no futuro"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido ou papel diferente de SUPPLIER")
+    })
+    @GetMapping("/mine/dashboard")
+    @ResponseBody
+    @RolesAllowed("SUPPLIER")
+    public ResponseEntity<SupplierDashboardDTO> getDashboard(
+            @Parameter(description = "Mês no formato YYYY-MM; omitido = mês corrente", example = "2026-10")
+            @RequestParam(value = "month", required = false) String month) {
+        YearMonth yearMonth;
+        try {
+            yearMonth = month == null ? YearMonth.now() : YearMonth.parse(month);
+        } catch (DateTimeParseException e) {
+            throw new BusinessRuleException("Mês inválido. Use o formato YYYY-MM.");
+        }
+        User supplier = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return ResponseEntity.ok(supplierDashboardService.buildDashboard(supplier.getId(), yearMonth));
+    }
 
     @GetMapping
     @ResponseBody

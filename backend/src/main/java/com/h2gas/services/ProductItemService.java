@@ -64,8 +64,8 @@ public class ProductItemService {
                 .map(productItemMapper::toDto);
     }
 
-    public Page<ProductItemDTO> findProductsFiltered(String supplierId, String search, String category, Pageable pageable) {
-        return productItemRepository.findBySupplierIdFiltered(supplierId, category, search, pageable)
+    public Page<ProductItemDTO> findProductsFiltered(String supplierId, String search, String category, boolean onlyAvailable, Pageable pageable) {
+        return productItemRepository.findBySupplierIdFiltered(supplierId, category, search, onlyAvailable, pageable)
                 .map(productItemMapper::toDto);
     }
 

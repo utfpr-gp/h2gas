@@ -67,14 +67,19 @@ export class LoginComponent {
         localStorage.setItem('user', JSON.stringify(response))
         const firstName = (response?.name || '').trim().split(/\s+/)[0];
         this.toastr.success(firstName ? `Bem-vindo(a), ${firstName}!` : 'Bem-vindo(a)!');
-        // o entregador não tem catálogo: vai direto para as entregas (HU07)
-        this.navigate(response.userType === 'DELIVERER' ? '/entregas' : '/inicio')
+        // o entregador não tem catálogo (HU07) e o fornecedor começa pelo dashboard (HU09)
+        this.navigate(this.homeFor(response.userType))
       }, 
       error: (err) => {
         console.error('Erro ao buscar o usuario logado:', err);
         this.toastr.error(`Erro ao carregar seus dados: ${backendMessage(err)}`)
       }
     })
+  }
+
+  private homeFor(userType: string): string {
+    if (userType === 'DELIVERER') return '/entregas';
+    return userType === 'SUPPLIER' ? '/dashboard' : '/inicio';
   }
 
   navigate(route: string) {

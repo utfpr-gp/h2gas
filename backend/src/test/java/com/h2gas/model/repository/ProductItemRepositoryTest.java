@@ -154,17 +154,81 @@ class ProductItemRepositoryTest {
         criarProduto(supplier, categoriaAgua, "MinalbaFixture", new BigDecimal("25.00"));
 
         Page<ProductItem> apenasCategoria = productItemRepository.findBySupplierIdFiltered(
-                supplier.getId(), "Água", null, PageRequest.of(0, 10));
+                supplier.getId(), "Água", null, false, PageRequest.of(0, 10));
         assertEquals(2, apenasCategoria.getTotalElements());
 
         Page<ProductItem> apenasBusca = productItemRepository.findBySupplierIdFiltered(
-                supplier.getId(), null, "copap", PageRequest.of(0, 10));
+                supplier.getId(), null, "copap", false, PageRequest.of(0, 10));
         assertEquals(1, apenasBusca.getTotalElements());
         assertEquals("CopapFixture", apenasBusca.getContent().get(0).getBrand());
 
         Page<ProductItem> categoriaEBusca = productItemRepository.findBySupplierIdFiltered(
-                supplier.getId(), "Água", "copap", PageRequest.of(0, 10));
+                supplier.getId(), "Água", "copap", false, PageRequest.of(0, 10));
         assertEquals(1, categoriaEBusca.getTotalElements());
         assertEquals("CopapFixture", categoriaEBusca.getContent().get(0).getBrand());
+    }
+
+    private CategoryProduct categoriaDe(Supplier supplier, ProductType tipo) {
+        CategoryProduct categoria = new CategoryProduct();
+        categoria.setName("Gás 13kg");
+        categoria.setProductType(tipo);
+        categoria.setSupplier(supplier);
+        return categoryProductRepository.saveAndFlush(categoria);
+    }
+
+    private ProductItem criarProdutoComEstoque(Supplier supplier, CategoryProduct categoria, String brand, Integer estoque) {
+        ProductItem produto = criarProduto(supplier, categoria, brand, new BigDecimal("100.00"));
+        produto.setStockQuantity(estoque);
+        return productItemRepository.saveAndFlush(produto);
+    }
+
+    @Test
+    @DisplayName("HU09/RN02: onlyAvailable=true oculta produtos com estoque zero ou nulo")
+    void deveOcultarProdutosZeradosQuandoOnlyAvailableTrue() {
+        City city = cityRepository.save(new City(null, "Pato Branco", "PR"));
+        ProductType gas = productTypeRepository.save(new ProductType(null, "Gás", null));
+        Supplier supplier = criarFornecedor(city, "estoque.true@h2gas.test");
+        CategoryProduct categoria = categoriaDe(supplier, gas);
+        criarProdutoComEstoque(supplier, categoria, "Com estoque", 3);
+        criarProdutoComEstoque(supplier, categoria, "Zerado", 0);
+        criarProdutoComEstoque(supplier, categoria, "Sem controle", null);
+
+        Page<ProductItem> result = productItemRepository.findBySupplierIdFiltered(
+                supplier.getId(), null, null, true, PageRequest.of(0, 10));
+
+        assertEquals(1, result.getTotalElements());
+        assertEquals("Com estoque", result.getContent().get(0).getBrand());
+    }
+
+    @Test
+    @DisplayName("HU09/RN02: onlyAvailable=false mantém a visão do fornecedor com os itens zerados para repor")
+    void deveExibirProdutosZeradosQuandoOnlyAvailableFalse() {
+        City city = cityRepository.save(new City(null, "Pato Branco", "PR"));
+        ProductType gas = productTypeRepository.save(new ProductType(null, "Gás", null));
+        Supplier supplier = criarFornecedor(city, "estoque.false@h2gas.test");
+        CategoryProduct categoria = categoriaDe(supplier, gas);
+        criarProdutoComEstoque(supplier, categoria, "Com estoque", 3);
+        criarProdutoComEstoque(supplier, categoria, "Zerado", 0);
+
+        Page<ProductItem> result = productItemRepository.findBySupplierIdFiltered(
+                supplier.getId(), null, null, false, PageRequest.of(0, 10));
+
+        assertEquals(2, result.getTotalElements());
+    }
+
+    @Test
+    @DisplayName("HU09/RN02: a vitrine aberta nunca traz produto zerado")
+    void deveOcultarProdutosZeradosNaVitrineAberta() {
+        City city = cityRepository.save(new City(null, "Pato Branco", "PR"));
+        ProductType gas = productTypeRepository.save(new ProductType(null, "Gás", null));
+        Supplier supplier = criarFornecedor(city, "vitrine.estoque@h2gas.test");
+        CategoryProduct categoria = categoriaDe(supplier, gas);
+        criarProdutoComEstoque(supplier, categoria, "Com estoque", 2);
+        criarProdutoComEstoque(supplier, categoria, "Zerado", 0);
+
+        Page<ProductItem> result = productItemRepository.findAvailableProducts(city.getId(), null, PageRequest.of(0, 10));
+
+        assertEquals(1, result.getTotalElements());
+        assertEquals("Com estoque", result.getContent().get(0).getBrand());
     }
 }

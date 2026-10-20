@@ -88,6 +88,22 @@
   
           <a
             *ngIf="user?.userType === 'SUPPLIER'"
+            href="/dashboard"
+            class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
+          >
+            <i class="fa-solid fa-chart-line"></i><span class="ml-2">Dashboard</span>
+          </a>
+
+          <a
+            *ngIf="user?.userType === 'SUPPLIER'"
+            href="/dashboard-fornecedor"
+            class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
+          >
+            <i class="fa-solid fa-receipt"></i><span class="ml-2">Pedidos</span>
+          </a>
+
+          <a
+            *ngIf="user?.userType === 'SUPPLIER'"
             href="/entregadores"
             class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
           >
@@ -274,7 +290,7 @@
               (click)="navigate('/dashboard-fornecedor')"
               class="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
             >
-              Dashboard Fornecedor
+              Pedidos recebidos
             </button>
             <button
               *ngIf="user?.userType === 'ADMIN' || user?.userType === 'CUSTOMER'"
@@ -314,6 +330,8 @@
       class="absolute top-16 left-0 w-full bg-primary text-white flex flex-col p-4 space-y-3 shadow-lg lg:hidden z-40"
     >
       <a href="/inicio" class="hover:bg-white/10 px-3 py-2 rounded-md">Início</a>
+      <a *ngIf="user?.userType === 'SUPPLIER'" href="/dashboard" class="hover:bg-white/10 px-3 py-2 rounded-md">Dashboard</a>
+      <a *ngIf="user?.userType === 'SUPPLIER'" href="/dashboard-fornecedor" class="hover:bg-white/10 px-3 py-2 rounded-md">Pedidos</a>
       <a *ngIf="user?.userType === 'SUPPLIER'" href="/entregadores" class="hover:bg-white/10 px-3 py-2 rounded-md">Entregadores</a>
   
       <ng-container *ngIf="user?.userType === 'ADMIN' || user?.userType === 'SUPPLIER'">

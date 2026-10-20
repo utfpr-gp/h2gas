@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
 import { PaginatedResponse } from '../models/paginated-response';
+import { SupplierDashboard } from '../models/supplier-dashboard';
 
 @Injectable({
   providedIn: 'root'
@@ -42,6 +43,12 @@ export class SupplierService extends AbstractService<Supplier> {
 
   getActiveSupplier(supplierId: string): Observable<boolean> {
     return this.http.get<boolean>(`${this.baseUrl}/${supplierId}/active`);
+  }
+
+  // o fornecedor vem do token; month (YYYY-MM) omitido = mês corrente
+  getDashboard(month?: string): Observable<SupplierDashboard> {
+    const query = month ? `?month=${month}` : '';
+    return this.http.get<SupplierDashboard>(`${this.baseUrl}/mine/dashboard${query}`);
   }
 
   getOpen(supplierId: string): Observable<boolean> {
