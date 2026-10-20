@@ -219,18 +219,23 @@ Regra herdada: specs antigos falhando no frontend não aumentam (22).
 
 ## 8. Definição de Pronto
 
-- [ ] Produto com `stockQuantity = 0` não aparece na vitrine do cliente
+- [x] Produto com `stockQuantity = 0` não aparece na vitrine do cliente
       (decisão no backend, inclusive se o cliente pedir
       `onlyAvailable=false`) e continua na gestão do fornecedor.
-- [ ] `GET /api/suppliers/mine/dashboard` devolve os indicadores do mês
+- [x] `GET /api/suppliers/mine/dashboard` devolve os indicadores do mês
       do fornecedor logado (nunca de outro), documentado no Swagger.
-- [ ] Tela `/dashboard` mostra KPIs, vendas por dia, vendas por produto,
+- [x] Tela `/dashboard` mostra KPIs, vendas por dia, vendas por produto,
       pagamentos e tempo médio de entrega, com seletor de mês.
-- [ ] Fornecedor entra pelo dashboard após o login; menu com Dashboard |
+- [x] Fornecedor entra pelo dashboard após o login; menu com Dashboard |
       Pedidos | Produtos.
-- [ ] Testes da seção 6 verdes; `mvn test` e `ng test` (≤ 22 falhas
+- [x] Testes da seção 6 verdes; `mvn test` e `ng test` (≤ 22 falhas
       antigas); sem HEX novo.
-- [ ] Commits pequenos por fatia (CLAUDE.md, seção Git).
-- [ ] Testado de ponta a ponta (API e interface, com pedidos de meses e
+- [x] Commits pequenos por fatia (CLAUDE.md, seção Git).
+- [x] Testado de ponta a ponta (API e interface, com pedidos de meses e
       estados variados e produto zerado).
 - [ ] Revisado e aprovado antes de HU10 começar.
+
+> Verificado em 2026-10-19: backend 208 testes (único erro: `BackendApplicationTests.contextLoads`, que precisa do MySQL local);
+> frontend 241 testes com 21 falhas antigas (uma a menos: o spec do `SupplierService` passou a ter `HttpClient`); E2E com 18 checagens
+> (produto zerado some para o cliente mesmo com `onlyAvailable=false` e continua para o fornecedor; dashboard do fornecedor logado,
+> soma diária = receita, variação sobre o mês anterior, mês futuro/inválido 400, isolamento entre fornecedores, login em `/dashboard`).
