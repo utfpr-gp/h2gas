@@ -208,21 +208,34 @@ Regra herdada: specs antigos falhando no frontend não aumentam (19).
 
 ## 8. Definição de Pronto
 
-- [ ] Solicitação de código responde 200 mesmo para e-mail inexistente e
+- [x] Solicitação de código responde 200 mesmo para e-mail inexistente e
       não revela a existência da conta.
-- [ ] Código de 6 dígitos expira em 5 minutos, aceita no máximo 5
+- [x] Código de 6 dígitos expira em 5 minutos, aceita no máximo 5
       tentativas e não vale duas vezes; pedir outro substitui o anterior.
-- [ ] Validação correta emite o mesmo JWT do login tradicional e leva ao
+- [x] Validação correta emite o mesmo JWT do login tradicional e leva ao
       destino do perfil.
-- [ ] Falha de SMTP não derruba a solicitação; fora de produção o código
+- [x] Falha de SMTP não derruba a solicitação; fora de produção o código
       é logado para teste local.
-- [ ] Migração `V8` aplicada e rotas novas documentadas no Swagger como
+- [x] Migração `V8` aplicada e rotas novas documentadas no Swagger como
       públicas.
-- [ ] Telas de código, login por senha e cadastro no padrão da Figura 10,
+- [x] Telas de código, login por senha e cadastro no padrão da Figura 10,
       sem HEX literal novo e sem `<body>` nos templates.
-- [ ] Testes da seção 6 verdes; `mvn test` e `ng test` (≤ 19 falhas
+- [x] Testes da seção 6 verdes; `mvn test` e `ng test` (≤ 19 falhas
       antigas).
-- [ ] Commits pequenos por fatia (CLAUDE.md, seção Git).
-- [ ] Testado de ponta a ponta (API e interface, com o código lido do log
+- [x] Commits pequenos por fatia (CLAUDE.md, seção Git).
+- [x] Testado de ponta a ponta (API e interface, com o código lido do log
       local).
 - [ ] Revisado e aprovado. Encerra a fila de scripts planejada.
+
+> Verificado em 2026-10-20: backend 247 testes (único erro: `BackendApplicationTests.contextLoads`, que precisa do MySQL local);
+> frontend 280 testes com as 19 falhas antigas; E2E por API com 19 checagens (prazo, tentativas, reenvio, código usado, sem revelar conta,
+> JWT válido em `/users/me`) e por interface com 17 (passo a passo da tela, mensagem do backend, reenvio, destino por perfil, login por
+> senha, seletor de perfil no cadastro).
+>
+> **Dois defeitos encontrados no teste e corrigidos**: (1) a contagem de tentativas sumia com o rollback da exceção de código inválido;
+> (2) o envio do e-mail segurava a transação, e como o SMTP leva ~2 s para falhar o código só era gravado depois — o reenvio parecia não
+> funcionar na tela. Agora o código é gravado antes do envio.
+>
+> **Pendência de ambiente (não de código)**: o `application.properties` aponta para o Gmail lendo `USER_NAME`/`PASSWORD_EMAIL` do `.env`, e
+> a credencial atual é recusada (`535 Username and Password not accepted`). Falta uma conta com senha de app para o e-mail sair de verdade;
+> fora de produção o código aparece no log do backend, e foi assim que o fluxo foi testado.
