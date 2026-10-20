@@ -44,8 +44,9 @@ Detalhamento operacional (não cria cenário novo):
 - **1b — Estado operacional agora**: pedidos pendentes e em rota (contagem
   atual, não depende do mês).
 - **1c — Gráficos**: vendas por dia do mês (volume financeiro), "Vendas
-  por Produto" (top 5 por unidades) e "Pagamentos" (por forma de pagamento,
-  com %).
+  por Produto" (top 5 por unidades), "Pagamentos" (por forma de pagamento,
+  com %) e **"Vendas por categoria"** (pizza da receita por tipo de produto,
+  ex.: Gás × Água — adicionada a pedido do autor depois da primeira entrega).
 - **2a — Vitrine do cliente**: produto com estoque zero some do catálogo
   do cliente, **sempre decidido no backend**; a gestão do fornecedor
   continua vendo os itens zerados para repor.
@@ -122,13 +123,17 @@ Detalhamento operacional (não cria cenário novo):
     pedidos), `receivable`, `deliveredOrders`, `pendingOrders`,
     `outForDeliveryOrders`, `averageDeliveryMinutes` (nulo sem entregas
     com os dois horários), `revenueByDay[]`, `salesByProduct[]`,
-    `paymentBreakdown[]`;
+    `paymentBreakdown[]`, `salesByCategory[]`;
   - `RevenuePointDTO(day, revenue)` — **todos** os dias do mês, com zero
     nos sem venda;
   - `ProductSalesDTO(productName, quantity, revenue)` — top 5 por
     unidades; nome = `marca + categoria`;
   - `PaymentShareDTO(method, orders, revenue, percent)` — percent sobre o
-    total de pedidos do mês.
+    total de pedidos do mês;
+  - `CategorySalesDTO(categoryName, quantity, revenue, percent)` — por
+    **tipo de produto** (`ProductType`, o que a vitrine chama de categoria:
+    Gás, Água…), da maior para a menor receita; percent sobre a receita
+    dos itens dos pedidos contados, 1 casa decimal.
 - `SupplierDashboardService.buildDashboard(supplierId, YearMonth month)`
   (`@Transactional(readOnly = true)`, injeção por construtor; serviço
   próprio para não inchar o `SupplierService`, que é todo por campo):
@@ -160,7 +165,9 @@ Detalhamento operacional (não cria cenário novo):
     Concluídas e Tempo médio ("—" quando nulo);
   - gráfico de barras de vendas por dia (SVG/CSS, com valor ao toque/
     hover), "Vendas por Produto" (barras de progresso com unidades) e
-    "Pagamentos" (forma, %, valor);
+    "Pagamentos" (forma, %, valor) e "Vendas por categoria" em **pizza**
+    (SVG com `stroke-dasharray`, cores por classes Tailwind/tokens, sem HEX
+    novo, com legenda de categoria, % e valor);
   - estados de carregando, vazio ("Sem vendas neste mês") e erro (toast
     pelo helper do F7).
 - Navegação: o login do `SUPPLIER` vai para `/dashboard`; o menu do
@@ -188,6 +195,7 @@ Detalhamento operacional (não cria cenário novo):
    `deveRetornarTempoMedioNuloSemEntregasComHorarios`,
    `deveListarTop5ProdutosPorUnidades`,
    `deveAgruparPagamentosComPercentual`,
+   `deveAgruparVendasPorCategoriaComPercentualDaReceita`,
    `naoDeveMisturarPedidosDeOutroFornecedor`, `deveRejeitarMesFuturo`.
 4. `SupplierControllerTest` —
    `deveRetornar200ComDashboardDoFornecedorLogado`,
@@ -199,6 +207,8 @@ Detalhamento operacional (não cria cenário novo):
 6. `supplier-dashboard.component.spec.ts` —
    `deveExibirKpisDoMes`, `deveRenderizarBarrasDeVendasPorDia`,
    `deveExibirVendasPorProdutoEPagamentos`,
+   `deveRenderizarPizzaDeVendasPorCategoria`,
+   `deveOcultarPizzaSemVendas`,
    `deveExibirTracoQuandoTempoMedioForNulo`,
    `deveRecarregarAoTrocarOMes`, `deveExibirEstadoVazioSemVendas`.
 7. `login.component.spec.ts` — `deveRedirecionarFornecedorParaDashboard`;
@@ -214,7 +224,8 @@ Regra herdada: specs antigos falhando no frontend não aumentam (22).
 - Atualização em tempo real do dashboard (SSE) e polling: carrega ao abrir
   e ao trocar o mês.
 - Dashboard de ADMIN sobre qualquer fornecedor e exportação (CSV/PDF).
-- Gráficos além dos da Figura 13 (ex.: por entregador, por bairro).
+- Gráficos além dos da Figura 13 e da pizza por categoria (ex.: por
+  entregador, por bairro, entrega × retirada).
 - Biblioteca de gráficos (`ng2-charts`/`chart.js`).
 
 ## 8. Definição de Pronto
@@ -226,6 +237,7 @@ Regra herdada: specs antigos falhando no frontend não aumentam (22).
       do fornecedor logado (nunca de outro), documentado no Swagger.
 - [x] Tela `/dashboard` mostra KPIs, vendas por dia, vendas por produto,
       pagamentos e tempo médio de entrega, com seletor de mês.
+- [ ] Pizza "Vendas por categoria" na tela, com os mesmos dados do backend.
 - [x] Fornecedor entra pelo dashboard após o login; menu com Dashboard |
       Pedidos | Produtos.
 - [x] Testes da seção 6 verdes; `mvn test` e `ng test` (≤ 22 falhas
