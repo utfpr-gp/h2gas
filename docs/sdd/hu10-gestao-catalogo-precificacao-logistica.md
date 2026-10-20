@@ -126,6 +126,9 @@ Detalhamento operacional (não cria cenário novo):
     forem iguais e preenchidos;
   - **3. Imagem**: área arrasta-e-solta (`dragover`/`drop`) além do
     clique, com pré-visualização e remover;
+  - no **cadastro** a imagem é obrigatória (a API exige a parte `file`):
+    sem ela o formulário avisa "Selecione uma imagem do produto." em
+    vez de deixar a API devolver erro; na edição a imagem não muda;
   - botões **Cancelar** (volta para `/product-items`) e **Salvar
     Produto**; erros do backend pelo helper `backendMessage`;
   - envia `priceDelivery`/`pricePickup` (nunca `price`); na edição o
@@ -164,7 +167,9 @@ Detalhamento operacional (não cria cenário novo):
    `deveAvisarEntregaGratisQuandoPrecosForemIguais`,
    `naoDeveAvisarQuandoPrecosDiferentes`,
    `deveAceitarImagemSoltaNaAreaDeUpload`,
-   `deveVoltarParaListaAoCancelar`.
+   `deveVoltarParaListaAoCancelar`, `deveExigirImagemNoCadastro`,
+   `deveIgnorarArquivoQueNaoEImagem`, `deveCarregarOsDoisPrecosNaEdicao`,
+   `deveSalvarAEdicaoSemExigirNovaImagem`.
 5. `product-card.component.spec.ts` —
    `deveExibirBadgeDeFreteGratisQuandoPrecosIguais`,
    `naoDeveExibirBadgeQuandoPrecosDiferentes`.

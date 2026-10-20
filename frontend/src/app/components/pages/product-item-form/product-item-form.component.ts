@@ -52,8 +52,9 @@ export class ProductItemFormComponent implements OnInit {
   ) {
     this.formProductItem = this.fb.group({
       brand: ['', [Validators.required]],
-      price: [0.0, [Validators.required]],
-      stockQuantity: [0, [Validators.required]],
+      priceDelivery: [null, [Validators.required, Validators.min(0)]],
+      pricePickup: [null, [Validators.required, Validators.min(0)]],
+      stockQuantity: [0, [Validators.required, Validators.min(0)]],
       description: ['', [Validators.required]],
       categoryProductId: [null, [Validators.required]]
     })
@@ -86,25 +87,60 @@ export class ProductItemFormComponent implements OnInit {
   }
 
   selectedImage: string | ArrayBuffer | null = null;
-  file: any;
+  file?: File;
+  dragging = false;
+
+  // HU10: preços iguais viram Entrega Grátis; avisa ao vivo, só com os dois preenchidos
+  get freeDeliveryHint(): boolean {
+    const { priceDelivery, pricePickup } = this.formProductItem.value;
+    return priceDelivery != null && pricePickup != null && priceDelivery !== '' && pricePickup !== ''
+      && Number(priceDelivery) === Number(pricePickup);
+  }
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     if (!input.files?.length) return;
+    this.setFile(input.files[0]);
+  }
 
-    this.file = input.files[0];
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    this.dragging = true;
+  }
 
+  onDragLeave() {
+    this.dragging = false;
+  }
+
+  onDrop(event: DragEvent) {
+    event.preventDefault();
+    this.dragging = false;
+    const dropped = event.dataTransfer?.files?.[0];
+    if (dropped) {
+      this.setFile(dropped);
+    }
+  }
+
+  private setFile(file: File) {
+    if (!file.type.startsWith('image/')) {
+      this.toastr.warning('Selecione um arquivo de imagem.');
+      return;
+    }
+    this.file = file;
     const reader = new FileReader();
     reader.onload = () => {
       this.selectedImage = reader.result;
     };
-    reader.readAsDataURL(this.file);
-
-    console.log(this.file);
+    reader.readAsDataURL(file);
   }
 
   removeImage() {
     this.selectedImage = null;
+    this.file = undefined;
+  }
+
+  cancel() {
+    this.navigateRoute('/product-items');
   }
 
   updateProduct() {
@@ -147,19 +183,24 @@ export class ProductItemFormComponent implements OnInit {
   }
 
   saveItemProduct() {
-    this.isLoading = true;
     if (!this.formProductItem.valid) {
       this.toastr.warning('Preencha os campos obrigatórios.')
       return;
     }
-    
+    // a API exige a parte 'file' no cadastro; na edição a imagem não muda
+    if (!this.file) {
+      this.toastr.warning('Selecione uma imagem do produto.')
+      return;
+    }
+    this.isLoading = true;
+
     this.productItemSave = this.formProductItem.value;
 
     // if (this.productItemSave) {
     //   this.productItemSave.supplierId = this.user?.supplierId ?? '';
     // }
     
-    this.productItemService.createWithFile(this.productItemSave!!, this.file).subscribe({
+    this.productItemService.createWithFile(this.productItemSave!!, this.file!).subscribe({
       next: (value) => {
         console.log("salvo com sucesso!!");
         this.isLoading = false;
