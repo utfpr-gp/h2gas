@@ -55,6 +55,11 @@ export class AddressFormComponent implements OnInit {
     this.form.get('addressName')?.setValue(rotulo);
   }
 
+  get cityLabel(): string {
+    const cidade = this.cities?.find((c) => c.id === this.form.get('cityId')?.value);
+    return cidade ? `${cidade.name} - ${cidade.state}` : '';
+  }
+
   buscarCep() {
     const cep = this.form.get('zipCode')?.value;
     if (!cep) {

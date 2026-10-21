@@ -547,7 +547,8 @@ guarda esse código e o casamento CEP ↔ cidade passa a ser exato.
   - `utils/city-match.ts`: `matchCityFromCep(cities, viaCep)` casa pelo
     código IBGE e, sem código, por nome sem acento/maiúscula **e** UF.
     Usado em `address-form` e `distribuitor-form` (que passa a
-    preencher a cidade pelo CEP);
+    preencher a cidade pelo CEP). O `address-form` mostra a cidade
+    casada ("Curitiba - PR"), só leitura, junto com rua e bairro;
   - `city-register`: lista das cidades atendidas com busca local
     (lista curta, só do admin), contador, estado vazio, skeleton;
     "Nova cidade" em modal com dropdown de UF e de município (cidades
@@ -823,14 +824,23 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > passou a `loadComponent` (tela só do admin); (2) no celular o campo de busca não ocupava a largura toda.
 
 **Fatia 6 — cidades com a base do IBGE (§5.14):**
-- [ ] Cidade cadastrada só por código IBGE, com nome e UF oficiais;
+- [x] Cidade cadastrada só por código IBGE, com nome e UF oficiais;
       409/400/502 com mensagem; exclusão de cidade em uso é 409.
-- [ ] CEP de usuário novo casa com a cidade pelo código IBGE (e por
+- [x] CEP de usuário novo casa com a cidade pelo código IBGE (e por
       nome + UF nas antigas) no `address-form` e no `distribuitor-form`.
-- [ ] Tela com dropdowns de UF e município, busca, confirmação de
+- [x] Tela com dropdowns de UF e município, busca, confirmação de
       exclusão; rotas com OpenAPI.
-- [ ] Testes da seção 7 (item 14) verdes; `mvn test`, `ng test` (sem
+- [x] Testes da seção 7 (item 14) verdes; `mvn test`, `ng test` (sem
       falhas novas) e `ng build`; teste manual em 390 e 1280 px.
+
+> Verificado em 2026-10-21: backend 316 testes (único erro: `contextLoads`, que precisa do MySQL local); Flyway V12 aplicada no
+> MySQL local (Curitiba com 4106902); frontend 377 testes com 15 falhas antigas (uma a menos: o spec antigo de `city-register`);
+> `ng build` sem erro; E2E com o IBGE real em 14 checagens (27 UFs, 399 municípios do PR, Curitiba desabilitada, cadastro de São
+> José dos Pinhais pela tela, 409 duplicada, 400 para código inexistente e para nome digitado, 409 ao excluir Curitiba em uso,
+> CEP 83005-000 de cliente preenchendo "São José dos Pinhais - PR", CEP de Florianópolis avisando "Florianópolis - SC", exclusão
+> de cidade sem uso, celular sem rolagem lateral). A cidade de teste foi removida no fim.
+>
+> **Achados do teste**: o `address-form` não mostrava qual cidade o CEP casou — ganhou o campo "Cidade" só leitura.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).

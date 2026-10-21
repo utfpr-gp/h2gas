@@ -65,6 +65,8 @@ describe('AddressFormComponent', () => {
 
     expect(component.cidadeEncontrada).toBeTrue();
     expect(component.form.get('cityId')?.value).toBe(2);
+    fixture.detectChanges();
+    expect((fixture.nativeElement.querySelector('[data-testid="matched-city"]') as HTMLInputElement).value).toBe('Curitiba - PR');
   });
 
   it('naoDeveAceitarCidadeDeMesmoNomeEmOutraUf', () => {
