@@ -26,7 +26,8 @@ import { backendMessage } from '../../../utils/backend-message';
   ],
   templateUrl: './product-list.component.html',
   styleUrl: './product-list.component.css',
-  animations: [staggerList]
+  animations: [staggerList],
+  host: { class: 'flex flex-1 flex-col bg-gray-50 -mt-5 pt-5' }
 })
 export class ProductListComponent implements OnInit {
   constructor(

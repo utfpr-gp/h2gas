@@ -972,7 +972,8 @@ de mais de uma loja de uma vez; mudanças no backend.
 > Escrita em 2026-10-21. Pedido do autor (tela
 > `/fornecedores/:id/produtos`, ao filtrar produtos): há diferença entre os
 > dois brancos do fundo; faltam animações; o tipo selecionado poderia ter
-> outra cor. Decisões: fundo **branco, igual ao `/inicio`**; tipo ativo em
+> outra cor. Decisões: fundo **cinza claro (`gray-50`) na tela toda** (1ª versão em
+> branco foi recusada: o autor não via mudança); tipo ativo em
 > **azul vivo cheio (accent)**, valendo também no `/inicio`, que usa o mesmo
 > componente de chips.
 
@@ -983,7 +984,9 @@ pouco distinto do normal. O grid troca de produtos sem transição.
 
 **Contrato**
 - `product-list`: sem `<html>`/`<body>` no template nem `body {}` no CSS; o
-  container é o único wrapper e a página tem um só branco (o do `/inicio`).
+  host da página (`flex flex-1 flex-col bg-gray-50`) pinta o cinza do menu ao
+  rodapé e sobe `-mt-5` para cobrir a folga (`mb-5`) do menu no shell, sem
+  faixa branca no topo.
 - `CategoryChipBarComponent`: chip ativo com círculo `bg-accent border-accent
   text-white`, rótulo `text-accent font-semibold`, leve `scale-105` e
   `transition-all`; inativo como hoje; `aria-pressed` preservado.
@@ -1293,7 +1296,7 @@ botão, debounce, `q`); paginação; redesenho do card; estado vazio.
 24. *(cliente, §5.24)* `category-chip-bar.component.spec.ts`:
     `deveDestacarOChipAtivoComAccent` (substitui
     `deveDestacarOChipAtivoSemFundoEscuro`);
-    `product-list.component.spec.ts`: `deveManterSoUmFundoNaTelaDeProdutos`,
+    `product-list.component.spec.ts`: `deveUsarFundoCinzaClaroNaTelaToda`,
     `deveAtenuarOGridEnquantoBusca`.
 
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
@@ -1613,13 +1616,12 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > até a etapa Entrega). Pedido de teste removido e estoque devolvido.
 
 **Cliente — Produtos de uma loja (§5.24):**
-- [x] Um só branco no fundo; chip ativo em accent; grid com entrada em
+- [x] Fundo cinza claro contínuo do menu ao rodapé; chip ativo em accent; grid com entrada em
       sequência e atenuado durante a busca; testes (item 24) verdes;
       `ng test` (sem falhas novas) e `ng build`; E2E em 390 e 1280 px.
 
 > **Verificação (2026-10-21)**: `ng test` 472 testes, só as 10 falhas antigas de providers; `ng build` ok. E2E com
-> `cliente.teste@h2gas.local` em 1280 e 390 px: `body`, `main` e container sem fundo próprio (um só branco, sem `<body>`
-> aninhado); chip "Água" ativo com `rgb(39,114,202)` e texto branco; lista entra em sequência ao trocar o tipo.
+> `cliente.teste@h2gas.local` em 1280 e 390 px: host da página `gray-50` colado ao menu (sem faixa branca) (sem `<body>` aninhado); chip "Água" ativo com `rgb(39,114,202)` e texto branco; lista entra em sequência ao trocar o tipo.
 > **Achado**: o ajuste de contraste do accent (`#2772ca`, 4,83:1) da auditoria nunca tinha sido commitado — o token
 > seguia `#2a78d6` (4,42:1, abaixo do AA); corrigido em commit à parte, e o texto da §5.21 foi acertado.
 

@@ -96,11 +96,13 @@ describe('ProductListComponent', () => {
   });
 
   // ---- F7 §5.24 ----
-  it('deveManterSoUmFundoNaTelaDeProdutos', () => {
-    const html = fixture.nativeElement as HTMLElement;
+  it('deveUsarFundoCinzaClaroNaTelaToda', () => {
+    const host = fixture.nativeElement as HTMLElement;
 
-    expect(html.querySelector('body')).toBeNull();
-    expect(html.querySelector('.bg-gray-50')).toBeNull();
+    expect(host.classList).toContain('bg-gray-50');
+    expect(host.classList).toContain('flex-1');
+    expect(host.querySelector('body')).toBeNull();
+    expect(host.querySelector('.bg-gray-50')).toBeNull();
   });
 
   it('deveAtenuarOGridEnquantoBusca', () => {
