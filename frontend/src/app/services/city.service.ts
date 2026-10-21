@@ -3,6 +3,7 @@ import { City } from '../models/city';
 import { HttpClient } from '@angular/common/http';
 import { AbstractService } from './abstract.service';
 import { environment } from '../../environments/environment';
+import { Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -12,5 +13,10 @@ export class CityService extends AbstractService<City>{
 
   constructor(protected override http: HttpClient) {
     super(http);
+  }
+
+  // F7 fatia 6: o backend busca nome e UF oficiais no IBGE
+  createFromIbge(ibgeCode: number): Observable<City> {
+    return this.http.post<City>(this.baseUrl, { ibgeCode });
   }
 }

@@ -7,6 +7,7 @@ import { AddressService } from '../../services/address.service';
 import { CityService } from '../../services/city.service';
 import { Address } from '../../models/address';
 import { City } from '../../models/city';
+import { matchCityFromCep } from '../../utils/city-match';
 import { backendMessage } from '../../utils/backend-message';
 
 @Component({
@@ -70,13 +71,11 @@ export class AddressFormComponent implements OnInit {
           return;
         }
 
-        const cidade = this.cities?.find(
-          (c) => c.name!.toLowerCase() === response.localidade.toLowerCase()
-        );
+        const cidade = matchCityFromCep(this.cities, response);
         this.cidadeEncontrada = !!cidade;
 
         if (!cidade) {
-          this.toastr.warning(`No momento ainda não atendemos a cidade de ${response.localidade}.`);
+          this.toastr.warning(`No momento ainda não atendemos a cidade de ${response.localidade} - ${response.uf}.`);
           return;
         }
 
