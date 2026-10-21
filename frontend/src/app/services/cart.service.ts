@@ -86,17 +86,43 @@ export class CartService {
     sessionStorage.removeItem(this.BUY_NOW_KEY);
   }
 
-  addProduct(product: any) {
-    const currentCart = this.cartProductsSubject.value;
-    const existing = currentCart.find(p => p.id === product.id);
+  // HU14: loja dona do carrinho (primeiro item); vazio → null
+  getCartSupplierId(): string | null {
+    const cart = this.cartProductsSubject.value;
+    if (!cart.length) {
+      return null;
+    }
+    const id = cart[0]?.supplierId;
+    return id ? String(id) : null;
+  }
 
+  // HU14: 'added' se entrou/somou; 'other_supplier' se outra loja (carrinho intacto)
+  addProduct(product: any): 'added' | 'other_supplier' {
+    const currentCart = [...this.cartProductsSubject.value];
+    const cartSupplierId = this.getCartSupplierId();
+    const productSupplierId = product?.supplierId ? String(product.supplierId) : '';
+
+    if (cartSupplierId && productSupplierId !== cartSupplierId) {
+      return 'other_supplier';
+    }
+    if (cartSupplierId && !productSupplierId) {
+      return 'other_supplier';
+    }
+
+    const existing = currentCart.find(p => p.id === product.id);
     if (existing) {
       existing.quantitySelect = (existing.quantitySelect ?? 0) + (product.quantitySelect ?? 1);
     } else {
       currentCart.push({ ...product });
     }
-
     this.saveToLocalStorage(currentCart);
+    return 'added';
+  }
+
+  // HU14: esvazia e coloca o produto da outra loja
+  clearAndAdd(product: any): void {
+    this.setCart([]);
+    this.addProduct(product);
   }
 
 }
