@@ -38,7 +38,7 @@ type ViewMode = 'suppliers' | 'products';
 export class SupplierListComponent implements OnInit {
   readonly promoBanners = [
     { title: 'Fardinho de Água', subtitle: 'Compre água de diferentes tamanhos', icon: 'water_drop' },
-    { title: 'Gás de Cozinha e Industrial', subtitle: 'Até 15% OFF em itens selecionados', icon: 'local_fire_department' },
+    { title: 'Gás de Cozinha e Industrial', subtitle: 'Botijões de vários tamanhos, com entrega ou retirada', icon: 'local_fire_department' },
   ];
 
   viewMode: ViewMode = 'suppliers';

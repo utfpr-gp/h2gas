@@ -56,4 +56,14 @@ describe('SupplierCardComponent', () => {
     expect(fixture.nativeElement.querySelector('[data-testid="supplier-logo"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('[data-testid="supplier-icon"]')).not.toBeNull();
   });
+
+  it('deveManterTextosLegiveisEAlvoDeToque', () => {
+    component.supplier = { id: '7', name: 'Depósito Central' } as Supplier;
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    // cinza 400 não passa de 2,6:1 no branco; o aviso de avaliações usa um tom que passa de 4,5:1
+    expect(el.querySelector('.text-gray-400')).toBeNull();
+    expect(el.querySelector('[data-testid="view-products"]')!.classList).toContain('min-h-11');
+  });
 });
