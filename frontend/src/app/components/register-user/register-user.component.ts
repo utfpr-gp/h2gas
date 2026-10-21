@@ -34,6 +34,27 @@ export class RegisterUserComponent implements OnInit {
   @Input()
   tittleRegister?: string;
 
+  // HU11 (Figura 10c): o cadastro público deixa escolher o perfil na própria tela
+  @Input()
+  allowProfileChoice = true;
+
+  selectProfile(profile: 'CUSTOMER' | 'SUPPLIER') {
+    this.userType = profile;
+    // o título veio de fora para o perfil inicial; ao trocar na tela ele acompanha a escolha
+    this.chosenTitle = profile === 'SUPPLIER'
+      ? 'Você esta a um passo de se tornar nosso fornecedor'
+      : 'Você esta a um passo de se tornar nosso cliente';
+    if (profile === 'CUSTOMER') {
+      this.registerForm.get('cnpj')?.setValue('');
+    }
+  }
+
+  get title(): string {
+    return this.chosenTitle || this.tittleRegister || 'Crie sua conta';
+  }
+
+  private chosenTitle?: string;
+
 
   constructor(
     private fb: FormBuilder,

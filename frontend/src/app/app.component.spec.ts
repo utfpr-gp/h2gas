@@ -26,4 +26,12 @@ describe('AppComponent', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('h1')?.textContent).toContain('Hello, frontend');
   });
+
+  it('deveEsconderOMenuNasTelasDeAutenticacao', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+
+    ['/login', '/login/senha', '/register', '/register-supplier'].forEach((rota) =>
+      expect(app.hiddenMenuRoutes).toContain(rota));
+  });
 });

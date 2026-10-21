@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
+import { of } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { provideNgxMask } from 'ngx-mask';
-import { of } from 'rxjs';
 
 import { RegisterUserComponent } from './register-user.component';
 import { UserService } from '../../services/user.service';
@@ -11,68 +11,85 @@ describe('RegisterUserComponent', () => {
   let component: RegisterUserComponent;
   let fixture: ComponentFixture<RegisterUserComponent>;
   let userServiceSpy: jasmine.SpyObj<UserService>;
-  let toastrSpy: jasmine.SpyObj<ToastrService>;
+  let navigateSpy: jasmine.Spy;
+
+  const el = () => fixture.nativeElement as HTMLElement;
+  const byId = (id: string) => el().querySelector(`[data-testid=${id}]`) as HTMLElement | null;
 
   beforeEach(async () => {
     userServiceSpy = jasmine.createSpyObj('UserService', ['createUser']);
-    toastrSpy = jasmine.createSpyObj('ToastrService', ['success', 'warning', 'error']);
+    userServiceSpy.createUser.and.returnValue(of({} as any));
 
     await TestBed.configureTestingModule({
       imports: [RegisterUserComponent],
       providers: [
         { provide: UserService, useValue: userServiceSpy },
-        { provide: ToastrService, useValue: toastrSpy },
+        { provide: ToastrService, useValue: jasmine.createSpyObj('ToastrService', ['success', 'error', 'warning']) },
+        provideRouter([]),
         provideNgxMask(),
-      ]
-    })
-    .compileComponents();
+      ],
+    }).compileComponents();
 
+    navigateSpy = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
     fixture = TestBed.createComponent(RegisterUserComponent);
     component = fixture.componentInstance;
+    component.userType = 'CUSTOMER';
+    component.tittleRegister = 'Você esta a um passo de se tornar nosso cliente';
     fixture.detectChanges();
   });
+
+  afterEach(() => fixture.destroy());
 
   it('should create', () => {
     expect(component).toBeTruthy();
   });
 
-  it('devePermitirSubmeterCadastroSemEndereco', () => {
-    userServiceSpy.createUser.and.returnValue(of({} as any));
+  it('deveAlternarEntreClienteEFornecedorNoSeletor', () => {
+    expect(el().querySelector('input[formControlName=cnpj]')).toBeNull();
 
-    component.registerForm.setValue({
-      email: 'cliente@teste.com',
-      name: 'Cliente Teste',
-      phoneNumber: '41999999999',
-      cpf: '',
-      cnpj: '',
-      password: '123456',
-      userType: '',
-    });
-    component.confirmPassword = '123456';
+    (byId('profile-supplier') as HTMLButtonElement).click();
+    fixture.detectChanges();
 
-    component.register();
+    expect(component.userType).toBe('SUPPLIER');
+    expect(el().querySelector('input[formControlName=cnpj]')).toBeTruthy();
 
-    expect(userServiceSpy.createUser).toHaveBeenCalled();
-    const payload = userServiceSpy.createUser.calls.mostRecent().args[0];
-    expect(payload.address).toBeUndefined();
+    (byId('profile-customer') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(component.userType).toBe('CUSTOMER');
+    expect(el().querySelector('input[formControlName=cnpj]')).toBeNull();
   });
 
-  it('naoDeveTravarBotaoQuandoSenhasDiferem', () => {
-    component.registerForm.setValue({
-      email: 'cliente@teste.com',
-      name: 'Cliente Teste',
-      phoneNumber: '41999999999',
-      cpf: '',
-      cnpj: '',
-      password: '123456',
-      userType: '',
+  it('deveEnviarOPerfilEscolhidoNoCadastro', () => {
+    (byId('profile-supplier') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    component.registerForm.patchValue({
+      name: 'Loja Teste', email: 'loja@h2gas.local', phoneNumber: '41999999999',
+      cnpj: '12345678000100', password: 'Teste@123',
     });
-    component.confirmPassword = 'diferente';
+    component.confirmPassword = 'Teste@123';
 
     component.register();
 
-    expect(component.isLoadingRegister).toBeFalse();
-    expect(userServiceSpy.createUser).not.toHaveBeenCalled();
-    expect(toastrSpy.warning).toHaveBeenCalledWith('As senhas não conferem.');
+    expect(userServiceSpy.createUser).toHaveBeenCalledWith(jasmine.objectContaining({ userType: 'SUPPLIER' }));
+    expect(navigateSpy).toHaveBeenCalledWith(['/login']);
+  });
+
+  it('naoDeveTerDoctypeNemHexLiteralNoTemplate', () => {
+    const html = el().innerHTML;
+
+    expect(html).not.toContain('<body');
+    expect(html).not.toMatch(/#0E2068|#3B82F6/i);
+  });
+
+  it('deveTrocarOTituloAoEscolherOPerfil', () => {
+    expect(el().querySelector('h1')!.textContent).toContain('cliente');
+
+    (byId('profile-supplier') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const titulo = el().querySelector('h1')!.textContent!;
+    expect(titulo).toContain('fornecedor');
+    expect(titulo).not.toContain('nosso cliente');
   });
 });

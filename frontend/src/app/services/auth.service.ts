@@ -1,4 +1,5 @@
 import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import {jwtDecode} from 'jwt-decode';
@@ -46,6 +47,15 @@ export class AuthService {
 
   loginUser(data: any) {
     return this.http.post(`${this.baseUrl}/login`, data)
+  }
+
+  // HU11: login por código de 6 dígitos enviado por e-mail
+  requestLoginToken(email: string): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/login/token/request`, { email });
+  }
+
+  validateLoginToken(email: string, code: string): Observable<{ token: string }> {
+    return this.http.post<{ token: string }>(`${this.baseUrl}/login/token/validate`, { email, code });
   }
 
   logout() {

@@ -1,0 +1,107 @@
+<div class="min-h-screen bg-gray-50">
+  <header class="bg-primary text-white px-4 pt-10 pb-24 text-center">
+    <img src="../assets/logo-h2.png" alt="H2Gás" class="w-28 mx-auto drop-shadow-lg" />
+    <p class="text-sm text-white/90 max-w-xs mx-auto mt-3">
+      A energia e a hidratação que movem o seu dia, a um clique de distância.
+    </p>
+  </header>
+
+  <main class="px-4 -mt-16 pb-12">
+    <section class="bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-md mx-auto p-6">
+      <div class="flex flex-col items-center text-center">
+        <span class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+          <span class="material-icons">lock</span>
+        </span>
+        <h1 class="text-xl font-bold text-gray-800 mt-3">Falta pouco para continuar!</h1>
+        <p class="text-sm text-gray-500">
+          {{ step === 'email' ? 'Escolha como deseja receber seu código de acesso' : 'Digite o código que enviamos para você' }}
+        </p>
+      </div>
+
+      <!-- Passo 1: canal e e-mail -->
+      <form *ngIf="step === 'email'" [formGroup]="emailForm" (ngSubmit)="sendCode()" class="mt-5 space-y-3">
+        <button type="button" data-testid="channel-sms" disabled
+          class="w-full flex items-center gap-3 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-left opacity-60 cursor-not-allowed">
+          <span class="w-9 h-9 rounded-lg bg-gray-100 text-gray-400 flex items-center justify-center">
+            <span class="material-icons text-base">smartphone</span>
+          </span>
+          <span class="flex-1">
+            <span class="block font-semibold text-gray-700">Celular</span>
+            <span class="block text-xs text-gray-500">Via SMS</span>
+          </span>
+          <span class="text-[11px] font-bold text-gray-500 bg-gray-200 rounded-full px-2 py-0.5">Em breve</span>
+        </button>
+
+        <div class="rounded-xl border border-primary bg-primary/5 px-4 py-3">
+          <button type="button" data-testid="channel-email" class="w-full flex items-center gap-3 text-left">
+            <span class="w-9 h-9 rounded-lg bg-white text-primary flex items-center justify-center">
+              <span class="material-icons text-base">mail</span>
+            </span>
+            <span class="flex-1">
+              <span class="block font-semibold text-gray-800">E-mail</span>
+              <span class="block text-xs text-gray-500">Via Inbox</span>
+            </span>
+            <span class="material-icons text-primary">check_circle</span>
+          </button>
+          <label class="block mt-3">
+            <span class="sr-only">E-mail</span>
+            <input type="email" formControlName="email" placeholder="seu@email.com" autocomplete="email"
+              class="input w-full rounded-xl border bg-white"
+              [ngClass]="emailForm.get('email')!.invalid && emailForm.get('email')!.touched ? 'border-red-400' : 'border-gray-300'" />
+          </label>
+        </div>
+
+        <button type="submit" data-testid="send-code" [disabled]="sending" class="btn btn-primary w-full rounded-xl">
+          <span *ngIf="sending" class="loading loading-spinner loading-sm"></span>
+          {{ sending ? 'Enviando...' : 'Enviar código' }}
+          <span *ngIf="!sending" class="material-icons text-base">arrow_forward</span>
+        </button>
+      </form>
+
+      <!-- Passo 2: código -->
+      <form *ngIf="step === 'code'" [formGroup]="codeForm" (ngSubmit)="validateCode()" class="mt-5 space-y-3">
+        <p class="text-sm text-gray-600 text-center">
+          Enviamos um código de 6 dígitos para <strong class="text-gray-800">{{ email }}</strong>.
+        </p>
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">Código de acesso</span>
+          <input type="text" data-testid="code-input" formControlName="code" inputmode="numeric" maxlength="6"
+            autocomplete="one-time-code" placeholder="000000"
+            class="input w-full rounded-xl mt-1 border bg-white text-center text-2xl tracking-[0.5em] font-semibold"
+            [ngClass]="codeForm.get('code')!.invalid && codeForm.get('code')!.touched ? 'border-red-400' : 'border-gray-300'" />
+        </label>
+        <button type="submit" data-testid="validate-code" [disabled]="validating || codeForm.invalid"
+          class="btn btn-primary w-full rounded-xl">
+          <span *ngIf="validating" class="loading loading-spinner loading-sm"></span>
+          {{ validating ? 'Validando...' : 'Validar e entrar' }}
+        </button>
+        <div class="flex items-center justify-between text-sm">
+          <button type="button" data-testid="resend-code" (click)="resendCode()" class="text-primary font-semibold hover:underline">
+            Reenviar código
+          </button>
+          <button type="button" data-testid="change-email" (click)="changeEmail()" class="text-gray-600 hover:underline">
+            Trocar e-mail
+          </button>
+        </div>
+      </form>
+
+      <p class="text-center text-sm text-gray-600 mt-5">
+        Não tem uma conta?
+        <button type="button" data-testid="go-register" (click)="goToRegister()" class="text-primary font-semibold hover:underline">
+          Cadastre-se
+        </button>
+      </p>
+
+      <div class="flex items-center gap-3 my-4">
+        <span class="h-px flex-1 bg-gray-200"></span>
+        <span class="text-xs text-gray-400">OU</span>
+        <span class="h-px flex-1 bg-gray-200"></span>
+      </div>
+
+      <button type="button" data-testid="password-login" (click)="goToPasswordLogin()"
+        class="w-full flex items-center justify-center gap-2 text-sm font-semibold text-gray-700 hover:underline">
+        <span class="material-icons text-base">key</span> Entrar com login padrão
+      </button>
+    </section>
+  </main>
+</div>

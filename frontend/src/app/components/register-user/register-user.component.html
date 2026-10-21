@@ -1,157 +1,112 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+<div class="min-h-screen bg-gray-50">
+  <header class="bg-primary text-white px-4 pt-10 pb-24 text-center">
+    <img src="../assets/logo-h2.png" alt="H2Gás" class="w-28 mx-auto drop-shadow-lg" />
+    <p class="text-sm text-white/90 max-w-xs mx-auto mt-3">
+      A energia e a hidratação que movem o seu dia, a um clique de distância.
+    </p>
+  </header>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cadastro</title>
-</head>
-
-<body class="bg-gradient-to-r from-[#0E2068] to-[#3B82F6] min-h-screen flex items-center justify-center px-4 py-10">
-  <section
-    class="flex flex-col md:flex-row items-center justify-center w-full max-w-6xl space-y-8 md:space-y-0 md:space-x-12">
-    <!-- LOGO -->
-    <div class="flex justify-center">
-      <img src="../assets/logo-h2.png" alt="logo" class="w-40 sm:w-52 md:w-64 lg:w-72 max-w-full drop-shadow-lg" />
-    </div>
-
-    <!-- CARD DE CADASTRO -->
-    <div class="bg-white shadow-2xl rounded-2xl w-full max-w-2xl sm:max-w-xl md:max-w-2xl p-8">
-      <h2 class="text-2xl font-semibold text-center text-gray-800 mb-6">
-        {{ tittleRegister }}
-      </h2>
-
-      <form [formGroup]="registerForm" class="space-y-4">
-        <!-- GRID DE CAMPOS -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <!-- Nome -->
-          <div class="form-control">
-            @if (userType == 'CUSTOMER') {
-            <label class="label"><span class="label-text">Nome de usuário</span></label>
-            <input type="text" placeholder="Digite seu nome de usuário" formControlName="name"
-              class="input input-bordered w-full" [ngClass]="{ 'border-red-500': isInvalid('name') }" />
-            <span *ngIf="isInvalid('name')" class="text-red-500 text-sm mt-1">{{ getErrorMessage('name') }}</span>
-            }
-
-            @if (userType == 'SUPPLIER') {
-            <label class="label"><span class="label-text">Nome da sua empresa</span></label>
-            <input type="text" placeholder="Digite o nome da sua empresa" formControlName="name"
-              class="input input-bordered w-full" [ngClass]="{ 'border-red-500': isInvalid('name') }" />
-            <span *ngIf="isInvalid('name')" class="text-red-500 text-sm mt-1">{{ getErrorMessage('name') }}</span>
-            }
-          </div>
-
-          <!-- Email -->
-          <div class="form-control">
-            @if (userType == 'SUPPLIER') {
-            <label class="label"><span class="label-text">Email da sua empresa</span></label>
-            <input type="email" placeholder="emailEmpresa@exemplo.com" formControlName="email"
-              class="input input-bordered w-full" [ngClass]="{ 'border-red-500': isInvalid('email') }" />
-            }
-
-            @if (userType == 'CUSTOMER') {
-            <label class="label"><span class="label-text">Email</span></label>
-            <input type="email" placeholder="email@exemplo.com" formControlName="email"
-              class="input input-bordered w-full" [ngClass]="{ 'border-red-500': isInvalid('email') }" />
-            }
-
-            <span *ngIf="isInvalid('email')" class="text-red-500 text-sm mt-1">{{ getErrorMessage('email') }}</span>
-          </div>
-
-          <!-- Telefone -->
-          <div class="form-control">
-            <label class="label"><span class="label-text">Telefone</span></label>
-            <input type="tel" mask="(00) 00000-0000" placeholder="+55 (99) 99999-9999" formControlName="phoneNumber"
-              class="input input-bordered w-full" [ngClass]="{ 'border-red-500': isInvalid('phoneNumber') }" />
-            <span *ngIf="isInvalid('phoneNumber')" class="text-red-500 text-sm mt-1">{{ getErrorMessage('phoneNumber')
-              }}</span>
-          </div>
-
-          <!-- CPF ou CNPJ -->
-          <!-- @if (userType == 'CUSTOMER') {
-              <div class="form-control">
-                <label class="label"><span class="label-text">CPF</span></label>
-                <input
-                  type="text"
-                  mask="000.000.000-00"
-                  placeholder="000.000.000-00"
-                  formControlName="cpf"
-                  class="input input-bordered w-full"
-                />
-              </div>
-            } -->
-
-          @if (userType == 'SUPPLIER') {
-          <div class="form-control">
-            <label class="label"><span class="label-text">CNPJ</span></label>
-            <input type="text" placeholder="99.999.999/9999-99" mask="00.000.000/0000-00" formControlName="cnpj"
-              class="input input-bordered w-full" />
-          </div>
-          }
-
-          <!-- Senha -->
-          <div class="form-control">
-            <label class="label"><span class="label-text">Senha</span></label>
-            <input type="password" placeholder="Digite uma senha" formControlName="password"
-              class="input input-bordered w-full" [ngClass]="{ 'border-red-500': isInvalid('password') }" />
-            <span *ngIf="isInvalid('password')" class="text-red-500 text-sm mt-1">{{ getErrorMessage('password')
-              }}</span>
-          </div>
-
-          <!-- Confirmar senha -->
-          <div class="form-control">
-            <label class="label"><span class="label-text">Confirme a senha</span></label>
-            <input type="password" placeholder="Repita a senha" required [ngModelOptions]="{ standalone: true }"
-              [(ngModel)]="confirmPassword" class="input input-bordered w-full" />
-          </div>
-        </div>
-      </form>
-
-      <!-- BOTÃO DE CADASTRO -->
-      <button (click)="register()" type="submit" [disabled]="isLoadingRegister"
-        class="btn btn-primary w-full mt-6 rounded-lg text-white font-medium tracking-wide transition-all duration-200 hover:bg-blue-600 flex items-center justify-center gap-2">
-        <svg *ngIf="isLoadingRegister" class="w-5 h-5 animate-spin text-white" xmlns="http://www.w3.org/2000/svg"
-          fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-        </svg>
-
-        <span>
-          {{ isLoadingRegister ? 'Cadastrando...' : 'Cadastrar' }}
-        </span>
-      </button>
-      <!-- <button
-          (click)="register()"
-          type="submit"
-          class="btn btn-primary w-full mt-6 rounded-lg text-white font-medium tracking-wide transition-all duration-200 hover:bg-blue-600"
-        >
-          CADASTRAR
-        </button> -->
-
-      <!-- LINKS -->
-      <div class="text-center mt-6 text-sm text-gray-600">
-        Já tem uma conta?
-        <button (click)="navigateRoute('/login')" class="text-blue-500 hover:underline">
-          Faça login
+  <main class="px-4 -mt-16 pb-12">
+    <section class="bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-xl mx-auto p-6">
+      <!-- Seletor de perfil (Figura 10c) -->
+      <div *ngIf="allowProfileChoice" class="grid grid-cols-2 gap-2 bg-gray-100 rounded-xl p-1 mb-5">
+        <button type="button" data-testid="profile-customer" (click)="selectProfile('CUSTOMER')"
+          class="rounded-lg py-2 text-sm font-semibold transition"
+          [ngClass]="userType === 'CUSTOMER' ? 'bg-white text-primary shadow' : 'text-gray-600'">
+          Sou cliente
+        </button>
+        <button type="button" data-testid="profile-supplier" (click)="selectProfile('SUPPLIER')"
+          class="rounded-lg py-2 text-sm font-semibold transition"
+          [ngClass]="userType === 'SUPPLIER' ? 'bg-white text-primary shadow' : 'text-gray-600'">
+          Sou fornecedor
         </button>
       </div>
 
-      <div class="text-center mt-2 text-sm text-gray-600">
-        @if (userType == 'CUSTOMER') {
-        Quer vender pelo nosso app?
-        <button (click)="navigateRoute('/register-supplier')" class="text-blue-500 hover:underline">Cadastre-se como
-          fornecedor</button>
-        }
+      <h1 class="text-xl font-bold text-gray-800">{{ title }}</h1>
+      <p class="text-sm text-gray-500">Preencha seus dados para começar a usar a plataforma</p>
 
-        @if (userType == 'SUPPLIER') {
-        Quer ser cliente no nosso app?
-        <button (click)="navigateRoute('/register')" class="text-blue-500 hover:underline">Cadastre-se como
-          cliente</button>
-        }
-      </div>
-    </div>
-  </section>
-</body>
+      <form [formGroup]="registerForm" (ngSubmit)="register()" class="mt-5 space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <label class="block sm:col-span-2">
+            <span class="text-sm font-medium text-gray-700">
+              {{ userType === 'SUPPLIER' ? 'Nome da sua empresa' : 'Nome completo' }}
+            </span>
+            <span class="relative mt-1 block">
+              <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base">person</span>
+              <input type="text" formControlName="name"
+                [placeholder]="userType === 'SUPPLIER' ? 'Nome da empresa' : 'Seu nome completo'"
+                class="input w-full rounded-xl border bg-white pl-10"
+                [ngClass]="isInvalid('name') ? 'border-red-400' : 'border-gray-300'" />
+            </span>
+            <span *ngIf="isInvalid('name')" class="text-red-500 text-sm">{{ getErrorMessage('name') }}</span>
+          </label>
 
-</html>
+          <label class="block sm:col-span-2">
+            <span class="text-sm font-medium text-gray-700">E-mail</span>
+            <span class="relative mt-1 block">
+              <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base">mail</span>
+              <input type="email" formControlName="email" placeholder="seu@email.com"
+                class="input w-full rounded-xl border bg-white pl-10"
+                [ngClass]="isInvalid('email') ? 'border-red-400' : 'border-gray-300'" />
+            </span>
+            <span *ngIf="isInvalid('email')" class="text-red-500 text-sm">{{ getErrorMessage('email') }}</span>
+          </label>
+
+          <label class="block" [class.sm:col-span-2]="userType !== 'SUPPLIER'">
+            <span class="text-sm font-medium text-gray-700">Telefone</span>
+            <span class="relative mt-1 block">
+              <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base">call</span>
+              <input type="tel" mask="(00) 00000-0000" formControlName="phoneNumber" placeholder="(00) 00000-0000"
+                class="input w-full rounded-xl border bg-white pl-10"
+                [ngClass]="isInvalid('phoneNumber') ? 'border-red-400' : 'border-gray-300'" />
+            </span>
+            <span *ngIf="isInvalid('phoneNumber')" class="text-red-500 text-sm">{{ getErrorMessage('phoneNumber') }}</span>
+          </label>
+
+          <label *ngIf="userType === 'SUPPLIER'" class="block">
+            <span class="text-sm font-medium text-gray-700">CNPJ</span>
+            <span class="relative mt-1 block">
+              <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base">badge</span>
+              <input type="text" mask="00.000.000/0000-00" formControlName="cnpj" placeholder="00.000.000/0000-00"
+                class="input w-full rounded-xl border border-gray-300 bg-white pl-10" />
+            </span>
+          </label>
+
+          <label class="block">
+            <span class="text-sm font-medium text-gray-700">Senha</span>
+            <span class="relative mt-1 block">
+              <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base">lock</span>
+              <input type="password" formControlName="password" placeholder="Mínimo de 6 caracteres"
+                class="input w-full rounded-xl border bg-white pl-10"
+                [ngClass]="isInvalid('password') ? 'border-red-400' : 'border-gray-300'" />
+            </span>
+            <span *ngIf="isInvalid('password')" class="text-red-500 text-sm">{{ getErrorMessage('password') }}</span>
+          </label>
+
+          <label class="block">
+            <span class="text-sm font-medium text-gray-700">Confirmar senha</span>
+            <span class="relative mt-1 block">
+              <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base">lock</span>
+              <input type="password" placeholder="Repita a senha" required [ngModelOptions]="{ standalone: true }"
+                [(ngModel)]="confirmPassword" class="input w-full rounded-xl border border-gray-300 bg-white pl-10" />
+            </span>
+          </label>
+        </div>
+
+        <button type="submit" data-testid="submit-register" [disabled]="isLoadingRegister"
+          class="btn btn-primary w-full rounded-xl">
+          <span *ngIf="isLoadingRegister" class="loading loading-spinner loading-sm"></span>
+          {{ isLoadingRegister ? 'Cadastrando...' : 'Criar minha conta' }}
+          <span *ngIf="!isLoadingRegister" class="material-icons text-base">arrow_forward</span>
+        </button>
+      </form>
+
+      <p class="text-center text-sm text-gray-600 mt-5">
+        Já tem uma conta?
+        <button type="button" (click)="navigateRoute('/login')" class="text-primary font-semibold hover:underline">
+          Entre
+        </button>
+      </p>
+    </section>
+  </main>
+</div>

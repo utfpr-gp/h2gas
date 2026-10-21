@@ -14,8 +14,10 @@ import com.h2gas.model.entity.User;
 import com.h2gas.model.repository.AddressRepository;
 import com.h2gas.model.repository.CityRepository;
 import com.h2gas.model.repository.UserRepository;
+import com.h2gas.services.LoginTokenService;
 import com.h2gas.services.MailService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -32,6 +34,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -49,6 +54,9 @@ import java.util.Optional;
 class AuthenticationControllerTest {
     @MockitoBean
     private MailService mailService;
+
+    @MockitoBean
+    private LoginTokenService loginTokenService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -217,5 +225,50 @@ class AuthenticationControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registerDTO)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("HU11: pedir código responde 200 mesmo para e-mail inexistente")
+    void deveRetornar200AoSolicitarCodigoMesmoParaEmailInexistente() throws Exception {
+        mockMvc.perform(post("/api/auth/login/token/request")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"qualquer@teste.com\"}"))
+                .andExpect(status().isOk());
+
+        verify(loginTokenService).requestToken("qualquer@teste.com");
+    }
+
+    @Test
+    @DisplayName("HU11: e-mail inválido no pedido de código é 400")
+    void deveRetornar400AoSolicitarComEmailInvalido() throws Exception {
+        mockMvc.perform(post("/api/auth/login/token/request")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"sem-arroba\"}"))
+                .andExpect(status().isBadRequest());
+
+        verify(loginTokenService, never()).requestToken(anyString());
+    }
+
+    @Test
+    @DisplayName("HU11: código correto devolve o JWT")
+    void deveRetornarJwtAoValidarCodigoCorreto() throws Exception {
+        when(loginTokenService.validateAndLogin("cliente@teste.com", "123456")).thenReturn("jwt-do-codigo");
+
+        mockMvc.perform(post("/api/auth/login/token/validate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"cliente@teste.com\",\"code\":\"123456\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("jwt-do-codigo"));
+    }
+
+    @Test
+    @DisplayName("HU11: código fora do formato de 6 dígitos é 400")
+    void deveRetornar400AoValidarCodigoComFormatoInvalido() throws Exception {
+        mockMvc.perform(post("/api/auth/login/token/validate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"cliente@teste.com\",\"code\":\"12a4\"}"))
+                .andExpect(status().isBadRequest());
+
+        verify(loginTokenService, never()).validateAndLogin(anyString(), anyString());
     }
 }
