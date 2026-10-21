@@ -60,6 +60,10 @@ public class Supplier extends User{
 
     private boolean open = false;
 
+    // abaixo disso o produto aparece como estoque baixo na tela de produtos do fornecedor
+    @Column(name = "low_stock_threshold", nullable = false)
+    private int lowStockThreshold = 8;
+
     @OneToMany(mappedBy = "supplier", cascade = CascadeType.ALL)
     private Set<CategoryProduct> categoryProducts = new HashSet<>();
 
