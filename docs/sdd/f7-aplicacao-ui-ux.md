@@ -1079,6 +1079,43 @@ vem no catálogo (§5.25). `GET /suppliers/{id}` não tem OpenAPI.
 taxa de entrega e modo Entrega/Retirada no cabeçalho; lista de comentários;
 apagar o banner antigo no Cloudinary (mesma dívida da logo).
 
+### 5.27 Cliente — Ver as avaliações da loja ao clicar nas estrelas
+
+> Escrita em 2026-10-21. Pedido do autor: ao clicar nas estrelas, ver as
+> avaliações, com o **primeiro nome** do cliente que avaliou e o comentário,
+> quando houver.
+
+**Estado atual**: a nota (média e contagem) aparece no card do catálogo e no
+cabeçalho da loja (§5.25/§5.26), mas não é clicável e nenhuma rota lista as
+avaliações.
+
+**Contrato — backend**
+- `GET /suppliers/{id}/reviews?page&size` (autenticado, qualquer papel) →
+  `200` `PageResponse<StoreReviewDTO>`; `404` se a loja não existe. Tamanho
+  padrão 10, máximo 50 (`PaginationUtil`).
+- `StoreReviewDTO`: `id`, `customerFirstName` (só a primeira palavra do nome;
+  nunca sobrenome, e-mail ou telefone), `rating` (1–5), `comment` (`null`
+  quando vazio ou só espaços), `reviewedAt` (data de entrega do pedido
+  avaliado; `null` se o pedido não tiver).
+- Ordem: entrega mais recente primeiro (`deliveredAt` desc, depois `id`
+  desc). Consulta paginada no banco, com contagem própria.
+- OpenAPI: `@Operation`, `@ApiResponses` (200, 404), `@Parameter` e `@Schema`
+  no DTO.
+
+**Contrato — frontend**
+- `app-store-rating` com nota fica clicável (botão, `aria-label` "Ver as 14
+  avaliações da loja, nota 4,2 de 5"); sem avaliações continua texto.
+- Clicar abre a janela **Avaliações** (`app-store-reviews-dialog`), no
+  cabeçalho da loja e no card do catálogo: topo com a média e a contagem;
+  lista com primeiro nome, estrelas da nota (`aria-label` "Nota 4 de 5"), data
+  (dd/mm/aaaa) e o comentário, se houver; "Ver mais avaliações" carrega a
+  próxima página; esqueleto ao carregar; erro → mensagem com a causa e
+  "Tentar de novo". Fecha no X, no fundo e no Esc; no celular abre de baixo.
+- Clicar nas estrelas do card **não** navega para os produtos.
+
+**Fora de escopo**: escrever/editar/responder avaliação; filtrar ou ordenar
+por nota; avaliações do entregador; foto do cliente; denunciar comentário.
+
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
 - Agregação de rating médio por fornecedor (entregue na §5.25; criar avaliação segue fora).
@@ -1402,6 +1439,21 @@ apagar o banner antigo no Cloudinary (mesma dívida da logo).
     `deveAlternarVerMaisNaDescricaoLonga`, `deveSeguirComOsProdutosSeALojaFalhar`;
     `store-profile.component.spec.ts`: `deveEnviarBannerEscolhido`,
     `deveRemoverBannerComConfirmacao`, `deveRecusarBannerInvalidoSemEnviar`.
+
+27. *(cliente, §5.27)* **Backend** — `SupplierServiceTest`:
+    `deveListarAvaliacoesComPrimeiroNomeEComentario`,
+    `deveOrdenarAvaliacoesPelaEntregaMaisRecente`,
+    `deveTratarComentarioEmBrancoComoNulo`,
+    `deveResponder404AoListarAvaliacoesDeLojaInexistente`;
+    `SupplierControllerTest`: `deveListarAvaliacoesPaginadas`.
+    **Frontend** — `supplier.service.spec.ts`: `deveBuscarAsAvaliacoesDaLoja`;
+    `store-rating.component.spec.ts`: `deveEmitirAoClicarNaNota`,
+    `naoDeveSerClicavelSemAvaliacoes`; `store-reviews-dialog.component.spec.ts`:
+    `deveListarNomeNotaEComentario`, `naoDeveMostrarComentarioQuandoNaoHa`,
+    `deveCarregarMaisAvaliacoes`, `deveFecharNoEsc`,
+    `deveMostrarErroComTentarDeNovo`; `product-list` e `supplier-list`:
+    `deveAbrirAvaliacoesAoClicarNasEstrelas`; `supplier-card`:
+    `naoDeveAbrirProdutosAoClicarNasEstrelas`.
 
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
@@ -1760,6 +1812,13 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > camadas do Tailwind 4 e vence `text-*xl` — os ícones novos usam o modificador `!` (o `text-3xl` do ícone do
 > `supplier-card` tem o mesmo problema, fora desta seção); (3) o banner fica `relative` e cobria a logo — a logo
 > ganhou `relative z-10`.
+
+**Cliente — Avaliações da loja (§5.27):**
+- [ ] `GET /suppliers/{id}/reviews` paginado com primeiro nome, nota,
+      comentário e data (OpenAPI); estrelas clicáveis no cabeçalho e no card
+      abrindo a janela de avaliações com "Ver mais"; testes (item 27) verdes;
+      `mvn test`, `ng test` (sem falhas novas), `ng build`; E2E em 390 e
+      1280 px com as avaliações geradas.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
