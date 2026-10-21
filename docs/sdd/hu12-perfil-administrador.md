@@ -224,15 +224,25 @@ dele vira o Painel.
   fornecedor); apagar tipo de produto; unificar dados existentes.
 
 ## 8. Definição de Pronto
-- [ ] Conta desativada não entra por senha nem por código e perde a
+- [x] Conta desativada não entra por senha nem por código e perde a
       sessão; migração `V9` aplicada.
-- [ ] `/api/admin/users` (listar, criar, ativar/desativar) e
+- [x] `/api/admin/users` (listar, criar, ativar/desativar) e
       `/api/admin/dashboard` documentados no Swagger, só para ADMIN.
-- [ ] Painel como tela inicial do admin; tela de usuários com filtro,
+- [x] Painel como tela inicial do admin; tela de usuários com filtro,
       busca, criação, edição e desativação.
-- [ ] Navbar do admin sem itens de cliente.
-- [ ] Admin cadastra e renomeia tipos de produto; fornecedor não cria
+- [x] Navbar do admin sem itens de cliente.
+- [x] Admin cadastra e renomeia tipos de produto; fornecedor não cria
       tipo; admin não escreve categoria nem produto (403) e não vê essas
       telas.
-- [ ] Testes da seção 6 verdes; `mvn test`, `ng test` (sem falha nova
+- [x] Testes da seção 6 verdes; `mvn test`, `ng test` (sem falha nova
       além das 18 antigas) e `ng build`; E2E e prints em 390 e 1280 px.
+
+**Verificação (20/10/2026):** `mvn test` 288 testes, só o
+`BackendApplicationTests` com erro (precisa de MySQL em 3306, ambiente);
+`ng test` 345 testes com 17 falhas, todas antigas de providers (o spec do
+`ProductTypeService` saiu da lista); `ng build` ok (só o aviso de budget
+que já existia). Swagger com a tag Administração e as rotas de tipos,
+categorias e produtos com os status do contrato. E2E: 18/18 (usuários e
+painel) e 15/15 (tipos e permissões do catálogo), prints em 390 e 1280 px.
+O `updateProductItem` perdeu o atalho "dono ou ADMIN" da HU10: agora só o
+dono edita.
