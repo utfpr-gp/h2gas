@@ -48,11 +48,12 @@ public class SupplierController {
 
     @Operation(summary = "Dashboard do fornecedor logado",
             description = "Indicadores do mês (receita, pedidos, ticket médio, variação sobre o mês anterior, receita a receber, "
-                    + "pendentes, em rota, concluídas, tempo médio de entrega, vendas por dia, por produto e por forma de pagamento). "
+                    + "pendentes, em rota, concluídas, tempo médio de entrega, vendas por dia, por produto, por tipo, por categoria da loja, por forma de pagamento e por modalidade). "
+                    + "Filtros opcionais: pagamento e modalidade filtram o pedido; tipo, categoria e produto somam só os itens que batem. "
                     + "O fornecedor vem do token; não há parâmetro para consultar o de outro")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Indicadores do mês"),
-            @ApiResponse(responseCode = "400", description = "Mês em formato inválido (use YYYY-MM) ou no futuro"),
+            @ApiResponse(responseCode = "400", description = "Mês em formato inválido (use YYYY-MM) ou no futuro, ou filtro inválido"),
             @ApiResponse(responseCode = "403", description = "Sem token válido ou papel diferente de SUPPLIER")
     })
     @GetMapping("/mine/dashboard")
@@ -60,7 +61,13 @@ public class SupplierController {
     @RolesAllowed("SUPPLIER")
     public ResponseEntity<SupplierDashboardDTO> getDashboard(
             @Parameter(description = "Mês no formato YYYY-MM; omitido = mês corrente", example = "2026-10")
-            @RequestParam(value = "month", required = false) String month) {
+            @RequestParam(value = "month", required = false) String month,
+            @Parameter(description = "PIX, DINHEIRO ou CREDIT_CARD (filtra o pedido)") @RequestParam(value = "payment", required = false) String payment,
+            @Parameter(description = "DELIVERY ou PICKUP (filtra o pedido)") @RequestParam(value = "mode", required = false) String mode,
+            @Parameter(description = "Id do tipo de produto (soma só os itens desse tipo)") @RequestParam(value = "typeId", required = false) String typeId,
+            @Parameter(description = "Id da categoria da loja (soma só os itens dela)") @RequestParam(value = "categoryId", required = false) String categoryId,
+            @Parameter(description = "Id do produto (soma só os itens dele)") @RequestParam(value = "productId", required = false) String productId) {
+        DashboardFilter filter = DashboardFilter.parse(payment, mode, typeId, categoryId, productId);
         YearMonth yearMonth;
         try {
             yearMonth = month == null ? YearMonth.now() : YearMonth.parse(month);
@@ -68,7 +75,7 @@ public class SupplierController {
             throw new BusinessRuleException("Mês inválido. Use o formato YYYY-MM.");
         }
         User supplier = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return ResponseEntity.ok(supplierDashboardService.buildDashboard(supplier.getId(), yearMonth));
+        return ResponseEntity.ok(supplierDashboardService.buildDashboard(supplier.getId(), yearMonth, filter));
     }
 
     @Operation(summary = "Lista fornecedores com filtro de status e busca",

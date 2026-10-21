@@ -1,5 +1,6 @@
 package com.h2gas.controller;
 
+import com.h2gas.model.dto.DashboardFilter;
 import com.h2gas.configuration.security.SecurityConfigurations;
 import com.h2gas.configuration.security.SecurityFilter;
 import com.h2gas.configuration.security.TokenService;
@@ -95,29 +96,29 @@ class SupplierControllerTest {
         autenticarComoFornecedor("fornecedor-1");
         SupplierDashboardDTO dashboard = new SupplierDashboardDTO();
         dashboard.setMonth("2026-10");
-        when(supplierDashboardService.buildDashboard("fornecedor-1", YearMonth.of(2026, 10))).thenReturn(dashboard);
+        when(supplierDashboardService.buildDashboard(eq("fornecedor-1"), eq(YearMonth.of(2026, 10)), any())).thenReturn(dashboard);
 
         mockMvc.perform(get("/api/suppliers/mine/dashboard").param("month", "2026-10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.month").value("2026-10"));
 
-        verify(supplierDashboardService).buildDashboard("fornecedor-1", YearMonth.of(2026, 10));
+        verify(supplierDashboardService).buildDashboard("fornecedor-1", YearMonth.of(2026, 10), DashboardFilter.NONE);
     }
 
     @Test
     void deveUsarMesCorrenteQuandoNaoInformado() throws Exception {
         autenticarComoFornecedor("fornecedor-1");
-        when(supplierDashboardService.buildDashboard(eq("fornecedor-1"), any())).thenReturn(new SupplierDashboardDTO());
+        when(supplierDashboardService.buildDashboard(eq("fornecedor-1"), any(), any())).thenReturn(new SupplierDashboardDTO());
 
         mockMvc.perform(get("/api/suppliers/mine/dashboard")).andExpect(status().isOk());
 
-        verify(supplierDashboardService).buildDashboard("fornecedor-1", YearMonth.now());
+        verify(supplierDashboardService).buildDashboard("fornecedor-1", YearMonth.now(), DashboardFilter.NONE);
     }
 
     @Test
     void deveRetornar400ParaMesFuturoOuInvalido() throws Exception {
         autenticarComoFornecedor("fornecedor-1");
-        when(supplierDashboardService.buildDashboard(eq("fornecedor-1"), any()))
+        when(supplierDashboardService.buildDashboard(eq("fornecedor-1"), any(), any()))
                 .thenThrow(new BusinessRuleException("Mês futuro não tem indicadores."));
 
         mockMvc.perform(get("/api/suppliers/mine/dashboard").param("month", "2099-01"))
@@ -125,7 +126,7 @@ class SupplierControllerTest {
         mockMvc.perform(get("/api/suppliers/mine/dashboard").param("month", "outubro"))
                 .andExpect(status().isBadRequest());
 
-        verify(supplierDashboardService, never()).buildDashboard(any(), eq(YearMonth.of(2026, 10)));
+        verify(supplierDashboardService, never()).buildDashboard(any(), eq(YearMonth.of(2026, 10)), any());
     }
 
     @Test
@@ -294,5 +295,28 @@ class SupplierControllerTest {
                 .andExpect(status().isForbidden());
 
         verify(supplierService, never()).updateStatusOpenClosed(any(), anyBoolean());
+    }
+
+    @Test
+    void deveRepassarOsFiltrosDoDashboard() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+        when(supplierDashboardService.buildDashboard(eq("fornecedor-1"), any(), any())).thenReturn(new SupplierDashboardDTO());
+
+        mockMvc.perform(get("/api/suppliers/mine/dashboard").param("month", "2026-10").param("payment", "pix")
+                        .param("mode", "PICKUP").param("typeId", "2").param("categoryId", "7").param("productId", "4"))
+                .andExpect(status().isOk());
+
+        verify(supplierDashboardService).buildDashboard("fornecedor-1", YearMonth.of(2026, 10),
+                DashboardFilter.parse("PIX", "PICKUP", "2", "7", "4"));
+    }
+
+    @Test
+    void deveRetornar400ComFiltroInvalidoNoDashboard() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+
+        mockMvc.perform(get("/api/suppliers/mine/dashboard").param("payment", "BOLETO")).andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/suppliers/mine/dashboard").param("typeId", "abc")).andExpect(status().isBadRequest());
+
+        verify(supplierDashboardService, never()).buildDashboard(any(), any(), any());
     }
 }

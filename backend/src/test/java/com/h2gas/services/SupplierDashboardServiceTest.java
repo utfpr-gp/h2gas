@@ -1,5 +1,9 @@
 package com.h2gas.services;
 
+import com.h2gas.enums.DeliveryModeEnum;
+import com.h2gas.model.dto.DeliveryModeShareDTO;
+import com.h2gas.model.dto.StoreCategorySalesDTO;
+import com.h2gas.model.dto.DashboardFilter;
 import com.h2gas.enums.OrderStatusEnum;
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.exceptions.BusinessRuleException;
@@ -314,5 +318,135 @@ class SupplierDashboardServiceTest {
         em.createQuery("update Order o set o.dispatchedAt = :a, o.deliveredAt = :b where o.id = :id")
                 .setParameter("a", despachadoEm).setParameter("b", entregueEm).setParameter("id", pedido.getId()).executeUpdate();
         em.clear();
+    }
+
+    // ---- F7 fatia 6: filtros do dashboard ----
+    private Order pedidoComItens(OrderStatusEnum status, String pagamento, DeliveryModeEnum modo, LocalDateTime criadoEm,
+                                 Object... produtoEValor) {
+        Order o = new Order();
+        o.setCustomer(cliente);
+        o.setSupplier(fornecedor);
+        o.setStatus(status);
+        o.setPaymentMethod(pagamento);
+        o.setDeliveryMode(modo);
+        BigDecimal total = BigDecimal.ZERO;
+        List<OrderItem> itens = new ArrayList<>();
+        for (int k = 0; k < produtoEValor.length; k += 2) {
+            OrderItem item = new OrderItem();
+            item.setOrder(o);
+            item.setProduct((ProductItem) produtoEValor[k]);
+            item.setQuantity(1);
+            BigDecimal valor = new BigDecimal((String) produtoEValor[k + 1]);
+            item.setUnitPrice(valor);
+            item.setTotalPrice(valor);
+            itens.add(item);
+            total = total.add(valor);
+        }
+        o.setTotalPrice(total);
+        o.setItems(itens);
+        o = orderRepository.saveAndFlush(o);
+        em.createQuery("update Order o set o.createdAt = :d where o.id = :id")
+                .setParameter("d", criadoEm).setParameter("id", o.getId()).executeUpdate();
+        em.clear();
+        return o;
+    }
+
+    private SupplierDashboardDTO dashboard(String payment, String mode, Long typeId, Long categoryId, Long productId) {
+        return dashboardService.buildDashboard(fornecedor.getId(), mes, DashboardFilter.parse(payment, mode,
+                typeId == null ? null : typeId.toString(), categoryId == null ? null : categoryId.toString(),
+                productId == null ? null : productId.toString()));
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: filtro de pagamento e de modo valem para o pedido inteiro")
+    void deveFiltrarPorPagamentoEModo() {
+        pedidoComItens(OrderStatusEnum.DELIVERED, "PIX", DeliveryModeEnum.DELIVERY, dia(mes, 1), botijao, "100.00");
+        pedidoComItens(OrderStatusEnum.DELIVERED, "PIX", DeliveryModeEnum.PICKUP, dia(mes, 2), galao, "40.00");
+        pedidoComItens(OrderStatusEnum.DELIVERED, "DINHEIRO", DeliveryModeEnum.DELIVERY, dia(mes, 3), botijao, "90.00");
+
+        SupplierDashboardDTO pix = dashboard("PIX", null, null, null, null);
+        assertEquals(2, pix.getTotalOrders());
+        assertEquals(0, new BigDecimal("140.00").compareTo(pix.getTotalRevenue()));
+        assertEquals(List.of("PIX"), pix.getPaymentBreakdown().stream().map(PaymentShareDTO::getMethod).toList());
+
+        SupplierDashboardDTO pixRetirada = dashboard("PIX", "PICKUP", null, null, null);
+        assertEquals(1, pixRetirada.getTotalOrders());
+        assertEquals(0, new BigDecimal("40.00").compareTo(pixRetirada.getTotalRevenue()));
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: filtro de tipo, categoria ou produto soma só os itens que batem")
+    void deveSomarSoOsItensQueBatemComTipoCategoriaOuProduto() {
+        pedidoComItens(OrderStatusEnum.DELIVERED, "PIX", DeliveryModeEnum.DELIVERY, dia(mes, 1), botijao, "300.00", galao, "100.00");
+        pedidoComItens(OrderStatusEnum.DELIVERED, "PIX", DeliveryModeEnum.DELIVERY, dia(mes, 2), galao, "50.00");
+        Long gas = botijao.getCategoryProduct().getProductType().getId();
+
+        SupplierDashboardDTO soGas = dashboard(null, null, gas, null, null);
+        assertEquals(1, soGas.getTotalOrders());
+        assertEquals(0, new BigDecimal("300.00").compareTo(soGas.getTotalRevenue()));
+        assertEquals(0, new BigDecimal("300.00").compareTo(soGas.getAverageTicket()));
+        assertEquals(0, new BigDecimal("300.00").compareTo(soGas.getPaymentBreakdown().get(0).getRevenue()));
+        assertEquals(List.of("Gás"), soGas.getSalesByCategory().stream().map(CategorySalesDTO::getCategoryName).toList());
+
+        SupplierDashboardDTO porCategoria = dashboard(null, null, null, galao.getCategoryProduct().getId(), null);
+        assertEquals(2, porCategoria.getTotalOrders());
+        assertEquals(0, new BigDecimal("150.00").compareTo(porCategoria.getTotalRevenue()));
+
+        SupplierDashboardDTO porProduto = dashboard(null, null, null, null, botijao.getId());
+        assertEquals(1, porProduto.getSalesByProduct().size());
+        assertEquals(botijao.getId(), porProduto.getSalesByProduct().get(0).getProductId());
+        BigDecimal dia1 = porProduto.getRevenueByDay().get(0).getRevenue();
+        assertEquals(0, new BigDecimal("300.00").compareTo(dia1));
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: a variação compara com o mês anterior usando o mesmo filtro")
+    void deveAplicarOFiltroNaVariacaoDoMesAnterior() {
+        pedidoComItens(OrderStatusEnum.DELIVERED, "PIX", DeliveryModeEnum.DELIVERY, dia(mes, 1), botijao, "150.00");
+        pedidoComItens(OrderStatusEnum.DELIVERED, "PIX", DeliveryModeEnum.DELIVERY, dia(mes.minusMonths(1), 1), botijao, "100.00");
+        pedidoComItens(OrderStatusEnum.DELIVERED, "DINHEIRO", DeliveryModeEnum.DELIVERY, dia(mes.minusMonths(1), 2), botijao, "900.00");
+
+        assertEquals(50.0, dashboard("PIX", null, null, null, null).getRevenueChangePercent());
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: quebras por categoria da loja e por entrega/retirada")
+    void deveQuebrarPorCategoriaDaLojaEPorModo() {
+        pedidoComItens(OrderStatusEnum.DELIVERED, "PIX", DeliveryModeEnum.DELIVERY, dia(mes, 1), botijao, "300.00");
+        pedidoComItens(OrderStatusEnum.DELIVERED, "PIX", DeliveryModeEnum.PICKUP, dia(mes, 1), galao, "100.00");
+
+        SupplierDashboardDTO d = dashboard(null, null, null, null, null);
+
+        List<StoreCategorySalesDTO> categorias = d.getSalesByStoreCategory();
+        assertEquals("Gás 13kg", categorias.get(0).getCategoryName());
+        assertEquals("Gás", categorias.get(0).getTypeName());
+        assertEquals(botijao.getCategoryProduct().getId(), categorias.get(0).getCategoryId());
+        assertEquals(75.0, categorias.get(0).getPercent());
+
+        List<DeliveryModeShareDTO> modos = d.getDeliveryModeBreakdown();
+        assertEquals("DELIVERY", modos.get(0).getMode());
+        assertEquals(0, new BigDecimal("300.00").compareTo(modos.get(0).getRevenue()));
+        assertEquals(50.0, modos.get(0).getPercent());
+        assertEquals("PICKUP", modos.get(1).getMode());
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: quebras trazem os ids para o clique filtrar")
+    void deveTrazerIdsNasQuebrasParaOFiltro() {
+        pedidoComItens(OrderStatusEnum.DELIVERED, "PIX", DeliveryModeEnum.DELIVERY, dia(mes, 1), botijao, "300.00");
+
+        SupplierDashboardDTO d = dashboard(null, null, null, null, null);
+
+        assertEquals(botijao.getId(), d.getSalesByProduct().get(0).getProductId());
+        assertEquals(0, new BigDecimal("300.00").compareTo(d.getSalesByProduct().get(0).getRevenue()));
+        assertEquals(botijao.getCategoryProduct().getProductType().getId(), d.getSalesByCategory().get(0).getProductTypeId());
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: filtro inválido do dashboard é 400")
+    void deveRecusarFiltroInvalidoDoDashboard() {
+        assertThrows(BusinessRuleException.class, () -> DashboardFilter.parse("BOLETO", null, null, null, null));
+        assertThrows(BusinessRuleException.class, () -> DashboardFilter.parse(null, "DRONE", null, null, null));
+        assertThrows(BusinessRuleException.class, () -> DashboardFilter.parse(null, null, "abc", null, null));
     }
 }

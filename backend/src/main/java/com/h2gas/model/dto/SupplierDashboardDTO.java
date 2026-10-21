@@ -57,4 +57,10 @@ public class SupplierDashboardDTO {
 
     @Schema(description = "Vendas por tipo de produto (Gás, Água…), da maior receita para a menor")
     private List<CategorySalesDTO> salesByCategory;
+
+    @Schema(description = "Vendas por categoria da loja (P13, 20L…), da maior receita para a menor")
+    private List<StoreCategorySalesDTO> salesByStoreCategory;
+
+    @Schema(description = "Pedidos por modalidade (entrega e retirada), do mais usado para o menos")
+    private List<DeliveryModeShareDTO> deliveryModeBreakdown;
 }
