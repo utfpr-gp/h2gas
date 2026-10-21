@@ -626,19 +626,36 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > dono); `DELETE /api/users` e rotas de cadastro de ADMIN não foram revisadas; a troca de e-mail com confirmação no endereço novo.
 
 **Fatia 5 — navbar, footer, tema estrutural e varredura de HEX (§5.12):**
-- [ ] Tema `h2gas` com as variáveis estruturais; campos com borda sem
+- [x] Tema `h2gas` com as variáveis estruturais; campos com borda sem
       remendo.
-- [ ] Casca do app sem wrappers de documento; footer escondido nas telas
+- [x] Casca do app sem wrappers de documento; footer escondido nas telas
       de autenticação e do entregador.
-- [ ] Navbar sem recarregar o app, com link ativo, logo por perfil,
+- [x] Navbar sem recarregar o app, com link ativo, logo por perfil,
       carrinho só do cliente, hambúrguer só de fornecedor/admin, ícones
       Material e painel mobile animado que fecha ao navegar e com Esc.
-- [ ] Footer nos tokens, com ano automático, compacto no celular.
-- [ ] Testes da seção 7 (item 12) verdes; `ng test` (≤ 18 falhas
+- [x] Footer nos tokens, com ano automático, compacto no celular.
+- [x] Testes da seção 7 (item 12) verdes; `ng test` (≤ 18 falhas
       antigas) e `ng build`; teste manual e E2E (navegação sem recarregar,
       SSE sem reconectar, prints em 390 e 1280 px).
 
-**Pendente (próximas fatias):**
-- [ ] Grupos A–E migrados pros tokens (grep: zero hex novo fora de
+> Verificado em 2026-10-20: frontend 322 testes com as 18 falhas antigas (providers faltando em specs antigos); `ng build` sem
+> erro; E2E no Chromium com 14 checagens (admin pela navbar desktop, fornecedor pelo menu mobile, cliente em "Meus Pedidos":
+> marcador em `window` sobrevive, nenhum documento recarregado, `aria-current` no link ativo, painel fecha ao navegar e com Esc, o
+> SSE continua com uma conexão ao clicar em "Pedidos"); grep sem HEX nos componentes (fora `distributor-management` e specs que
+> verificam a ausência de HEX); prints antes/depois em 390 e 1280 px dos quatro perfis, landing, Sobre, Contato e telas de admin.
+>
+> **Achados do teste**: (1) com `href`, o próprio Karma recarregava a página ao clicar num link da navbar — o defeito reproduzido
+> no teste; (2) a coluna "Ativo" da aprovação de fornecedores não mostrava os interruptores (o `toggle` do DaisyUI depende das
+> variáveis estruturais do tema) — voltaram com o tema; (3) o "body" dentro dos templates de admin recebia a regra `body` do CSS
+> legado (fundo cinza, `min-h-screen`) — o fundo virou `bg-base-200` num wrapper; (4) os ícones dentro dos campos do Meus Dados,
+> do login por senha e do cadastro ficavam atrás do `input` do DaisyUI — sobem com `z-10`; (5) a página Sobre carregava uma
+> segunda cópia do Tailwind 2 por CDN.
+>
+> **Dívida registrada (fora desta fatia)**: o "Início" do admin (`/inicio`, mesma regra do login) cai no cadastro de primeiro
+> endereço, porque o admin não tem endereço — pede uma tela inicial própria do admin.
+
+- [x] Grupos A–E migrados pros tokens (grep: zero hex novo fora de
       `styles.css`).
+
+**Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
