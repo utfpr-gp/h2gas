@@ -451,6 +451,55 @@ depois da HU11.
   `check-email`: 1 HEX cada), `supplier-list.component.css` e
   `menu.component.css`.
 
+### 5.13 Fatia 6 — back-office tela a tela: aprovação de fornecedores
+
+> Escrita em 2026-10-21. Pedido do autor: melhorar a UI/UX das telas de
+> back-office uma a uma, com boas práticas ("eu passo e você faz"). Isso
+> revoga, **só para a tela citada em cada subseção**, o item "Redesenho
+> mobile-first dos Grupos C e D" do Fora de Escopo. Feita na branch da
+> HU12, a pedido do autor. Primeira tela: `/supplier-approval`.
+
+**Achados**
+- O campo "Buscar fornecedores..." não está ligado a nada.
+- Tabela de 10 colunas (nome, telefone, ativo, cidade, bairro, rua,
+  número, CNPJ, e-mail): no celular só cabe rolando de lado, e o status
+  fica no meio da linha.
+- O interruptor muda na hora, sem confirmação, e **não volta** se o
+  backend falhar (a tela mostra um status que não foi salvo); o toast
+  de erro diz "Erro ao buscar" numa ação de atualizar.
+- Sem filtro de status: o admin não acha quem está aguardando
+  aprovação, embora o card "Aguardando aprovação" do painel (HU12)
+  traga o admin para cá. Sem skeleton, estado vazio nem paginação
+  (carrega só a 1ª página de 10).
+- `GET /api/suppliers` não tem OpenAPI e não filtra.
+
+**Contrato**
+- Backend: `GET /api/suppliers` ganha `active` (opcional; `false` =
+  aguardando aprovação, `true` = ativos, ausente = todos) e `q`
+  (opcional; nome, e-mail ou CNPJ, sem diferenciar maiúsculas), além de
+  `page`/`size`; ordenado por nome. Filtro no backend (paginação
+  correta). Rota passa a ter `@Operation`, `@ApiResponses` (200, 403) e
+  `@Parameter`. Papéis inalterados.
+- Frontend (`supplier-approval`):
+  - chips "Aguardando aprovação" (padrão, `active=false`), "Ativos",
+    "Todos", com `aria-pressed`; busca com debounce de 300 ms no
+    backend; contador do filtro;
+  - lista de cards (padrão da tela de Usuários da HU12): nome, CNPJ,
+    e-mail e telefone, cidade · bairro · rua e número, badge de status
+    ("Aguardando aprovação" / "Ativo");
+  - ação "Aprovar" (aguardando) ou "Desativar" (ativo) com modal de
+    confirmação; desativar avisa que o fornecedor sai do catálogo dos
+    clientes. Sucesso: toast com o nome e a lista recarrega a página
+    atual (o card sai do filtro). Erro: toast com a causa
+    (`backendMessage`) e o status **não muda**;
+  - skeleton, estado vazio por filtro, paginação Anterior/Próxima;
+  - sem `console.log`, sem `DynamicTableComponent` nesta tela (segue em
+    `city-register`), sem HEX.
+
+**Fora de escopo (desta tela)**: editar dados do fornecedor (é a tela de
+Usuários da HU12), motivo da recusa, aviso por e-mail ao aprovar, ações
+em lote, mexer no `PATCH /{id}/update-active`.
+
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
 - Agregação de rating médio por fornecedor (gap de backend).
@@ -568,6 +617,17 @@ depois da HU11.
     `footer.component.spec.ts`: `deveMostrarOAnoAtual`,
     `deveUsarRouterLinkNosLinks`, `naoDeveTerHexLiteral`.
 
+13. *(fatia 6, §5.13)* **Backend** — `SupplierServiceTest`:
+    `deveFiltrarFornecedoresAguardandoAprovacao`,
+    `deveBuscarFornecedoresPorNomeEmailOuCnpj`;
+    `SupplierControllerTest`: `deveRepassarFiltrosDeStatusEBusca`.
+    **Frontend** — `supplier-approval.component.spec.ts`:
+    `deveAbrirNoFiltroAguardandoAprovacao`, `deveFiltrarPorStatus`,
+    `deveBuscarNoBackendComDebounce`, `deveExibirEstadoVazio`,
+    `deveConfirmarAntesDeAprovar`, `deveRecarregarAoAprovarComSucesso`,
+    `deveManterStatusQuandoAprovacaoFalhar`, `devePaginar`;
+    `supplier.service.spec.ts`: `deveEnviarFiltrosNaListagem`.
+
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
 ## 8. Definição de Pronto
@@ -662,6 +722,14 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
 - [x] Grupos A–E migrados pros tokens (grep: zero hex novo fora de
       `styles.css`).
+
+**Fatia 6 — aprovação de fornecedores (§5.13):**
+- [ ] `GET /api/suppliers` filtra por status e busca no backend, com
+      OpenAPI.
+- [ ] Tela com filtros, busca, cards, confirmação, skeleton, estado
+      vazio e paginação; erro não muda o status.
+- [ ] Testes da seção 7 (item 13) verdes; `mvn test`, `ng test` (sem
+      falhas novas) e `ng build`; teste manual em 390 e 1280 px.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
