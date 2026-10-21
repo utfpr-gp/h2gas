@@ -451,6 +451,56 @@ depois da HU11.
   `check-email`: 1 HEX cada), `supplier-list.component.css` e
   `menu.component.css`.
 
+### 5.15 Fatia 6 — configuração da loja do fornecedor
+
+> Escrita em 2026-10-21. Pedido do autor: melhorar a UI/UX das telas de
+> fornecedor uma a uma; primeira: `/configuracao`. Revoga, só para esta
+> tela, o item "Redesenho mobile-first das telas de admin/fornecedor" do
+> Fora de Escopo. Branch `feature/f7-back-office` (da `develop`); as
+> §5.13 e §5.14 estão na branch da HU12, que entra antes. Decisões do
+> autor: o estoque mínimo vai para o backend; abrir/fechar a loja fica
+> onde está (Pedidos recebidos e Histórico).
+
+**Achados**
+- `PATCH /api/suppliers/{id}/update-times` aceita qualquer `id` de
+  qualquer SUPPLIER: um fornecedor muda o horário de outro.
+- O estoque mínimo fica só no `localStorage` (`ConfigurationService`):
+  some em outro aparelho; só alimenta o contador "estoque baixo" da tela
+  de produtos (padrão 8).
+- Um botão salva duas coisas: com estoque inválido avisa e ainda envia
+  o horário (dois toasts); sem validação de horário nem estado de
+  carregando/salvando; Salvar sempre habilitado.
+- Visual fora do padrão (azul fixo, gradiente, Font Awesome, `p-10` no
+  celular, `min-h-screen`, `console.log`); a rota aceita ADMIN, que não
+  tem `supplierId` (a tela quebra).
+
+**Contrato**
+- Flyway `V13__supplier_low_stock_threshold.sql`:
+  `suppliers.low_stock_threshold INT NOT NULL DEFAULT 8`. Número 13
+  porque a HU12 traz `V9`–`V12` e é mergeada antes.
+- `GET /api/suppliers/mine/settings` e `PUT /api/suppliers/mine/settings`
+  (SUPPLIER): o fornecedor vem do token, nunca do corpo nem da URL.
+  Corpo/resposta `SupplierSettingsDTO`: `openingTime` e `closingTime`
+  (`HH:mm`, obrigatórios), `averageDeliveryTime` (minutos, 1–240),
+  `lowStockThreshold` (1–9999). Fechamento igual à abertura → **400**
+  "O horário de fechamento precisa ser diferente da abertura." (fechar
+  depois da meia-noite é permitido). OpenAPI nas duas rotas.
+- `PATCH /{id}/update-times`: SUPPLIER só altera o próprio id (**403**);
+  ADMIN continua podendo. OpenAPI.
+- Frontend: `SupplierService.getMySettings`/`updateMySettings`; a tela de
+  produtos lê o `lowStockThreshold` salvo; `ConfigurationService` sai.
+- Tela "Configurações da loja": um formulário só, seções Horário de
+  funcionamento, Entrega e Estoque, com ajuda por campo e prévia
+  ("Aberta das 08:00 às 18:00 · entrega em ~30 min"; fechamento depois
+  da meia-noite mostra "do dia seguinte"); erros por campo; Salvar
+  desabilitado sem alteração ou inválido, com spinner; um toast só;
+  erro com a causa; skeleton ao carregar; rota só SUPPLIER e sob
+  demanda; sem HEX nem `console.log`.
+
+**Fora de escopo (desta tela)**: abrir/fechar a loja aqui; horário por
+dia da semana e feriados; fechar sozinho fora do horário; alerta ou
+e-mail de estoque baixo; `distributor-management` (código morto).
+
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
 - Agregação de rating médio por fornecedor (gap de backend).
@@ -568,6 +618,24 @@ depois da HU11.
     `footer.component.spec.ts`: `deveMostrarOAnoAtual`,
     `deveUsarRouterLinkNosLinks`, `naoDeveTerHexLiteral`.
 
+15. *(fatia 6, §5.15)* **Backend** — `SupplierServiceTest`:
+    `deveLerConfiguracoesDoProprioFornecedor`,
+    `deveSalvarHorarioTempoEEstoqueMinimo`,
+    `deveRecusarFechamentoIgualAAbertura`;
+    `SupplierControllerTest`: `deveUsarOFornecedorDoToken`,
+    `deveRetornar400ComTempoDeEntregaForaDoLimite`,
+    `deveRetornar403AoAlterarHorarioDeOutroFornecedor`.
+    **Frontend** — `supplier.service.spec.ts`:
+    `deveBuscarConfiguracoesDoFornecedorLogado`, `deveSalvarConfiguracoes`;
+    `product-item.component.spec.ts`:
+    `deveUsarOEstoqueMinimoSalvoNoBackend`;
+    `configuration.component.spec.ts`:
+    `deveCarregarConfiguracoesDoFornecedor`,
+    `deveDesabilitarSalvarSemAlteracao`,
+    `deveMostrarErroComFechamentoIgualAAbertura`,
+    `deveSalvarTudoNumaChamadaComUmToast`,
+    `deveMostrarMensagemDoBackendNoErro`, `deveMostrarPreviaDoHorario`.
+
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
 ## 8. Definição de Pronto
@@ -662,6 +730,15 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
 - [x] Grupos A–E migrados pros tokens (grep: zero hex novo fora de
       `styles.css`).
+
+**Fatia 6 — configuração da loja (§5.15):**
+- [ ] Horário, tempo de entrega e estoque mínimo salvos no backend pelo
+      fornecedor do token; `update-times` de outro fornecedor é 403;
+      `V13` aplicada; OpenAPI.
+- [ ] Tela com um formulário, validação por campo, prévia, Salvar só com
+      alteração válida e um toast; tela de produtos usa o limite salvo.
+- [ ] Testes da seção 7 (item 15) verdes; `mvn test`, `ng test` (sem
+      falhas novas) e `ng build`; teste manual em 390 e 1280 px.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
