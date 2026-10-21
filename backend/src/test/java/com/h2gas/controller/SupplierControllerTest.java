@@ -6,6 +6,7 @@ import com.h2gas.configuration.security.SecurityFilter;
 import com.h2gas.configuration.security.TokenService;
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.exceptions.BusinessRuleException;
+import com.h2gas.model.dto.StorefrontDTO;
 import com.h2gas.model.dto.SupplierDTO;
 import com.h2gas.model.dto.SupplierDashboardDTO;
 import com.h2gas.model.dto.SupplierSettingsDTO;
@@ -132,9 +133,7 @@ class SupplierControllerTest {
 
     @Test
     void deveAceitarParametroCityIdOpcionalNoEndpointActivesOpen() throws Exception {
-        SupplierDTO dto = new SupplierDTO();
-        dto.setName("Fornecedor Curitiba");
-        Page<SupplierDTO> page = new PageImpl<>(List.of(dto), PageRequest.of(0, 10), 1);
+        Page<StorefrontDTO> page = new PageImpl<>(List.of(vitrine("Fornecedor Curitiba", null, 0L)), PageRequest.of(0, 10), 1);
 
         when(supplierService.findAllSuppliersOpenAndActive(eq(7L), isNull(), any())).thenReturn(page);
 
@@ -144,9 +143,11 @@ class SupplierControllerTest {
         verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), isNull(), any());
     }
 
+    // HU13: visitante precisa da cidade (PublicCatalogAccessTest); o admin logado segue vendo todas as cidades
     @Test
-    void deveFuncionarSemCityIdMantendoComportamentoAtual() throws Exception {
-        Page<SupplierDTO> page = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
+    void deveManterCidadeOpcionalParaOAdmin() throws Exception {
+        autenticarComo("ROLE_ADMIN");
+        Page<StorefrontDTO> page = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
 
         when(supplierService.findAllSuppliersOpenAndActive(isNull(), isNull(), any())).thenReturn(page);
 
@@ -334,14 +335,10 @@ class SupplierControllerTest {
 
     @Test
     void deveExporNotaEContagemNoCatalogo() throws Exception {
-        SupplierDTO loja = new SupplierDTO();
-        loja.setName("Gás Centro");
-        loja.setAverageRating(4.3);
-        loja.setReviewCount(14L);
-        when(supplierService.findAllSuppliersOpenAndActive(isNull(), isNull(), any()))
-                .thenReturn(new PageImpl<>(List.of(loja), PageRequest.of(0, 10), 1));
+        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), isNull(), any()))
+                .thenReturn(new PageImpl<>(List.of(vitrine("Gás Centro", 4.3, 14L)), PageRequest.of(0, 10), 1));
 
-        mockMvc.perform(get("/api/suppliers/actives/open"))
+        mockMvc.perform(get("/api/suppliers/actives/open").param("cityId", "7"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].averageRating").value(4.3))
                 .andExpect(jsonPath("$.data[0].reviewCount").value(14));
@@ -391,5 +388,29 @@ class SupplierControllerTest {
                 .andExpect(jsonPath("$.totalElements").value(1));
 
         verify(supplierService).findReviews(eq("loja-1"), eq(PageRequest.of(0, 5)));
+    }
+
+    private static StorefrontDTO vitrine(String nome, Double nota, Long avaliacoes) {
+        return new StorefrontDTO("loja-1", nome, "Entrega rápida", null, null, "07:00", "20:00", 60L, true,
+                7L, "Curitiba", "Centro", nota, avaliacoes);
+    }
+
+    private static void autenticarComo(String role) {
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                "usuario", null, List.of(new SimpleGrantedAuthority(role))));
+    }
+
+    @Test
+    void deveDevolverAVitrineDaLoja() throws Exception {
+        when(supplierService.findStorefront("loja-1")).thenReturn(vitrine("Gás Centro", 4.2, 14L));
+
+        mockMvc.perform(get("/api/suppliers/loja-1/storefront"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Gás Centro"))
+                .andExpect(jsonPath("$.averageRating").value(4.2))
+                .andExpect(jsonPath("$.cityName").value("Curitiba"))
+                .andExpect(jsonPath("$.email").doesNotExist())
+                .andExpect(jsonPath("$.cnpj").doesNotExist())
+                .andExpect(jsonPath("$.phone").doesNotExist());
     }
 }

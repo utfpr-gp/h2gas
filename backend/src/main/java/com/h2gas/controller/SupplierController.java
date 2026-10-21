@@ -1,5 +1,7 @@
 package com.h2gas.controller;
 
+import com.h2gas.util.CatalogAccess;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ForbiddenResourceException;
@@ -119,23 +121,27 @@ public class SupplierController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Lista fornecedores ativos e abertos",
-            description = "Retorna fornecedores ativos e abertos, ordenados por nome, opcionalmente filtrados por cidade do endereço ativo "
-                    + "do cliente (RN05) e pela busca q no nome da loja. Cada loja traz averageRating (média, 1 casa; nula sem avaliações) e reviewCount")
+    @Operation(summary = "Lista as lojas ativas e abertas (vitrine pública)",
+            description = "Aberta a visitantes. Retorna a vitrine das lojas ativas e abertas, ordenadas por nome, filtradas pela cidade (RN05) "
+                    + "e pela busca q no nome da loja; cada loja traz averageRating (média, 1 casa; nula sem avaliações) e reviewCount. "
+                    + "Sem login, cityId é obrigatório; o admin logado pode omitir para ver todas as cidades")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Lista paginada de fornecedores ativos e abertos")
+            @ApiResponse(responseCode = "200", description = "Lista paginada da vitrine das lojas"),
+            @ApiResponse(responseCode = "400", description = "Visitante sem cityId")
     })
+    @SecurityRequirements
     @GetMapping("/actives/open")
     @ResponseBody
-    public ResponseEntity<PageResponse<SupplierDTO>> getAllSuppliersOpenAndActive(
+    public ResponseEntity<PageResponse<StorefrontDTO>> getAllSuppliersOpenAndActive(
             @Parameter(description = "Número da página (0-based)") @RequestParam(value = "page", required = false) Integer page,
             @Parameter(description = "Tamanho da página") @RequestParam(value = "size", required = false) Integer size,
             @Parameter(description = "Filtra por cidade do endereço ativo do cliente (RN05)") @RequestParam(value = "cityId", required = false) Long cityId,
             @Parameter(description = "Trecho do nome da loja", example = "gás") @RequestParam(value = "q", required = false) String q
     ) {
+        CatalogAccess.requireCityForVisitor(cityId);
         Pageable pageable = PaginationUtil.getPageableRequest(page, size);
-        Page<SupplierDTO> result = supplierService.findAllSuppliersOpenAndActive(cityId, q, pageable);
-        PageResponse<SupplierDTO> response = new PageResponse<>(result);
+        Page<StorefrontDTO> result = supplierService.findAllSuppliersOpenAndActive(cityId, q, pageable);
+        PageResponse<StorefrontDTO> response = new PageResponse<>(result);
 
         return ResponseEntity.ok(response);
     }
@@ -230,13 +236,28 @@ public class SupplierController {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
+    @Operation(summary = "Lê a vitrine de uma loja (pública)",
+            description = "Aberta a visitantes. Nome, descrição, logo, banner, horário, tempo médio, aberta/fechada, bairro e cidade, "
+                    + "e a nota (averageRating, 1 casa; nula sem avaliações) com reviewCount. Sem e-mail, telefone, CNPJ nem endereço completo")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Vitrine da loja"),
+            @ApiResponse(responseCode = "404", description = "Loja não encontrada")
+    })
+    @SecurityRequirements
+    @GetMapping("/{id}/storefront")
+    @ResponseBody
+    public ResponseEntity<StorefrontDTO> getStorefront(@Parameter(description = "Id da loja (fornecedor)") @PathVariable String id) {
+        return ResponseEntity.ok(supplierService.findStorefront(id));
+    }
+
     @Operation(summary = "Lista as avaliações de uma loja",
             description = "Avaliações da loja, da entrega mais recente para a mais antiga, com o primeiro nome do cliente, a nota (1 a 5), "
-                    + "o comentário (nulo quando não há) e a data da entrega avaliada. Aberta a qualquer usuário autenticado")
+                    + "o comentário (nulo quando não há) e a data da entrega avaliada. Aberta a visitantes")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Página de avaliações"),
             @ApiResponse(responseCode = "404", description = "Loja não encontrada")
     })
+    @SecurityRequirements
     @GetMapping("/{id}/reviews")
     @ResponseBody
     public ResponseEntity<PageResponse<StoreReviewDTO>> getStoreReviews(

@@ -534,9 +534,9 @@ class SupplierServiceTest {
                     "s", "11222333000144", "d", true, (Boolean) loja[2], a, (City) loja[1]));
         }
 
-        Page<SupplierDTO> result = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), "GÁS AZUL", PageRequest.of(0, 10));
+        Page<com.h2gas.model.dto.StorefrontDTO> result = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), "GÁS AZUL", PageRequest.of(0, 10));
 
-        assertEquals(List.of("Gás Azul Curitiba"), result.getContent().stream().map(SupplierDTO::getName).toList());
+        assertEquals(List.of("Gás Azul Curitiba"), result.getContent().stream().map(com.h2gas.model.dto.StorefrontDTO::name).toList());
         assertEquals(2, supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, PageRequest.of(0, 10)).getTotalElements());
     }
 
@@ -576,11 +576,11 @@ class SupplierServiceTest {
         avaliar(avaliada, cliente, 4);
         avaliar(avaliada, cliente, 4);
 
-        Page<SupplierDTO> result = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, PageRequest.of(0, 10));
+        Page<com.h2gas.model.dto.StorefrontDTO> result = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, PageRequest.of(0, 10));
 
-        SupplierDTO dto = result.getContent().stream().filter(d -> d.getName().equals("Loja Avaliada")).findFirst().orElseThrow();
-        assertEquals(4.3, dto.getAverageRating());
-        assertEquals(3L, dto.getReviewCount());
+        com.h2gas.model.dto.StorefrontDTO dto = result.getContent().stream().filter(d -> d.name().equals("Loja Avaliada")).findFirst().orElseThrow();
+        assertEquals(4.3, dto.averageRating());
+        assertEquals(3L, dto.reviewCount());
     }
 
     @Test
@@ -589,10 +589,10 @@ class SupplierServiceTest {
         City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
         lojaAberta("Loja Sem Nota", curitiba);
 
-        SupplierDTO dto = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, PageRequest.of(0, 10)).getContent().get(0);
+        com.h2gas.model.dto.StorefrontDTO dto = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, PageRequest.of(0, 10)).getContent().get(0);
 
-        assertNull(dto.getAverageRating());
-        assertEquals(0L, dto.getReviewCount());
+        assertNull(dto.averageRating());
+        assertEquals(0L, dto.reviewCount());
     }
 
     @Test
@@ -707,5 +707,34 @@ class SupplierServiceTest {
     @DisplayName("F7 §5.27: avaliações de loja inexistente é 404")
     void deveResponder404AoListarAvaliacoesDeLojaInexistente() {
         assertThrows(com.h2gas.exceptions.ResourceNotFoundException.class, () -> supplierService.findReviews("nao-existe", PageRequest.of(0, 10)));
+    }
+
+    @Test
+    @DisplayName("HU13: a vitrine da loja traz só o que o visitante vê (sem e-mail, CNPJ, telefone e endereço completo), com a nota")
+    void deveMontarAVitrineSemDadosInternos() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        User cliente = userRepository.save(new User(null, "Cliente Vitrine", "vitrine@t", "41999990009", "99988877799", "x", UserTypeEnum.CUSTOMER));
+        Supplier loja = lojaAberta("Loja Vitrine", curitiba);
+        avaliar(loja, cliente, 5);
+
+        com.h2gas.model.dto.StorefrontDTO vitrine = supplierService.findStorefront(loja.getId());
+
+        assertEquals("Loja Vitrine", vitrine.name());
+        assertEquals("Curitiba", vitrine.cityName());
+        assertEquals(curitiba.getId(), vitrine.cityId());
+        assertEquals("Centro", vitrine.addressNeighborhood());
+        assertEquals(5.0, vitrine.averageRating());
+        assertEquals(1L, vitrine.reviewCount());
+        List<String> campos = java.util.Arrays.stream(com.h2gas.model.dto.StorefrontDTO.class.getRecordComponents())
+                .map(java.lang.reflect.RecordComponent::getName).toList();
+        for (String interno : List.of("email", "cnpj", "phone", "addressStreetName", "addressNumber", "addressComplement", "products")) {
+            assertFalse(campos.contains(interno), "a vitrine não pode expor " + interno);
+        }
+    }
+
+    @Test
+    @DisplayName("HU13: vitrine de loja inexistente é 404")
+    void deveResponder404NaVitrineDeLojaInexistente() {
+        assertThrows(com.h2gas.exceptions.ResourceNotFoundException.class, () -> supplierService.findStorefront("nao-existe"));
     }
 }
