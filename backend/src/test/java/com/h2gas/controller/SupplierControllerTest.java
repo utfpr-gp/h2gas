@@ -8,6 +8,9 @@ import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.model.dto.SupplierDTO;
 import com.h2gas.model.dto.SupplierDashboardDTO;
 import com.h2gas.model.dto.SupplierSettingsDTO;
+import com.h2gas.model.dto.SupplierProfileDTO;
+import com.h2gas.model.dto.SupplierProfileRequestDTO;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.http.MediaType;
 import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.SupplierMapper;
@@ -40,6 +43,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -221,5 +226,62 @@ class SupplierControllerTest {
         mockMvc.perform(get("/api/suppliers")).andExpect(status().isOk());
 
         verify(supplierService).findAllSuppliers(isNull(), isNull(), any());
+    }
+
+    @Test
+    void deveUsarALojaDoTokenNoPerfil() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+        SupplierProfileDTO perfil = new SupplierProfileDTO("Gás Centro", "41999999999", "Desde 1990", "12345678000101",
+                null, 3L, "Rua XV", "700", "Centro", "Curitiba", "PR");
+        when(supplierService.findMyProfile("fornecedor-1")).thenReturn(perfil);
+        when(supplierService.updateMyProfile(eq("fornecedor-1"), any())).thenReturn(perfil);
+
+        mockMvc.perform(get("/api/suppliers/mine/profile"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cnpj").value("12345678000101"));
+        mockMvc.perform(put("/api/suppliers/mine/profile").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Gás Centro\",\"phone\":\"41999999999\",\"description\":\"Desde 1990\"}"))
+                .andExpect(status().isOk());
+
+        verify(supplierService).updateMyProfile("fornecedor-1", new SupplierProfileRequestDTO("Gás Centro", "41999999999", "Desde 1990"));
+    }
+
+    @Test
+    void deveRetornar400ComNomeVazio() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+
+        mockMvc.perform(put("/api/suppliers/mine/profile").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"  \",\"phone\":\"41999999999\"}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(put("/api/suppliers/mine/profile").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Gás\",\"phone\":\"123\"}"))
+                .andExpect(status().isBadRequest());
+
+        verify(supplierService, never()).updateMyProfile(any(), any());
+    }
+
+    @Test
+    void deveRetornar403AoEditarLojaDeOutroPeloId() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+
+        mockMvc.perform(put("/api/suppliers/fornecedor-2").contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"Invadida\"}"))
+                .andExpect(status().isForbidden());
+
+        verify(supplierService, never()).update(any(), any());
+    }
+
+    @Test
+    void deveEnviarALogoComoMultipart() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+        when(supplierService.updateMyLogo(eq("fornecedor-1"), any())).thenReturn("https://res.cloudinary.com/h2gas/logo.png");
+
+        mockMvc.perform(multipart("/api/suppliers/mine/logo")
+                        .file(new MockMultipartFile("file", "logo.png", "image/png", new byte[]{1, 2, 3}))
+                        .with(r -> { r.setMethod("PUT"); return r; }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.logoUrl").value("https://res.cloudinary.com/h2gas/logo.png"));
+        mockMvc.perform(delete("/api/suppliers/mine/logo")).andExpect(status().isNoContent());
+
+        verify(supplierService).removeMyLogo("fornecedor-1");
     }
 }

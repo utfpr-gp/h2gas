@@ -228,10 +228,78 @@ public class SupplierController {
         return ResponseEntity.ok(supplierDTO);
     }
 
+    @Operation(summary = "Lê os dados da loja do fornecedor logado",
+            description = "Nome, telefone, descrição, CNPJ (só leitura), logo e endereço resumido. A loja vem do token")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Dados da loja"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido ou papel diferente de SUPPLIER")
+    })
+    @GetMapping("/mine/profile")
+    @ResponseBody
+    @RolesAllowed("SUPPLIER")
+    public ResponseEntity<SupplierProfileDTO> getMyProfile() {
+        return ResponseEntity.ok(supplierService.findMyProfile(currentUser().getId()));
+    }
+
+    @Operation(summary = "Salva os dados da loja do fornecedor logado",
+            description = "Só nome, telefone e descrição. Horário e entrega são da configuração; a cidade é do endereço")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Dados salvos"),
+            @ApiResponse(responseCode = "400", description = "Nome vazio ou longo, telefone inválido ou descrição longa"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido ou papel diferente de SUPPLIER")
+    })
+    @PutMapping("/mine/profile")
+    @ResponseBody
+    @RolesAllowed("SUPPLIER")
+    public ResponseEntity<SupplierProfileDTO> updateMyProfile(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Dados da loja")
+            @Valid @RequestBody SupplierProfileRequestDTO request) {
+        return ResponseEntity.ok(supplierService.updateMyProfile(currentUser().getId(), request));
+    }
+
+    @Operation(summary = "Envia a logo da loja do fornecedor logado",
+            description = "Multipart com o campo file: JPG, PNG ou WEBP de até 1 MB. A logo aparece no card da loja no catálogo")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Logo salva; devolve logoUrl"),
+            @ApiResponse(responseCode = "400", description = "Arquivo vazio, de outro tipo ou maior que 1 MB"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido ou papel diferente de SUPPLIER"),
+            @ApiResponse(responseCode = "502", description = "Falha ao enviar a imagem ao Cloudinary")
+    })
+    @PutMapping(value = "/mine/logo", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ResponseBody
+    @RolesAllowed("SUPPLIER")
+    public ResponseEntity<Map<String, String>> updateMyLogo(
+            @Parameter(description = "Imagem da logo") @RequestPart("file") org.springframework.web.multipart.MultipartFile file) {
+        return ResponseEntity.ok(Map.of("logoUrl", supplierService.updateMyLogo(currentUser().getId(), file)));
+    }
+
+    @Operation(summary = "Remove a logo da loja do fornecedor logado", description = "O catálogo volta a mostrar o ícone de loja")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Logo removida"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido ou papel diferente de SUPPLIER")
+    })
+    @DeleteMapping("/mine/logo")
+    @RolesAllowed("SUPPLIER")
+    public ResponseEntity<Void> removeMyLogo() {
+        supplierService.removeMyLogo(currentUser().getId());
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Edita um fornecedor",
+            description = "O fornecedor só edita a própria loja; o admin edita qualquer uma. A tela da loja usa /mine/profile")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Fornecedor atualizado"),
+            @ApiResponse(responseCode = "403", description = "Fornecedor editando outra loja"),
+            @ApiResponse(responseCode = "404", description = "Fornecedor ou cidade inexistente")
+    })
     @PutMapping("/{id}")
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER"})
-    public ResponseEntity<SupplierDTO> update(@PathVariable String id, @RequestBody SupplierCreateDTO dto) {
+    public ResponseEntity<SupplierDTO> update(@Parameter(description = "Id do fornecedor") @PathVariable String id, @RequestBody SupplierCreateDTO dto) {
+        User actor = currentUser();
+        if (actor.getUserType() == UserTypeEnum.SUPPLIER && !actor.getId().equals(id)) {
+            throw new ForbiddenResourceException("Você só pode editar a sua própria loja.");
+        }
         SupplierDTO updated = supplierService.update(id, dto);
         return ResponseEntity.ok(updated);
     }

@@ -6,6 +6,14 @@ import com.h2gas.model.dto.AddressDTO;
 import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
 import com.h2gas.model.dto.SupplierSettingsDTO;
+import com.h2gas.model.dto.SupplierProfileDTO;
+import com.h2gas.model.dto.SupplierProfileRequestDTO;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import java.util.Map;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 import com.h2gas.model.entity.Address;
 import com.h2gas.model.entity.City;
 import com.h2gas.model.entity.Supplier;
@@ -430,5 +438,62 @@ class SupplierServiceTest {
         assertEquals(1, supplierService.findAllSuppliers(null, "CONTATO@OMEGA", PageRequest.of(0, 10)).getTotalElements());
         assertEquals(1, supplierService.findAllSuppliers(false, "99888777", PageRequest.of(0, 10)).getTotalElements());
         assertEquals(0, supplierService.findAllSuppliers(true, "99888777", PageRequest.of(0, 10)).getTotalElements());
+    }
+
+    @MockitoBean
+    private CloudinaryService cloudinaryService;
+
+    @Test
+    @DisplayName("F7 fatia 6: perfil da loja muda nome, telefone e descrição sem mexer no horário")
+    void deveAtualizarPerfilSemMexerNoHorario() {
+        SupplierProfileDTO perfil = supplierService.updateMyProfile(validId,
+                new SupplierProfileRequestDTO("  Gás Nova Era ", "46999990000", "Entrega rápida no centro"));
+
+        Supplier supplier = supplierRepository.findById(validId).orElseThrow();
+        assertEquals("Gás Nova Era", supplier.getName());
+        assertEquals("46999990000", supplier.getPhoneNumber());
+        assertEquals("Entrega rápida no centro", supplier.getDescription());
+        assertEquals(LocalTime.of(8, 0), supplier.getOpeningTime());
+        assertEquals(LocalTime.of(18, 0), supplier.getClosingTime());
+        assertEquals(Duration.ofMinutes(30), supplier.getAverageDeliveryTime());
+        assertEquals("Gás Nova Era", perfil.name());
+        assertEquals("12345678901234", perfil.cnpj());
+        assertEquals("Pato Branco", perfil.cityName());
+        assertEquals("PR", perfil.cityState());
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: logo enviada ao Cloudinary, gravada e removida")
+    void deveSalvarERemoverALogo() throws Exception {
+        when(cloudinaryService.upload(any())).thenReturn(Map.of("secure_url", "https://res.cloudinary.com/h2gas/logo.png", "url", "http://x/logo.png"));
+
+        String url = supplierService.updateMyLogo(validId, new MockMultipartFile("file", "logo.png", "image/png", new byte[2048]));
+
+        assertEquals("https://res.cloudinary.com/h2gas/logo.png", url);
+        assertEquals(url, supplierRepository.findById(validId).orElseThrow().getLogoUrl());
+        assertEquals(url, supplierService.findMyProfile(validId).logoUrl());
+
+        supplierService.removeMyLogo(validId);
+        assertNull(supplierRepository.findById(validId).orElseThrow().getLogoUrl());
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: arquivo que não é JPG, PNG ou WEBP é 400")
+    void deveRecusarArquivoQueNaoEImagem() {
+        BusinessRuleException erro = assertThrows(BusinessRuleException.class, () -> supplierService.updateMyLogo(validId,
+                new MockMultipartFile("file", "logo.gif", "image/gif", new byte[100])));
+
+        assertEquals("Envie uma imagem JPG, PNG ou WEBP de até 1 MB.", erro.getMessage());
+        verifyNoInteractions(cloudinaryService);
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: imagem acima de 1 MB é 400")
+    void deveRecusarImagemMaiorQue1MB() {
+        assertThrows(BusinessRuleException.class, () -> supplierService.updateMyLogo(validId,
+                new MockMultipartFile("file", "logo.jpg", "image/jpeg", new byte[1_048_577])));
+        assertThrows(BusinessRuleException.class, () -> supplierService.updateMyLogo(validId,
+                new MockMultipartFile("file", "logo.jpg", "image/jpeg", new byte[0])));
+        verifyNoInteractions(cloudinaryService);
     }
 }
