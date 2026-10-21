@@ -76,4 +76,36 @@ describe('SupplierService', () => {
     expect(req.request.params.has('q')).toBeFalse();
     req.flush({ data: [], page: 0, size: 10, totalElements: 0, totalPages: 0, hasNext: false, hasPrevious: false });
   });
+
+  it('deveBuscarPerfilDaLoja', () => {
+    service.getMyProfile().subscribe((p) => expect(p.cnpj).toBe('12345678000101'));
+    const get = httpMock.expectOne(`${environment.apiUrl}/suppliers/mine/profile`);
+    expect(get.request.method).toBe('GET');
+    get.flush({ name: 'Gás Centro', phone: '41991110000', cnpj: '12345678000101' });
+
+    service.updateMyProfile({ name: 'Gás Centro', phone: '41991110000', description: 'Desde 1990' }).subscribe();
+    const put = httpMock.expectOne(`${environment.apiUrl}/suppliers/mine/profile`);
+    expect(put.request.method).toBe('PUT');
+    expect(put.request.body).toEqual({ name: 'Gás Centro', phone: '41991110000', description: 'Desde 1990' });
+    put.flush({});
+  });
+
+  it('deveEnviarLogoComoFormData', () => {
+    const arquivo = new File([new Uint8Array([1, 2, 3])], 'logo.png', { type: 'image/png' });
+    service.uploadMyLogo(arquivo).subscribe((r) => expect(r.logoUrl).toBe('https://cdn/logo.png'));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/suppliers/mine/logo`);
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body instanceof FormData).toBeTrue();
+    expect((req.request.body as FormData).get('file')).toBe(arquivo);
+    req.flush({ logoUrl: 'https://cdn/logo.png' });
+  });
+
+  it('deveRemoverLogo', () => {
+    service.removeMyLogo().subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/suppliers/mine/logo`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null, { status: 204, statusText: 'No Content' });
+  });
 });

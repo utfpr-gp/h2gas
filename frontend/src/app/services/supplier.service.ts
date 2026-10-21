@@ -7,6 +7,7 @@ import { Observable } from 'rxjs';
 import { PaginatedResponse } from '../models/paginated-response';
 import { SupplierDashboard } from '../models/supplier-dashboard';
 import { SupplierSettings } from '../models/supplier-settings';
+import { SupplierProfile, SupplierProfileRequest } from '../models/supplier-profile';
 
 @Injectable({
   providedIn: 'root'
@@ -16,6 +17,25 @@ export class SupplierService extends AbstractService<Supplier> {
 
   constructor(protected override http: HttpClient) {
     super(http);
+  }
+
+  // F7 fatia 6: dados e logo da loja; o backend usa o fornecedor do token
+  getMyProfile(): Observable<SupplierProfile> {
+    return this.http.get<SupplierProfile>(`${this.baseUrl}/mine/profile`);
+  }
+
+  updateMyProfile(request: SupplierProfileRequest): Observable<SupplierProfile> {
+    return this.http.put<SupplierProfile>(`${this.baseUrl}/mine/profile`, request);
+  }
+
+  uploadMyLogo(file: File): Observable<{ logoUrl: string }> {
+    const body = new FormData();
+    body.append('file', file);
+    return this.http.put<{ logoUrl: string }>(`${this.baseUrl}/mine/logo`, body);
+  }
+
+  removeMyLogo(): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/mine/logo`);
   }
 
   // o backend usa o fornecedor do token
