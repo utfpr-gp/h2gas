@@ -1,6 +1,9 @@
 package com.h2gas.controller;
 
+import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.exceptions.BusinessRuleException;
+import com.h2gas.exceptions.ForbiddenResourceException;
+import jakarta.validation.Valid;
 import com.h2gas.model.dto.*;
 import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.SupplierMapper;
@@ -150,13 +153,60 @@ public class SupplierController {
         return ResponseEntity.ok(Map.of("message", "Status atualizado."));
     }
 
+    @Operation(summary = "Configurações da loja do fornecedor logado",
+            description = "Horário de funcionamento, tempo médio de entrega e estoque mínimo. O fornecedor vem do token")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Configurações atuais"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido ou papel diferente de SUPPLIER")
+    })
+    @GetMapping("/mine/settings")
+    @ResponseBody
+    @RolesAllowed("SUPPLIER")
+    public ResponseEntity<SupplierSettingsDTO> getMySettings() {
+        return ResponseEntity.ok(supplierService.findMySettings(currentUser().getId()));
+    }
+
+    @Operation(summary = "Salva as configurações da loja do fornecedor logado",
+            description = "Grava horário, tempo médio de entrega e estoque mínimo de uma vez. Fechamento antes da abertura "
+                    + "significa que a loja fecha depois da meia-noite; igual à abertura é recusado")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Configurações salvas"),
+            @ApiResponse(responseCode = "400", description = "Campo ausente, fora do limite ou fechamento igual à abertura"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido ou papel diferente de SUPPLIER")
+    })
+    @PutMapping("/mine/settings")
+    @ResponseBody
+    @RolesAllowed("SUPPLIER")
+    public ResponseEntity<SupplierSettingsDTO> updateMySettings(
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Configurações da loja")
+            @Valid @RequestBody SupplierSettingsDTO settings) {
+        return ResponseEntity.ok(supplierService.updateMySettings(currentUser().getId(), settings));
+    }
+
+    @Operation(summary = "Atualiza horário e tempo de entrega de um fornecedor",
+            description = "Campos opcionais (openingTime, closingTime, averageDeliveryTime em minutos). "
+                    + "O fornecedor só altera a própria loja; o admin altera qualquer uma")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Horário atualizado"),
+            @ApiResponse(responseCode = "400", description = "Tempo médio de entrega não numérico"),
+            @ApiResponse(responseCode = "403", description = "Fornecedor alterando outra loja"),
+            @ApiResponse(responseCode = "404", description = "Fornecedor não encontrado")
+    })
     @PatchMapping("/{id}/update-times")
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER"})
-    public ResponseEntity<Map<String, String>> updateSupplierTimes(@PathVariable String id,
+    public ResponseEntity<Map<String, String>> updateSupplierTimes(@Parameter(description = "Id do fornecedor") @PathVariable String id,
                                                                     @RequestBody Map<String, String> times) {
+        User actor = currentUser();
+        if (actor.getUserType() == UserTypeEnum.SUPPLIER && !actor.getId().equals(id)) {
+            throw new ForbiddenResourceException("Você só pode alterar o horário da sua própria loja.");
+        }
         supplierService.updateTimesSupplier(id, times);
         return ResponseEntity.ok(Map.of("message", "Horário de funcionamento atualizado."));
+    }
+
+    private static User currentUser() {
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
     @GetMapping("/{id}")

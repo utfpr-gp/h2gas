@@ -4,6 +4,8 @@ import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
+import com.h2gas.model.dto.SupplierSettingsDTO;
+import org.springframework.transaction.annotation.Transactional;
 import com.h2gas.model.dto.SupplierSummaryDTO;
 import com.h2gas.model.entity.*;
 import com.h2gas.model.mapper.*;
@@ -215,6 +217,39 @@ public class SupplierService {
     }
 
 
+
+    // F7 fatia 6: configurações da loja; o id vem sempre do token (controller)
+    public SupplierSettingsDTO findMySettings(String supplierId) {
+        return toSettings(findSupplier(supplierId));
+    }
+
+    @Transactional
+    public SupplierSettingsDTO updateMySettings(String supplierId, SupplierSettingsDTO settings) {
+        LocalTime opening = LocalTime.parse(settings.openingTime());
+        LocalTime closing = LocalTime.parse(settings.closingTime());
+        if (opening.equals(closing)) {
+            throw new BusinessRuleException("O horário de fechamento precisa ser diferente da abertura.");
+        }
+        Supplier supplier = findSupplier(supplierId);
+        supplier.setOpeningTime(opening);
+        supplier.setClosingTime(closing);
+        supplier.setAverageDeliveryTime(Duration.ofMinutes(settings.averageDeliveryTime()));
+        supplier.setLowStockThreshold(settings.lowStockThreshold());
+        return toSettings(supplierRepository.save(supplier));
+    }
+
+    private Supplier findSupplier(String id) {
+        return supplierRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Fornecedor com " + id + " não encontrado"));
+    }
+
+    private static SupplierSettingsDTO toSettings(Supplier supplier) {
+        return new SupplierSettingsDTO(
+                supplier.getOpeningTime() == null ? null : supplier.getOpeningTime().toString(),
+                supplier.getClosingTime() == null ? null : supplier.getClosingTime().toString(),
+                supplier.getAverageDeliveryTime() == null ? null : (int) supplier.getAverageDeliveryTime().toMinutes(),
+                supplier.getLowStockThreshold());
+    }
 
     public void updateStatusOpenClosed(String id, boolean openClose) {
         Supplier supplier = supplierRepository.findById(id)

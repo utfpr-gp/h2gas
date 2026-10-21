@@ -7,6 +7,8 @@ import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.model.dto.SupplierDTO;
 import com.h2gas.model.dto.SupplierDashboardDTO;
+import com.h2gas.model.dto.SupplierSettingsDTO;
+import org.springframework.http.MediaType;
 import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.SupplierMapper;
 import com.h2gas.model.repository.UserRepository;
@@ -38,6 +40,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -142,5 +146,47 @@ class SupplierControllerTest {
                 .andExpect(status().isOk());
 
         verify(supplierService).findAllSuppliersOpenAndActive(isNull(), any());
+    }
+
+    @Test
+    void deveUsarOFornecedorDoToken() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+        when(supplierService.findMySettings("fornecedor-1")).thenReturn(new SupplierSettingsDTO("08:00", "18:00", 30, 8));
+        when(supplierService.updateMySettings(eq("fornecedor-1"), any())).thenReturn(new SupplierSettingsDTO("09:00", "19:00", 40, 6));
+
+        mockMvc.perform(get("/api/suppliers/mine/settings"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.lowStockThreshold").value(8));
+        mockMvc.perform(put("/api/suppliers/mine/settings").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"openingTime\":\"09:00\",\"closingTime\":\"19:00\",\"averageDeliveryTime\":40,\"lowStockThreshold\":6}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.openingTime").value("09:00"));
+
+        verify(supplierService).updateMySettings("fornecedor-1", new SupplierSettingsDTO("09:00", "19:00", 40, 6));
+    }
+
+    @Test
+    void deveRetornar400ComTempoDeEntregaForaDoLimite() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+
+        mockMvc.perform(put("/api/suppliers/mine/settings").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"openingTime\":\"09:00\",\"closingTime\":\"19:00\",\"averageDeliveryTime\":500,\"lowStockThreshold\":6}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(put("/api/suppliers/mine/settings").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"openingTime\":\"9h\",\"closingTime\":\"19:00\",\"averageDeliveryTime\":30,\"lowStockThreshold\":6}"))
+                .andExpect(status().isBadRequest());
+
+        verify(supplierService, never()).updateMySettings(any(), any());
+    }
+
+    @Test
+    void deveRetornar403AoAlterarHorarioDeOutroFornecedor() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+
+        mockMvc.perform(patch("/api/suppliers/fornecedor-2/update-times").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"openingTime\":\"00:00\"}"))
+                .andExpect(status().isForbidden());
+
+        verify(supplierService, never()).updateTimesSupplier(any(), any());
     }
 }

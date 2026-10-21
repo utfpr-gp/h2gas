@@ -5,6 +5,7 @@ import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.dto.AddressDTO;
 import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
+import com.h2gas.model.dto.SupplierSettingsDTO;
 import com.h2gas.model.entity.Address;
 import com.h2gas.model.entity.City;
 import com.h2gas.model.entity.Supplier;
@@ -362,5 +363,39 @@ class SupplierServiceTest {
                 () -> supplierService.updateTimesSupplier(validId, java.util.Map.of("averageDeliveryTime", "meia hora")));
 
         assertEquals("Tempo médio de entrega inválido: informe os minutos.", erro.getMessage());
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: lê horário, tempo de entrega e estoque mínimo do fornecedor")
+    void deveLerConfiguracoesDoProprioFornecedor() {
+        SupplierSettingsDTO settings = supplierService.findMySettings(validId);
+
+        assertEquals("08:00", settings.openingTime());
+        assertEquals("18:00", settings.closingTime());
+        assertEquals(30, settings.averageDeliveryTime());
+        assertEquals(8, settings.lowStockThreshold());
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: salva horário (até depois da meia-noite), tempo de entrega e estoque mínimo")
+    void deveSalvarHorarioTempoEEstoqueMinimo() {
+        SupplierSettingsDTO salvo = supplierService.updateMySettings(validId,
+                new SupplierSettingsDTO("18:00", "02:00", 45, 5));
+
+        Supplier supplier = supplierRepository.findById(validId).orElseThrow();
+        assertEquals(LocalTime.of(18, 0), supplier.getOpeningTime());
+        assertEquals(LocalTime.of(2, 0), supplier.getClosingTime());
+        assertEquals(Duration.ofMinutes(45), supplier.getAverageDeliveryTime());
+        assertEquals(5, supplier.getLowStockThreshold());
+        assertEquals(new SupplierSettingsDTO("18:00", "02:00", 45, 5), salvo);
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: fechamento igual à abertura é 400")
+    void deveRecusarFechamentoIgualAAbertura() {
+        BusinessRuleException erro = assertThrows(BusinessRuleException.class,
+                () -> supplierService.updateMySettings(validId, new SupplierSettingsDTO("08:00", "08:00", 30, 8)));
+
+        assertEquals("O horário de fechamento precisa ser diferente da abertura.", erro.getMessage());
     }
 }
