@@ -892,7 +892,7 @@ gráficos (o SVG é feito à mão, como hoje).
 - Template com `<!DOCTYPE>`/`<html>`/`<body>` e Font Awesome.
 
 **Contrato**
-- Tema: `--color-accent` `#2a78d6` (azul vivo, texto branco ≈ 4,6:1, AA)
+- Tema: `--color-accent` `#2772ca` (azul vivo, texto branco 4,83:1, AA)
   e `--color-accent-content` branco, para a ação principal.
 - `GET /api/suppliers/actives/open` e `GET /api/product-items/by-supplier-open`
   ganham `q` (loja: nome; produto: marca, categoria ou tipo), sem
@@ -1613,9 +1613,15 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > até a etapa Entrega). Pedido de teste removido e estoque devolvido.
 
 **Cliente — Produtos de uma loja (§5.24):**
-- [ ] Um só branco no fundo; chip ativo em accent; grid com entrada em
+- [x] Um só branco no fundo; chip ativo em accent; grid com entrada em
       sequência e atenuado durante a busca; testes (item 24) verdes;
       `ng test` (sem falhas novas) e `ng build`; E2E em 390 e 1280 px.
+
+> **Verificação (2026-10-21)**: `ng test` 472 testes, só as 10 falhas antigas de providers; `ng build` ok. E2E com
+> `cliente.teste@h2gas.local` em 1280 e 390 px: `body`, `main` e container sem fundo próprio (um só branco, sem `<body>`
+> aninhado); chip "Água" ativo com `rgb(39,114,202)` e texto branco; lista entra em sequência ao trocar o tipo.
+> **Achado**: o ajuste de contraste do accent (`#2772ca`, 4,83:1) da auditoria nunca tinha sido commitado — o token
+> seguia `#2a78d6` (4,42:1, abaixo do AA); corrigido em commit à parte, e o texto da §5.21 foi acertado.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
