@@ -1224,9 +1224,15 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > foto de produto (`ProductItemService`) tem o mesmo defeito: **dívida registrada**. (3) A logo que não carrega volta para as
 > iniciais também na tela da loja. Dívida também registrada: o `PUT /addresses/{id}` não confere o dono.
 
-- [ ] Tela única "Minha loja" para o fornecedor: `/meus-dados` e
+- [x] Tela única "Minha loja" para o fornecedor: `/meus-dados` e
       `/distributor/edit/:id` levam a `/minha-loja`, e-mail só leitura,
       menu com "Minha loja" e atualizado ao salvar o nome (ajuste pedido).
+
+> Tela única verificada em 2026-10-21: backend 349 testes (único erro: `contextLoads`); frontend 425 testes com as 12 falhas
+> antigas; `ng build` sem erro; E2E em 1280 e 390 px com 15 checagens (menu com "Minha loja" e sem "Meus Dados", e-mail só
+> leitura, `/meus-dados` e `/distributor/edit/<id>` caindo em `/minha-loja`, iniciais do menu atualizadas ao salvar o nome sem
+> recarregar, "Editar loja" de Pedidos recebidos levando a `/minha-loja`, cliente seguindo no Meus Dados, sem rolagem lateral nem
+> erro de JS); nome restaurado. O `navigateEdit` de Pedidos recebidos virou `goToStore()`, e o do Histórico (sem uso) saiu.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
