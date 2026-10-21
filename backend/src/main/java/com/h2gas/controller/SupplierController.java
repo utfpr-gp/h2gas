@@ -304,11 +304,20 @@ public class SupplierController {
         return ResponseEntity.ok(updated);
     }
 
+    @Operation(summary = "Abre ou fecha a loja", description = "Corpo {\"status\": true|false}. O fornecedor só altera a própria loja")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Status atualizado"),
+            @ApiResponse(responseCode = "403", description = "Fornecedor alterando outra loja")
+    })
     @PatchMapping("/{id}/status")
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER"})
     public ResponseEntity<Map<String, String>> changeStatusOpenClosed(@PathVariable String id,
                                                               @RequestBody Map<String, Boolean> status) {
+        User actor = currentUser();
+        if (actor.getUserType() == UserTypeEnum.SUPPLIER && !actor.getId().equals(id)) {
+            throw new ForbiddenResourceException("Você só pode abrir ou fechar a sua própria loja.");
+        }
         boolean novoStatus = status.get("status");
         supplierService.updateStatusOpenClosed(id, novoStatus);
         return ResponseEntity.ok(Map.of("message", "Status atualizado."));

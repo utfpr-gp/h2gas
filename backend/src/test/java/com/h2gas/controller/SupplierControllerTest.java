@@ -37,6 +37,7 @@ import java.time.YearMonth;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
@@ -283,5 +284,15 @@ class SupplierControllerTest {
         mockMvc.perform(delete("/api/suppliers/mine/logo")).andExpect(status().isNoContent());
 
         verify(supplierService).removeMyLogo("fornecedor-1");
+    }
+
+    @Test
+    void deveRetornar403AoAbrirOuFecharLojaDeOutro() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+
+        mockMvc.perform(patch("/api/suppliers/fornecedor-2/status").contentType(MediaType.APPLICATION_JSON).content("{\"status\":true}"))
+                .andExpect(status().isForbidden());
+
+        verify(supplierService, never()).updateStatusOpenClosed(any(), anyBoolean());
     }
 }
