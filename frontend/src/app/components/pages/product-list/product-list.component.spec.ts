@@ -10,6 +10,13 @@ import { ProductItemService } from '../../../services/product-item.service';
 import { ProductTypeService } from '../../../services/product-type.service';
 import { CartService } from '../../../services/cart.service';
 import { ProductItem } from '../../../models/product-item';
+import { SupplierService } from '../../../services/supplier.service';
+import { Supplier } from '../../../models/supplier';
+import { registerLocaleData } from '@angular/common';
+import localePt from '@angular/common/locales/pt';
+import { LOCALE_ID } from '@angular/core';
+
+registerLocaleData(localePt);
 
 describe('ProductListComponent', () => {
   let component: ProductListComponent;
@@ -18,6 +25,13 @@ describe('ProductListComponent', () => {
   let productTypeServiceSpy: jasmine.SpyObj<ProductTypeService>;
   let cartServiceSpy: jasmine.SpyObj<CartService>;
   let toastrSpy: jasmine.SpyObj<ToastrService>;
+  let supplierServiceSpy: jasmine.SpyObj<SupplierService>;
+
+  const loja: Supplier = {
+    id: 'fixture-supplier-hu02', name: 'Gás Centro Curitiba', open: true, openingTime: '07:00', closingTime: '20:00',
+    averageDeliveryTime: '60', addressNeighborhood: 'Batel', cityName: 'Curitiba', averageRating: 4.2, reviewCount: 14,
+    bannerUrl: 'https://cdn/banner.jpg', logoUrl: 'https://cdn/logo.png', description: 'Entrega rápida no centro',
+  };
 
   const emptyPage = { data: [], page: 0, size: 10, totalElements: 0, totalPages: 0, hasNext: false, hasPrevious: false };
 
@@ -29,6 +43,8 @@ describe('ProductListComponent', () => {
     productTypeServiceSpy.findAll.and.returnValue(of([{ id: 1, name: 'Gás' }, { id: 2, name: 'Água' }] as any));
 
     cartServiceSpy = jasmine.createSpyObj('CartService', ['addProduct', 'startBuyNow']);
+    supplierServiceSpy = jasmine.createSpyObj('SupplierService', ['findById']);
+    supplierServiceSpy.findById.and.returnValue(of(loja));
 
     await TestBed.configureTestingModule({
       imports: [ProductListComponent],
@@ -39,6 +55,8 @@ describe('ProductListComponent', () => {
         { provide: ProductTypeService, useValue: productTypeServiceSpy },
         { provide: ToastrService, useValue: toastrSpy = jasmine.createSpyObj('ToastrService', ['success', 'error', 'warning']) },
         { provide: CartService, useValue: cartServiceSpy },
+        { provide: SupplierService, useValue: supplierServiceSpy },
+        { provide: LOCALE_ID, useValue: 'pt-BR' },
       ]
     })
     .compileComponents();
@@ -117,5 +135,68 @@ describe('ProductListComponent', () => {
     resposta.next({ ...emptyPage, data: [{ id: 1, brand: 'Ultragaz' }], totalElements: 1, totalPages: 1 });
     fixture.detectChanges();
     expect(grid.classList).not.toContain('opacity-60');
+  });
+
+  // ---- F7 §5.26: cabeçalho da loja ----
+  const byId = (id: string) => fixture.nativeElement.querySelector(`[data-testid="${id}"]`) as HTMLElement | null;
+  const recriarCom = (store: Supplier) => {
+    supplierServiceSpy.findById.and.returnValue(of(store));
+    fixture = TestBed.createComponent(ProductListComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  };
+
+  it('deveMostrarOCabecalhoDaLoja', () => {
+    expect(supplierServiceSpy.findById).toHaveBeenCalledWith('fixture-supplier-hu02');
+    const cabecalho = byId('store-header')!;
+    expect(cabecalho.querySelector('h1')!.textContent).toContain('Gás Centro Curitiba');
+    expect(cabecalho.textContent).toContain('4,2');
+    expect(cabecalho.textContent).toContain('(14)');
+    expect(byId('store-status')!.textContent).toContain('Aberta');
+    expect(byId('store-hours')!.textContent).toContain('07:00 – 20:00');
+    expect(byId('store-hours')!.textContent).toContain('60 min');
+    expect(byId('store-location')!.textContent).toContain('Batel · Curitiba');
+    expect((byId('store-banner-image') as HTMLImageElement).src).toBe('https://cdn/banner.jpg');
+    expect((byId('store-logo') as HTMLImageElement).src).toBe('https://cdn/logo.png');
+    expect(byId('store-description')!.textContent).toContain('Entrega rápida no centro');
+    expect(byId('toggle-description')).toBeNull();
+  });
+
+  it('deveUsarOBannerPadraoSemBanner', () => {
+    recriarCom({ ...loja, bannerUrl: null });
+
+    expect(byId('store-banner-image')).toBeNull();
+    expect(byId('store-banner-default')).not.toBeNull();
+  });
+
+  it('deveMostrarFechadaQuandoALojaNaoEstaAberta', () => {
+    recriarCom({ ...loja, open: false });
+
+    expect(byId('store-status')!.textContent).toContain('Fechada');
+  });
+
+  it('deveAlternarVerMaisNaDescricaoLonga', () => {
+    recriarCom({ ...loja, description: 'Trabalhamos com gás de cozinha e industrial há mais de vinte anos, '
+      + 'com entrega rápida em toda a região central e atendimento por telefone das 7h às 20h.' });
+    const descricao = byId('store-description')!;
+    expect(descricao.classList).toContain('line-clamp-2');
+
+    (byId('toggle-description') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(descricao.classList).not.toContain('line-clamp-2');
+    expect(byId('toggle-description')!.textContent).toContain('Ver menos');
+    expect(byId('toggle-description')!.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('deveSeguirComOsProdutosSeALojaFalhar', () => {
+    supplierServiceSpy.findById.and.returnValue(throwError(() => ({ error: { message: 'Loja não encontrada' } })));
+    productItemServiceSpy.getProductsBySupplierId.calls.reset();
+    fixture = TestBed.createComponent(ProductListComponent);
+    fixture.detectChanges();
+
+    expect(toastrSpy.error).toHaveBeenCalledWith(jasmine.stringContaining('Loja não encontrada'));
+    expect(productItemServiceSpy.getProductsBySupplierId).toHaveBeenCalled();
+    expect(byId('store-header')).toBeNull();
   });
 });

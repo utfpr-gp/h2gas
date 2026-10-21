@@ -12,7 +12,10 @@ import { PaginationComponent } from '../../pagination/pagination.component';
 import { ProductTypeService } from '../../../services/product-type.service';
 import { CategoryChipBarComponent } from '../../category-chip-bar/category-chip-bar.component';
 import { ProductCardComponent } from '../../product-card/product-card.component';
-import { staggerList } from '../../../animations/checkout.animations';
+import { fadeIn, staggerList } from '../../../animations/checkout.animations';
+import { SupplierService } from '../../../services/supplier.service';
+import { Supplier } from '../../../models/supplier';
+import { StoreRatingComponent } from '../../store-rating/store-rating.component';
 import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
@@ -22,11 +25,11 @@ import { backendMessage } from '../../../utils/backend-message';
     CommonModule,
     PaginationComponent,
     CategoryChipBarComponent,
-    ProductCardComponent
+    ProductCardComponent,
+    StoreRatingComponent
   ],
   templateUrl: './product-list.component.html',
-  styleUrl: './product-list.component.css',
-  animations: [staggerList],
+  animations: [staggerList, fadeIn],
   host: { class: 'flex flex-1 flex-col bg-gray-50 -mt-5 pt-5' }
 })
 export class ProductListComponent implements OnInit {
@@ -36,11 +39,19 @@ export class ProductListComponent implements OnInit {
     private routeActive: ActivatedRoute,
     private productItemService: ProductItemService,
     private productTypeService: ProductTypeService,
-    private cartService: CartService
+    private cartService: CartService,
+    private supplierService: SupplierService
   ) {}
 
   idSupplier?: string = '';
   products?: ProductItem[];
+  // F7 §5.26: cabeçalho da loja (banner, logo, nome, nota, horário, bairro, descrição)
+  store?: Supplier;
+  storeLoading = true;
+  bannerBroken = false;
+  logoBroken = false;
+  descriptionExpanded = false;
+  readonly descriptionClampLength = 120;
   loading = false;
   listVersion = 0; // muda a cada resposta, para a lista entrar em sequência mesmo com a mesma quantidade
   categories: ProductType[] = [];
@@ -52,6 +63,7 @@ export class ProductListComponent implements OnInit {
       return;
     }
     this.idSupplier = idParam;
+    this.loadStore(idParam);
     this.loadCategories();
     this.getProducts(this.idSupplier);
   }
@@ -63,6 +75,27 @@ export class ProductListComponent implements OnInit {
 
   searchTerm = '';
   selectedCategory: string | null = null;
+
+  loadStore(id: string) {
+    this.supplierService.findById(id).subscribe({
+      next: (store) => {
+        this.store = store;
+        this.storeLoading = false;
+      },
+      error: (err) => {
+        this.storeLoading = false;
+        this.toastr.error(`Erro ao carregar a loja: ${backendMessage(err)}`);
+      }
+    });
+  }
+
+  get hasLongDescription(): boolean {
+    return (this.store?.description?.length ?? 0) > this.descriptionClampLength;
+  }
+
+  get storeLocation(): string {
+    return [this.store?.addressNeighborhood, this.store?.cityName].filter(Boolean).join(' · ');
+  }
 
   loadCategories() {
     this.productTypeService.findAll().subscribe({
