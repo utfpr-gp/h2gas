@@ -3,6 +3,7 @@ import { LoginComponent } from './components/pages/login/login.component';
 import { InitialScreenComponent } from './components/pages/initial-screen/initial-screen.component';
 import { RegisterComponent } from './components/pages/register/register.component';
 import { RegisterSupplierComponent } from './components/pages/register-supplier/register-supplier.component';
+import { supplierStoreGuard } from './guards/supplier-store.guard';
 import { authGuard } from './guards/auth.guard';
 import { activeDeliveryGuard } from './guards/active-delivery.guard';
 import { addressDefinedGuard } from './guards/address-defined.guard';
@@ -52,9 +53,11 @@ export const routes: Routes = [
         canActivate: [authGuard],
         data: {roles: ['ADMIN', 'SUPPLIER']}
     },
+    // links antigos da tela da loja (o id da URL não é mais usado)
+    {path: 'distributor/edit/:id', redirectTo: 'minha-loja'},
     {
-        path: 'distributor/edit/:id',
-        // F7 fatia 6: dados da loja do fornecedor logado (o :id fica só por compatibilidade dos links)
+        path: 'minha-loja',
+        // F7 fatia 6: tela única do fornecedor (conta e loja são o mesmo cadastro)
         loadComponent: () => import('./components/pages/store-profile/store-profile.component').then((m) => m.StoreProfileComponent),
         canActivate: [authGuard],
         data: {roles: ['SUPPLIER']}
@@ -150,7 +153,7 @@ export const routes: Routes = [
     {
         path: 'meus-dados',
         component: CustomerPanelComponent,
-        canActivate: [authGuard],
+        canActivate: [authGuard, supplierStoreGuard],
         data: {roles: ['ADMIN', 'CUSTOMER', 'SUPPLIER', 'DELIVERER']}
     },
     // rota antiga (favoritos e links): segue funcionando

@@ -160,9 +160,6 @@ export class OrderHistoryComponent {
     })
   }
 
-  navigateEdit(id?: number) {
-    this.router.navigate(['/distributor/edit', id])
-  }
 
   getCountByStatus(status: string): number {
     return this.orders?.filter(order => order.status === status).length || 0;

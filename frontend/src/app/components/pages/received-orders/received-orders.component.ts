@@ -294,8 +294,8 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
     }
   }
 
-  navigateEdit(id?: string) {
-    this.router.navigate(['/distributor/edit', id])
+  goToStore() {
+    this.router.navigate(['/minha-loja'])
   }
 
   getCountByStatus(status: string): number {

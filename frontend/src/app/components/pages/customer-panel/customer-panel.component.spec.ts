@@ -183,12 +183,6 @@ describe('CustomerPanelComponent', () => {
     fixture.destroy();
     TestBed.resetTestingModule();
 
-    await setup({ ...igor, userType: 'SUPPLIER' });
-    expect(byId('atalho-configuracao')).toBeTruthy();
-    expect(byId('atalho-meus-enderecos')).toBeNull();
-    fixture.destroy();
-    TestBed.resetTestingModule();
-
     await setup({ ...igor, userType: 'DELIVERER' });
     expect(byId('atalho-meus-enderecos')).toBeNull();
     expect(byId('atalho-meus-pedidos')).toBeNull();
