@@ -102,8 +102,12 @@ export class StoreProfileComponent implements OnInit, OnDestroy {
     return initials(this.form.controls.name.value || this.profile?.name);
   }
 
+  // logo que não carrega (URL velha, sem rede) volta para as iniciais
+  logoBroken = false;
+
   get logoSrc(): string | null {
-    return this.logoPreview ?? this.profile?.logoUrl ?? null;
+    if (this.logoPreview) return this.logoPreview;
+    return this.logoBroken ? null : this.profile?.logoUrl ?? null;
   }
 
   get formattedCnpj(): string {
@@ -176,6 +180,7 @@ export class StoreProfileComponent implements OnInit, OnDestroy {
       next: ({ logoUrl }) => {
         this.uploadingLogo = false;
         this.clearPreview();
+        this.logoBroken = false;
         if (this.profile) this.profile = { ...this.profile, logoUrl };
         this.toastr.success('Logo atualizada.');
       },

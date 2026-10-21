@@ -22,7 +22,7 @@
             <div class="flex flex-wrap items-center gap-4">
                 <div class="relative w-24 h-24 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center shrink-0 border border-gray-200">
                     <img *ngIf="logoSrc; else iniciais" data-testid="logo-image" [src]="logoSrc" [alt]="'Logo de ' + profile.name"
-                        class="w-full h-full object-cover" />
+                        class="w-full h-full object-cover" (error)="logoBroken = !logoPreview" />
                     <ng-template #iniciais>
                         <span data-testid="logo-initials" class="text-2xl font-bold text-primary">{{ initials }}</span>
                     </ng-template>

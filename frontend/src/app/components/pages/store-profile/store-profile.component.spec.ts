@@ -155,4 +155,14 @@ describe('StoreProfileComponent', () => {
     expect(toastrSpy.error).toHaveBeenCalledWith(jasmine.stringContaining('Não foi possível enviar a imagem'));
     expect(byId('logo-image')).toBeNull();
   });
+
+  it('deveVoltarParaAsIniciaisSeALogoNaoCarregar', async () => {
+    await setup({ ...perfil, logoUrl: 'https://cdn/quebrada.png' });
+
+    byId('logo-image')!.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+
+    expect(byId('logo-image')).toBeNull();
+    expect(byId('logo-initials')?.textContent).toContain('GC');
+  });
 });

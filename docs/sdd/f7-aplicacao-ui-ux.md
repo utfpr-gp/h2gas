@@ -745,7 +745,9 @@ registrar como dívida para a tela dele.
   `DELETE /api/suppliers/mine/logo` → **204**.
 - `PUT /{id}`: SUPPLIER só a própria loja (**403**); ADMIN continua.
   OpenAPI em todas.
-- Tela "Dados da loja": logo com prévia (iniciais da loja sem logo),
+- Tela "Dados da loja" (componente novo `store-profile` na rota
+  `distributor/edit/:id`; o `distribuitor-form` fica só para o
+  `/distributor/new`): logo com prévia (iniciais da loja sem logo),
   trocar e remover (com confirmação), checagem de tipo e tamanho antes de
   enviar e upload na hora; formulário de nome, telefone e descrição com
   contador, CNPJ só leitura, erro por campo, Salvar só com alteração
@@ -971,14 +973,18 @@ a imagem antiga no Cloudinary; checar o dono no `PUT /addresses/{id}`
     `SupplierControllerTest`: `deveUsarALojaDoTokenNoPerfil`,
     `deveRetornar400ComNomeVazio`,
     `deveRetornar403AoEditarLojaDeOutroPeloId`,
-    `deveEnviarALogoComoMultipart`.
+    `deveEnviarALogoComoMultipart`; `SupplierServiceTest`:
+    `deveResponder502QuandoOCloudinaryRecusa`;
+    `GlobalExceptionHandlerTest`: `deveResponder400QuandoArquivoPassaDoLimite`.
     **Frontend** — `supplier.service.spec.ts`: `deveBuscarPerfilDaLoja`,
     `deveEnviarLogoComoFormData`, `deveRemoverLogo`;
-    `distribuitor-form.component.spec.ts`: `deveCarregarPerfilDaLoja`,
+    `store-profile.component.spec.ts`: `deveCarregarPerfilDaLoja`,
     `deveSalvarSoNomeTelefoneEDescricao`,
     `deveDesabilitarSalvarSemAlteracao`, `deveEnviarLogoEscolhida`,
     `deveRecusarArquivoGrandeAntesDeEnviar`,
-    `deveRemoverLogoComConfirmacao`, `deveMostrarIniciaisSemLogo`;
+    `deveRemoverLogoComConfirmacao`, `deveMostrarIniciaisSemLogo`,
+    `deveMostrarMensagemDoBackendAoFalharOEnvio`,
+    `deveVoltarParaAsIniciaisSeALogoNaoCarregar`;
     `supplier-card.component.spec.ts`: `deveMostrarLogoDaLojaOuIcone`.
 
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
@@ -1174,13 +1180,26 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > Água); esses produtos não aparecem em nenhum grupo dele.
 
 **Fatia 6 — dados da loja com logo (§5.18):**
-- [ ] Perfil e logo da loja pelo fornecedor do token; editar a loja de
+- [x] Perfil e logo da loja pelo fornecedor do token; editar a loja de
       outro é 403; editar o perfil não altera o horário; imagem validada
       (400) e falha de upload 502; `V14` aplicada; OpenAPI.
-- [ ] Tela "Dados da loja" com logo, formulário validado e endereço pelo
+- [x] Tela "Dados da loja" com logo, formulário validado e endereço pelo
       CEP; logo no card do catálogo com o ícone de reserva.
-- [ ] Testes da seção 7 (item 18) verdes; `mvn test`, `ng test` (sem
+- [x] Testes da seção 7 (item 18) verdes; `mvn test`, `ng test` (sem
       falhas novas) e `ng build`; teste manual em 390 e 1280 px.
+
+> Verificado em 2026-10-21: backend 348 testes (único erro: `contextLoads`, que precisa do MySQL local); `V14` aplicada no MySQL
+> local; frontend 420 testes com as 12 falhas antigas de providers; `ng build` sem erro; E2E em 1280 e 390 px com 19 checagens
+> (403 ao editar outra loja pelo id, dados e iniciais, .txt e imagem > 1 MB recusados antes de enviar, falha do Cloudinary com o
+> 502 amigável, logo salva na tela, um toast ao salvar, horário intacto ao salvar o perfil, cidade no modal de endereço, logo no
+> card do catálogo para o cliente e ícone na loja sem logo, remoção da logo, sem rolagem lateral nem erro de JS); dados do Gás
+> Centro restaurados no fim.
+>
+> **Achados do teste**: (1) as credenciais do Cloudinary no `.env` local são recusadas ("Invalid Signature") — o envio real não
+> pôde ser testado; a exibição foi testada com uma imagem pública de demonstração do Cloudinary gravada no banco. (2) O SDK do
+> Cloudinary lança `RuntimeException` quando a API recusa, e o envio virava 500 — agora é 502 com mensagem clara. O upload de
+> foto de produto (`ProductItemService`) tem o mesmo defeito: **dívida registrada**. (3) A logo que não carrega volta para as
+> iniciais também na tela da loja. Dívida também registrada: o `PUT /addresses/{id}` não confere o dono.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
