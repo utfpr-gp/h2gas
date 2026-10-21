@@ -1,4 +1,4 @@
-<div class="container w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 pb-20 md:pb-12">
+<div class="container w-full mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-20 md:pb-12">
     <!-- F7 §5.26: cabeçalho da loja -->
     <div *ngIf="storeLoading" data-testid="store-header-loading" class="rounded-xl overflow-hidden border border-gray-200 bg-white mb-6" aria-hidden="true">
         <div class="skeleton h-40 md:h-56 w-full rounded-none"></div>
@@ -15,18 +15,18 @@
                 alt="" class="w-full h-full object-cover" (error)="bannerBroken = true" />
             <ng-template #bannerPadrao>
                 <div data-testid="store-banner-default" class="w-full h-full bg-linear-to-br from-primary to-accent flex items-center justify-end pr-6 md:pr-12">
-                    <span class="material-icons text-white/15 text-8xl md:text-9xl" aria-hidden="true">storefront</span>
+                    <span class="material-icons text-white/15 text-8xl! md:text-9xl!" aria-hidden="true">storefront</span>
                 </div>
             </ng-template>
         </div>
 
         <div class="px-4 md:px-6 pb-4 md:pb-5">
-            <div class="flex items-end gap-3 md:gap-4 -mt-10 md:-mt-12">
+            <div class="relative z-10 flex items-end gap-3 md:gap-4 -mt-10 md:-mt-12">
                 <div class="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden ring-4 ring-white bg-white shadow-md flex items-center justify-center shrink-0">
                     <img *ngIf="store.logoUrl && !logoBroken; else iconeLoja" data-testid="store-logo" [src]="store.logoUrl"
                         [alt]="'Logo de ' + store.name" class="w-full h-full object-cover" (error)="logoBroken = true" />
                     <ng-template #iconeLoja>
-                        <span class="material-icons text-primary text-4xl" aria-hidden="true">storefront</span>
+                        <span class="material-icons text-primary text-4xl!" aria-hidden="true">storefront</span>
                     </ng-template>
                 </div>
             </div>
