@@ -12,6 +12,7 @@ import { PaginationComponent } from '../../pagination/pagination.component';
 import { ProductTypeService } from '../../../services/product-type.service';
 import { CategoryChipBarComponent } from '../../category-chip-bar/category-chip-bar.component';
 import { ProductCardComponent } from '../../product-card/product-card.component';
+import { staggerList } from '../../../animations/checkout.animations';
 import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
@@ -24,7 +25,8 @@ import { backendMessage } from '../../../utils/backend-message';
     ProductCardComponent
   ],
   templateUrl: './product-list.component.html',
-  styleUrl: './product-list.component.css'
+  styleUrl: './product-list.component.css',
+  animations: [staggerList]
 })
 export class ProductListComponent implements OnInit {
   constructor(
@@ -38,6 +40,8 @@ export class ProductListComponent implements OnInit {
 
   idSupplier?: string = '';
   products?: ProductItem[];
+  loading = false;
+  listVersion = 0; // muda a cada resposta, para a lista entrar em sequência mesmo com a mesma quantidade
   categories: ProductType[] = [];
 
   ngOnInit(): void {
@@ -76,6 +80,7 @@ export class ProductListComponent implements OnInit {
   }
 
   getProducts(supplierId: string, page: number = 0) {
+    this.loading = true;
     this.productItemService
       .getProductsBySupplierId(
         supplierId,
@@ -86,6 +91,8 @@ export class ProductListComponent implements OnInit {
       )
       .subscribe({
         next: (response: PaginatedResponse<ProductItem>) => {
+          this.loading = false;
+          this.listVersion++;
           this.products = response.data;
           this.currentPageProducts = response.page;
           this.pageSizeProducts = response.size;
@@ -93,6 +100,7 @@ export class ProductListComponent implements OnInit {
           this.totalElementsProducts = response.totalElements;
         },
         error: (err) => {
+          this.loading = false;
           console.error('Erro ao buscar produtos:', err.error?.message || err.message);
           this.toastr.error(`Erro ao buscar produtos: ${backendMessage(err)}`);
         },
