@@ -21,7 +21,7 @@ import { backendMessage } from '../../../utils/backend-message';
     DeleteConfirmationModalComponent
   ],
   templateUrl: './category-products.component.html',
-  styleUrl: './category-products.component.css'
+  host: { class: 'flex-1 flex flex-col' },
 })
 export class CategoryProductsComponent implements OnInit {
 

@@ -1,148 +1,134 @@
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Document</title>
-    </head>
-    <body class="bg-blue-50">
-        <!-- <header class="sticky top-0 z-40 w-full shadow-md">
-            <app-menu></app-menu>
-        </header> -->
-
-        <main class="flex-1 container mx-auto px-4 py-8">
-            <div class="bg-blue-50 min-h-screen p-6">
-                <div class="flex justify-between items-center mb-6">
-                  <div class="flex items-center gap-2">
-                    <div class="text-blue-600 text-3xl">📁</div>
-                    <div>
-                      <h1 class="text-xl font-bold text-blue-900">Categorias</h1>
-                      <p class="text-blue-700 text-lg">Gerencie as categorias dos seus produtos como tamanho ou litragem</p>
-                    </div>
-                  </div>
-                  <button (click)="toggleFormulario()" class="bg-blue-500 cursor-pointer hover:bg-blue-600 text-white px-4 py-2 rounded">
-                    + Nova Categoria
-                  </button>
-                </div>
-              
-                <div *ngIf="mostrarFormulario" class=" p-4 rounded shadow mb-6">
-                  <form>
-                    <div class="max-w-xl mx-auto p-6 bg-white rounded-xl shadow-md space-y-4">
-                        <div>
-                          <label class="block text-sm font-medium mb-1">Nome da Categoria *</label>
-                          <input type="text" class="w-full border rounded-md p-2 text-sm" />
-                        </div>
-                        <div>
-                          <label class="block text-sm font-medium mb-1">Descrição</label>
-                          <textarea class="w-full border rounded-md p-2 text-sm" rows="3"></textarea>
-                        </div>
-                        <div class="flex gap-2 justify-end">
-                          <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">Salvar</button>
-                          <button (click)="toggleFormulario()" class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 text-sm">Cancelar</button>
-                        </div>
-                      </div>
-                  </form>
-                </div>
-              
-                <div class="grid grid-cols-1  sm:grid-cols-3 gap-4 mt-6">
-                    <div *ngFor="let category of categories" class="bg-white p-4  rounded-xl shadow hover:shadow-md transition">
-                      <h3 class="text-lg font-semibold text-gray-800">
-                        {{category.type}}
-                      </h3>
-                      <p class="text-sm text-gray-600">
-                        {{category.name}}
-                      </p>
-                      <!-- <p class="text-xs text-gray-400 mt-1">Criado em: 2024-01-15</p> -->
-                      <div class="mt-3 flex items-center gap-3 text-blue-600">
-                        <button (click)="openModalEdit(category, true)"
-                          class="hover:text-blue-800 cursor-pointer">
-                          <i class="fa fa-pencil-alt"></i>
-                        </button>
-                        <button (click)="openModalDelete(category)" class="hover:text-red-800 cursor-pointer">
-                          <i class="fa fa-trash-alt"></i>
-                        </button>
-                      </div>
-                    </div>
-                </div>
-                  
-            </div>
-
-            <app-delete-confirmation-modal
-              [itemName]="deleteNameCategory!!"
-              (confirm)="deleteConfirmed()"
-              (cancel)="idCategoryRow = undefined">
-            </app-delete-confirmation-modal>
-            <!-- modal aqui -->
-            <div *ngIf="modalAberta" class="fixed inset-0 bg-black bg-opacity-25 backdrop-blur-sm flex justify-center items-center z-50">
-              <div class="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-md mx-4">
-                <div class="p-6">
-                  <div class="flex justify-between items-center mb-4">
-                    <!-- isEdit -->
-                    <h2 *ngIf="!isEdit" class="text-xl font-bold">Nova Categoria</h2>
-                    <h2  *ngIf="isEdit" class="text-xl font-bold">Editar Categoria</h2>
-                    <button class="text-gray-500 hover:text-gray-700" (click)="modalAberta = false">
-                      <i class="fas fa-times h-5 w-5"></i>
-                    </button>
-                  </div>
-        
-                  <form class="space-y-4" [formGroup]="formCategory">
-                    <div class="space-y-2">
-                      <label class="block text-sm font-medium text-gray-700">Nome da Categoria *</label>
-                      <input
-                        type="text"
-                        placeholder="Digite o nome da Categoria"
-                        class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 
-                               focus:ring-[#0017bf]/50 border-gray-300"
-                        formControlName="name"
-                      />
-                      <div *ngIf="formCategory.get('name')?.invalid && formCategory.get('name')?.touched"
-                           class="text-red-600 text-sm">
-                        Este campo é obrigatório.
-                      </div>
-                    </div>
-                  
-                    <div class="space-y-2">
-                      <label class="block text-sm font-medium text-gray-700">Tipo de Produto *</label>
-                      <select
-                        formControlName="productTypeId"
-                        
-                        class="mt-1 block w-full rounded-lg border border-gray-300 
-                               px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="null">Selecione o tipo de produto</option>
-                        <option *ngFor="let type of productTypes" [value]="type.id">
-                          {{ type.name }}
-                        </option>
-                      </select>
-                      <div *ngIf="formCategory.get('productTypeId')?.invalid && formCategory.get('productTypeId')?.touched"
-                           class="text-red-600 text-sm">
-                        Este campo é obrigatório.
-                      </div>
-                    </div>
-                  
-                    <div class="flex justify-end gap-2 pt-4">
-                      <button
-                        type="button"
-                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                        (click)="modalAberta = false"
-                      >
-                        Cancelar
-                      </button>
-                      <button 
-                        type="button"
-                        class="px-4 py-2 bg-[#0017bf] hover:bg-[#0017bf]/80 text-white rounded-md cursor-pointer"
-                        (click)="isEdit ? update() : salvarCategoria()"
-                      >
-                        Salvar
-                      </button>
-                    </div>
-                  </form>
-                  
-                </div>
+<div class="flex-1 bg-blue-50">
+  <div class="container mx-auto px-4 py-8">
+      <div class="bg-blue-50 min-h-screen p-6">
+          <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-2">
+              <div class="text-blue-600 text-3xl">📁</div>
+              <div>
+                <h1 class="text-xl font-bold text-blue-900">Categorias</h1>
+                <p class="text-blue-700 text-lg">Gerencie as categorias dos seus produtos como tamanho ou litragem</p>
               </div>
             </div>
-                     
-        </main>
-  </body>
-</html>
+            <button (click)="toggleFormulario()" class="bg-blue-500 cursor-pointer hover:bg-blue-600 text-white px-4 py-2 rounded">
+              + Nova Categoria
+            </button>
+          </div>
+
+          <div *ngIf="mostrarFormulario" class=" p-4 rounded shadow mb-6">
+            <form>
+              <div class="max-w-xl mx-auto p-6 bg-white rounded-xl shadow-md space-y-4">
+                  <div>
+                    <label class="block text-sm font-medium mb-1">Nome da Categoria *</label>
+                    <input type="text" class="w-full border rounded-md p-2 text-sm" />
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium mb-1">Descrição</label>
+                    <textarea class="w-full border rounded-md p-2 text-sm" rows="3"></textarea>
+                  </div>
+                  <div class="flex gap-2 justify-end">
+                    <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">Salvar</button>
+                    <button (click)="toggleFormulario()" class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 text-sm">Cancelar</button>
+                  </div>
+                </div>
+            </form>
+          </div>
+
+          <div class="grid grid-cols-1  sm:grid-cols-3 gap-4 mt-6">
+              <div *ngFor="let category of categories" class="bg-white p-4  rounded-xl shadow hover:shadow-md transition">
+                <h3 class="text-lg font-semibold text-gray-800">
+                  {{category.type}}
+                </h3>
+                <p class="text-sm text-gray-600">
+                  {{category.name}}
+                </p>
+                <div class="mt-3 flex items-center gap-3 text-blue-600">
+                  <button (click)="openModalEdit(category, true)"
+                    class="hover:text-blue-800 cursor-pointer">
+                    <i class="fa fa-pencil-alt"></i>
+                  </button>
+                  <button (click)="openModalDelete(category)" class="hover:text-red-800 cursor-pointer">
+                    <i class="fa fa-trash-alt"></i>
+                  </button>
+                </div>
+              </div>
+          </div>
+
+      </div>
+
+      <app-delete-confirmation-modal
+        [itemName]="deleteNameCategory!!"
+        (confirm)="deleteConfirmed()"
+        (cancel)="idCategoryRow = undefined">
+      </app-delete-confirmation-modal>
+      <!-- modal aqui -->
+      <div *ngIf="modalAberta" class="fixed inset-0 bg-black bg-opacity-25 backdrop-blur-sm flex justify-center items-center z-50">
+        <div class="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-md mx-4">
+          <div class="p-6">
+            <div class="flex justify-between items-center mb-4">
+              <!-- isEdit -->
+              <h2 *ngIf="!isEdit" class="text-xl font-bold">Nova Categoria</h2>
+              <h2  *ngIf="isEdit" class="text-xl font-bold">Editar Categoria</h2>
+              <button class="text-gray-500 hover:text-gray-700" (click)="modalAberta = false">
+                <i class="fas fa-times h-5 w-5"></i>
+              </button>
+            </div>
+
+            <form class="space-y-4" [formGroup]="formCategory">
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Nome da Categoria *</label>
+                <input
+                  type="text"
+                  placeholder="Digite o nome da Categoria"
+                  class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 
+                         focus:ring-secondary/50 border-gray-300"
+                  formControlName="name"
+                />
+                <div *ngIf="formCategory.get('name')?.invalid && formCategory.get('name')?.touched"
+                     class="text-red-600 text-sm">
+                  Este campo é obrigatório.
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Tipo de Produto *</label>
+                <select
+                  formControlName="productTypeId"
+
+                  class="mt-1 block w-full rounded-lg border border-gray-300 
+                         px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="null">Selecione o tipo de produto</option>
+                  <option *ngFor="let type of productTypes" [value]="type.id">
+                    {{ type.name }}
+                  </option>
+                </select>
+                <div *ngIf="formCategory.get('productTypeId')?.invalid && formCategory.get('productTypeId')?.touched"
+                     class="text-red-600 text-sm">
+                  Este campo é obrigatório.
+                </div>
+              </div>
+
+              <div class="flex justify-end gap-2 pt-4">
+                <button
+                  type="button"
+                  class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  (click)="modalAberta = false"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="button"
+                  class="px-4 py-2 bg-secondary hover:bg-secondary/80 text-white rounded-md cursor-pointer"
+                  (click)="isEdit ? update() : salvarCategoria()"
+                >
+                  Salvar
+                </button>
+              </div>
+            </form>
+
+          </div>
+        </div>
+      </div>
+
+  </div>
+</div>
