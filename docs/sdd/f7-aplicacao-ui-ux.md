@@ -500,6 +500,66 @@ depois da HU11.
 Usuários da HU12), motivo da recusa, aviso por e-mail ao aprovar, ações
 em lote, mexer no `PATCH /{id}/update-active`.
 
+### 5.14 Fatia 6 — cidades atendidas com a base do IBGE
+
+> Escrita em 2026-10-21, segunda tela da Fatia 6 (§5.13). Pedido do
+> autor: cadastrar cidade por dropdowns com a lista oficial de cidades
+> do Brasil, sem digitar à mão, e garantir que a cidade cadastrada case
+> com a do CEP quando um usuário novo informa o endereço.
+
+**Achados**
+- Nome e estado digitados livres: nada impede "curitiba", "Curitba"
+  ou estado "Paraná" no lugar de "PR".
+- O CEP (ViaCEP) é casado com a cidade **só pelo nome**, sem
+  diferenciar acento nem UF: "Sao Jose" não casa com "São José", e
+  "Bom Jesus" existe em vários estados (`address-form`,
+  `distribuitor-form`). O `distribuitor-form` nem preenche a cidade a
+  partir do CEP.
+- `POST /api/cities` devolve o corpo recebido (sem `id`), duplicidade
+  é 404 e só olha o nome; apagar cidade usada por fornecedor ou
+  endereço estoura a FK (500). As rotas não têm OpenAPI.
+- Tela: tabela genérica, botões com cor fixa, `console.log`, modal de
+  exclusão por checkbox, Font Awesome.
+
+**Decisão**: a fonte é a API pública de localidades do IBGE
+(`servicodados.ibge.gov.br/api/v1/localidades`, sem chave). O ViaCEP
+devolve no campo `ibge` o mesmo código de município, então a cidade
+guarda esse código e o casamento CEP ↔ cidade passa a ser exato.
+
+**Contrato**
+- Flyway `V12__city_ibge_code.sql`: `cities.ibge_code INT NULL UNIQUE`;
+  preenche Curitiba/PR (4106902). Cidades antigas sem código seguem
+  funcionando pelo casamento por nome + UF (abaixo).
+- `IbgeClient` (Spring `RestClient`, sem dependência nova):
+  `findMunicipality(code)` → nome e UF oficiais.
+- `POST /api/cities` (ADMIN) recebe só `{ "ibgeCode": 4106902 }`
+  (`@NotNull`). Nome e UF vêm do IBGE, nunca do corpo. **201** com
+  `id`, `name`, `state`, `ibgeCode`; **409** se a cidade já é atendida;
+  **400** se o código não existe no IBGE; **502** se o IBGE não
+  responder.
+- `DELETE /api/cities/{id}` (ADMIN): **409** com mensagem se houver
+  fornecedor ou endereço na cidade; **404** se não existir.
+- `GET /api/cities` passa a trazer `ibgeCode` e vem ordenado por UF e
+  nome. As três rotas ganham OpenAPI.
+- Frontend:
+  - `services/ibge.service.ts`: UFs e municípios por UF direto do IBGE
+    (como o ViaCEP), ordenados por nome e guardados em cache na sessão;
+  - `utils/city-match.ts`: `matchCityFromCep(cities, viaCep)` casa pelo
+    código IBGE e, sem código, por nome sem acento/maiúscula **e** UF.
+    Usado em `address-form` e `distribuitor-form` (que passa a
+    preencher a cidade pelo CEP);
+  - `city-register`: lista das cidades atendidas com busca local
+    (lista curta, só do admin), contador, estado vazio, skeleton;
+    "Nova cidade" em modal com dropdown de UF e de município (cidades
+    já atendidas aparecem desabilitadas), botão salvar só com município
+    escolhido; excluir com modal de confirmação próprio e a mensagem do
+    409; rota sob demanda (`loadComponent`).
+
+**Fora de escopo (desta tela)**: backend conferir se o CEP do endereço
+pertence ao `cityId` enviado; preencher o código IBGE das cidades
+antigas de outros ambientes (o casamento por nome + UF cobre); bairros
+ou faixas de CEP atendidas; editar cidade.
+
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
 - Agregação de rating médio por fornecedor (gap de backend).
@@ -628,6 +688,29 @@ em lote, mexer no `PATCH /{id}/update-active`.
     `deveManterStatusQuandoAprovacaoFalhar`, `devePaginar`;
     `supplier.service.spec.ts`: `deveEnviarFiltrosNaListagem`.
 
+14. *(fatia 6, §5.14)* **Backend** — `CityServiceTest`:
+    `deveCadastrarCidadeComNomeEUfDoIbge`,
+    `deveRecusarCidadeJaAtendida` (409),
+    `deveRecusarCodigoInexistenteNoIbge` (400),
+    `deveRecusarExcluirCidadeComFornecedorOuEndereco` (409);
+    `IbgeClientTest`: `deveLerNomeEUfDoMunicipio`,
+    `deveDevolverVazioParaCodigoInexistente`,
+    `deveAvisarQuandoOIbgeNaoResponde` (502);
+    `CityControllerTest`: `deveRetornar201AoCadastrarCidade`,
+    `deveRetornar400SemCodigoIbge`.
+    **Frontend** — `city-match.spec.ts`:
+    `deveCasarPeloCodigoIbge`, `deveCasarPorNomeSemAcentoEUf`,
+    `naoDeveCasarMesmoNomeEmOutraUf`;
+    `ibge.service.spec.ts`: `deveListarUfsPorNome`,
+    `deveListarMunicipiosDaUfComCache`;
+    `city-register.component.spec.ts`:
+    `deveListarCidadesAtendidas`, `deveCarregarMunicipiosAoEscolherUf`,
+    `deveDesabilitarMunicipioJaAtendido`,
+    `deveCadastrarPeloCodigoIbge`, `deveConfirmarAntesDeExcluir`,
+    `deveMostrarMensagemQuandoCidadeEmUso`;
+    `address-form.component.spec.ts`:
+    `devePreencherCidadePeloCodigoIbgeDoCep`.
+
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
 ## 8. Definição de Pronto
@@ -738,6 +821,16 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 >
 > **Achados do teste**: (1) a tela entrava no bundle inicial e estourava o orçamento de 1 MB do `ng build` por 1 kB — a rota
 > passou a `loadComponent` (tela só do admin); (2) no celular o campo de busca não ocupava a largura toda.
+
+**Fatia 6 — cidades com a base do IBGE (§5.14):**
+- [ ] Cidade cadastrada só por código IBGE, com nome e UF oficiais;
+      409/400/502 com mensagem; exclusão de cidade em uso é 409.
+- [ ] CEP de usuário novo casa com a cidade pelo código IBGE (e por
+      nome + UF nas antigas) no `address-form` e no `distribuitor-form`.
+- [ ] Tela com dropdowns de UF e município, busca, confirmação de
+      exclusão; rotas com OpenAPI.
+- [ ] Testes da seção 7 (item 14) verdes; `mvn test`, `ng test` (sem
+      falhas novas) e `ng build`; teste manual em 390 e 1280 px.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
