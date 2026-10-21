@@ -41,6 +41,10 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/test").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/cities").permitAll()
+                        // HU13: vitrine pública, só leitura — checkout, pedidos e dados completos da loja seguem com login
+                        .requestMatchers(HttpMethod.GET, "/api/suppliers/actives/open", "/api/suppliers/*/storefront",
+                                "/api/suppliers/*/reviews", "/api/product-items/by-supplier/*",
+                                "/api/product-items/by-supplier-open", "/api/product-types").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login/token/request").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login/token/validate").permitAll()

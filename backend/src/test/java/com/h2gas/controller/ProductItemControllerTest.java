@@ -116,6 +116,18 @@ class ProductItemControllerTest {
         verify(productItemService).findProductsFiltered(eq("forn-1"), any(), any(), eq(true), any());
     }
 
+    // HU13: o visitante (sem login) também nunca vê produto zerado (RN02)
+    @Test
+    void deveForcarOnlyAvailableParaVisitante() throws Exception {
+        when(productItemService.findProductsFiltered(any(), any(), any(), org.mockito.ArgumentMatchers.anyBoolean(), any()))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
+
+        mockMvc.perform(get("/api/product-items/by-supplier/forn-1").param("onlyAvailable", "false"))
+                .andExpect(status().isOk());
+
+        verify(productItemService).findProductsFiltered(eq("forn-1"), any(), any(), eq(true), any());
+    }
+
     @Test
     void devePermitirFornecedorVerProdutosZerados() throws Exception {
         autenticarComo("SUPPLIER");
