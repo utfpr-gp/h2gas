@@ -73,7 +73,7 @@ describe('SupplierCardComponent', () => {
     expect(el.querySelector('[data-testid="view-products"]')!.classList).toContain('min-h-11');
   });
 
-  // ---- F7 §5.25 ----
+  // ---- F7 §5.25: a formatação da nota é testada em store-rating; aqui, só que o card a mostra ----
   const rating = () => fixture.nativeElement.querySelector('[data-testid="supplier-rating"]') as HTMLElement;
 
   it('deveMostrarNotaEContagemDaLoja', () => {
@@ -84,21 +84,5 @@ describe('SupplierCardComponent', () => {
     expect(rating().textContent).toContain('(14)');
     expect(rating().textContent).not.toContain('Sem avaliações');
     expect(rating().getAttribute('aria-label')).toBe('Nota 4,3 de 5, 14 avaliações');
-  });
-
-  it('deveMostrarSingularComUmaAvaliacao', () => {
-    component.supplier = { id: '7', name: 'Gás Centro', averageRating: 5, reviewCount: 1 } as Supplier;
-    fixture.detectChanges();
-
-    expect(rating().textContent).toContain('5,0');
-    expect(rating().getAttribute('aria-label')).toBe('Nota 5,0 de 5, 1 avaliação');
-  });
-
-  it('deveMostrarSemAvaliacoesQuandoNaoHa', () => {
-    component.supplier = { id: '7', name: 'Gás Centro', averageRating: null, reviewCount: 0 } as Supplier;
-    fixture.detectChanges();
-
-    expect(rating().textContent).toContain('Sem avaliações ainda');
-    expect(rating().getAttribute('aria-label')).toBeNull();
   });
 });
