@@ -1,17 +1,66 @@
 <div class="max-w-7xl mx-auto px-4 md:px-8 pt-6 pb-24 md:pb-10">
-    <header class="flex flex-wrap items-center justify-between gap-3 mb-5">
+    <header class="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div>
             <h1 class="text-2xl font-bold text-gray-800">Visão Geral</h1>
-            <p class="text-sm text-gray-500">Indicadores de vendas e entregas da sua loja.</p>
+            <p class="text-sm text-gray-500">Vendas e entregas da sua loja. Clique num pagamento, tipo, categoria ou produto para filtrar.</p>
         </div>
         <label class="flex items-center gap-2 text-sm text-gray-600">
             <span class="material-icons text-base">calendar_month</span>
             <select data-testid="month-select" (change)="changeMonth($any($event.target).value)" aria-label="Mês dos indicadores"
-                class="select rounded-xl border border-gray-300 bg-white text-gray-800">
+                class="select select-bordered select-sm rounded-xl bg-white text-gray-800">
                 <option *ngFor="let m of months" [value]="m.value" [selected]="m.value === selectedMonth">{{ m.label }}</option>
             </select>
         </label>
     </header>
+
+    <!-- Filtros: uma linha acima dos gráficos -->
+    <section class="bg-white rounded-xl border border-gray-200 p-3 mb-4 space-y-2" aria-label="Filtros">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+            <label class="form-control">
+                <span class="label-text text-xs text-gray-500">Pagamento</span>
+                <select data-testid="filter-payment" class="select select-bordered select-sm rounded-xl" (change)="selectFilter('payment', $any($event.target).value)">
+                    <option value="" [selected]="!filter.payment">Todos</option>
+                    <option *ngFor="let p of payments" [value]="p" [selected]="filter.payment === p">{{ paymentLabel(p) }}</option>
+                </select>
+            </label>
+            <label class="form-control">
+                <span class="label-text text-xs text-gray-500">Entrega ou retirada</span>
+                <select data-testid="filter-mode" class="select select-bordered select-sm rounded-xl" (change)="selectFilter('mode', $any($event.target).value)">
+                    <option value="" [selected]="!filter.mode">Todas</option>
+                    <option value="DELIVERY" [selected]="filter.mode === 'DELIVERY'">Entrega</option>
+                    <option value="PICKUP" [selected]="filter.mode === 'PICKUP'">Retirada</option>
+                </select>
+            </label>
+            <label class="form-control">
+                <span class="label-text text-xs text-gray-500">Tipo</span>
+                <select data-testid="filter-type" class="select select-bordered select-sm rounded-xl" (change)="selectFilter('typeId', $any($event.target).value)">
+                    <option value="" [selected]="filter.typeId == null">Todos os tipos</option>
+                    <option *ngFor="let t of productTypes" [value]="t.id" [selected]="filter.typeId === t.id">{{ t.name }}</option>
+                </select>
+            </label>
+            <label class="form-control">
+                <span class="label-text text-xs text-gray-500">Categoria</span>
+                <select data-testid="filter-category" class="select select-bordered select-sm rounded-xl" (change)="selectFilter('categoryId', $any($event.target).value)">
+                    <option value="" [selected]="filter.categoryId == null">Todas as categorias</option>
+                    <option *ngFor="let c of categories" [value]="c.id" [selected]="filter.categoryId === c.id">{{ c.name }}</option>
+                </select>
+            </label>
+            <label class="form-control col-span-2 md:col-span-1">
+                <span class="label-text text-xs text-gray-500">Produto</span>
+                <select data-testid="filter-product" class="select select-bordered select-sm rounded-xl" (change)="selectFilter('productId', $any($event.target).value)">
+                    <option value="" [selected]="filter.productId == null">Todos os produtos</option>
+                    <option *ngFor="let p of products" [value]="p.id" [selected]="filter.productId === p.id">{{ p.label }}</option>
+                </select>
+            </label>
+        </div>
+        <div *ngIf="activeFilters.length" data-testid="active-filters" class="flex flex-wrap items-center gap-1.5">
+            <button *ngFor="let f of activeFilters" type="button" class="badge badge-primary badge-outline gap-1 py-3"
+                [attr.aria-label]="'Remover filtro ' + f.label" (click)="setFilter(f.key, undefined)">
+                {{ f.label }}<span class="material-icons text-sm" aria-hidden="true">close</span>
+            </button>
+            <button type="button" data-testid="clear-filters" class="btn btn-xs btn-ghost text-primary" (click)="clearFilters()">Limpar</button>
+        </div>
+    </section>
 
     <div *ngIf="loading && !dashboard" class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <div *ngFor="let n of [1,2,3,4,5,6,7,8]" class="skeleton h-24 rounded-xl"></div>
@@ -19,130 +68,204 @@
 
     <ng-container *ngIf="dashboard">
         <section [class.opacity-60]="loading" class="grid grid-cols-2 lg:grid-cols-4 gap-3" aria-label="Indicadores do mês">
-            <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
-                <p class="text-xs text-gray-500">Receita total</p>
-                <p data-testid="kpi-revenue" class="text-xl font-bold text-gray-800 mt-1">{{ dashboard.totalRevenue | currency:'BRL':'symbol':'1.2-2' }}</p>
+            <div class="bg-white rounded-xl border border-gray-200 p-4">
+                <p class="text-xs text-gray-500 flex items-center gap-1"><span class="material-icons text-sm text-primary" aria-hidden="true">payments</span>Receita</p>
+                <p data-testid="kpi-revenue" class="text-xl font-bold text-gray-800 mt-1 tabular-nums">{{ dashboard.totalRevenue | currency:'BRL':'symbol':'1.2-2' }}</p>
                 <p *ngIf="dashboard.revenueChangePercent != null" data-testid="revenue-change"
                     class="text-xs font-semibold mt-1 flex items-center gap-0.5"
-                    [ngClass]="dashboard.revenueChangePercent >= 0 ? 'text-green-600' : 'text-red-600'">
-                    <span class="material-icons text-sm">{{ dashboard.revenueChangePercent >= 0 ? 'trending_up' : 'trending_down' }}</span>
+                    [ngClass]="dashboard.revenueChangePercent >= 0 ? 'text-success' : 'text-error'">
+                    <span class="material-icons text-sm" aria-hidden="true">{{ dashboard.revenueChangePercent >= 0 ? 'trending_up' : 'trending_down' }}</span>
                     {{ dashboard.revenueChangePercent >= 0 ? '+' : '' }}{{ dashboard.revenueChangePercent | number:'1.1-1' }}% vs mês anterior
                 </p>
             </div>
-            <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
-                <p class="text-xs text-gray-500">Total de pedidos</p>
-                <p data-testid="kpi-orders" class="text-xl font-bold text-gray-800 mt-1">{{ dashboard.totalOrders }}</p>
+            <div class="bg-white rounded-xl border border-gray-200 p-4">
+                <p class="text-xs text-gray-500 flex items-center gap-1"><span class="material-icons text-sm text-primary" aria-hidden="true">receipt_long</span>Pedidos</p>
+                <p data-testid="kpi-orders" class="text-xl font-bold text-gray-800 mt-1 tabular-nums">{{ dashboard.totalOrders }}</p>
                 <p *ngIf="dashboard.ordersChangePercent != null" data-testid="orders-change"
                     class="text-xs font-semibold mt-1 flex items-center gap-0.5"
-                    [ngClass]="dashboard.ordersChangePercent >= 0 ? 'text-green-600' : 'text-red-600'">
-                    <span class="material-icons text-sm">{{ dashboard.ordersChangePercent >= 0 ? 'trending_up' : 'trending_down' }}</span>
+                    [ngClass]="dashboard.ordersChangePercent >= 0 ? 'text-success' : 'text-error'">
+                    <span class="material-icons text-sm" aria-hidden="true">{{ dashboard.ordersChangePercent >= 0 ? 'trending_up' : 'trending_down' }}</span>
                     {{ dashboard.ordersChangePercent >= 0 ? '+' : '' }}{{ dashboard.ordersChangePercent | number:'1.1-1' }}% vs mês anterior
                 </p>
             </div>
-            <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
-                <p class="text-xs text-gray-500">Ticket médio</p>
-                <p data-testid="kpi-ticket" class="text-xl font-bold text-gray-800 mt-1">
+            <div class="bg-white rounded-xl border border-gray-200 p-4">
+                <p class="text-xs text-gray-500 flex items-center gap-1"><span class="material-icons text-sm text-primary" aria-hidden="true">sell</span>Ticket médio</p>
+                <p data-testid="kpi-ticket" class="text-xl font-bold text-gray-800 mt-1 tabular-nums">
                     <ng-container *ngIf="dashboard.averageTicket != null; else semTicket">{{ dashboard.averageTicket | currency:'BRL':'symbol':'1.2-2' }}</ng-container>
                     <ng-template #semTicket>—</ng-template>
                 </p>
             </div>
-            <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
-                <p class="text-xs text-gray-500">A receber</p>
-                <p data-testid="kpi-receivable" class="text-xl font-bold text-gray-800 mt-1">{{ dashboard.receivable | currency:'BRL':'symbol':'1.2-2' }}</p>
+            <div class="bg-white rounded-xl border border-gray-200 p-4">
+                <p class="text-xs text-gray-500 flex items-center gap-1"><span class="material-icons text-sm text-primary" aria-hidden="true">hourglass_top</span>A receber</p>
+                <p data-testid="kpi-receivable" class="text-xl font-bold text-gray-800 mt-1 tabular-nums">{{ dashboard.receivable | currency:'BRL':'symbol':'1.2-2' }}</p>
             </div>
-            <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
-                <p class="text-xs text-gray-500">Pendentes agora</p>
-                <p data-testid="kpi-pending" class="text-xl font-bold text-amber-600 mt-1">{{ dashboard.pendingOrders }}</p>
+            <div class="bg-white rounded-xl border border-gray-200 p-4">
+                <p class="text-xs text-gray-500 flex items-center gap-1"><span class="material-icons text-sm text-warning" aria-hidden="true">pending_actions</span>Pendentes agora</p>
+                <p data-testid="kpi-pending" class="text-xl font-bold text-gray-800 mt-1 tabular-nums">{{ dashboard.pendingOrders }}</p>
             </div>
-            <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
-                <p class="text-xs text-gray-500">Em rota agora</p>
-                <p data-testid="kpi-route" class="text-xl font-bold text-primary mt-1">{{ dashboard.outForDeliveryOrders }}</p>
+            <div class="bg-white rounded-xl border border-gray-200 p-4">
+                <p class="text-xs text-gray-500 flex items-center gap-1"><span class="material-icons text-sm text-info" aria-hidden="true">local_shipping</span>Em rota agora</p>
+                <p data-testid="kpi-route" class="text-xl font-bold text-gray-800 mt-1 tabular-nums">{{ dashboard.outForDeliveryOrders }}</p>
             </div>
-            <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
-                <p class="text-xs text-gray-500">Entregas concluídas</p>
-                <p data-testid="kpi-delivered" class="text-xl font-bold text-gray-800 mt-1">{{ dashboard.deliveredOrders }}</p>
+            <div class="bg-white rounded-xl border border-gray-200 p-4">
+                <p class="text-xs text-gray-500 flex items-center gap-1"><span class="material-icons text-sm text-success" aria-hidden="true">check_circle</span>Entregas concluídas</p>
+                <p data-testid="kpi-delivered" class="text-xl font-bold text-gray-800 mt-1 tabular-nums">{{ dashboard.deliveredOrders }}</p>
             </div>
-            <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
-                <p class="text-xs text-gray-500">Tempo médio de entrega</p>
-                <p data-testid="kpi-avg-delivery" class="text-xl font-bold text-gray-800 mt-1">
+            <div class="bg-white rounded-xl border border-gray-200 p-4">
+                <p class="text-xs text-gray-500 flex items-center gap-1"><span class="material-icons text-sm text-primary" aria-hidden="true">timer</span>Tempo médio de entrega</p>
+                <p data-testid="kpi-avg-delivery" class="text-xl font-bold text-gray-800 mt-1 tabular-nums">
                     <ng-container *ngIf="dashboard.averageDeliveryMinutes != null; else semTempo">{{ dashboard.averageDeliveryMinutes | number:'1.0-1' }} min</ng-container>
                     <ng-template #semTempo>—</ng-template>
                 </p>
             </div>
         </section>
 
-        <div *ngIf="!hasSales" @fadeIn class="text-center bg-white rounded-xl border border-gray-200 py-12 px-4 mt-5">
-            <span class="material-icons text-gray-300" style="font-size: 56px">insights</span>
-            <p class="text-gray-700 font-semibold mt-2">Sem vendas neste mês</p>
-            <p class="text-sm text-gray-500">Escolha outro mês ou aguarde os próximos pedidos.</p>
+        <div *ngIf="!hasSales" @fadeIn data-testid="empty-state" class="text-center bg-white rounded-xl border border-gray-200 py-12 px-4 mt-5">
+            <span class="material-icons text-gray-300" style="font-size: 56px">{{ hasFilter ? 'filter_alt_off' : 'insights' }}</span>
+            <ng-container *ngIf="hasFilter; else semVendas">
+                <p class="text-gray-700 font-semibold mt-2">Nenhuma venda com estes filtros</p>
+                <p class="text-sm text-gray-500">Tire algum filtro ou escolha outro mês.</p>
+                <button type="button" data-testid="empty-clear-filters" class="btn btn-sm btn-primary rounded-xl mt-3" (click)="clearFilters()">Limpar filtros</button>
+            </ng-container>
+            <ng-template #semVendas>
+                <p class="text-gray-700 font-semibold mt-2">Sem vendas neste mês</p>
+                <p class="text-sm text-gray-500">Escolha outro mês ou aguarde os próximos pedidos.</p>
+            </ng-template>
         </div>
 
         <ng-container *ngIf="hasSales">
-            <section class="bg-white rounded-xl shadow-md border border-gray-200 p-4 mt-5" aria-label="Vendas por dia">
-                <h2 class="font-bold text-gray-800">Vendas por dia</h2>
-                <div class="mt-4 flex items-end gap-0.5 h-40" role="img" aria-label="Gráfico de barras com a receita de cada dia do mês">
-                    <div *ngFor="let point of dashboard.revenueByDay; trackBy: trackByDay" class="flex-1 h-full flex items-end">
-                        <div data-testid="day-bar" class="w-full bg-primary rounded-t min-h-px"
-                            [style.height.%]="barHeight(point.revenue)"
-                            [attr.aria-label]="(point.day | date:'dd/MM') + ': ' + (point.revenue | currency:'BRL':'symbol':'1.2-2')"
-                            [title]="(point.day | date:'dd/MM') + ': ' + (point.revenue | currency:'BRL':'symbol':'1.2-2')"></div>
+            <!-- Vendas por dia: colunas com eixo e o melhor dia em destaque -->
+            <section class="bg-white rounded-xl border border-gray-200 p-4 mt-5" aria-label="Vendas por dia" [class.opacity-60]="loading">
+                <div class="flex flex-wrap items-baseline justify-between gap-2">
+                    <h2 class="font-bold text-gray-800">Vendas por dia</h2>
+                    <p *ngIf="bestDay" data-testid="best-day" class="text-xs text-gray-500">
+                        Melhor dia: <strong class="text-gray-800">{{ bestDay.day | date:'dd/MM' }}</strong> ·
+                        <span class="tabular-nums">{{ bestDay.revenue | currency:'BRL':'symbol':'1.2-2' }}</span>
+                    </p>
+                </div>
+                <div class="mt-4 flex gap-2">
+                    <div class="relative w-16 shrink-0 h-44 text-[10px] text-gray-400 tabular-nums" aria-hidden="true">
+                        <span *ngFor="let t of axisTicks" data-testid="axis-label" class="absolute right-0 translate-y-1/2" [style.bottom.%]="t.bottom">
+                            {{ t.value | currency:'BRL':'symbol':'1.0-0' }}
+                        </span>
+                    </div>
+                    <div class="relative flex-1 min-w-0 h-44">
+                        <div *ngFor="let t of axisTicks" class="absolute inset-x-0 border-t border-dashed border-gray-100" [style.bottom.%]="t.bottom"></div>
+                        <div class="relative h-full flex items-end gap-px" role="img" aria-label="Gráfico de colunas com a receita de cada dia do mês">
+                            <div *ngFor="let point of dashboard.revenueByDay; trackBy: trackByDay" class="group flex-1 h-full flex items-end">
+                                <div data-testid="day-bar" class="w-full rounded-t-sm min-h-px transition-opacity group-hover:opacity-80"
+                                    [ngClass]="isBestDay(point) ? 'bg-chart-2' : 'bg-primary'"
+                                    [attr.data-best]="isBestDay(point)"
+                                    [style.height.%]="barHeight(point.revenue)"
+                                    [attr.aria-label]="(point.day | date:'dd/MM') + ': ' + (point.revenue | currency:'BRL':'symbol':'1.2-2')"
+                                    [title]="(point.day | date:'dd/MM') + ': ' + (point.revenue | currency:'BRL':'symbol':'1.2-2')"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="flex justify-between text-[11px] text-gray-500 mt-1">
+                <div class="flex justify-between text-[11px] text-gray-500 mt-1 pl-[4.5rem]">
                     <span>{{ dashboard.revenueByDay[0].day | date:'dd/MM' }}</span>
                     <span>{{ dashboard.revenueByDay[dashboard.revenueByDay.length - 1].day | date:'dd/MM' }}</span>
                 </div>
             </section>
 
-            <section data-testid="category-pie" *ngIf="categorySlices.length" class="bg-white rounded-xl shadow-md border border-gray-200 p-4 mt-5" aria-label="Vendas por categoria">
-                <h2 class="font-bold text-gray-800">Vendas por categoria</h2>
-                <div class="mt-4 flex flex-col sm:flex-row items-center gap-6">
-                    <svg viewBox="-1.5 -1.5 39 39" class="w-44 h-44 shrink-0" role="img" aria-label="Pizza com a participação de cada categoria na receita do mês">
-                        <circle cx="18" cy="18" r="15.9155" fill="none" class="text-gray-100" stroke="currentColor" stroke-width="6"></circle>
-                        <circle *ngFor="let slice of categorySlices" data-testid="category-slice" cx="18" cy="18" r="15.9155" fill="none"
-                            stroke="currentColor" stroke-width="6" [ngClass]="slice.strokeClass"
-                            [attr.stroke-dasharray]="slice.dasharray" [attr.stroke-dashoffset]="slice.dashoffset">
-                            <title>{{ slice.name }}: {{ slice.percent | number:'1.0-1' }}%</title>
-                        </circle>
-                    </svg>
-                    <ul class="w-full sm:max-w-md space-y-2">
-                        <li *ngFor="let slice of categorySlices" data-testid="category-legend-row" class="flex items-center justify-between gap-3 text-sm">
-                            <span class="flex items-center gap-2 text-gray-800">
-                                <span class="w-3 h-3 rounded-full" [ngClass]="slice.dotClass"></span>{{ slice.name }}
-                            </span>
-                            <span class="text-gray-500">{{ slice.percent | number:'1.0-1' }}% · {{ slice.quantity }} un · {{ slice.revenue | currency:'BRL':'symbol':'1.2-2' }}</span>
+            <div class="grid lg:grid-cols-2 gap-5 mt-5" [class.opacity-60]="loading">
+                <!-- Tipo: pizza com o total no centro; a legenda filtra -->
+                <section data-testid="category-pie" *ngIf="categorySlices.length" class="bg-white rounded-xl border border-gray-200 p-4" aria-label="Vendas por tipo">
+                    <h2 class="font-bold text-gray-800">Vendas por tipo</h2>
+                    <div class="mt-4 flex flex-col sm:flex-row items-center gap-5">
+                        <div class="relative w-40 h-40 shrink-0">
+                            <svg viewBox="-1.5 -1.5 39 39" class="w-40 h-40 -rotate-0" role="img" aria-label="Rosca com a participação de cada tipo na receita">
+                                <circle cx="18" cy="18" r="15.9155" fill="none" class="text-gray-100" stroke="currentColor" stroke-width="5"></circle>
+                                <circle *ngFor="let slice of categorySlices" data-testid="category-slice" cx="18" cy="18" r="15.9155" fill="none"
+                                    stroke="currentColor" stroke-width="5" [ngClass]="slice.strokeClass"
+                                    [class.opacity-30]="filter.typeId != null && filter.typeId !== slice.id"
+                                    [attr.stroke-dasharray]="slice.dasharray" [attr.stroke-dashoffset]="slice.dashoffset">
+                                    <title>{{ slice.name }}: {{ slice.percent | number:'1.0-1' }}%</title>
+                                </circle>
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                                <span class="text-[10px] uppercase tracking-wide text-gray-500">Total</span>
+                                <span data-testid="pie-total" class="text-sm font-bold text-gray-800 tabular-nums">{{ pieTotal | currency:'BRL':'symbol':'1.2-2' }}</span>
+                            </div>
+                        </div>
+                        <ul class="w-full space-y-1">
+                            <li *ngFor="let slice of categorySlices" data-testid="category-legend-row">
+                                <button type="button" [attr.data-testid]="'type-' + slice.id" [attr.aria-pressed]="isActive('typeId', slice.id)"
+                                    (click)="toggleFilter('typeId', slice.id)"
+                                    class="w-full flex items-center justify-between gap-3 text-sm rounded-lg px-2 py-1.5 hover:bg-base-200"
+                                    [ngClass]="{ 'bg-primary/10': isActive('typeId', slice.id) }">
+                                    <span class="flex items-center gap-2 text-gray-800"><span class="w-3 h-3 rounded-full" [ngClass]="slice.dotClass"></span>{{ slice.name }}</span>
+                                    <span class="text-gray-500 tabular-nums">{{ slice.percent | number:'1.0-1' }}% · {{ slice.quantity }} un · {{ slice.revenue | currency:'BRL':'symbol':'1.2-2' }}</span>
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </section>
+
+                <!-- Pagamentos -->
+                <section class="bg-white rounded-xl border border-gray-200 p-4" aria-label="Pagamentos">
+                    <h2 class="font-bold text-gray-800">Pagamentos</h2>
+                    <ul class="mt-3 space-y-1">
+                        <li *ngFor="let payment of dashboard.paymentBreakdown" data-testid="payment-row">
+                            <button type="button" [attr.data-testid]="'payment-' + payment.method" [attr.aria-pressed]="isActive('payment', $any(payment.method))"
+                                (click)="toggleFilter('payment', $any(payment.method))"
+                                class="w-full text-left rounded-lg px-2 py-1.5 hover:bg-base-200" [ngClass]="{ 'bg-primary/10': isActive('payment', $any(payment.method)) }">
+                                <span class="flex items-center justify-between text-sm">
+                                    <span class="text-gray-800">{{ paymentLabel(payment.method) }}</span>
+                                    <span class="text-gray-500 tabular-nums">{{ payment.orders }} pedidos · {{ payment.percent | number:'1.0-1' }}% · {{ payment.revenue | currency:'BRL':'symbol':'1.2-2' }}</span>
+                                </span>
+                                <span class="block h-2 bg-gray-100 rounded-full mt-1"><span class="block h-2 bg-primary rounded-full" [style.width.%]="payment.percent"></span></span>
+                            </button>
                         </li>
                     </ul>
-                </div>
-            </section>
+                    <h3 *ngIf="dashboard.deliveryModeBreakdown?.length" class="font-semibold text-gray-700 text-sm mt-4">Entrega ou retirada</h3>
+                    <div class="mt-2 grid grid-cols-2 gap-2">
+                        <button *ngFor="let m of dashboard.deliveryModeBreakdown" type="button" [attr.data-testid]="'mode-' + m.mode"
+                            [attr.aria-pressed]="isActive('mode', m.mode)" (click)="toggleFilter('mode', m.mode)"
+                            class="text-left rounded-xl border px-3 py-2 hover:border-primary/40"
+                            [ngClass]="isActive('mode', m.mode) ? 'border-primary bg-primary/10' : 'border-gray-200'">
+                            <span class="flex items-center gap-1 text-xs text-gray-500">
+                                <span class="material-icons text-sm" aria-hidden="true">{{ m.mode === 'PICKUP' ? 'storefront' : 'local_shipping' }}</span>{{ modeLabel[m.mode] }}
+                            </span>
+                            <span class="block font-bold text-gray-800 tabular-nums">{{ m.percent | number:'1.0-1' }}%</span>
+                            <span class="block text-xs text-gray-500 tabular-nums">{{ m.orders }} pedidos · {{ m.revenue | currency:'BRL':'symbol':'1.2-2' }}</span>
+                        </button>
+                    </div>
+                </section>
 
-            <div class="grid lg:grid-cols-2 gap-5 mt-5">
-                <section class="bg-white rounded-xl shadow-md border border-gray-200 p-4" aria-label="Vendas por produto">
-                    <h2 class="font-bold text-gray-800">Vendas por produto</h2>
-                    <ul class="mt-3 space-y-3">
+                <!-- Produtos -->
+                <section class="bg-white rounded-xl border border-gray-200 p-4" aria-label="Vendas por produto">
+                    <h2 class="font-bold text-gray-800">Produtos mais vendidos</h2>
+                    <ul class="mt-3 space-y-1">
                         <li *ngFor="let product of dashboard.salesByProduct" data-testid="product-row">
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="text-gray-800">{{ product.productName }}</span>
-                                <span class="text-gray-500">{{ product.quantity }} un</span>
-                            </div>
-                            <div class="h-2 bg-gray-100 rounded-full mt-1">
-                                <div class="h-2 bg-primary rounded-full" [style.width.%]="productWidth(product.quantity)"></div>
-                            </div>
+                            <button type="button" [attr.data-testid]="'product-' + product.productId" [attr.aria-pressed]="isActive('productId', product.productId)"
+                                (click)="toggleFilter('productId', product.productId)"
+                                class="w-full text-left rounded-lg px-2 py-1.5 hover:bg-base-200" [ngClass]="{ 'bg-primary/10': isActive('productId', product.productId) }">
+                                <span class="flex items-center justify-between gap-2 text-sm">
+                                    <span class="text-gray-800 truncate">{{ product.productName }}</span>
+                                    <span class="text-gray-500 tabular-nums shrink-0">{{ product.quantity }} un · {{ product.revenue | currency:'BRL':'symbol':'1.2-2' }}</span>
+                                </span>
+                                <span class="block h-2 bg-gray-100 rounded-full mt-1"><span class="block h-2 bg-primary rounded-full" [style.width.%]="widthOf(product.quantity, productQuantities)"></span></span>
+                            </button>
                         </li>
                     </ul>
                 </section>
 
-                <section class="bg-white rounded-xl shadow-md border border-gray-200 p-4" aria-label="Pagamentos">
-                    <h2 class="font-bold text-gray-800">Pagamentos</h2>
-                    <ul class="mt-3 space-y-3">
-                        <li *ngFor="let payment of dashboard.paymentBreakdown" data-testid="payment-row">
-                            <div class="flex items-center justify-between text-sm">
-                                <span class="text-gray-800">{{ paymentLabel(payment.method) }}</span>
-                                <span class="text-gray-500">{{ payment.percent | number:'1.0-1' }}% · {{ payment.revenue | currency:'BRL':'symbol':'1.2-2' }}</span>
-                            </div>
-                            <div class="h-2 bg-gray-100 rounded-full mt-1">
-                                <div class="h-2 bg-primary rounded-full" [style.width.%]="payment.percent"></div>
-                            </div>
+                <!-- Categorias da loja -->
+                <section *ngIf="dashboard.salesByStoreCategory?.length" class="bg-white rounded-xl border border-gray-200 p-4" aria-label="Vendas por categoria">
+                    <h2 class="font-bold text-gray-800">Vendas por categoria</h2>
+                    <ul class="mt-3 space-y-1">
+                        <li *ngFor="let c of dashboard.salesByStoreCategory">
+                            <button type="button" [attr.data-testid]="'store-category-' + c.categoryId" [attr.aria-pressed]="isActive('categoryId', c.categoryId)"
+                                (click)="toggleFilter('categoryId', c.categoryId)"
+                                class="w-full text-left rounded-lg px-2 py-1.5 hover:bg-base-200" [ngClass]="{ 'bg-primary/10': isActive('categoryId', c.categoryId) }">
+                                <span class="flex items-center justify-between gap-2 text-sm">
+                                    <span class="text-gray-800 truncate">{{ c.categoryName }} <span class="text-xs text-gray-400">{{ c.typeName }}</span></span>
+                                    <span class="text-gray-500 tabular-nums shrink-0">{{ c.percent | number:'1.0-1' }}% · {{ c.revenue | currency:'BRL':'symbol':'1.2-2' }}</span>
+                                </span>
+                                <span class="block h-2 bg-gray-100 rounded-full mt-1"><span class="block h-2 bg-primary rounded-full" [style.width.%]="widthOf(c.revenue, storeCategoryRevenues)"></span></span>
+                            </button>
                         </li>
                     </ul>
                 </section>

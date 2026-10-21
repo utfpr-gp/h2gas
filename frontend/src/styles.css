@@ -35,6 +35,17 @@
   --noise: 0;
 }
 
+/* F7 fatia 6: cores categóricas dos gráficos (ordem fixa, validada contra o fundo branco: faixa de
+   luminosidade, croma, separação para daltônicos ΔE ≥ 9 e visão normal ≥ 19). Três ficam abaixo de 3:1
+   no branco, então todo gráfico que as usa mostra rótulo ou legenda com o valor. */
+@theme {
+  --color-chart-1: #2a78d6;
+  --color-chart-2: #eb6834;
+  --color-chart-3: #1baf7a;
+  --color-chart-4: #eda100;
+  --color-chart-5: #e87ba4;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
