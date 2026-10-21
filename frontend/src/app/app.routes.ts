@@ -11,7 +11,6 @@ import { FirstAccessAddressComponent } from './components/pages/first-access-add
 import { SupplierApprovalComponent } from './components/pages/supplier-approval/supplier-approval.component';
 import { DistribuitorFormComponent } from './components/pages/distribuitor-form/distribuitor-form.component';
 import { CategoryProductsComponent } from './components/pages/category-products/category-products.component';
-import { ProductItemComponent } from './components/pages/product-item/product-item.component';
 import { ProductItemFormComponent } from './components/pages/product-item-form/product-item-form.component';
 import { UnauthorizedComponent } from './components/pages/unauthorized/unauthorized.component';
 import { SupplierListComponent } from './components/pages/supplier-list/supplier-list.component';
@@ -67,7 +66,8 @@ export const routes: Routes = [
     },
     {
         path: 'product-items', 
-        component: ProductItemComponent,
+        // tela só do fornecedor: fora do bundle inicial
+        loadComponent: () => import('./components/pages/product-item/product-item.component').then((m) => m.ProductItemComponent),
         canActivate: [authGuard],
         data: {roles: ['ADMIN', 'SUPPLIER']}
     },
