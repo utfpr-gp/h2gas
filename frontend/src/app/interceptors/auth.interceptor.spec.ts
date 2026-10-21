@@ -57,4 +57,15 @@ describe('authInterceptor', () => {
     expect(localStorage.getItem('access_token')).toBeNull();
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/login'], { queryParams: { returnUrl: '/resumo-pedido?modo=compra-direta' } });
   });
+
+  // HU13: senha errada (ou visitante) dá 401 sem token — não é sessão caída: nada de sair nem de perder o carrinho
+  it('naoDeveDerrubarASessaoEm401SemToken', () => {
+    localStorage.setItem('cart-product', JSON.stringify([{ id: 1, quantitySelect: 2 }]));
+
+    http.post('/api/auth/login', {}).subscribe({ error: () => {} });
+    httpMock.expectOne('/api/auth/login').flush({ message: 'E-mail ou senha inválidos.' }, { status: 401, statusText: 'Unauthorized' });
+
+    expect(routerSpy.navigate).not.toHaveBeenCalled();
+    expect(JSON.parse(localStorage.getItem('cart-product')!).length).toBe(1);
+  });
 });

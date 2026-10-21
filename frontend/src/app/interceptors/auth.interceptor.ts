@@ -19,7 +19,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authReq).pipe(
     catchError(err => {
-      if (err.status === 401) {
+      // só é sessão caída se a requisição levou token; senha errada ou visitante (HU13) não derrubam nada
+      if (err.status === 401 && token) {
         authService.logout();
         const returnUrl = router.url;
         router.navigate(['/login'], returnUrl && !returnUrl.startsWith('/login') ? { queryParams: { returnUrl } } : {});
