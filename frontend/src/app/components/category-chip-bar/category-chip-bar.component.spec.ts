@@ -52,4 +52,16 @@ describe('CategoryChipBarComponent', () => {
       .map((el) => el.textContent?.trim());
     expect(icones).toEqual(['apps', 'ac_unit', 'category']);
   });
+
+  it('deveDestacarOChipAtivoSemFundoEscuro', () => {
+    component.categories = [{ id: 1, name: 'Gás', icon: 'local_fire_department' }] as any;
+    component.selected = 'Gás';
+    fixture.detectChanges();
+
+    const ativo = fixture.nativeElement.querySelector('[data-testid="chip-Gás"] span') as HTMLElement;
+    expect(ativo.classList).not.toContain('bg-primary');
+    expect(ativo.classList).toContain('border-primary');
+    expect(ativo.classList).toContain('text-primary');
+    expect(fixture.nativeElement.querySelector('[data-testid="chip-Gás"]').getAttribute('aria-pressed')).toBe('true');
+  });
 });

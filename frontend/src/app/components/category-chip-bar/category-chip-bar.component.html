@@ -1,34 +1,30 @@
-<div class="flex gap-3 overflow-x-auto pb-2">
+<div class="flex gap-3 overflow-x-auto pb-2" role="group" aria-label="Filtrar por tipo">
   <button
     type="button"
+    data-testid="chip-all"
     class="flex flex-col items-center gap-1 shrink-0"
+    [attr.aria-pressed]="selected === null"
     (click)="select(null)">
     <span
-      class="w-14 h-14 rounded-full flex items-center justify-center border-2"
-      [class.border-primary]="selected === null"
-      [class.bg-primary]="selected === null"
-      [class.text-white]="selected === null"
-      [class.border-gray-200]="selected !== null"
-      [class.text-gray-500]="selected !== null">
+      class="w-14 h-14 rounded-full flex items-center justify-center border-2 transition-colors"
+      [ngClass]="selected === null ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 text-gray-500 hover:border-primary/40'">
       <span class="material-icons">apps</span>
     </span>
-    <span class="text-xs text-gray-700">Todas</span>
+    <span class="text-xs" [ngClass]="selected === null ? 'text-primary font-semibold' : 'text-gray-700'">Todas</span>
   </button>
 
   <button
     type="button"
     class="flex flex-col items-center gap-1 shrink-0"
     *ngFor="let categoria of categories"
+    [attr.data-testid]="'chip-' + categoria.name"
+    [attr.aria-pressed]="selected === categoria.name"
     (click)="select(categoria.name ?? null)">
     <span
-      class="w-14 h-14 rounded-full flex items-center justify-center border-2"
-      [class.border-primary]="selected === categoria.name"
-      [class.bg-primary]="selected === categoria.name"
-      [class.text-white]="selected === categoria.name"
-      [class.border-gray-200]="selected !== categoria.name"
-      [class.text-gray-500]="selected !== categoria.name">
+      class="w-14 h-14 rounded-full flex items-center justify-center border-2 transition-colors"
+      [ngClass]="selected === categoria.name ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 text-gray-500 hover:border-primary/40'">
       <span class="material-icons">{{ iconFor(categoria) }}</span>
     </span>
-    <span class="text-xs text-gray-700">{{ categoria.name }}</span>
+    <span class="text-xs" [ngClass]="selected === categoria.name ? 'text-primary font-semibold' : 'text-gray-700'">{{ categoria.name }}</span>
   </button>
 </div>

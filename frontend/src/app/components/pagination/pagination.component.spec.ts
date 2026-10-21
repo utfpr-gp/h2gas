@@ -20,4 +20,15 @@ describe('PaginationComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+
+  it('deveMarcarAPaginaAtualSemFundoEscuro', () => {
+    component.currentPage = 1;
+    component.totalPages = 3;
+    fixture.detectChanges();
+
+    const atual = fixture.nativeElement.querySelector('[aria-current="page"]') as HTMLElement;
+    expect(atual.textContent!.trim()).toBe('2');
+    expect(atual.classList).not.toContain('bg-primary');
+    expect(atual.classList).toContain('border-primary');
+  });
 });

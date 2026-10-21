@@ -59,4 +59,13 @@ describe('ProductCardComponent', () => {
     expect(entrega.textContent).toMatch(/110[.,]00/);
     expect(retirada.textContent).toMatch(/95[.,]00/);
   });
+
+  it('deveUsarAAcaoDeDestaqueNoAdicionar', () => {
+    component.product = { id: 1, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as any;
+    fixture.detectChanges();
+
+    const botao = fixture.nativeElement.querySelector('[data-testid="add-to-cart"]') as HTMLButtonElement;
+    expect(botao.classList).toContain('btn-accent');
+    expect(botao.classList).not.toContain('bg-primary');
+  });
 });
