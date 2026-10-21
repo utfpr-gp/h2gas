@@ -103,4 +103,22 @@ describe('addressDefinedGuard', () => {
       done();
     });
   });
+
+  // ---- HU13: visitante ----
+  it('deveMandarVisitanteSemCidadeParaOCep', () => {
+    userServiceSpy.getUserLocalStorage.and.returnValue(null);
+
+    const result = executeGuard({ data: { allowVisitor: true } } as any, { url: '/inicio' } as any);
+
+    expect(result).toBeFalse();
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/onde-voce-esta'], { queryParams: { returnUrl: '/inicio' } });
+    expect(addressServiceSpy.findByUserId).not.toHaveBeenCalled();
+  });
+
+  it('devePermitirVisitanteComCidade', () => {
+    userServiceSpy.getUserLocalStorage.and.returnValue(null);
+    locationContextService.setAddress({ cityId: 3, cityName: 'Curitiba', label: 'Batel · Curitiba' });
+
+    expect(executeGuard({ data: { allowVisitor: true } } as any, { url: '/inicio' } as any)).toBeTrue();
+  });
 });

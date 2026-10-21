@@ -17,6 +17,11 @@ export const authGuard: CanActivateFn = (route, state) => {
   const user = userService.getUserLocalStorage();
 
   if (!authService.isLogged()) {
+    // HU13: a vitrine (catálogo e página da loja) abre sem login
+    if (route.data?.['allowVisitor']) {
+      authService.dropExpiredSession();
+      return true;
+    }
     navigateKeepingReturnUrl(router, '/login', state.url); // HU13: volta para a página pedida depois de entrar
     return false;
   }

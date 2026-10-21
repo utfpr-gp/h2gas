@@ -38,4 +38,15 @@ describe('authGuard', () => {
     expect(result).toBeFalse();
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/login'], { queryParams: { returnUrl: '/resumo-pedido?modo=compra-direta' } });
   });
+
+  it('devePermitirVisitanteNoCatalogo', () => {
+    authSpy.isLogged.and.returnValue(false);
+    authSpy.dropExpiredSession = jasmine.createSpy('dropExpiredSession');
+
+    const result = executeGuard({ data: { allowVisitor: true, roles: ['CUSTOMER'] } } as any, { url: '/inicio' } as any);
+
+    expect(result).toBeTrue();
+    expect(authSpy.dropExpiredSession).toHaveBeenCalled();
+    expect(routerSpy.navigate).not.toHaveBeenCalled();
+  });
 });

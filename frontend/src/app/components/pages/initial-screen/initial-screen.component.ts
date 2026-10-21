@@ -19,4 +19,9 @@ export class InitialScreenComponent {
     this.router.navigate(['/login'])
   }
 
+  // HU13: ver a vitrine sem conta (o CEP é pedido antes do catálogo)
+  browseAsVisitor() {
+    this.router.navigate(['/inicio']);
+  }
+
 }

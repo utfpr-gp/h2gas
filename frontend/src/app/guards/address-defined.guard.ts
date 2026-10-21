@@ -19,6 +19,15 @@ export const addressDefinedGuard: CanActivateFn = (route, state) => {
   }
 
   const user = userService.getUserLocalStorage();
+  // HU13: o visitante escolhe a cidade pelo CEP antes de ver o catálogo (RN05)
+  if (!user && route?.data?.['allowVisitor']) {
+    navigateKeepingReturnUrl(router, '/onde-voce-esta', state?.url);
+    return false;
+  }
+  // sem usuário numa rota que exige login, quem decide é o authGuard (que roda junto)
+  if (!user) {
+    return true;
+  }
   // o admin não compra: vê o catálogo sem filtro de cidade e não cadastra endereço
   if (user?.userType === 'ADMIN') {
     return true;

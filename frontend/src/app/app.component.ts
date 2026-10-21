@@ -24,6 +24,7 @@ export class AppComponent {
     '/login', 
     '/login/senha',
     '/register', 
+    '/onde-voce-esta',
     '/register-supplier', 
     '/unauthorized', 
     '/aguardando-aprovacao',

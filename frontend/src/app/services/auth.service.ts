@@ -69,6 +69,14 @@ export class AuthService {
     this.cartService.clearBuyNow();
   }
 
+  // HU13: sessão vencida vira visitante — sai o token e o usuário, ficam o carrinho e a cidade
+  dropExpiredSession() {
+    if (localStorage.getItem('access_token') && this.isTokenExpired()) {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
+    }
+  }
+
   requestPasswordReset(data: any) {
     return this.http.post(`${environment.apiUrl}/users/reset-password`, data)
   }

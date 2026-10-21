@@ -67,4 +67,20 @@ describe('AuthService', () => {
     expect(JSON.parse(localStorage.getItem('cart-product') ?? '[]')).toEqual([]);
     expect(sessionStorage.getItem('buy-now-item')).toBeNull();
   });
+
+  // HU13 Cenário 12: sessão vencida vira visitante sem perder carrinho nem cidade
+  it('deveDescartarSessaoVencidaSemLimparOCarrinho', () => {
+    const vencido = `${btoa('{"alg":"HS256"}')}.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) - 60 }))}.x`;
+    localStorage.setItem('access_token', vencido);
+    localStorage.setItem('user', JSON.stringify({ id: 'u1' }));
+    localStorage.setItem('cart-product', JSON.stringify([{ id: 1, quantitySelect: 1 }]));
+    locationContextService.setAddress({ cityId: 3, cityName: 'Curitiba', label: 'Curitiba' });
+
+    service.dropExpiredSession();
+
+    expect(localStorage.getItem('access_token')).toBeNull();
+    expect(localStorage.getItem('user')).toBeNull();
+    expect(JSON.parse(localStorage.getItem('cart-product')!).length).toBe(1);
+    expect(locationContextService.current()).not.toBeNull();
+  });
 });
