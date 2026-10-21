@@ -3,12 +3,13 @@ import { LoginComponent } from './components/pages/login/login.component';
 import { InitialScreenComponent } from './components/pages/initial-screen/initial-screen.component';
 import { RegisterComponent } from './components/pages/register/register.component';
 import { RegisterSupplierComponent } from './components/pages/register-supplier/register-supplier.component';
-import { CityRegisterComponent } from './components/pages/city-register/city-register.component';
 import { authGuard } from './guards/auth.guard';
 import { activeDeliveryGuard } from './guards/active-delivery.guard';
 import { addressDefinedGuard } from './guards/address-defined.guard';
 import { FirstAccessAddressComponent } from './components/pages/first-access-address/first-access-address.component';
-import { SupplierApprovalComponent } from './components/pages/supplier-approval/supplier-approval.component';
+import { AdminDashboardComponent } from './components/pages/admin-dashboard/admin-dashboard.component';
+import { AdminUsersComponent } from './components/pages/admin-users/admin-users.component';
+import { AdminProductTypesComponent } from './components/pages/admin-product-types/admin-product-types.component';
 import { DistribuitorFormComponent } from './components/pages/distribuitor-form/distribuitor-form.component';
 import { CategoryProductsComponent } from './components/pages/category-products/category-products.component';
 import { ProductItemFormComponent } from './components/pages/product-item-form/product-item-form.component';
@@ -62,36 +63,57 @@ export const routes: Routes = [
         path: 'category-products', 
         component: CategoryProductsComponent,
         canActivate: [authGuard],
-        data: {roles: ['ADMIN', 'SUPPLIER']}
+        data: {roles: ['SUPPLIER']}
     },
     {
         path: 'product-items', 
         // tela só do fornecedor: fora do bundle inicial
         loadComponent: () => import('./components/pages/product-item/product-item.component').then((m) => m.ProductItemComponent),
         canActivate: [authGuard],
-        data: {roles: ['ADMIN', 'SUPPLIER']}
+        data: {roles: ['SUPPLIER']}
     },
     {
         path: 'product-items/new', 
         component: ProductItemFormComponent,
         canActivate: [authGuard],
-        data: {roles: ['ADMIN', 'SUPPLIER']}
+        data: {roles: ['SUPPLIER']}
     },
     {
         path: 'product-items/edit/:id', 
         component: ProductItemFormComponent,
         canActivate: [authGuard],
-        data: {roles: ['ADMIN', 'SUPPLIER']}
+        data: {roles: ['SUPPLIER']}
     },
     {
-        path: 'register-city', 
-        component: CityRegisterComponent,
+        path: 'admin',
+        component: AdminDashboardComponent,
         canActivate: [authGuard],
         data: {roles: ['ADMIN']}
     },
     {
-        path: 'supplier-approval', 
-        component: SupplierApprovalComponent,
+        path: 'admin/usuarios',
+        component: AdminUsersComponent,
+        canActivate: [authGuard],
+        data: {roles: ['ADMIN']}
+    },
+    {
+        path: 'admin/tipos',
+        component: AdminProductTypesComponent,
+        canActivate: [authGuard],
+        data: {roles: ['ADMIN']}
+    },
+    {
+        path: 'register-city', 
+        // tela só do admin: fora do bundle inicial
+        loadComponent: () => import('./components/pages/city-register/city-register.component').then((m) => m.CityRegisterComponent),
+        canActivate: [authGuard],
+        data: {roles: ['ADMIN']}
+    },
+    {
+        path: 'supplier-approval',
+        // tela só do admin: fora do bundle inicial
+        loadComponent: () => import('./components/pages/supplier-approval/supplier-approval.component')
+            .then((m) => m.SupplierApprovalComponent),
         canActivate: [authGuard],
         data: {roles: ['ADMIN']}
     },

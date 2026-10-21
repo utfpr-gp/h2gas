@@ -189,4 +189,37 @@ class SupplierControllerTest {
 
         verify(supplierService, never()).updateTimesSupplier(any(), any());
     }
+
+    private void autenticarComoAdmin() {
+        User admin = new User(null, "Admin", "admin@teste.com", "41999999999", "12345678900", "senha", UserTypeEnum.ADMIN);
+        admin.setId("admin-1");
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                admin, null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))));
+    }
+
+    @Test
+    void deveRepassarFiltrosDeStatusEBusca() throws Exception {
+        autenticarComoAdmin();
+        SupplierDTO dto = new SupplierDTO();
+        dto.setName("Gás Centro");
+        when(supplierService.findAllSuppliers(eq(false), eq("gás"), any()))
+                .thenReturn(new PageImpl<>(List.of(dto), PageRequest.of(0, 10), 1));
+
+        mockMvc.perform(get("/api/suppliers").param("active", "false").param("q", "gás"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].name").value("Gás Centro"));
+
+        verify(supplierService).findAllSuppliers(eq(false), eq("gás"), any());
+    }
+
+    @Test
+    void deveListarTodosQuandoSemFiltros() throws Exception {
+        autenticarComoAdmin();
+        when(supplierService.findAllSuppliers(isNull(), isNull(), any()))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
+
+        mockMvc.perform(get("/api/suppliers")).andExpect(status().isOk());
+
+        verify(supplierService).findAllSuppliers(isNull(), isNull(), any());
+    }
 }

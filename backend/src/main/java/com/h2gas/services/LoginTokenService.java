@@ -2,6 +2,8 @@ package com.h2gas.services;
 
 import com.h2gas.configuration.security.TokenService;
 import com.h2gas.exceptions.BusinessRuleException;
+import com.h2gas.exceptions.ForbiddenResourceException;
+import com.h2gas.exceptions.GlobalExceptionHandler;
 import com.h2gas.model.entity.LoginToken;
 import com.h2gas.model.entity.User;
 import com.h2gas.model.repository.LoginTokenRepository;
@@ -42,8 +44,8 @@ public class LoginTokenService {
     // que pode demorar segundos para falhar) acontece com o código já gravado.
     public void requestToken(String email) {
         Optional<User> userOptional = userRepository.findByEmail(email);
-        if (userOptional.isEmpty()) {
-            log.info("Pedido de código para e-mail não cadastrado; nada é enviado.");
+        if (userOptional.isEmpty() || !userOptional.get().isEnabled()) {
+            log.info("Pedido de código para e-mail não cadastrado ou conta desativada; nada é enviado.");
             return;
         }
 
@@ -79,6 +81,9 @@ public class LoginTokenService {
 
         token.setUsed(true);
         loginTokenRepository.save(token);
+        if (!user.isEnabled()) {
+            throw new ForbiddenResourceException(GlobalExceptionHandler.DISABLED_ACCOUNT);
+        }
         return tokenService.generateToken(user);
     }
 

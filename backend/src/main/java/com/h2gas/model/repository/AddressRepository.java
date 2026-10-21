@@ -9,6 +9,7 @@ import java.util.Optional;
 
 public interface AddressRepository extends JpaRepository<Address, Long> {
     Optional<Address> findByStreetName(String name);
+    boolean existsByCityId(Long cityId);
 
     // usuário pode ter N endereços (F3); quem só precisa de um usa o mais recente
     Optional<Address> findFirstByUserIdOrderByIdDesc(String id);

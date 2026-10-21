@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ProductType } from '../../models/product-type';
+import { DEFAULT_PRODUCT_TYPE_ICON, ProductType } from '../../models/product-type';
 
 @Component({
   selector: 'app-category-chip-bar',
@@ -17,14 +17,8 @@ export class CategoryChipBarComponent {
     this.categorySelected.emit(name);
   }
 
-  iconFor(name?: string): string {
-    const normalized = (name ?? '').toLowerCase();
-    if (normalized.includes('gás') || normalized.includes('gas')) {
-      return 'local_fire_department';
-    }
-    if (normalized.includes('água') || normalized.includes('agua')) {
-      return 'water_drop';
-    }
-    return 'category';
+  iconFor(type: ProductType): string {
+    return type.icon || DEFAULT_PRODUCT_TYPE_ICON;
   }
+
 }

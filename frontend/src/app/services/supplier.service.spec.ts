@@ -56,4 +56,24 @@ describe('SupplierService', () => {
     expect(req.request.body).toEqual(settings);
     req.flush(settings);
   });
+
+  it('deveEnviarFiltrosNaListagem', () => {
+    service.listForApproval({ active: false, q: ' gás ', page: 2, size: 10 }).subscribe((r) => expect(r.totalElements).toBe(1));
+
+    const req = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/suppliers`);
+    expect(req.request.params.get('active')).toBe('false');
+    expect(req.request.params.get('q')).toBe('gás');
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('size')).toBe('10');
+    req.flush({ data: [], page: 2, size: 10, totalElements: 1, totalPages: 3, hasNext: false, hasPrevious: true });
+  });
+
+  it('deveOmitirStatusEBuscaQuandoAusentes', () => {
+    service.listForApproval({ page: 0 }).subscribe();
+
+    const req = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/suppliers`);
+    expect(req.request.params.has('active')).toBeFalse();
+    expect(req.request.params.has('q')).toBeFalse();
+    req.flush({ data: [], page: 0, size: 10, totalElements: 0, totalPages: 0, hasNext: false, hasPrevious: false });
+  });
 });

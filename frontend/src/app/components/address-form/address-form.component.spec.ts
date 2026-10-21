@@ -42,7 +42,7 @@ describe('AddressFormComponent', () => {
 
   it('deveBuscarEnderecoPorCep', () => {
     addressServiceSpy.buscaViaCep.and.returnValue(
-      of({ logradouro: 'Rua XV', bairro: 'Centro', localidade: 'Pato Branco' })
+      of({ logradouro: 'Rua XV', bairro: 'Centro', localidade: 'Pato Branco', uf: 'PR' })
     );
 
     component.form.get('zipCode')?.setValue('85501-000');
@@ -52,6 +52,33 @@ describe('AddressFormComponent', () => {
     expect(component.form.get('streetName')?.value).toBe('Rua XV');
     expect(component.form.get('neighborhood')?.value).toBe('Centro');
     expect(component.form.get('cityId')?.value).toBe(1);
+  });
+
+  it('devePreencherCidadePeloCodigoIbgeDoCep', () => {
+    component.cities = [patoBranco, { id: 2, name: 'Curitiba', state: 'PR', ibgeCode: 4106902 }];
+    addressServiceSpy.buscaViaCep.and.returnValue(
+      of({ logradouro: 'Rua José Loureiro', bairro: 'Centro', localidade: 'Curitiba', uf: 'PR', ibge: '4106902' })
+    );
+
+    component.form.get('zipCode')?.setValue('80010-000');
+    component.buscarCep();
+
+    expect(component.cidadeEncontrada).toBeTrue();
+    expect(component.form.get('cityId')?.value).toBe(2);
+    fixture.detectChanges();
+    expect((fixture.nativeElement.querySelector('[data-testid="matched-city"]') as HTMLInputElement).value).toBe('Curitiba - PR');
+  });
+
+  it('naoDeveAceitarCidadeDeMesmoNomeEmOutraUf', () => {
+    addressServiceSpy.buscaViaCep.and.returnValue(
+      of({ logradouro: 'Rua A', bairro: 'Centro', localidade: 'Pato Branco', uf: 'SC', ibge: '9999999' })
+    );
+
+    component.form.get('zipCode')?.setValue('89000-000');
+    component.buscarCep();
+
+    expect(component.cidadeEncontrada).toBeFalse();
+    expect(toastrSpy.warning).toHaveBeenCalledWith('No momento ainda não atendemos a cidade de Pato Branco - SC.');
   });
 
   it('deveExibirErroParaCepInexistente', () => {

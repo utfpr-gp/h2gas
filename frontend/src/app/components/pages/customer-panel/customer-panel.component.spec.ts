@@ -22,7 +22,9 @@ describe('CustomerPanelComponent', () => {
   const setup = async (user: Record<string, unknown> = igor, getMe$: any = of(user)) => {
     localStorage.clear();
     localStorage.setItem('user', JSON.stringify(user));
-    userServiceSpy = jasmine.createSpyObj('UserService', ['getMe', 'getUserLocalStorage', 'updateUser', 'setCurrentUser']);
+    userServiceSpy = jasmine.createSpyObj('UserService', ['getMe', 'getUserLocalStorage', 'updateUser', 'setCurrentUser', 'requestEmailChange', 'confirmEmailChange']);
+    userServiceSpy.requestEmailChange.and.returnValue(of(void 0));
+    userServiceSpy.confirmEmailChange.and.returnValue(of({ token: 'jwt-novo' }));
     userServiceSpy.getMe.and.returnValue(getMe$);
     userServiceSpy.getUserLocalStorage.and.returnValue(user);
     userServiceSpy.updateUser.and.returnValue(of({ ...user, name: 'Igor E. Souza' } as any));
@@ -201,5 +203,59 @@ describe('CustomerPanelComponent', () => {
 
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/meus-enderecos']);
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/meus-pedidos']);
+  });
+
+  const admin = { id: 'admin-1', name: 'Admin H2Gás', email: 'admin@h2gas.local', phoneNumber: '41990000000', userType: 'ADMIN' };
+  const digitar = (id: string, valor: string) => {
+    const input = byId(id) as HTMLInputElement;
+    input.value = valor;
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+  };
+  const clicar = (id: string) => { (byId(id) as HTMLButtonElement).click(); fixture.detectChanges(); };
+
+  it('naoDeveMostrarAtalhosDeClienteParaAdmin', async () => {
+    await setup(admin);
+
+    expect(byId('atalho-meus-enderecos')).toBeNull();
+    expect(byId('atalho-meus-pedidos')).toBeNull();
+    expect(el().textContent).not.toContain('fale com o suporte');
+    expect(byId('change-email')).toBeTruthy();
+  });
+
+  it('deveTrocarEmailDoAdminComCodigo', async () => {
+    await setup(admin);
+
+    clicar('change-email');
+    digitar('new-email', 'novo.admin@h2gas.local');
+    clicar('send-email-code');
+    expect(userServiceSpy.requestEmailChange).toHaveBeenCalledWith('novo.admin@h2gas.local');
+    expect(el().textContent).toContain('novo.admin@h2gas.local');
+
+    digitar('email-code', '123456');
+    clicar('confirm-email-code');
+
+    expect(userServiceSpy.confirmEmailChange).toHaveBeenCalledWith('123456');
+    expect(localStorage.getItem('access_token')).toBe('jwt-novo');
+    expect(userServiceSpy.setCurrentUser).toHaveBeenCalledWith(jasmine.objectContaining({ email: 'novo.admin@h2gas.local' }));
+    expect(byId('profile-email')!.textContent).toContain('novo.admin@h2gas.local');
+    expect(byId('email-code')).toBeNull();
+    expect(toastrSpy.success).toHaveBeenCalled();
+  });
+
+  it('deveMostrarErroDoCodigoSemTrocarOEmail', async () => {
+    await setup(admin);
+    userServiceSpy.confirmEmailChange.and.returnValue(throwError(() => ({ error: { status: 400, message: 'Código inválido.' } })));
+
+    clicar('change-email');
+    digitar('new-email', 'novo.admin@h2gas.local');
+    clicar('send-email-code');
+    digitar('email-code', '000000');
+    clicar('confirm-email-code');
+
+    expect(toastrSpy.error).toHaveBeenCalledWith(jasmine.stringContaining('Código inválido.'));
+    expect(localStorage.getItem('access_token')).toBeNull();
+    expect(byId('profile-email')!.textContent).toContain('admin@h2gas.local');
+    expect(byId('email-code')).toBeTruthy();
   });
 });

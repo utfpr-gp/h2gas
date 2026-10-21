@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NgxMaskDirective } from 'ngx-mask';
 import { ToastrService } from 'ngx-toastr';
@@ -9,7 +9,8 @@ import { User } from '../../../models/user';
 import { backendMessage } from '../../../utils/backend-message';
 import { initials } from '../../../utils/initials';
 
-// F7 (fatia 4): "Meus Dados" de cliente, fornecedor e entregador; o e-mail é só leitura (identidade do login por código)
+// F7 (fatia 4): "Meus Dados" de cliente, fornecedor e entregador; o e-mail é só leitura (identidade do login por código).
+// HU12: o admin troca o próprio e-mail confirmando o código enviado ao endereço novo
 @Component({
   selector: 'app-customer-panel',
   imports: [ReactiveFormsModule, CommonModule, NgxMaskDirective],
@@ -21,6 +22,12 @@ export class CustomerPanelComponent implements OnInit {
   loading = true;
   saving = false;
   private baseline = { name: '', phoneNumber: '' };
+
+  emailStep: 'idle' | 'email' | 'code' = 'idle';
+  emailBusy = false;
+  pendingEmail = '';
+  readonly newEmail = new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] });
+  readonly emailCode = new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.pattern(/^\d{6}$/)] });
 
   constructor(
     private userService: UserService,
@@ -79,6 +86,61 @@ export class CustomerPanelComponent implements OnInit {
       error: (err) => {
         this.saving = false;
         this.toastr.error(`Erro ao salvar seus dados: ${backendMessage(err)}`);
+      },
+    });
+  }
+
+  startEmailChange() {
+    this.newEmail.reset();
+    this.emailCode.reset();
+    this.emailStep = 'email';
+  }
+
+  cancelEmailChange() {
+    if (!this.emailBusy) this.emailStep = 'idle';
+  }
+
+  sendEmailCode() {
+    const email = this.newEmail.value.trim();
+    if (this.newEmail.invalid || this.emailBusy) {
+      this.newEmail.markAsTouched();
+      return;
+    }
+    this.emailBusy = true;
+    this.userService.requestEmailChange(email).subscribe({
+      next: () => {
+        this.emailBusy = false;
+        this.pendingEmail = email;
+        this.emailCode.reset();
+        this.emailStep = 'code';
+      },
+      error: (err) => {
+        this.emailBusy = false;
+        this.toastr.error(`Não foi possível enviar o código: ${backendMessage(err)}`);
+      },
+    });
+  }
+
+  confirmEmailCode() {
+    if (this.emailCode.invalid || this.emailBusy || !this.user) {
+      this.emailCode.markAsTouched();
+      return;
+    }
+    this.emailBusy = true;
+    this.userService.confirmEmailChange(this.emailCode.value).subscribe({
+      next: ({ token }) => {
+        this.emailBusy = false;
+        // o e-mail identifica o usuário no JWT: sem o token novo a sessão cairia
+        localStorage.setItem('access_token', token);
+        const updated = { ...this.user!, email: this.pendingEmail };
+        this.user = updated;
+        this.userService.setCurrentUser(updated);
+        this.emailStep = 'idle';
+        this.toastr.success('E-mail atualizado.');
+      },
+      error: (err) => {
+        this.emailBusy = false;
+        this.toastr.error(`Não foi possível confirmar: ${backendMessage(err)}`);
       },
     });
   }

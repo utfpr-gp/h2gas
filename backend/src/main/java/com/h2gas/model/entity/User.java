@@ -3,7 +3,6 @@ package com.h2gas.model.entity;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.h2gas.enums.UserTypeEnum;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,7 +19,6 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy=GenerationType.UUID)
@@ -39,6 +37,16 @@ public class User implements UserDetails {
     private String password;
 
     private UserTypeEnum userType;
+
+    // conta ativa (HU12); não confundir com Supplier.active, que é a aprovação do fornecedor
+    @Column(nullable = false)
+    private boolean enabled = true;
+
+    public User(String id, String name, String email, String phoneNumber,
+                String cpf, String password, UserTypeEnum userType) {
+        this(name, email, phoneNumber, cpf, password, userType);
+        this.id = id;
+    }
 
     public User(String name, String email, String phoneNumber,
                 String cpf, String password,
@@ -87,7 +95,7 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return UserDetails.super.isEnabled();
+        return enabled;
     }
 
 }

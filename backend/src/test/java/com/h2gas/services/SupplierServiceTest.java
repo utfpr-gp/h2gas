@@ -398,4 +398,37 @@ class SupplierServiceTest {
 
         assertEquals("O horário de fechamento precisa ser diferente da abertura.", erro.getMessage());
     }
+
+    private Supplier salvarFornecedor(String nome, String email, String cnpj, boolean active) {
+        City city = cityRepository.save(new City(null, "Francisco Beltrão", "PR"));
+        Address address = addressRepository.save(new Address(
+                null, "Rua " + nome, "loja", "10", "centro", "Centro", "85600-000", city, null));
+        return supplierRepository.save(getSupplier(nome, email, "46999990000", "000111222",
+                "senhateste", cnpj, "descricao", active, true, address, city));
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: active=false traz só quem aguarda aprovação")
+    void deveFiltrarFornecedoresAguardandoAprovacao() {
+        salvarFornecedor("Zeta Gás Aguardando", "zeta@h2gas.test", "11222333000144", false);
+
+        Page<SupplierDTO> aguardando = supplierService.findAllSuppliers(false, null, PageRequest.of(0, 50));
+        Page<SupplierDTO> ativos = supplierService.findAllSuppliers(true, null, PageRequest.of(0, 50));
+
+        assertTrue(aguardando.getContent().stream().noneMatch(SupplierDTO::isActive));
+        assertTrue(aguardando.getContent().stream().anyMatch(dto -> "Zeta Gás Aguardando".equals(dto.getName())));
+        assertTrue(ativos.getContent().stream().noneMatch(dto -> "Zeta Gás Aguardando".equals(dto.getName())));
+        assertTrue(ativos.getContent().stream().anyMatch(dto -> "Fornecedor Teste".equals(dto.getName())));
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: busca por nome, e-mail ou CNPJ sem diferenciar maiúsculas")
+    void deveBuscarFornecedoresPorNomeEmailOuCnpj() {
+        salvarFornecedor("Ômega Água Mineral", "contato@omega.test", "99888777000166", false);
+
+        assertEquals(1, supplierService.findAllSuppliers(null, "ômega água", PageRequest.of(0, 10)).getTotalElements());
+        assertEquals(1, supplierService.findAllSuppliers(null, "CONTATO@OMEGA", PageRequest.of(0, 10)).getTotalElements());
+        assertEquals(1, supplierService.findAllSuppliers(false, "99888777", PageRequest.of(0, 10)).getTotalElements());
+        assertEquals(0, supplierService.findAllSuppliers(true, "99888777", PageRequest.of(0, 10)).getTotalElements());
+    }
 }

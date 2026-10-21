@@ -9,6 +9,7 @@ import { SupplierService } from '../../../services/supplier.service';
 import { Supplier } from '../../../models/supplier';
 import { CityService } from '../../../services/city.service';
 import { City } from '../../../models/city';
+import { matchCityFromCep } from '../../../utils/city-match';
 import { Address } from '../../../models/address';
 import { AddressService } from '../../../services/address.service';
 import { UserService } from '../../../services/user.service';
@@ -121,13 +122,15 @@ export class DistribuitorFormComponent implements OnInit {
   buscarCep() {
     this.addressService.buscaViaCep(this.registerFormAddress.get('zipCode')?.value).subscribe({
       next: (response: any) => {
-        this.cidadeEncontrada = this.cities?.some(c => c.name!.toLowerCase() === response.localidade.toLowerCase());
+        const cidade = matchCityFromCep(this.cities, response);
+        this.cidadeEncontrada = !!cidade;
 
-        if (!this.cidadeEncontrada) {
-          this.toastr.warning(`No momento ainda não atendemos a cidade de ${response.localidade}.`);
+        if (!cidade) {
+          this.toastr.warning(`No momento ainda não atendemos a cidade de ${response.localidade} - ${response.uf}.`);
           return;
         }
         this.registerFormAddress.get('streetName')?.setValue(response.logradouro)
+        this.registerFormAddress.get('cityId')?.setValue(cidade.id)
 
         // this.registerFormAddress.get('cityName')?.setValue(response.localidade)
         this.registerFormAddress.get('neighborhood')?.setValue(response.bairro)

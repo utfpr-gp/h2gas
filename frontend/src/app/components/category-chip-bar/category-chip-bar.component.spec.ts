@@ -43,4 +43,13 @@ describe('CategoryChipBarComponent', () => {
 
     expect(component.categorySelected.emit).toHaveBeenCalledWith(null);
   });
+
+  it('deveMostrarOIconeDoTipo', () => {
+    component.categories = [{ id: 1, name: 'Gelo', icon: 'ac_unit' }, { id: 2, name: 'Diversos' }];
+    fixture.detectChanges();
+
+    const icones = Array.from(fixture.nativeElement.querySelectorAll('button .material-icons') as NodeListOf<HTMLElement>)
+      .map((el) => el.textContent?.trim());
+    expect(icones).toEqual(['apps', 'ac_unit', 'category']);
+  });
 });

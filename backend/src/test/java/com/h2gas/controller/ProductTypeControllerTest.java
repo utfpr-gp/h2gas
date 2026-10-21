@@ -23,8 +23,17 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
+import org.junit.jupiter.api.DisplayName;
+import org.springframework.http.MediaType;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ProductTypeController.class)
@@ -66,5 +75,56 @@ class ProductTypeControllerTest {
 
         mockMvc.perform(get("/api/product-types"))
                 .andExpect(status().isOk());
+    }
+
+    private void autenticarComo(String role) {
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                "usuario", null, List.of(new SimpleGrantedAuthority(role))));
+    }
+
+    @Test
+    @DisplayName("HU12: admin cria tipo (201)")
+    void deveCriarTipoComoAdmin() throws Exception {
+        autenticarComo("ROLE_ADMIN");
+        when(productTypeService.createProductType(any(ProductTypeDTO.class))).thenReturn(new ProductTypeDTO(3L, "Carvão"));
+
+        mockMvc.perform(post("/api/product-types").contentType(MediaType.APPLICATION_JSON).content("{\"name\": \"Carvão\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(3));
+    }
+
+    @Test
+    @DisplayName("HU12: admin renomeia tipo (200)")
+    void deveRenomearTipoComoAdmin() throws Exception {
+        autenticarComo("ROLE_ADMIN");
+        when(productTypeService.updateProductType(eq(1L), any(ProductTypeDTO.class))).thenReturn(new ProductTypeDTO(1L, "Gás GLP"));
+
+        mockMvc.perform(put("/api/product-types/1").contentType(MediaType.APPLICATION_JSON).content("{\"name\": \"Gás GLP\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Gás GLP"));
+    }
+
+    @Test
+    @DisplayName("HU12: fornecedor não cria nem renomeia tipo (403)")
+    void deveRetornar403AoFornecedorCriarTipo() throws Exception {
+        autenticarComo("ROLE_SUPPLIER");
+
+        mockMvc.perform(post("/api/product-types").contentType(MediaType.APPLICATION_JSON).content("{\"name\": \"Carvão\"}"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(put("/api/product-types/1").contentType(MediaType.APPLICATION_JSON).content("{\"name\": \"Carvão\"}"))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(productTypeService);
+    }
+
+    @Test
+    @DisplayName("HU12: nome vazio é 400")
+    void deveRetornar400ComNomeVazio() throws Exception {
+        autenticarComo("ROLE_ADMIN");
+
+        mockMvc.perform(post("/api/product-types").contentType(MediaType.APPLICATION_JSON).content("{\"name\": \"  \"}"))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(productTypeService);
     }
 }

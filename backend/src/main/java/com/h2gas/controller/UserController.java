@@ -56,10 +56,11 @@ public class UserController {
 
     @Operation(summary = "Edita os dados do próprio usuário",
             description = "Atualiza nome e telefone. Só o próprio usuário do token (ou ADMIN) edita; o e-mail só é alterado por ADMIN, "
-                    + "porque é a identidade do login por código")
+                    + "porque é a identidade do login por código; o próprio e-mail do ADMIN só muda pelo código de "
+                    + "/api/users/me/email-change")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Dados atualizados"),
-            @ApiResponse(responseCode = "400", description = "Tentativa de trocar o e-mail por usuário comum, ou e-mail já cadastrado"),
+            @ApiResponse(responseCode = "400", description = "Tentativa de trocar o e-mail por usuário comum ou o próprio e-mail do ADMIN, ou e-mail já cadastrado"),
             @ApiResponse(responseCode = "403", description = "Sem token válido, papel sem permissão ou dados de outro usuário"),
             @ApiResponse(responseCode = "404", description = "Usuário inexistente")
     })

@@ -38,8 +38,11 @@ public class SecurityFilter extends OncePerRequestFilter {
                var subject = tokenService.validateToken(token);
                UserDetails user = authorizationService.loadUserByUsername(subject);
 
-               var authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
-               SecurityContextHolder.getContext().setAuthentication(authentication);
+               // conta desativada pelo admin perde a sessão na hora, mesmo com o JWT ainda no prazo
+               if (user.isEnabled()) {
+                   var authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
+                   SecurityContextHolder.getContext().setAuthentication(authentication);
+               }
            }
 
            filterChain.doFilter(request, response);

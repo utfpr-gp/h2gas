@@ -1,29 +1,107 @@
-<div class="flex-1 bg-base-200">
-  <div class="container mx-auto px-4 py-8">
-    <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900">Ativar Fornecedores</h1>
-    </div>
-    <div class="w-full space-y-4">
-      <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div class="relative w-full sm:w-64">
-          <i class="fas fa-search absolute left-2.5 top-2.5 h-4 w-4 text-gray-500"></i>
-          <input
-            type="search"
-            placeholder="Buscar fornecedores..."
-            class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-transparent"
-          />
+<div class="max-w-5xl w-full mx-auto px-4 md:px-8 pt-6 pb-24 md:pb-10">
+    <header class="mb-4">
+        <h1 class="text-2xl font-bold text-gray-800">Aprovação de fornecedores</h1>
+        <p class="text-sm text-gray-500">
+            {{ totalElements }} {{ totalElements === 1 ? 'fornecedor' : 'fornecedores' }}
+            {{ status === 'pending' ? 'aguardando aprovação' : status === 'active' ? 'ativos' : 'no total' }}.
+        </p>
+    </header>
+
+    <div class="flex flex-col md:flex-row md:items-center gap-3 mb-4">
+        <div class="flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Filtrar por status">
+            <button *ngFor="let c of chips" type="button" [attr.data-testid]="'chip-' + c.status"
+                class="btn btn-sm rounded-full whitespace-nowrap"
+                [ngClass]="status === c.status ? 'btn-primary' : 'btn-ghost bg-white border border-gray-200'"
+                [attr.aria-pressed]="status === c.status" (click)="selectStatus(c.status)">
+                {{ c.label }}
+            </button>
         </div>
-      </div>
-
-      <div class="overflow-x-auto rounded-lg shadow-md">
-        <app-dynamic-table 
-        [data]="suppliers!!"
-        [columns]="columns!!"
-        (switchChanged)="handleSwitchChange($event)"
-        >
-
-        </app-dynamic-table>
-      </div>
+        <label class="input input-bordered rounded-xl flex items-center gap-2 w-full md:ml-auto md:w-72 bg-white">
+            <span class="material-icons text-base text-gray-400">search</span>
+            <input data-testid="supplier-search" type="search" class="grow" placeholder="Nome, e-mail ou CNPJ"
+                aria-label="Buscar por nome, e-mail ou CNPJ" (input)="onSearch($any($event.target).value)" />
+        </label>
     </div>
-  </div>
+
+    <div *ngIf="loading && !suppliers.length" class="space-y-2" aria-busy="true">
+        <div *ngFor="let n of [1,2,3,4]" class="skeleton h-24 rounded-xl"></div>
+    </div>
+
+    <div *ngIf="!loading && !suppliers.length" data-testid="empty-state"
+        class="text-center bg-white rounded-xl border border-gray-200 py-12 px-4">
+        <span class="material-icons text-gray-300" style="font-size: 56px">{{ status === 'pending' ? 'task_alt' : 'storefront' }}</span>
+        <p class="text-gray-700 font-semibold mt-2">{{ emptyMessage[status] }}</p>
+        <p class="text-sm text-gray-500">
+            {{ query ? 'Troque o termo da busca ou o filtro.' : status === 'pending' ? 'Novos cadastros de fornecedor aparecem aqui.' : 'Troque o filtro de status.' }}
+        </p>
+    </div>
+
+    <ul *ngIf="suppliers.length" class="space-y-2" [class.opacity-60]="loading">
+        <li *ngFor="let s of suppliers" [attr.data-testid]="'supplier-' + s.id"
+            class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-wrap items-start gap-x-4 gap-y-3">
+            <div class="min-w-0 basis-full sm:basis-0 sm:flex-1 space-y-1">
+                <div class="flex flex-wrap items-center gap-2">
+                    <p class="font-semibold text-gray-800 truncate">{{ s.name }}</p>
+                    <span [attr.data-testid]="'status-' + s.id" class="badge badge-sm"
+                        [ngClass]="s.active ? 'badge-success badge-outline' : 'badge-warning'">
+                        {{ s.active ? 'Ativo' : 'Aguardando aprovação' }}
+                    </span>
+                </div>
+                <p *ngIf="s.cnpj" class="text-sm text-gray-600 tabular-nums">CNPJ {{ s.cnpj }}</p>
+                <p class="text-sm text-gray-500 flex flex-wrap gap-x-3 gap-y-1">
+                    <span class="inline-flex items-center gap-1 min-w-0 break-all" *ngIf="s.email">
+                        <span class="material-icons text-sm" aria-hidden="true">mail</span>{{ s.email }}
+                    </span>
+                    <span class="inline-flex items-center gap-1 tabular-nums" *ngIf="s.phone">
+                        <span class="material-icons text-sm" aria-hidden="true">call</span>{{ s.phone }}
+                    </span>
+                </p>
+                <p *ngIf="address(s)" class="text-sm text-gray-500 inline-flex items-center gap-1">
+                    <span class="material-icons text-sm" aria-hidden="true">location_on</span>{{ address(s) }}
+                </p>
+            </div>
+            <button type="button" [attr.data-testid]="'toggle-' + s.id"
+                class="btn btn-sm rounded-lg w-full sm:w-auto"
+                [ngClass]="s.active ? 'btn-ghost text-error' : 'btn-success'"
+                [attr.aria-label]="(s.active ? 'Desativar ' : 'Aprovar ') + s.name" (click)="askToggle(s)">
+                <span class="material-icons text-base">{{ s.active ? 'block' : 'check_circle' }}</span>
+                {{ s.active ? 'Desativar' : 'Aprovar' }}
+            </button>
+        </li>
+    </ul>
+
+    <nav *ngIf="totalPages > 1" class="flex items-center justify-center gap-3 mt-4" aria-label="Paginação">
+        <button type="button" data-testid="prev-page" class="btn btn-sm btn-ghost rounded-lg" [disabled]="page === 0 || loading" (click)="load(page - 1)">
+            <span class="material-icons text-base">chevron_left</span> Anterior
+        </button>
+        <span class="text-sm text-gray-600">Página {{ page + 1 }} de {{ totalPages }}</span>
+        <button type="button" data-testid="next-page" class="btn btn-sm btn-ghost rounded-lg" [disabled]="page + 1 >= totalPages || loading" (click)="load(page + 1)">
+            Próxima <span class="material-icons text-base">chevron_right</span>
+        </button>
+    </nav>
+
+    <!-- Confirmação de aprovar/desativar -->
+    <div *ngIf="toggleTarget" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-gray-900/40 p-4"
+        (click)="closeToggle()" (keydown.escape)="closeToggle()">
+        <div data-testid="toggle-modal" role="dialog" aria-modal="true" aria-labelledby="toggle-title" @fadeIn
+            class="w-full max-w-md bg-white rounded-xl shadow-xl p-5" (click)="$event.stopPropagation()">
+            <h3 id="toggle-title" class="text-lg font-bold text-gray-800">
+                {{ toggleTarget.active ? 'Desativar' : 'Aprovar' }} {{ toggleTarget.name }}?
+            </h3>
+            <p class="text-sm text-gray-500 mt-1" *ngIf="!toggleTarget.active">
+                O fornecedor passa a aparecer no catálogo dos clientes da cidade dele e pode receber pedidos.
+            </p>
+            <p class="text-sm text-gray-500 mt-1" *ngIf="toggleTarget.active">
+                O fornecedor sai do catálogo dos clientes e deixa de receber pedidos novos. Dá para aprovar de novo depois.
+            </p>
+            <div class="grid grid-cols-2 gap-2 mt-4">
+                <button type="button" data-testid="cancel-toggle" class="btn btn-outline btn-primary rounded-xl" [disabled]="toggling" (click)="closeToggle()">Voltar</button>
+                <button type="button" data-testid="confirm-toggle" class="btn rounded-xl"
+                    [ngClass]="toggleTarget.active ? 'btn-error' : 'btn-success'" [disabled]="toggling" (click)="confirmToggle()">
+                    <span *ngIf="toggling" class="loading loading-spinner loading-sm"></span>
+                    {{ toggleTarget.active ? 'Desativar' : 'Aprovar' }}
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
