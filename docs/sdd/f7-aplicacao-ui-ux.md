@@ -361,6 +361,91 @@ depois da HU11.
 - Tokens F2, sem HEX novo, `rounded-xl`, `pb-24` no mobile; campos com
   borda explícita (Tailwind), não `input-bordered`.
 
+### 5.12 Fatia 5 — navbar, footer, tema estrutural e varredura de HEX
+
+> Escrita em 2026-10-20, depois da Fatia 4. Pedido do autor: rodada de
+> UX/UI na "casca" do app (navbar, footer e etc.). Decisões do autor: as
+> quatro frentes abaixo entram juntas; a Fatia 4 vai antes para o PR.
+
+**Achados (diagnóstico do código atual)**
+- **Navbar**: os 18 links usam `href` — cada clique recarrega o app
+  inteiro (perde o estado, pisca e derruba o SSE da HU08). Não há
+  destaque do link ativo; os ícones misturam Font Awesome e Material; o
+  "Início" do fornecedor leva ao catálogo do cliente; o carrinho aparece
+  para fornecedor e admin (que não compram); o cliente no celular tem um
+  hambúrguer que repete a bottom tab bar; o menu mobile abre sem
+  animação e não fecha ao navegar.
+- **Footer**: `bg-[#0E2068]` e `hover:text-[#67E8F9]` (HEX), ano fixo
+  "© 2025", ocupa meia tela no celular, links por `href` e aparece nas
+  telas "de app" (entregador, login).
+- **Layout**: `app.component.html` tem `<!DOCTYPE>`/`<head>`/`<body>`
+  dentro do template.
+- **Tema**: o bloco `@plugin "daisyui/theme"` do tema `h2gas`
+  (`styles.css`) não define as variáveis estruturais do DaisyUI 5
+  (`--border`, `--radius-*`, `--size-*`, `--depth`, `--noise`): campos
+  `input-bordered`/`select` sem borda (remendados tela a tela) e raios
+  irregulares. Dívida registrada na HU05 e na Fatia 3.
+- **HEX solto** (pendência "Grupos A–E"): landing `/` (10), Sobre e
+  Contato; e as 4 telas de admin/fornecedor (`supplier-approval`,
+  `city-register`, `category-products`, `distribuitor-form`), cujos CSS
+  de 303 linhas reimplementam à mão classes do Tailwind com cor fixa
+  (sobrescrevendo o Tailwind real), além de `<!DOCTYPE>`/`<head>`, link
+  de Font Awesome por CDN (já carregado no `index.html`), título "Azul
+  Cidades" e um `#mobile-menu` sem uso nos templates.
+
+**Tema estrutural (`styles.css`)**
+- No tema `h2gas`: `--radius-selector: 0.5rem`, `--radius-field:
+  0.75rem`, `--radius-box: 1rem`, `--size-selector: 0.25rem`,
+  `--size-field: 0.25rem`, `--border: 1px`, `--depth: 0`, `--noise: 0`.
+  Campos `input-bordered`/`select-bordered` passam a ter borda visível
+  sem remendo; os remendos existentes (borda explícita do Tailwind)
+  continuam válidos e não são reescritos nesta fatia.
+
+**Layout do app (`app.component`)**
+- Template sem `<!DOCTYPE>`/`<head>`/`<body>`: casca `header` (menu) +
+  `main` (`flex-1`, coluna com altura mínima da tela, footer no fim) +
+  `footer`.
+- **Footer escondido** nas telas de autenticação/onboarding (as de
+  `hiddenMenuRoutes`, **exceto** a landing `/`, `/sobre` e `/contato`,
+  que são institucionais e têm no footer o caminho entre si) e nas do
+  entregador (`/entregas` e filhas — tela de app com abas fixas).
+
+**Navbar (`menu`)**
+- Todos os links internos (desktop, mobile e logo) por `routerLink` —
+  navegação sem recarregar o app.
+- Link ativo destacado: `routerLinkActive` com `bg-white/15` e
+  `aria-current="page"` (`ariaCurrentWhenActive`); "Início" com
+  correspondência exata.
+- Logo leva ao **início do perfil**: cliente e admin `/inicio`,
+  fornecedor `/dashboard`, entregador `/entregas` — a mesma regra do
+  login por senha e por código, extraída para `utils/home-route.ts`
+  (`homeFor`) e usada pelos três.
+- **Fornecedor** sem o link "Início" do catálogo; **carrinho só para o
+  cliente**.
+- Ícones da navbar só Material (o dropdown do usuário já usa).
+- **Hambúrguer só para fornecedor e admin** (o cliente navega pela
+  bottom tab bar no celular; o entregador pelas abas dele). Painel
+  mobile com `expandCollapse` (`animations/checkout.animations.ts`),
+  fecha ao navegar (`NavigationEnd`) e com **Esc**; botão com
+  `aria-expanded`, `aria-controls="mobile-menu"` e rótulo acessível.
+
+**Footer (`footer`)**
+- Cores do tema (`bg-primary`, `text-primary-content`), sem HEX; ano
+  atual automático; versão compacta no celular (logo menor, marca e
+  links em linha); `routerLink` para Sobre e Contato.
+
+**Varredura de HEX**
+- Grupo E (`initial-screen`, `about`, `contact`): HEX → tokens, sem
+  wrappers de documento.
+- Grupos C/D (`supplier-approval`, `city-register`,
+  `category-products`, `distribuitor-form`): o CSS legado e o
+  `styleUrl` saem; saem também `<!DOCTYPE>`/`<head>`, o Font Awesome
+  por CDN, o título "Azul Cidades" e os blocos mortos; HEX → tokens;
+  `href` internos → `routerLink`. Layout mantido (só tokens, §5.7).
+- Resíduos do Grupo A (`forgot-password`, `reset-password`,
+  `check-email`: 1 HEX cada), `supplier-list.component.css` e
+  `menu.component.css`.
+
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
 - Agregação de rating médio por fornecedor (gap de backend).
@@ -382,6 +467,12 @@ depois da HU11.
 - Fatia 4: trocar de e-mail com confirmação no endereço novo; trocar a
   senha por esta tela; foto de perfil (upload); aba "Perfil" na barra do
   entregador (segue fora, como na HU07); edição de CPF/CNPJ.
+
+- Fatia 5: sino de notificações das Figuras 13/16 (sem backend); trocar
+  o Font Awesome no app inteiro (só navbar e footer); redesenho
+  mobile-first das telas de admin/fornecedor (só tokens, §5.7);
+  reescrever os remendos de borda já existentes; `distributor-management`
+  (código morto); dark mode.
 
 ## 7. Plano de Testes (TDD)
 
@@ -458,6 +549,19 @@ depois da HU11.
     `product-list.component.spec.ts`
     (`deveMostrarCausaAoFalharCarregarCategorias`).
 
+12. *(fatia 5, §5.12)* `app.component.spec.ts`:
+    `deveEsconderFooterNasTelasDeAppEAutenticacao` (e mostrar na
+    landing, Sobre, Contato e telas do cliente);
+    `menu.component.spec.ts` (Router real via `provideRouter`):
+    `deveNavegarSemRecarregarOApp` (todo link interno com `routerLink`,
+    clique sem recarregar), `deveDestacarOLinkAtivo`,
+    `deveLevarALogoParaOInicioDoPerfil`, `deveMostrarCarrinhoSoParaCliente`,
+    `deveMostrarHamburguerSoParaFornecedorEAdmin`,
+    `deveFecharMenuMobileAoNavegarEComEsc`;
+    `home-route.spec.ts`: `deveLevarCadaPerfilAoSeuInicio`;
+    `footer.component.spec.ts`: `deveMostrarOAnoAtual`,
+    `deveUsarRouterLinkNosLinks`, `naoDeveTerHexLiteral`.
+
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
 ## 8. Definição de Pronto
@@ -520,6 +624,19 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 >
 > **Dívidas registradas (fora desta fatia)**: `GET /api/users?id=` ainda lê o usuário de qualquer id (só leitura, sem checagem de
 > dono); `DELETE /api/users` e rotas de cadastro de ADMIN não foram revisadas; a troca de e-mail com confirmação no endereço novo.
+
+**Fatia 5 — navbar, footer, tema estrutural e varredura de HEX (§5.12):**
+- [ ] Tema `h2gas` com as variáveis estruturais; campos com borda sem
+      remendo.
+- [ ] Casca do app sem wrappers de documento; footer escondido nas telas
+      de autenticação e do entregador.
+- [ ] Navbar sem recarregar o app, com link ativo, logo por perfil,
+      carrinho só do cliente, hambúrguer só de fornecedor/admin, ícones
+      Material e painel mobile animado que fecha ao navegar e com Esc.
+- [ ] Footer nos tokens, com ano automático, compacto no celular.
+- [ ] Testes da seção 7 (item 12) verdes; `ng test` (≤ 18 falhas
+      antigas) e `ng build`; teste manual e E2E (navegação sem recarregar,
+      SSE sem reconectar, prints em 390 e 1280 px).
 
 **Pendente (próximas fatias):**
 - [ ] Grupos A–E migrados pros tokens (grep: zero hex novo fora de
