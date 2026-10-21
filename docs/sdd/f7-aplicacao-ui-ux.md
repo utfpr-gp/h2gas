@@ -758,6 +758,23 @@ registrar como dívida para a tela dele.
 - `supplier-card` do catálogo: a logo no lugar do ícone de loja, com o
   ícone de volta sem logo ou se a imagem falhar.
 
+**Ajuste: uma tela só para o fornecedor** (pedido do autor, 2026-10-21:
+"meus dados e dados da loja devem ser a mesma coisa, está ambíguo").
+`Supplier` herda de `User`: nome e telefone são a mesma linha do banco,
+e `/meus-dados` e a tela da loja editavam os mesmos campos com rótulos
+diferentes. Decisão:
+- rota canônica `/minha-loja` (só SUPPLIER, sob demanda), título "Minha
+  loja"; `/meus-dados` do fornecedor redireciona para ela (guard que
+  devolve `UrlTree`; os outros perfis seguem no Meus Dados);
+  `/distributor/edit/:id` vira redirecionamento para `/minha-loja`;
+- `SupplierProfileDTO` ganha `email` (só leitura); a tela mostra o
+  e-mail com "Para trocar o e-mail, fale com o suporte.";
+- salvar o nome atualiza o nome e as iniciais do menu
+  (`UserService.setCurrentUser`);
+- menu do fornecedor: "Minha loja" no lugar de "Meus Dados"; os botões
+  de Pedidos recebidos e Histórico levam a `/minha-loja`; o Meus Dados
+  perde o ramo de fornecedor.
+
 **Fora de escopo (desta tela)**: foto de cliente e entregador; logo no
 menu e nos pedidos; recortar ou redimensionar a imagem no cliente; apagar
 a imagem antiga no Cloudinary; checar o dono no `PUT /addresses/{id}`
@@ -984,8 +1001,14 @@ a imagem antiga no Cloudinary; checar o dono no `PUT /addresses/{id}`
     `deveRecusarArquivoGrandeAntesDeEnviar`,
     `deveRemoverLogoComConfirmacao`, `deveMostrarIniciaisSemLogo`,
     `deveMostrarMensagemDoBackendAoFalharOEnvio`,
-    `deveVoltarParaAsIniciaisSeALogoNaoCarregar`;
+    `deveVoltarParaAsIniciaisSeALogoNaoCarregar`,
+    `deveMostrarEmailSomenteLeitura`, `deveAtualizarOMenuAoSalvarONome`;
     `supplier-card.component.spec.ts`: `deveMostrarLogoDaLojaOuIcone`.
+    Tela única: `SupplierServiceTest.deveTrazerOEmailNoPerfil`;
+    `supplier-store.guard.spec.ts`:
+    `deveLevarFornecedorDeMeusDadosParaMinhaLoja`,
+    `deveDeixarOutrosPerfisEmMeusDados`; `menu.component.spec.ts`:
+    `deveMostrarMinhaLojaNoLugarDeMeusDadosParaFornecedor`.
 
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
@@ -1200,6 +1223,10 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > Cloudinary lança `RuntimeException` quando a API recusa, e o envio virava 500 — agora é 502 com mensagem clara. O upload de
 > foto de produto (`ProductItemService`) tem o mesmo defeito: **dívida registrada**. (3) A logo que não carrega volta para as
 > iniciais também na tela da loja. Dívida também registrada: o `PUT /addresses/{id}` não confere o dono.
+
+- [ ] Tela única "Minha loja" para o fornecedor: `/meus-dados` e
+      `/distributor/edit/:id` levam a `/minha-loja`, e-mail só leitura,
+      menu com "Minha loja" e atualizado ao salvar o nome (ajuste pedido).
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
