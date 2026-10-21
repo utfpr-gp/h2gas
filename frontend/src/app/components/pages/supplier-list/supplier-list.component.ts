@@ -17,6 +17,7 @@ import { CategoryChipBarComponent } from '../../category-chip-bar/category-chip-
 import { ProductCardComponent } from '../../product-card/product-card.component';
 import { SupplierCardComponent } from '../../supplier-card/supplier-card.component';
 import { StoreReviewsDialogComponent } from '../../store-reviews-dialog/store-reviews-dialog.component';
+import { CartOtherStoreDialogComponent } from '../../cart-other-store-dialog/cart-other-store-dialog.component';
 import { backendMessage } from '../../../utils/backend-message';
 
 const SUPPLIERS_PAGE_SIZE = 10;
@@ -34,6 +35,7 @@ type ViewMode = 'suppliers' | 'products';
     ProductCardComponent,
     SupplierCardComponent,
     StoreReviewsDialogComponent,
+    CartOtherStoreDialogComponent,
   ],
   templateUrl: './supplier-list.component.html',
 })
@@ -183,9 +185,29 @@ export class SupplierListComponent implements OnInit {
     this.router.navigate(['/fornecedores', id, 'produtos']);
   }
 
+  // HU14: produto aguardando confirmação de esvaziar o carrinho de outra loja
+  pendingOtherStoreProduct?: ProductItem;
+
   addToCart(product: ProductItem) {
-    this.cartService.addProduct({ ...product, quantitySelect: 1 });
+    const item = { ...product, quantitySelect: 1 };
+    if (this.cartService.addProduct(item) === 'other_supplier') {
+      this.pendingOtherStoreProduct = item;
+      return;
+    }
     this.toastr.success('Produto adicionado ao carrinho.');
+  }
+
+  confirmClearAndAdd() {
+    if (!this.pendingOtherStoreProduct) {
+      return;
+    }
+    this.cartService.clearAndAdd(this.pendingOtherStoreProduct);
+    this.pendingOtherStoreProduct = undefined;
+    this.toastr.success('Produto adicionado ao carrinho.');
+  }
+
+  cancelOtherStoreDialog() {
+    this.pendingOtherStoreProduct = undefined;
   }
 
   // F7 §5.23: compra direta — item avulso, sem passar pelo carrinho

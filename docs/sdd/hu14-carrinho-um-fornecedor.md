@@ -88,7 +88,11 @@ esvaziar o carrinho e adicionar o novo produto.
 
 ## 8. Definição de Pronto
 
-- [ ] Script atendido; nada do "Fora de Escopo".
-- [ ] Testes do Plano verdes.
-- [ ] Fluxo manual: loja A → item → loja B → diálogo → cancelar mantém A;
+- [x] Script atendido; nada do "Fora de Escopo".
+- [x] Testes do Plano verdes.
+- [x] Fluxo manual: loja A → item → loja B → diálogo → cancelar mantém A;
       esvaziar deixa só B.
+
+> **Verificação (2026-10-21)**: `ng test` — `cart.service`, `product-list` e
+> `supplier-list` (50 specs) verdes. Regra no `CartService`; diálogo
+> `cart-other-store-dialog` nas duas listas do catálogo.

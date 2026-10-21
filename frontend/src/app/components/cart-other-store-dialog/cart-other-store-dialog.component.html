@@ -1,0 +1,22 @@
+<div data-testid="cart-other-store-dialog"
+  class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-base-content/40 sm:p-4"
+  (click)="keepCart.emit()">
+  <div role="dialog" aria-modal="true" aria-labelledby="cart-other-store-title"
+    class="w-full sm:max-w-md bg-base-100 rounded-t-2xl sm:rounded-xl shadow-xl p-5 md:p-6"
+    (click)="$event.stopPropagation()">
+    <h2 id="cart-other-store-title" class="text-lg font-bold text-base-content">Uma loja por vez</h2>
+    <p class="mt-2 text-sm text-neutral leading-relaxed">
+      Seu carrinho tem itens de outra loja. Esvazie para adicionar este produto.
+    </p>
+    <div class="mt-5 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+      <button type="button" data-testid="keep-cart" class="btn btn-ghost rounded-xl min-h-11"
+        (click)="keepCart.emit()">
+        Cancelar
+      </button>
+      <button type="button" data-testid="clear-and-add" class="btn btn-accent rounded-xl min-h-11"
+        (click)="clearAndAdd.emit()">
+        Esvaziar e adicionar
+      </button>
+    </div>
+  </div>
+</div>
