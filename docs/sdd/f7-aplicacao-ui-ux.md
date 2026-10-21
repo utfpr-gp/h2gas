@@ -1375,13 +1375,24 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > data do card dividia a linha com o nome do cliente e era cortada — foi para a linha de pagamento.
 
 **Fatia 6 — dashboard com filtros (§5.20):**
-- [ ] Filtros de pagamento, modo, tipo, categoria e produto no backend
+- [x] Filtros de pagamento, modo, tipo, categoria e produto no backend
       (itens que batem), com ids nas quebras, quebra por categoria da
       loja e por modo; 400 em filtro inválido; OpenAPI.
-- [ ] Tela com filtros, gráficos clicáveis que filtram, chips, gráfico
+- [x] Tela com filtros, gráficos clicáveis que filtram, chips, gráfico
       diário com eixo e destaque, pizza com total; estado vazio do filtro.
-- [ ] Testes da seção 7 (item 20) verdes; `mvn test`, `ng test` (sem
+- [x] Testes da seção 7 (item 20) verdes; `mvn test`, `ng test` (sem
       falhas novas) e `ng build`; teste manual em 390 e 1280 px.
+
+> Verificado em 2026-10-21: backend 365 testes (único erro: `contextLoads`); frontend 443 testes com 10 falhas antigas; `ng
+> build` sem erro; E2E em 1280 e 390 px com 13 checagens no Gás Centro comparando com o banco (receita e pedidos do mês; clicar
+> em PIX filtra e clicar de novo tira; clicar no tipo Gás soma só os itens de gás; retirada; retirada + cartão; melhor dia e
+> eixo; sem rolagem lateral nem erro de JS).
+>
+> **Decisões da implementação**: o gráfico diário ficou em colunas (total por dia é discreto), com eixo de três marcas nos
+> valores alcançados, grade tracejada discreta, o melhor dia em outra cor e o valor de cada dia no `title`; as cores
+> categóricas foram validadas pelo script do skill de visualização (a paleta antiga reprovava: azul-marinho fora da faixa de
+> luminosidade e par rosa/verde com ΔE 3,9 para daltônicos) e entraram como tokens `--color-chart-1..5` no tema. **Achado**: no
+> celular, rótulos longos ("Cartão de crédito") colavam nos valores — as linhas passaram a quebrar.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).

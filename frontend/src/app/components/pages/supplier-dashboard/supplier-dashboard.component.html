@@ -211,7 +211,7 @@
                             <button type="button" [attr.data-testid]="'payment-' + payment.method" [attr.aria-pressed]="isActive('payment', $any(payment.method))"
                                 (click)="toggleFilter('payment', $any(payment.method))"
                                 class="w-full text-left rounded-lg px-2 py-1.5 hover:bg-base-200" [ngClass]="{ 'bg-primary/10': isActive('payment', $any(payment.method)) }">
-                                <span class="flex items-center justify-between text-sm">
+                                <span class="flex flex-wrap items-center justify-between gap-x-3 text-sm">
                                     <span class="text-gray-800">{{ paymentLabel(payment.method) }}</span>
                                     <span class="text-gray-500 tabular-nums">{{ payment.orders }} pedidos · {{ payment.percent | number:'1.0-1' }}% · {{ payment.revenue | currency:'BRL':'symbol':'1.2-2' }}</span>
                                 </span>
@@ -242,7 +242,7 @@
                             <button type="button" [attr.data-testid]="'product-' + product.productId" [attr.aria-pressed]="isActive('productId', product.productId)"
                                 (click)="toggleFilter('productId', product.productId)"
                                 class="w-full text-left rounded-lg px-2 py-1.5 hover:bg-base-200" [ngClass]="{ 'bg-primary/10': isActive('productId', product.productId) }">
-                                <span class="flex items-center justify-between gap-2 text-sm">
+                                <span class="flex flex-wrap items-center justify-between gap-x-3 text-sm">
                                     <span class="text-gray-800 truncate">{{ product.productName }}</span>
                                     <span class="text-gray-500 tabular-nums shrink-0">{{ product.quantity }} un · {{ product.revenue | currency:'BRL':'symbol':'1.2-2' }}</span>
                                 </span>
@@ -260,7 +260,7 @@
                             <button type="button" [attr.data-testid]="'store-category-' + c.categoryId" [attr.aria-pressed]="isActive('categoryId', c.categoryId)"
                                 (click)="toggleFilter('categoryId', c.categoryId)"
                                 class="w-full text-left rounded-lg px-2 py-1.5 hover:bg-base-200" [ngClass]="{ 'bg-primary/10': isActive('categoryId', c.categoryId) }">
-                                <span class="flex items-center justify-between gap-2 text-sm">
+                                <span class="flex flex-wrap items-center justify-between gap-x-3 text-sm">
                                     <span class="text-gray-800 truncate">{{ c.categoryName }} <span class="text-xs text-gray-400">{{ c.typeName }}</span></span>
                                     <span class="text-gray-500 tabular-nums shrink-0">{{ c.percent | number:'1.0-1' }}% · {{ c.revenue | currency:'BRL':'symbol':'1.2-2' }}</span>
                                 </span>
