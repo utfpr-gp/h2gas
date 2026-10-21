@@ -109,6 +109,19 @@ describe('SupplierService', () => {
     req.flush(null, { status: 204, statusText: 'No Content' });
   });
 
+  // F7 §5.27
+  it('deveBuscarAsAvaliacoesDaLoja', () => {
+    service.getReviews('loja-1', 1, 5).subscribe((r) => expect(r.data[0].customerFirstName).toBe('Maria'));
+
+    const req = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/suppliers/loja-1/reviews`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('size')).toBe('5');
+    req.flush({ data: [{ id: 1, customerFirstName: 'Maria', rating: 4, comment: null, reviewedAt: null }], page: 1, size: 5,
+      totalElements: 6, totalPages: 2, hasNext: false, hasPrevious: true });
+  });
+
+
   it('deveEnviarFiltrosDoDashboard', () => {
     service.getDashboard('2026-10', { payment: 'PIX', mode: 'PICKUP', typeId: 2, categoryId: 7, productId: 4 }).subscribe();
 

@@ -8,6 +8,7 @@ import { PaginatedResponse } from '../models/paginated-response';
 import { DashboardFilter, SupplierDashboard } from '../models/supplier-dashboard';
 import { SupplierSettings } from '../models/supplier-settings';
 import { SupplierProfile, SupplierProfileRequest } from '../models/supplier-profile';
+import { StoreReview } from '../models/store-review';
 
 @Injectable({
   providedIn: 'root'
@@ -36,6 +37,12 @@ export class SupplierService extends AbstractService<Supplier> {
 
   removeMyLogo(): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/mine/logo`);
+  }
+
+  // F7 §5.27: avaliações da loja, da entrega mais recente para a mais antiga
+  getReviews(supplierId: string, page = 0, size = 10): Observable<PaginatedResponse<StoreReview>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<PaginatedResponse<StoreReview>>(`${this.baseUrl}/${supplierId}/reviews`, { params });
   }
 
   // o backend usa o fornecedor do token

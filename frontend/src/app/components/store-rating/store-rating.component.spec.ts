@@ -51,4 +51,29 @@ describe('StoreRatingComponent', () => {
     expect(rating().textContent).toContain('Sem avaliações ainda');
     expect(rating().getAttribute('aria-label')).toBeNull();
   });
+
+  // ---- F7 §5.27 ----
+  it('deveEmitirAoClicarNaNota', () => {
+    component.average = 4.2;
+    component.count = 14;
+    component.clickable = true;
+    fixture.detectChanges();
+    spyOn(component.openReviews, 'emit');
+
+    const botao = fixture.nativeElement.querySelector('button[data-testid="supplier-rating"]') as HTMLButtonElement;
+    expect(botao.getAttribute('aria-label')).toBe('Ver as 14 avaliações da loja, nota 4,2 de 5');
+    botao.click();
+
+    expect(component.openReviews.emit).toHaveBeenCalled();
+  });
+
+  it('naoDeveSerClicavelSemAvaliacoes', () => {
+    component.average = null;
+    component.count = 0;
+    component.clickable = true;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('button')).toBeNull();
+    expect(rating().textContent).toContain('Sem avaliações ainda');
+  });
 });
