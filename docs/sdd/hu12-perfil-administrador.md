@@ -270,9 +270,9 @@ dele vira o Painel.
 - [x] Admin cadastra e renomeia tipos de produto; fornecedor não cria
       tipo; admin não escreve categoria nem produto (403) e não vê essas
       telas.
-- [ ] Admin escolhe o ícone do tipo numa grade fechada; o catálogo do
+- [x] Admin escolhe o ícone do tipo numa grade fechada; o catálogo do
       cliente mostra o ícone gravado; migração `V10` aplicada.
-- [ ] Testes da seção 6 verdes; `mvn test`, `ng test` (sem falha nova
+- [x] Testes da seção 6 verdes; `mvn test`, `ng test` (sem falha nova
       além das 18 antigas) e `ng build`; E2E e prints em 390 e 1280 px.
 
 **Verificação (20/10/2026):** `mvn test` 288 testes, só o
@@ -284,3 +284,10 @@ categorias e produtos com os status do contrato. E2E: 18/18 (usuários e
 painel) e 15/15 (tipos e permissões do catálogo), prints em 390 e 1280 px.
 O `updateProductItem` perdeu o atalho "dono ou ADMIN" da HU10: agora só o
 dono edita.
+
+**Verificação do ícone (20/10/2026):** `V10` aplicada no MySQL (Gás →
+chama, Água → gota, demais → genérico); `mvn test` 292 testes, só o
+`BackendApplicationTests` com erro de ambiente; `ng test` 348 testes, as
+mesmas 17 falhas antigas; `ng build` ok. E2E de tipos 20/20 (ícone fora
+da lista → 400, troca de ícone gravada e restaurada) e 18/18 no de
+usuários; prints em 390 e 1280 px.
