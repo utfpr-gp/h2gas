@@ -710,6 +710,57 @@ reordenar categorias; descrição da categoria; o formulário de produto
 (`product-item-form`) continua lendo `by-supplier` com 10 por página —
 registrar como dívida para a tela dele.
 
+### 5.18 Fatia 6 — dados da loja com logo (`/distributor/edit/:id`)
+
+> Escrita em 2026-10-21. Pedido do autor: o fornecedor ganha foto/logo
+> da loja ("importante só para ele; usuários não querem foto"). Decisões
+> do autor: a logo aparece no card da loja do catálogo; a tela recebe
+> logo, correção de segurança e redesenho.
+
+**Achados**
+- `PUT /api/suppliers/{id}` não confere o dono: qualquer fornecedor
+  edita a loja de outro; a tela usa o `id` da URL.
+- O `PUT` exige e regrava horário e tempo de entrega (hoje da
+  Configuração, §5.15): editar o nome sobrescreve o horário, e campo
+  vazio estoura `LocalTime.parse`. A cidade vem do formulário, mas é do
+  endereço.
+- Tela fora do padrão (azul fixo, Font Awesome, `select` manual de
+  cidade no endereço, toasts errados como "Erro ao buscar cidades" ao
+  salvar, `console.log`, sem validação visível). `/distributor/new` só é
+  aberto pelo `distributor-management` (código morto).
+- Não existe imagem de fornecedor; o upload de produto já usa o
+  `CloudinaryService` (502 em falha) com limite multipart de 1 MB.
+
+**Contrato**
+- Flyway `V14__supplier_logo.sql`: `suppliers.logo_url VARCHAR(500)
+  NULL`; `SupplierDTO.logoUrl` (o catálogo recebe sem rota nova).
+- `GET /api/suppliers/mine/profile` (SUPPLIER): nome, telefone,
+  descrição, CNPJ (só leitura), logo e endereço resumido.
+- `PUT /api/suppliers/mine/profile` (SUPPLIER): só `name` (obrigatório,
+  até 80), `phone` (obrigatório, 10 ou 11 dígitos) e `description` (até
+  500); não mexe em horário, cidade nem aprovação.
+- `PUT /api/suppliers/mine/logo` (multipart `file`): só JPG, PNG ou WEBP
+  de até 1 MB, senão **400** "Envie uma imagem JPG, PNG ou WEBP de até
+  1 MB."; falha no Cloudinary → **502**; devolve `{ logoUrl }`.
+  `DELETE /api/suppliers/mine/logo` → **204**.
+- `PUT /{id}`: SUPPLIER só a própria loja (**403**); ADMIN continua.
+  OpenAPI em todas.
+- Tela "Dados da loja": logo com prévia (iniciais da loja sem logo),
+  trocar e remover (com confirmação), checagem de tipo e tamanho antes de
+  enviar e upload na hora; formulário de nome, telefone e descrição com
+  contador, CNPJ só leitura, erro por campo, Salvar só com alteração
+  válida e um toast; endereço em cartão com modal restilizado (o CEP
+  define a cidade); link para Horário e entrega (`/configuracao`); lê e
+  grava pelos `/mine`, sem depender do `:id`; rota sob demanda; sem HEX
+  nem `console.log`.
+- `supplier-card` do catálogo: a logo no lugar do ícone de loja, com o
+  ícone de volta sem logo ou se a imagem falhar.
+
+**Fora de escopo (desta tela)**: foto de cliente e entregador; logo no
+menu e nos pedidos; recortar ou redimensionar a imagem no cliente; apagar
+a imagem antiga no Cloudinary; checar o dono no `PUT /addresses/{id}`
+(dívida registrada); refazer `/distributor/new`.
+
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
 - Agregação de rating médio por fornecedor (gap de backend).
@@ -914,6 +965,22 @@ registrar como dívida para a tela dele.
     `deveAvisarNomeRepetidoAntesDeEnviar`,
     `deveMostrarPreviaEContador`, `deveFecharComEsc`.
 
+18. *(fatia 6, §5.18)* **Backend** — `SupplierServiceTest`:
+    `deveAtualizarPerfilSemMexerNoHorario`, `deveSalvarERemoverALogo`,
+    `deveRecusarArquivoQueNaoEImagem`, `deveRecusarImagemMaiorQue1MB`;
+    `SupplierControllerTest`: `deveUsarALojaDoTokenNoPerfil`,
+    `deveRetornar400ComNomeVazio`,
+    `deveRetornar403AoEditarLojaDeOutroPeloId`,
+    `deveEnviarALogoComoMultipart`.
+    **Frontend** — `supplier.service.spec.ts`: `deveBuscarPerfilDaLoja`,
+    `deveEnviarLogoComoFormData`, `deveRemoverLogo`;
+    `distribuitor-form.component.spec.ts`: `deveCarregarPerfilDaLoja`,
+    `deveSalvarSoNomeTelefoneEDescricao`,
+    `deveDesabilitarSalvarSemAlteracao`, `deveEnviarLogoEscolhida`,
+    `deveRecusarArquivoGrandeAntesDeEnviar`,
+    `deveRemoverLogoComConfirmacao`, `deveMostrarIniciaisSemLogo`;
+    `supplier-card.component.spec.ts`: `deveMostrarLogoDaLojaOuIcone`.
+
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
 ## 8. Definição de Pronto
@@ -1105,6 +1172,15 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > **Achado do teste (dado, não código)**: no banco local, os produtos de gás do Gás Centro estão em categorias de outro
 > fornecedor (`fixture-supplier-hu02`) ou sem dono, criadas antes da regra da HU10. A tela mostra só as categorias da loja (as de
 > Água); esses produtos não aparecem em nenhum grupo dele.
+
+**Fatia 6 — dados da loja com logo (§5.18):**
+- [ ] Perfil e logo da loja pelo fornecedor do token; editar a loja de
+      outro é 403; editar o perfil não altera o horário; imagem validada
+      (400) e falha de upload 502; `V14` aplicada; OpenAPI.
+- [ ] Tela "Dados da loja" com logo, formulário validado e endereço pelo
+      CEP; logo no card do catálogo com o ícone de reserva.
+- [ ] Testes da seção 7 (item 18) verdes; `mvn test`, `ng test` (sem
+      falhas novas) e `ng build`; teste manual em 390 e 1280 px.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
