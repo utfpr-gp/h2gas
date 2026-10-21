@@ -109,6 +109,25 @@ describe('SupplierService', () => {
     req.flush(null, { status: 204, statusText: 'No Content' });
   });
 
+  // F7 §5.26
+  it('deveEnviarOBannerComoMultipart', () => {
+    const arquivo = new File([new Uint8Array([1, 2, 3])], 'banner.jpg', { type: 'image/jpeg' });
+    service.uploadMyBanner(arquivo).subscribe((r) => expect(r.bannerUrl).toBe('https://cdn/banner.jpg'));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/suppliers/mine/banner`);
+    expect(req.request.method).toBe('PUT');
+    expect((req.request.body as FormData).get('file')).toBe(arquivo);
+    req.flush({ bannerUrl: 'https://cdn/banner.jpg' });
+  });
+
+  it('deveRemoverOBanner', () => {
+    service.removeMyBanner().subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/suppliers/mine/banner`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null, { status: 204, statusText: 'No Content' });
+  });
+
   it('deveEnviarFiltrosDoDashboard', () => {
     service.getDashboard('2026-10', { payment: 'PIX', mode: 'PICKUP', typeId: 2, categoryId: 7, productId: 4 }).subscribe();
 

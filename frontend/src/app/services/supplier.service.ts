@@ -38,6 +38,17 @@ export class SupplierService extends AbstractService<Supplier> {
     return this.http.delete<void>(`${this.baseUrl}/mine/logo`);
   }
 
+  // F7 §5.26: banner da loja, no topo da página de produtos
+  uploadMyBanner(file: File): Observable<{ bannerUrl: string }> {
+    const body = new FormData();
+    body.append('file', file);
+    return this.http.put<{ bannerUrl: string }>(`${this.baseUrl}/mine/banner`, body);
+  }
+
+  removeMyBanner(): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/mine/banner`);
+  }
+
   // o backend usa o fornecedor do token
   getMySettings(): Observable<SupplierSettings> {
     return this.http.get<SupplierSettings>(`${this.baseUrl}/mine/settings`);
