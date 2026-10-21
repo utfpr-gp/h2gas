@@ -655,6 +655,50 @@ e-mail de estoque baixo; `distributor-management` (código morto).
 exclusão lógica/arquivar produto; ordenar por coluna; mexer no
 formulário de produto (`product-item-form`).
 
+### 5.17 Fatia 6 — categorias do fornecedor (`/category-products`)
+
+> Escrita em 2026-10-21, terceira tela de fornecedor da Fatia 6, já
+> com a HU12 mergeada na branch.
+
+**Achados**
+- `POST /api/category-products` usa o `supplierId` do corpo: um
+  fornecedor cria categoria na loja de outro. `PUT` e `DELETE` não
+  conferem o dono.
+- Excluir categoria que tem produtos estoura a FK (500). Sem validação
+  (nome vazio passa) nem checagem de nome repetido no mesmo tipo.
+- A tela busca só a 1ª página (10) do `by-supplier`; tem um formulário
+  morto (`mostrarFormulario`), emoji no título, azul fixo, Font Awesome,
+  exclusão por checkbox escondido e `console.log`; a checagem "nenhuma
+  alteração" compara objetos por referência e nunca dispara.
+
+**Contrato**
+- `GET /api/category-products/mine` (SUPPLIER): todas as categorias do
+  fornecedor do token (lista curta, sem paginação), ordenadas por tipo e
+  nome, com `id`, `name`, `type`, `productTypeId`, `typeIcon` e
+  `productCount`.
+- `POST /api/category-products` e `PUT /{id}` recebem
+  `CategoryRequestDTO` (`name` obrigatório, até 60 caracteres;
+  `productTypeId` obrigatório); o fornecedor vem do token. Nome repetido
+  no mesmo tipo e na mesma loja (sem diferenciar maiúsculas) → **409**
+  "Você já tem a categoria 20L em Água." `POST` devolve **201**.
+- `PUT` e `DELETE` de categoria de outro fornecedor → **403**.
+  `DELETE` de categoria com produtos → **409** "20L tem 3 produtos.
+  Mova ou exclua os produtos antes de excluir a categoria."
+- OpenAPI atualizado nas quatro rotas. `by-supplier` segue igual (usado
+  pelo formulário de produto).
+- Tela: cabeçalho com "Nova categoria"; categorias agrupadas por tipo
+  (com o ícone do tipo, HU12), cada uma com a contagem de produtos;
+  editar e excluir com rótulo acessível; modal de criar/editar com tipo
+  e nome, erro por campo, Salvar só com alteração válida; excluir com
+  modal próprio — com produtos, o modal explica e não deixa confirmar;
+  mensagens do 409; skeleton e estado vazio; rota sob demanda; sem HEX,
+  emoji nem `console.log`.
+
+**Fora de escopo (desta tela)**: mover produtos entre categorias;
+reordenar categorias; descrição da categoria; o formulário de produto
+(`product-item-form`) continua lendo `by-supplier` com 10 por página —
+registrar como dívida para a tela dele.
+
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
 - Agregação de rating médio por fornecedor (gap de backend).
@@ -838,6 +882,23 @@ formulário de produto (`product-item-form`).
     `deveMostrarSeloDeEstoquePorProduto`, `deveConfirmarAntesDeExcluir`,
     `deveMostrarMensagemQuandoProdutoJaVendido`, `devePaginar`.
 
+17. *(fatia 6, §5.17)* **Backend** — `CategoryProductServiceTest`:
+    `deveListarCategoriasDoFornecedorComContagemDeProdutos`,
+    `deveCriarCategoriaNaLojaDoToken`,
+    `deveRecusarNomeRepetidoNoMesmoTipo`,
+    `deveRecusarEditarOuExcluirCategoriaDeOutroFornecedor`,
+    `deveRecusarExcluirCategoriaComProdutos`;
+    `CategoryProductControllerTest`: `deveRetornar201AoCriarCategoria`,
+    `deveRetornar400SemNomeOuTipo`, `deveListarAsCategoriasDoToken`.
+    **Frontend** — `category-product.service.spec.ts`:
+    `deveListarMinhasCategorias`, `deveCriarSoComNomeETipo`;
+    `category-products.component.spec.ts`:
+    `deveAgruparCategoriasPorTipo`, `deveCriarCategoria`,
+    `deveDesabilitarSalvarSemAlteracaoNaEdicao`,
+    `deveMostrarMensagemDoBackendQuandoNomeRepetido`,
+    `deveImpedirExcluirCategoriaComProdutos`,
+    `deveExcluirCategoriaVazia`, `deveExibirEstadoVazio`.
+
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
 ## 8. Definição de Pronto
@@ -1002,6 +1063,15 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > rolagem lateral nem erro de JS); o estoque mexido para o teste foi restaurado.
 >
 > **Observação**: com a HU12 mergeada, a rota da tela é só do fornecedor, como as rotas `/mine`.
+
+**Fatia 6 — categorias do fornecedor (§5.17):**
+- [ ] Categoria criada, editada e excluída só pelo dono do token;
+      nome repetido e categoria com produtos dão 409 com mensagem;
+      validação no boundary; OpenAPI.
+- [ ] Tela agrupada por tipo, com contagem de produtos, modal com
+      validação e exclusão protegida.
+- [ ] Testes da seção 7 (item 17) verdes; `mvn test`, `ng test` (sem
+      falhas novas) e `ng build`; teste manual em 390 e 1280 px.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
