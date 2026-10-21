@@ -18,6 +18,10 @@ export const addressDefinedGuard: CanActivateFn = (route, state) => {
   }
 
   const user = userService.getUserLocalStorage();
+  // o admin não compra: vê o catálogo sem filtro de cidade e não cadastra endereço
+  if (user?.userType === 'ADMIN') {
+    return true;
+  }
 
   return addressService.findByUserId(user?.id).pipe(
     map((response: any) => {

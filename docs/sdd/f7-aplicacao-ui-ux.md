@@ -422,6 +422,11 @@ depois da HU11.
   (`homeFor`) e usada pelos três.
 - **Fornecedor** sem o link "Início" do catálogo; **carrinho só para o
   cliente**.
+- **Admin não cadastra endereço** (pedido do autor no teste): o
+  `addressDefinedGuard` libera o ADMIN direto, sem buscar endereço nem
+  mandar para `/primeiro-acesso-endereco`; o catálogo do admin vem sem
+  `cityId` (o backend devolve todos os fornecedores ativos e abertos). O
+  cliente segue obrigado a ter endereço (RN05).
 - Ícones da navbar só Material (o dropdown do usuário já usa).
 - **Hambúrguer só para fornecedor e admin** (o cliente navega pela
   bottom tab bar no celular; o entregador pelas abas dele). Painel
@@ -559,6 +564,7 @@ depois da HU11.
     `deveMostrarHamburguerSoParaFornecedorEAdmin`,
     `deveFecharMenuMobileAoNavegarEComEsc`;
     `home-route.spec.ts`: `deveLevarCadaPerfilAoSeuInicio`;
+    `address-defined.guard.spec.ts`: `deveLiberarAdminSemExigirEndereco`;
     `footer.component.spec.ts`: `deveMostrarOAnoAtual`,
     `deveUsarRouterLinkNosLinks`, `naoDeveTerHexLiteral`.
 
@@ -651,8 +657,8 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > do login por senha e do cadastro ficavam atrás do `input` do DaisyUI — sobem com `z-10`; (5) a página Sobre carregava uma
 > segunda cópia do Tailwind 2 por CDN.
 >
-> **Dívida registrada (fora desta fatia)**: o "Início" do admin (`/inicio`, mesma regra do login) cai no cadastro de primeiro
-> endereço, porque o admin não tem endereço — pede uma tela inicial própria do admin.
+> (6) o "Início" do admin (`/inicio`) caía no cadastro de primeiro endereço — o admin agora passa sem endereço e vê o catálogo
+> sem filtro de cidade.
 
 - [x] Grupos A–E migrados pros tokens (grep: zero hex novo fora de
       `styles.css`).
