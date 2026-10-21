@@ -998,9 +998,40 @@ pouco distinto do normal. O grid troca de produtos sem transição.
 **Fora de escopo**: levar a busca desta tela ao padrão do `/inicio` (sem
 botão, debounce, `q`); paginação; redesenho do card; estado vazio.
 
+### 5.25 Cliente — Média e contagem de avaliações da loja no catálogo
+
+> Escrita em 2026-10-21. Pedido do autor: gerar avaliações de lojas (feito
+> como dado de teste local); o card seguia com "Sem avaliações ainda" porque
+> o backend não agrega as notas (item da §6 desta versão). Esta seção
+> entrega só a **leitura agregada**.
+
+**Estado atual**: a tabela `reviews` (nota 1–5, `supplier_id`, `order_id`)
+existe, mas nenhuma rota a lê e `SupplierDTO` não traz nota. O card do
+catálogo (`/inicio`) mostra sempre "Sem avaliações ainda".
+
+**Contrato**
+- `SupplierDTO` ganha `averageRating` (decimal com 1 casa, ex.: `4.3`; `null`
+  sem avaliações) e `reviewCount` (inteiro, `0` sem avaliações), preenchidos
+  **só** na listagem do catálogo (`GET /suppliers/actives/open`, a mesma
+  rota paginada que já filtra por cidade, RN05, e por `q`). Demais rotas de
+  fornecedor devolvem `averageRating = null` e `reviewCount = 0`.
+- A média e a contagem vêm de **uma consulta agrupada** por loja da página
+  (`ReviewRepository`), no banco — sem N+1 e sem calcular no frontend (RN01
+  por analogia: agregação no backend).
+- OpenAPI: `@Schema` nos dois campos novos; a descrição da rota passa a
+  citar a nota.
+- Card (`supplier-card`): com avaliações, mostra estrela cheia, a média com
+  uma casa decimal e a contagem entre parênteses ("4,3 (14)"; "1 avaliação"
+  no singular); sem avaliações mantém "Sem avaliações ainda". Leitor de tela:
+  `aria-label` "Nota 4,3 de 5, 14 avaliações".
+
+**Fora de escopo**: criar/editar avaliação (rota de escrita e a regra RN04
+na API); lista de comentários; média do entregador; ordenar ou filtrar
+lojas por nota; mostrar a nota em outras telas.
+
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
-- Agregação de rating médio por fornecedor (gap de backend).
+- Agregação de rating médio por fornecedor (entregue na §5.25; criar avaliação segue fora).
 - Agregação de "preço mínimo de entrega" por fornecedor.
 - Categoria resumida no card de fornecedor.
 - Mover a barra de busca para dentro da navbar global (fica no corpo de
@@ -1298,6 +1329,15 @@ botão, debounce, `q`); paginação; redesenho do card; estado vazio.
     `deveDestacarOChipAtivoSemFundoEscuro`);
     `product-list.component.spec.ts`: `deveUsarFundoCinzaClaroNaTelaToda`,
     `deveAtenuarOGridEnquantoBusca`.
+
+25. *(cliente, §5.25)* **Backend** — `SupplierServiceTest`:
+    `deveTrazerMediaEContagemDeAvaliacoesNoCatalogo`,
+    `deveTrazerNulaESemContagemQuandoAindaNaoHaAvaliacao`;
+    `SupplierControllerTest`: a resposta do catálogo expõe
+    `averageRating` e `reviewCount`. **Frontend** —
+    `supplier-card.component.spec.ts`: `deveMostrarNotaEContagemDaLoja`,
+    `deveMostrarSingularComUmaAvaliacao`,
+    `deveMostrarSemAvaliacoesQuandoNaoHa`.
 
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
@@ -1624,6 +1664,12 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > `cliente.teste@h2gas.local` em 1280 e 390 px: host da página `gray-50` colado ao menu (sem faixa branca) (sem `<body>` aninhado); chip "Água" ativo com `rgb(39,114,202)` e texto branco; lista entra em sequência ao trocar o tipo.
 > **Achado**: o ajuste de contraste do accent (`#2772ca`, 4,83:1) da auditoria nunca tinha sido commitado — o token
 > seguia `#2a78d6` (4,42:1, abaixo do AA); corrigido em commit à parte, e o texto da §5.21 foi acertado.
+
+**Cliente — Avaliações da loja no catálogo (§5.25):**
+- [ ] `averageRating`/`reviewCount` no catálogo por consulta agrupada,
+      documentados no OpenAPI; card com nota e contagem; testes (item 25)
+      verdes; `mvn test` e `ng test` (sem falhas novas); conferido no
+      navegador com as avaliações geradas.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
