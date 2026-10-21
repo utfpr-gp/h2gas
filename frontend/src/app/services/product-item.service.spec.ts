@@ -61,4 +61,14 @@ describe('ProductItemService', () => {
     expect(req.request.method).toBe('GET');
     req.flush({ total: 7, available: 6, lowStock: 2, outOfStock: 1, lowStockThreshold: 8 });
   });
+
+  it('deveEnviarABuscaNoCatalogo', () => {
+    service.getProductsFromActiveSuppliers(2, 12, 7, undefined, undefined, ' minalba ').subscribe();
+
+    const req = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/product-items/by-supplier-open`);
+    expect(req.request.params.get('page')).toBe('2');
+    expect(req.request.params.get('size')).toBe('12');
+    expect(req.request.params.get('q')).toBe('minalba');
+    req.flush({ data: [], page: 2, size: 12, totalElements: 0, totalPages: 0, hasNext: false, hasPrevious: true });
+  });
 });

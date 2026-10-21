@@ -126,4 +126,19 @@ describe('SupplierService', () => {
     expect(semFiltro.request.params.keys()).toEqual(['month']);
     semFiltro.flush({ month: '2026-10' });
   });
+
+  it('deveBuscarLojasAbertasDaCidadeComBusca', () => {
+    service.getAllSupplierOpenAndActive(1, 10, 7, ' gás ').subscribe();
+
+    const req = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/suppliers/actives/open`);
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('cityId')).toBe('7');
+    expect(req.request.params.get('q')).toBe('gás');
+    req.flush({ data: [], page: 1, size: 10, totalElements: 0, totalPages: 0, hasNext: false, hasPrevious: true });
+
+    service.getAllSupplierOpenAndActive(0, 10, 7).subscribe();
+    const semBusca = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/suppliers/actives/open`);
+    expect(semBusca.request.params.has('q')).toBeFalse();
+    semBusca.flush({ data: [], page: 0, size: 10, totalElements: 0, totalPages: 0, hasNext: false, hasPrevious: false });
+  });
 });
