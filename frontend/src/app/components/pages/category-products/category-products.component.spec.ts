@@ -69,7 +69,7 @@ describe('CategoryProductsComponent', () => {
     click('new-category');
     expect((byId('save-category') as HTMLButtonElement).disabled).toBeTrue();
 
-    preencher('category-type', '2');
+    click('type-option-2');
     preencher('category-name', ' P5 ');
     click('save-category');
 
@@ -95,14 +95,15 @@ describe('CategoryProductsComponent', () => {
 
   it('deveMostrarMensagemDoBackendQuandoNomeRepetido', async () => {
     await setup();
-    categorySpy.createCategory.and.returnValue(throwError(() => ({ status: 409, error: { message: 'Você já tem a categoria P13 em Gás.' } })));
+    // criada em outra aba: a lista carregada não sabe dela, então só o backend barra
+    categorySpy.createCategory.and.returnValue(throwError(() => ({ status: 409, error: { message: 'Você já tem a categoria P99 em Gás.' } })));
     click('new-category');
-    preencher('category-type', '2');
-    preencher('category-name', 'P13');
+    click('type-option-2');
+    preencher('category-name', 'P99');
 
     click('save-category');
 
-    expect(toastrSpy.error).toHaveBeenCalledWith(jasmine.stringContaining('Você já tem a categoria P13 em Gás.'));
+    expect(toastrSpy.error).toHaveBeenCalledWith(jasmine.stringContaining('Você já tem a categoria P99 em Gás.'));
     expect(byId('category-modal')).not.toBeNull();
   });
 
@@ -131,5 +132,84 @@ describe('CategoryProductsComponent', () => {
     await setup([]);
 
     expect(byId('empty-state')?.textContent).toContain('Nenhuma categoria cadastrada');
+  });
+
+  describe('popup', () => {
+    it('deveEscolherTipoPorCartaoComIcone', async () => {
+      await setup();
+      click('new-category');
+
+      expect(byId('type-option-1')?.textContent).toContain('water_drop');
+      expect(byId('type-option-2')?.textContent).toContain('Gás');
+      expect(byId('type-option-2')?.getAttribute('aria-checked')).toBe('false');
+
+      click('type-option-2');
+
+      expect(byId('type-option-2')?.getAttribute('aria-checked')).toBe('true');
+      expect(byId('type-option-1')?.getAttribute('aria-checked')).toBe('false');
+    });
+
+    it('deveSugerirNomesDoTipoSemOsQueJaExistem', async () => {
+      await setup();
+      click('new-category');
+      expect(byId('name-suggestions')).toBeNull();
+
+      click('type-option-2');
+      const sugestoes = Array.from(byId('name-suggestions')!.querySelectorAll('button')).map((b) => b.textContent!.trim());
+      expect(sugestoes).toEqual(['P2', 'P5', 'P8', 'P20']);
+
+      click('suggestion-P20');
+      expect((byId('category-name') as HTMLInputElement).value).toBe('P20');
+      expect((byId('save-category') as HTMLButtonElement).disabled).toBeFalse();
+    });
+
+    it('deveEsconderSugestaoQueJaApareceNoNomeDeUmaCategoria', async () => {
+      await setup([{ id: 7, name: 'Água 20L', type: 'Água', productTypeId: 1, typeIcon: 'water_drop', productCount: 2 }]);
+      click('new-category');
+
+      click('type-option-1');
+
+      const sugestoes = Array.from(byId('name-suggestions')!.querySelectorAll('button')).map((b) => b.textContent!.trim());
+      expect(sugestoes).toEqual(['5L', '10L']);
+    });
+
+    it('deveAvisarNomeRepetidoAntesDeEnviar', async () => {
+      await setup();
+      click('new-category');
+      click('type-option-2');
+      preencher('category-name', ' p13 ');
+
+      expect(byId('name-duplicate')?.textContent).toContain('Você já tem P13 em Gás.');
+      expect((byId('save-category') as HTMLButtonElement).disabled).toBeTrue();
+
+      // a mesma categoria na edição não conta como repetida
+      fixture.componentInstance.closeForm();
+      fixture.detectChanges();
+      click('edit-2');
+      preencher('category-name', 'P13');
+      expect(byId('name-duplicate')).toBeNull();
+    });
+
+    it('deveMostrarPreviaEContador', async () => {
+      await setup();
+      click('new-category');
+      preencher('category-name', 'P5');
+      expect(byId('category-preview')).toBeNull();
+
+      click('type-option-2');
+
+      expect(byId('category-preview')?.textContent).toContain('Gás · P5');
+      expect(byId('name-counter')?.textContent).toContain('2/60');
+    });
+
+    it('deveFecharComEsc', async () => {
+      await setup();
+      click('new-category');
+
+      byId('category-modal')!.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      fixture.detectChanges();
+
+      expect(byId('category-modal')).toBeNull();
+    });
   });
 });

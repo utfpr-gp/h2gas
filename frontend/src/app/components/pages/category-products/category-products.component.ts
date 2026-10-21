@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
@@ -8,6 +8,12 @@ import { DEFAULT_PRODUCT_TYPE_ICON, ProductType } from '../../../models/product-
 import { CategoryRequest, SupplierCategory } from '../../../models/supplier-category';
 import { backendMessage } from '../../../utils/backend-message';
 import { fadeIn } from '../../../animations/checkout.animations';
+
+// tamanhos comuns por tipo; outros tipos ficam sem sugestão
+const NAME_SUGGESTIONS: { match: string[]; names: string[] }[] = [
+  { match: ['gas', 'gás'], names: ['P2', 'P5', 'P8', 'P13', 'P20', 'P45'] },
+  { match: ['agua', 'água'], names: ['5L', '10L', '20L'] },
+];
 
 interface CategoryGroup { productTypeId: number; type: string; icon: string; categories: SupplierCategory[]; }
 
@@ -88,13 +94,75 @@ export class CategoryProductsComponent implements OnInit {
   openCreate() {
     this.editing = undefined;
     this.form.reset({ productTypeId: '', name: '' });
-    this.formOpen = true;
+    this.openForm();
   }
 
   openEdit(c: SupplierCategory) {
     this.editing = c;
     this.form.reset({ productTypeId: String(c.productTypeId), name: c.name });
+    this.openForm();
+  }
+
+  private openForm() {
     this.formOpen = true;
+    setTimeout(() => document.getElementById('category-name')?.focus());
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape() {
+    if (this.formOpen) this.closeForm();
+    else if (this.deleteTarget) this.closeDelete();
+  }
+
+  selectType(type: ProductType) {
+    const control = this.form.controls.productTypeId;
+    control.setValue(String(type.id));
+    control.markAsTouched();
+  }
+
+  isSelected(type: ProductType): boolean {
+    return this.form.controls.productTypeId.value === String(type.id);
+  }
+
+  typeIcon(type: ProductType): string {
+    return type.icon || DEFAULT_PRODUCT_TYPE_ICON;
+  }
+
+  get selectedType(): ProductType | undefined {
+    return this.productTypes.find((t) => this.isSelected(t));
+  }
+
+  // só as que a loja ainda não tem nesse tipo
+  get suggestions(): string[] {
+    const type = this.selectedType;
+    if (!type) return [];
+    const name = (type.name ?? '').toLowerCase();
+    const names = NAME_SUGGESTIONS.find((s) => s.match.some((m) => name.includes(m)))?.names ?? [];
+    // "Água 20L" já cobre a sugestão "20L"
+    const taken = this.categories.filter((c) => c.productTypeId === type.id)
+      .flatMap((c) => c.name.toLowerCase().split(/\s+/));
+    return names.filter((n) => !taken.includes(n.toLowerCase()));
+  }
+
+  useSuggestion(name: string) {
+    const control = this.form.controls.name;
+    control.setValue(name);
+    control.markAsDirty();
+    document.getElementById('category-name')?.focus();
+  }
+
+  // aviso antes de enviar; o 409 do backend continua valendo
+  get duplicate(): boolean {
+    const { name, productTypeId } = this.request();
+    if (!name || !productTypeId) return false;
+    return this.categories.some((c) => c.id !== this.editing?.id && c.productTypeId === productTypeId
+      && c.name.toLowerCase() === name.toLowerCase());
+  }
+
+  get preview(): string {
+    const type = this.selectedType;
+    const name = this.form.controls.name.value.trim();
+    return type && name ? `${type.name} · ${name}` : '';
   }
 
   closeForm() {
@@ -112,7 +180,7 @@ export class CategoryProductsComponent implements OnInit {
   }
 
   get canSave(): boolean {
-    if (this.form.invalid || this.saving) return false;
+    if (this.form.invalid || this.saving || this.duplicate) return false;
     const r = this.request();
     return !this.editing || r.name !== this.editing.name || r.productTypeId !== this.editing.productTypeId;
   }

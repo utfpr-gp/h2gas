@@ -1085,8 +1085,14 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
       validação no boundary; OpenAPI.
 - [x] Tela agrupada por tipo, com contagem de produtos, modal com
       validação e exclusão protegida.
-- [ ] Popup com tipo em cartões, sugestões de nome, prévia, aviso de
+- [x] Popup com tipo em cartões, sugestões de nome, prévia, aviso de
       repetido antes de enviar, contador e Esc (ajuste pedido).
+
+> Popup verificado em 2026-10-21: 13 specs da tela verdes; frontend 405 testes com as 12 falhas antigas; `ng build` sem erro; E2E
+> em 1280 e 390 px com 14 checagens (foco no nome, sugestões sem as que a loja já tem, repetido avisado antes de enviar, prévia,
+> criação pela sugestão, Esc fecha, sem rolagem lateral nem erro de JS); categoria de teste removida. **Achado**: as categorias
+> do banco local se chamam "Água 10L"/"Água 20L", e o popup ainda sugeria "10L"/"20L" — a sugestão some quando já aparece como
+> palavra no nome de uma categoria do mesmo tipo.
 - [x] Testes da seção 7 (item 17) verdes; `mvn test`, `ng test` (sem
       falhas novas) e `ng build`; teste manual em 390 e 1280 px.
 
