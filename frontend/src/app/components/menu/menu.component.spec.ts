@@ -508,4 +508,16 @@ describe('MenuComponent', () => {
 
     expect(router.navigate).toHaveBeenCalledWith(['/login'], { queryParams: { returnUrl: '/fornecedores/loja-1/produtos' } });
   });
+
+  // HU13 Cenário 12: a guarda descarta a sessão vencida; na navegação seguinte o menu já é de visitante
+  it('deveVirarVisitanteQuandoASessaoSomeAoNavegar', async () => {
+    expect(fixture.nativeElement.querySelector('[data-testid="user-menu-button"]')).not.toBeNull();
+
+    localStorage.removeItem('user');
+    await TestBed.inject(Router).navigateByUrl('/inicio');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="visitor-login"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="user-menu-button"]')).toBeNull();
+  });
 });

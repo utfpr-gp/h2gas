@@ -100,7 +100,11 @@ export class MenuComponent implements OnInit, OnDestroy {
     });
     this.navigationSub = this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
-      .subscribe(() => this.closeNavMenus());
+      .subscribe(() => {
+        this.closeNavMenus();
+        // HU13: a guarda pode ter descartado uma sessão vencida — o menu acompanha o que está salvo
+        this.user = this.userService.getUserLocalStorage() ?? undefined;
+      });
   }
 
   ngOnDestroy(): void {
