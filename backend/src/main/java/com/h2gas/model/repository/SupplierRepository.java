@@ -17,6 +17,7 @@ public interface SupplierRepository extends JpaRepository<Supplier, String> {
     Page<Supplier> findByNameContainingIgnoreCase(String name, Pageable pageable);
     Optional<Supplier> findByEmail(String email);
     long countByActive(boolean active);
+    boolean existsByCityId(Long cityId);
 
     // F7 fatia 6: aprovação de fornecedores — status e busca opcionais, aplicados no banco para a paginação bater
     @Query("select s from Supplier s where (:active is null or s.active = :active) and (:q is null"
