@@ -282,6 +282,8 @@ describe('SupplierDashboardComponent', () => {
     const barras = all('day-bar');
     expect(barras[2].getAttribute('data-best')).toBe('true');
     expect(barras[0].getAttribute('data-best')).toBe('false');
+    // o melhor dia não ganha cor própria (parecia outra série); fica no texto e no número em negrito
+    expect(barras.every((b) => b.classList.contains('bg-primary') && !b.classList.contains('bg-chart-2'))).toBeTrue();
     expect(all('axis-label').length).toBeGreaterThan(1);
   });
 

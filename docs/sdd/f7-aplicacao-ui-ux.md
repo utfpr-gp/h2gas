@@ -1132,7 +1132,9 @@ gráficos (o SVG é feito à mão, como hoje).
     `deveExplicarVazioCausadoPeloFiltro`,
     `deveLevarParaACentralDePedidos`, `deveMostrarCadaDiaDoMesNoEixo`
     (pedido do autor: cada dia do mês abaixo da sua coluna; no celular,
-    só os ímpares, para não sobrepor).
+    só os ímpares, para não sobrepor). Ajuste: o melhor dia deixou de ter
+    cor própria (o laranja parecia outra série/tipo); segue no texto
+    "Melhor dia" e no número em negrito.
 
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 

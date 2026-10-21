@@ -164,8 +164,7 @@
                         <div *ngFor="let t of axisTicks" class="absolute inset-x-0 border-t border-dashed border-gray-100" [style.bottom.%]="t.bottom"></div>
                         <div class="relative h-full flex items-end gap-px" role="img" aria-label="Gráfico de colunas com a receita de cada dia do mês">
                             <div *ngFor="let point of dashboard.revenueByDay; trackBy: trackByDay" class="group flex-1 h-full flex items-end">
-                                <div data-testid="day-bar" class="w-full rounded-t-sm min-h-px transition-opacity group-hover:opacity-80"
-                                    [ngClass]="isBestDay(point) ? 'bg-chart-2' : 'bg-primary'"
+                                <div data-testid="day-bar" class="w-full rounded-t-sm min-h-px bg-primary transition-opacity group-hover:opacity-80"
                                     [attr.data-best]="isBestDay(point)"
                                     [style.height.%]="barHeight(point.revenue)"
                                     [attr.aria-label]="(point.day | date:'dd/MM') + ': ' + (point.revenue | currency:'BRL':'symbol':'1.2-2')"
