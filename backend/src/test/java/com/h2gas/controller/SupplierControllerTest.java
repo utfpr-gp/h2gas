@@ -330,4 +330,19 @@ class SupplierControllerTest {
 
         verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), eq("gás azul"), any());
     }
+
+    @Test
+    void deveExporNotaEContagemNoCatalogo() throws Exception {
+        SupplierDTO loja = new SupplierDTO();
+        loja.setName("Gás Centro");
+        loja.setAverageRating(4.3);
+        loja.setReviewCount(14L);
+        when(supplierService.findAllSuppliersOpenAndActive(isNull(), isNull(), any()))
+                .thenReturn(new PageImpl<>(List.of(loja), PageRequest.of(0, 10), 1));
+
+        mockMvc.perform(get("/api/suppliers/actives/open"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].averageRating").value(4.3))
+                .andExpect(jsonPath("$.data[0].reviewCount").value(14));
+    }
 }

@@ -68,6 +68,12 @@ class SupplierServiceTest {
     @Autowired
     private SupplierMapper supplierMapper;
 
+    @Autowired
+    private com.h2gas.model.repository.OrderRepository orderRepository;
+
+    @Autowired
+    private com.h2gas.model.repository.ReviewRepository reviewRepository;
+
     private String validId;
 
 
@@ -532,5 +538,54 @@ class SupplierServiceTest {
 
         assertEquals(List.of("Gás Azul Curitiba"), result.getContent().stream().map(SupplierDTO::getName).toList());
         assertEquals(2, supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, PageRequest.of(0, 10)).getTotalElements());
+    }
+
+    private void avaliar(Supplier loja, User cliente, int nota) {
+        com.h2gas.model.entity.Order pedido = new com.h2gas.model.entity.Order();
+        pedido.setCustomer(cliente);
+        pedido.setSupplier(loja);
+        pedido.setStatus(com.h2gas.enums.OrderStatusEnum.DELIVERED);
+        pedido = orderRepository.save(pedido);
+        com.h2gas.model.entity.Review avaliacao = new com.h2gas.model.entity.Review();
+        avaliacao.setOrder(pedido);
+        avaliacao.setSupplier(loja);
+        avaliacao.setRating(nota);
+        reviewRepository.save(avaliacao);
+    }
+
+    private Supplier lojaAberta(String nome, City cidade) {
+        Address a = addressRepository.save(new Address(null, "Rua " + nome, "loja", "1", "c", "Centro", "80000-000", cidade, null));
+        return supplierRepository.save(getSupplier(nome, nome.replace(" ", "") + "@t", "41900000000", "1",
+                "s", "11222333000144", "d", true, true, a, cidade));
+    }
+
+    @Test
+    @DisplayName("F7 §5.25: catálogo traz média (1 casa) e contagem de avaliações por loja")
+    void deveTrazerMediaEContagemDeAvaliacoesNoCatalogo() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        User cliente = userRepository.save(new User(null, "Cliente", "cli@t", "41999990000", "99988877766", "x", UserTypeEnum.CUSTOMER));
+        Supplier avaliada = lojaAberta("Loja Avaliada", curitiba);
+        lojaAberta("Loja Sem Nota", curitiba);
+        avaliar(avaliada, cliente, 5);
+        avaliar(avaliada, cliente, 4);
+        avaliar(avaliada, cliente, 4);
+
+        Page<SupplierDTO> result = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, PageRequest.of(0, 10));
+
+        SupplierDTO dto = result.getContent().stream().filter(d -> d.getName().equals("Loja Avaliada")).findFirst().orElseThrow();
+        assertEquals(4.3, dto.getAverageRating());
+        assertEquals(3L, dto.getReviewCount());
+    }
+
+    @Test
+    @DisplayName("F7 §5.25: loja sem avaliação vem com média nula e contagem zero")
+    void deveTrazerNulaESemContagemQuandoAindaNaoHaAvaliacao() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        lojaAberta("Loja Sem Nota", curitiba);
+
+        SupplierDTO dto = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, PageRequest.of(0, 10)).getContent().get(0);
+
+        assertNull(dto.getAverageRating());
+        assertEquals(0L, dto.getReviewCount());
     }
 }

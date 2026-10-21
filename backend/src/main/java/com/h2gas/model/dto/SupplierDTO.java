@@ -3,6 +3,7 @@ package com.h2gas.model.dto;
 import com.h2gas.model.entity.Address;
 import com.h2gas.model.entity.City;
 import com.h2gas.model.entity.User;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -29,6 +30,10 @@ public class SupplierDTO {
     private String email;
     private String cnpj;
     private String logoUrl;
+    @Schema(description = "Média das avaliações da loja, com 1 casa decimal; nula sem avaliações. Preenchida só no catálogo do cliente", example = "4.3", nullable = true)
+    private Double averageRating;
+    @Schema(description = "Quantidade de avaliações da loja; 0 sem avaliações. Preenchida só no catálogo do cliente", example = "14")
+    private Long reviewCount = 0L;
     private List<ProductItemDTO> products;
 //    private UserDto user;
 

@@ -121,7 +121,7 @@ public class SupplierController {
 
     @Operation(summary = "Lista fornecedores ativos e abertos",
             description = "Retorna fornecedores ativos e abertos, ordenados por nome, opcionalmente filtrados por cidade do endereço ativo "
-                    + "do cliente (RN05) e pela busca q no nome da loja")
+                    + "do cliente (RN05) e pela busca q no nome da loja. Cada loja traz averageRating (média, 1 casa; nula sem avaliações) e reviewCount")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista paginada de fornecedores ativos e abertos")
     })
