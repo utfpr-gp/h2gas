@@ -1223,6 +1223,11 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > Cloudinary lança `RuntimeException` quando a API recusa, e o envio virava 500 — agora é 502 com mensagem clara. O upload de
 > foto de produto (`ProductItemService`) tem o mesmo defeito: **dívida registrada**. (3) A logo que não carrega volta para as
 > iniciais também na tela da loja. Dívida também registrada: o `PUT /addresses/{id}` não confere o dono.
+>
+> **Envio real verificado depois (2026-10-21)**: o `.env` local tinha a API Key no lugar do secret, depois ficou sem o
+> `@<cloud>` no fim, e a chave tinha permissão restrita ("missing permissions (actions=create)"). Com o `CLOUDINARY_URL`
+> corrigido pelo autor, o E2E passou 5/5: upload aceito, URL `https://res.cloudinary.com/<cloud>/...` gravada, imagem pública e
+> logo no card do catálogo para o cliente. A logo de teste foi tirada do Gás Centro no fim.
 
 - [x] Tela única "Minha loja" para o fornecedor: `/meus-dados` e
       `/distributor/edit/:id` levam a `/minha-loja`, e-mail só leitura,
