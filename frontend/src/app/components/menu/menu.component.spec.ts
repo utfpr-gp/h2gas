@@ -339,10 +339,11 @@ describe('MenuComponent', () => {
       .map((a) => a.getAttribute('href'));
 
     for (const [onde, hrefs] of [['desktop', desktop], ['mobile', mobile]] as const) {
-      expect(hrefs).withContext(onde).toEqual(jasmine.arrayContaining(['/admin', '/admin/usuarios', '/supplier-approval', '/register-city']));
+      expect(hrefs).withContext(onde).toEqual(jasmine.arrayContaining(['/admin', '/admin/usuarios', '/supplier-approval', '/register-city', '/admin/tipos']));
       expect(hrefs).withContext(onde).not.toContain('/inicio');
       expect(hrefs).withContext(onde).not.toContain('/meus-pedidos');
     }
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Produtos');
 
     abrirMenu();
     expect(itens()).toEqual(['Meus Dados', 'Painel', 'Sair']);

@@ -59,10 +59,13 @@
             <a routerLink="/register-city" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors [&>.material-icons]:text-[20px]">
               <span class="material-icons" aria-hidden="true">map</span><span>Cidades</span>
             </a>
+            <a routerLink="/admin/tipos" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors [&>.material-icons]:text-[20px]">
+              <span class="material-icons" aria-hidden="true">category</span><span>Tipos</span>
+            </a>
           </ng-container>
 
           <!-- Dropdown Produtos -->
-          <div *ngIf="isAdmin || isSupplier" class="relative">
+          <div *ngIf="isSupplier" class="relative">
             <button type="button" (click)="toggleProductsMenu()" [attr.aria-expanded]="productsMenuOpen" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors focus:outline-none [&>.material-icons]:text-[20px]">
               <span class="material-icons" aria-hidden="true">local_fire_department</span><span>Produtos</span>
               <span class="material-icons text-[18px] transition-transform" [ngClass]="{ 'rotate-180': productsMenuOpen }" aria-hidden="true">expand_more</span>
@@ -293,6 +296,9 @@
           <a routerLink="/register-city" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-white/10">
             <span class="material-icons" aria-hidden="true">map</span>Cidades
           </a>
+          <a routerLink="/admin/tipos" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-white/10">
+            <span class="material-icons" aria-hidden="true">category</span>Tipos
+          </a>
         </ng-container>
         <ng-container *ngIf="isSupplier">
           <a routerLink="/dashboard" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-white/10">
@@ -306,14 +312,16 @@
           </a>
         </ng-container>
 
-        <button type="button" (click)="toggleSubmenu()" [attr.aria-expanded]="submenuOpen" class="flex items-center justify-between px-3 py-2.5 rounded-md hover:bg-white/10 text-left">
-          <span class="flex items-center gap-3"><span class="material-icons" aria-hidden="true">local_fire_department</span>Produtos</span>
-          <span class="material-icons transition-transform" [ngClass]="{ 'rotate-180': submenuOpen }" aria-hidden="true">expand_more</span>
-        </button>
-        <div *ngIf="submenuOpen" @expandCollapse class="flex flex-col pl-9 gap-1">
-          <a routerLink="/product-items" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="hover:bg-white/10 px-3 py-2 rounded-md">Item produtos</a>
-          <a routerLink="/category-products" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="hover:bg-white/10 px-3 py-2 rounded-md">Categoria de produtos</a>
-        </div>
+        <ng-container *ngIf="isSupplier">
+          <button type="button" (click)="toggleSubmenu()" [attr.aria-expanded]="submenuOpen" class="flex items-center justify-between px-3 py-2.5 rounded-md hover:bg-white/10 text-left">
+            <span class="flex items-center gap-3"><span class="material-icons" aria-hidden="true">local_fire_department</span>Produtos</span>
+            <span class="material-icons transition-transform" [ngClass]="{ 'rotate-180': submenuOpen }" aria-hidden="true">expand_more</span>
+          </button>
+          <div *ngIf="submenuOpen" @expandCollapse class="flex flex-col pl-9 gap-1">
+            <a routerLink="/product-items" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="hover:bg-white/10 px-3 py-2 rounded-md">Item produtos</a>
+            <a routerLink="/category-products" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="hover:bg-white/10 px-3 py-2 rounded-md">Categoria de produtos</a>
+          </div>
+        </ng-container>
 
       </div>
     </nav>
