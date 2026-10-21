@@ -1565,11 +1565,18 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
       escuro, sem erro de JS).
 
 **Cliente — Comprar agora (§5.23):**
-- [ ] Item avulso separado do carrinho; checkout com `modo=compra-direta`
+- [x] Item avulso separado do carrinho; checkout com `modo=compra-direta`
       usa só o produto e deixa o carrinho intacto; abre na etapa Entrega.
-- [ ] Botão "Comprar agora" no card, nas duas telas; testes (item 23)
+- [x] Botão "Comprar agora" no card, nas duas telas; testes (item 23)
       verdes; `ng test` (sem falhas novas) e `ng build`; E2E em 390 e
       1280 px, conferindo o pedido no banco.
+
+> **Verificação (2026-10-21)**: `ng test` 469 testes, só as 10 falhas antigas de providers; `ng build` ok. E2E com
+> `cliente.teste@h2gas.local` (carrinho com 2 itens): "Comprar agora" abriu o checkout na etapa Entrega só com o produto;
+> +/− atualizou o preview; concluir criou **um** pedido (`PENDING`, R$ 28,00 = 2 × R$ 14,00, só o produto escolhido) e o carrinho
+> seguiu com os 2 itens, sem item avulso na sessão. Sem item avulso, `?modo=compra-direta` volta a `/inicio`; o checkout sem o
+> parâmetro usa o carrinho. Conferido em 1280 e 390 px (o fluxo completo até o pedido foi feito em 1280 px; em 390 px,
+> até a etapa Entrega). Pedido de teste removido e estoque devolvido.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
