@@ -809,13 +809,22 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > O "Configurações" do menu do admin aponta para uma rota que agora é só do fornecedor; a HU12 já tira esse item do menu.
 
 **Fatia 6 — produtos do fornecedor (§5.16):**
-- [ ] Lista, filtros e contadores calculados no backend para o
+- [x] Lista, filtros e contadores calculados no backend para o
       fornecedor do token; exclusão de produto alheio é 403 e de produto
       vendido é 409 com orientação; OpenAPI.
-- [ ] Tela com contadores-filtro, busca, selo de estoque correto,
+- [x] Tela com contadores-filtro, busca, selo de estoque correto,
       confirmação de exclusão, skeleton, estado vazio e paginação.
-- [ ] Testes da seção 7 (item 16) verdes; `mvn test`, `ng test` (sem
+- [x] Testes da seção 7 (item 16) verdes; `mvn test`, `ng test` (sem
       falhas novas) e `ng build`; teste manual em 390 e 1280 px.
+
+> Verificado em 2026-10-21: backend 270 testes (único erro: `contextLoads`, que precisa do MySQL local); frontend 338 testes com as
+> 17 falhas antigas de providers; `ng build` sem erro; E2E em 1280 e 390 px com 22 checagens no Gás Centro (resumo 7/6/1/1 com
+> limite 8, 403 ao excluir produto alheio, 409 ao excluir produto vendido com toast orientando a zerar o estoque, 400 para filtro
+> inválido, selos Esgotado/Estoque baixo, filtro pelo contador, busca "minalba", estado vazio, link para a configuração, sem
+> rolagem lateral nem erro de JS); o estoque mexido para o teste foi restaurado.
+>
+> **Observação**: a rota da tela ainda aceita ADMIN nesta branch, mas as rotas `/mine` são só do fornecedor; a HU12 já tira o
+> admin das telas de produto.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
