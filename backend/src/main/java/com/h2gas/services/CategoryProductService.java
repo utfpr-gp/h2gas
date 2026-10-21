@@ -1,5 +1,13 @@
 package com.h2gas.services;
 
+import com.h2gas.exceptions.ForbiddenResourceException;
+import com.h2gas.model.dto.CategoryRequestDTO;
+import com.h2gas.model.dto.SupplierCategoryDTO;
+import com.h2gas.model.repository.ProductItemRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.AddressDTO;
 import com.h2gas.model.dto.CategoryProductDTO;
@@ -34,6 +42,9 @@ public class CategoryProductService {
     @Autowired
     private SupplierService supplierService;
 
+    @Autowired
+    private ProductItemRepository productItemRepository;
+
 
     public List<CategoryProductDTO> findAllCategoryProducts() {
         return categoryProductRepository.findAll()
@@ -53,25 +64,48 @@ public class CategoryProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada com ID: " + id));
     }
 
-    public CategoryProductDTO createCategory(CategoryProductDTO categoryDto) {
-        CategoryProduct categoryProduct = categoryProductMapper.toEntity(categoryDto);
-        ProductType productType = productTypeService.findEntityById(categoryDto.getProductTypeId());
-        Supplier supplier = supplierService.findEntityById(categoryDto.getSupplierId());
-
-        if (productType != null) {
-            categoryProduct.setProductType(productType);
+    // F7 fatia 6: o fornecedor vem sempre do token (controller); nome único por tipo dentro da loja
+    @Transactional
+    public CategoryProductDTO createCategory(String supplierId, CategoryRequestDTO request) {
+        String name = request.name().trim();
+        ProductType productType = productTypeService.findEntityById(request.productTypeId());
+        if (categoryProductRepository.existsBySupplierIdAndProductTypeIdAndNameIgnoreCase(supplierId, productType.getId(), name)) {
+            throw duplicated(name, productType);
         }
-        categoryProduct.setSupplier(supplier);
-
-        CategoryProduct savedCategoryProduct = categoryProductRepository.save(categoryProduct);
-        return categoryProductMapper.toDto(savedCategoryProduct);
+        CategoryProduct categoryProduct = new CategoryProduct();
+        categoryProduct.setName(name);
+        categoryProduct.setProductType(productType);
+        categoryProduct.setSupplier(supplierService.findEntityById(supplierId));
+        return categoryProductMapper.toDto(categoryProductRepository.save(categoryProduct));
     }
 
-    public void deleteCategory(Long id) {
+    public List<SupplierCategoryDTO> findMine(String supplierId) {
+        return categoryProductRepository.findMine(supplierId);
+    }
+
+    @Transactional
+    public void deleteCategory(Long id, String supplierId) {
+        CategoryProduct category = findOwned(id, supplierId);
+        // o cascade da entidade apagaria os produtos junto: com produto, a categoria fica
+        long products = productItemRepository.countByCategoryProductId(id);
+        if (products > 0) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, category.getName() + " tem " + products
+                    + (products == 1 ? " produto" : " produtos") + ". Mova ou exclua os produtos antes de excluir a categoria.");
+        }
+        categoryProductRepository.delete(category);
+    }
+
+    private CategoryProduct findOwned(Long id, String supplierId) {
         CategoryProduct category = categoryProductRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada com ID: " + id));
+        if (category.getSupplier() == null || !category.getSupplier().getId().equals(supplierId)) {
+            throw new ForbiddenResourceException("Você só pode alterar as categorias da sua loja.");
+        }
+        return category;
+    }
 
-        categoryProductRepository.delete(category);
+    private static ResponseStatusException duplicated(String name, ProductType productType) {
+        return new ResponseStatusException(HttpStatus.CONFLICT, "Você já tem a categoria " + name + " em " + productType.getName() + ".");
     }
 
     public Page<CategoryProductDTO> findAllBySupplierId(String supplierId, Pageable pageable) {
@@ -79,20 +113,16 @@ public class CategoryProductService {
                 .map(categoryProductMapper::toDto);
     }
 
-    public CategoryProductDTO update(Long id, CategoryProductDTO categoryDto) {
-        CategoryProduct categoryEdit = categoryProductRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada com ID: " + id));
-
-        ProductType productType = productTypeService.findEntityById(categoryDto.getProductTypeId());
-
-        if (!categoryEdit.getProductType().getId().equals(productType.getId())) {
-            categoryEdit.setProductType(productType);
+    @Transactional
+    public CategoryProductDTO update(Long id, CategoryRequestDTO request, String supplierId) {
+        CategoryProduct categoryEdit = findOwned(id, supplierId);
+        String name = request.name().trim();
+        ProductType productType = productTypeService.findEntityById(request.productTypeId());
+        if (categoryProductRepository.existsBySupplierIdAndProductTypeIdAndNameIgnoreCaseAndIdNot(supplierId, productType.getId(), name, id)) {
+            throw duplicated(name, productType);
         }
-
-        categoryEdit.setName(categoryDto.getName());
-
-        categoryProductRepository.save(categoryEdit);
-
-        return categoryProductMapper.toDto(categoryEdit);
+        categoryEdit.setProductType(productType);
+        categoryEdit.setName(name);
+        return categoryProductMapper.toDto(categoryProductRepository.save(categoryEdit));
     }
 }

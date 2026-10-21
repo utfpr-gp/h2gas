@@ -31,6 +31,7 @@ public interface ProductItemRepository extends JpaRepository<ProductItem, Long> 
                                Pageable pageable);
 
     long countBySupplierId(String supplierId);
+    long countByCategoryProductId(Long categoryProductId);
     long countBySupplierIdAndStockQuantityGreaterThan(String supplierId, int stock);
     long countBySupplierIdAndStockQuantity(String supplierId, int stock);
     long countBySupplierIdAndStockQuantityBetween(String supplierId, int min, int max);
