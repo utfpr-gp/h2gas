@@ -306,8 +306,13 @@ describe('MenuComponent', () => {
 
     expect(linkPara('/register-city')!.classList).toContain('bg-white/15');
     expect(linkPara('/register-city')!.getAttribute('aria-current')).toBe('page');
-    expect(linkPara('/inicio')!.classList).not.toContain('bg-white/15');
-    expect(linkPara('/inicio')!.getAttribute('aria-current')).toBeNull();
+    expect(linkPara('/admin')!.classList).not.toContain('bg-white/15');
+    expect(linkPara('/admin')!.getAttribute('aria-current')).toBeNull();
+
+    await navegar('/admin/usuarios');
+
+    expect(linkPara('/admin/usuarios')!.getAttribute('aria-current')).toBe('page');
+    expect(linkPara('/admin')!.getAttribute('aria-current')).withContext('Painel só ativo na própria rota').toBeNull();
   });
 
   it('deveLevarALogoParaOInicioDoPerfil', () => {
@@ -320,7 +325,27 @@ describe('MenuComponent', () => {
     entrarComo(perfis.entregador);
     expect(logo()).toBe('/entregas');
     entrarComo(perfis.admin);
-    expect(logo()).toBe('/inicio');
+    expect(logo()).toBe('/admin');
+  });
+
+  it('deveMostrarPainelEUsuariosParaAdmin', () => {
+    entrarComo(perfis.admin);
+    (byId('mobile-menu-button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const desktop = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('nav[aria-label="Navegação principal"] a'))
+      .map((a) => a.getAttribute('href'));
+    const mobile = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('#mobile-menu a'))
+      .map((a) => a.getAttribute('href'));
+
+    for (const [onde, hrefs] of [['desktop', desktop], ['mobile', mobile]] as const) {
+      expect(hrefs).withContext(onde).toEqual(jasmine.arrayContaining(['/admin', '/admin/usuarios', '/supplier-approval', '/register-city']));
+      expect(hrefs).withContext(onde).not.toContain('/inicio');
+      expect(hrefs).withContext(onde).not.toContain('/meus-pedidos');
+    }
+
+    abrirMenu();
+    expect(itens()).toEqual(['Meus Dados', 'Painel', 'Sair']);
   });
 
   it('naoDeveMostrarInicioDoCatalogoParaFornecedor', () => {

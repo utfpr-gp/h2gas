@@ -141,8 +141,7 @@ export class MenuComponent implements OnInit, OnDestroy {
       case 'ADMIN':
         return [
           meusDados,
-          { id: 'pedidos-recebidos', label: 'Pedidos recebidos', icon: 'inbox', route: '/dashboard-fornecedor' },
-          { id: 'configuracao', label: 'Configurações', icon: 'settings', route: '/configuracao' },
+          { id: 'painel', label: 'Painel', icon: 'space_dashboard', route: '/admin' },
         ];
       default:
         return [meusDados];
