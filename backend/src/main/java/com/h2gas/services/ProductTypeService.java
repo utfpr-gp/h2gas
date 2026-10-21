@@ -1,5 +1,6 @@
 package com.h2gas.services;
 
+import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.CategoryProductDTO;
 import com.h2gas.model.dto.CreateProductItemDTO;
@@ -19,6 +20,8 @@ import java.util.stream.Collectors;
 
 @Component
 public class ProductTypeService {
+    private static final String DUPLICATED_TYPE = "Tipo já cadastrado.";
+
     @Autowired
     private ProductTypeRepository productTypeRepository;
 
@@ -44,8 +47,24 @@ public class ProductTypeService {
     }
 
 
+    // HU12: só o admin cria e renomeia; o nome é único sem diferenciar maiúsculas
     public ProductTypeDTO createProductType(ProductTypeDTO productTypeDTO) {
-        ProductType productType = productTypeMapper.toEntity(productTypeDTO);
+        String name = productTypeDTO.getName().trim();
+        if (productTypeRepository.existsByNameIgnoreCase(name)) {
+            throw new BusinessRuleException(DUPLICATED_TYPE);
+        }
+        ProductType productType = new ProductType();
+        productType.setName(name);
+        return productTypeMapper.toDto(productTypeRepository.save(productType));
+    }
+
+    public ProductTypeDTO updateProductType(Long id, ProductTypeDTO productTypeDTO) {
+        ProductType productType = findEntityById(id);
+        String name = productTypeDTO.getName().trim();
+        if (productTypeRepository.existsByNameIgnoreCaseAndIdNot(name, id)) {
+            throw new BusinessRuleException(DUPLICATED_TYPE);
+        }
+        productType.setName(name);
         return productTypeMapper.toDto(productTypeRepository.save(productType));
     }
 }

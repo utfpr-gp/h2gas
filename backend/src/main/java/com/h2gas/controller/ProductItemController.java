@@ -61,7 +61,7 @@ public class ProductItemController {
     })
     @PostMapping
     @ResponseBody
-    @RolesAllowed({"ADMIN", "SUPPLIER"})
+    @RolesAllowed("SUPPLIER")
     public ResponseEntity<ProductItemDTO> createCategoryProduct(
             @RequestPart("product") @Valid CreateProductItemDTO productItemDTO,
             @RequestPart("file") MultipartFile file
@@ -74,7 +74,7 @@ public class ProductItemController {
 
     @GetMapping("/{id}")
     @ResponseBody
-    @RolesAllowed({"ADMIN", "SUPPLIER"})
+    @RolesAllowed("SUPPLIER")
     public ResponseEntity<ProductItemDTO> getProductById(@PathVariable Long id) {
         ProductItemDTO productItem = productItemService.findById(id);
         return ResponseEntity.ok(productItem);
@@ -82,15 +82,15 @@ public class ProductItemController {
 
     @DeleteMapping("/{id}")
     @ResponseBody
-    @RolesAllowed({"ADMIN", "SUPPLIER"})
+    @RolesAllowed("SUPPLIER")
     public ResponseEntity<Long> deleteProduct(@PathVariable("id") Long id) {
         productItemService.deleteProductItem(id);
         return ResponseEntity.ok(id);
     }
 
     @Operation(summary = "Edita um produto do fornecedor logado",
-            description = "Atualiza marca, price e shippingFee (retirada = price; entrega = price + shippingFee), estoque e descrição. Só o dono do produto "
-                    + "(ou ADMIN) edita, e a categoria nova precisa ser do mesmo fornecedor")
+            description = "Atualiza marca, price e shippingFee (retirada = price; entrega = price + shippingFee), estoque e descrição. Só o fornecedor dono "
+                    + "do produto edita, e a categoria nova precisa ser do mesmo fornecedor")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Produto atualizado"),
             @ApiResponse(responseCode = "400", description = "Preço ausente ou negativo, marca/categoria ausentes ou estoque negativo"),
@@ -99,7 +99,7 @@ public class ProductItemController {
     })
     @PutMapping("/{id}")
     @ResponseBody
-    @RolesAllowed({"ADMIN", "SUPPLIER"})
+    @RolesAllowed("SUPPLIER")
     public ResponseEntity<ProductItemDTO> update(@Parameter(description = "ID do produto") @PathVariable Long id,
                                                  @Valid @RequestBody CreateProductItemDTO dto) {
         User actor = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
