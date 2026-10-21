@@ -83,6 +83,20 @@ describe('SupplierCardComponent', () => {
     expect(rating().textContent).toContain('4,3');
     expect(rating().textContent).toContain('(14)');
     expect(rating().textContent).not.toContain('Sem avaliações');
-    expect(rating().getAttribute('aria-label')).toBe('Nota 4,3 de 5, 14 avaliações');
+    // F7 §5.27: no card, a nota é o botão que abre as avaliações
+    expect(rating().getAttribute('aria-label')).toBe('Ver as 14 avaliações da loja, nota 4,3 de 5');
+  });
+
+  // ---- F7 §5.27 ----
+  it('naoDeveAbrirProdutosAoClicarNasEstrelas', () => {
+    component.supplier = { id: '7', name: 'Gás Centro', averageRating: 4.2, reviewCount: 14 } as Supplier;
+    fixture.detectChanges();
+    spyOn(component.viewProducts, 'emit');
+    spyOn(component.viewReviews, 'emit');
+
+    (fixture.nativeElement.querySelector('button[data-testid="supplier-rating"]') as HTMLButtonElement).click();
+
+    expect(component.viewReviews.emit).toHaveBeenCalledWith(jasmine.objectContaining({ id: '7' }));
+    expect(component.viewProducts.emit).not.toHaveBeenCalled();
   });
 });

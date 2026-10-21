@@ -16,6 +16,7 @@ import { ProductType } from '../../../models/product-type';
 import { CategoryChipBarComponent } from '../../category-chip-bar/category-chip-bar.component';
 import { ProductCardComponent } from '../../product-card/product-card.component';
 import { SupplierCardComponent } from '../../supplier-card/supplier-card.component';
+import { StoreReviewsDialogComponent } from '../../store-reviews-dialog/store-reviews-dialog.component';
 import { backendMessage } from '../../../utils/backend-message';
 
 const SUPPLIERS_PAGE_SIZE = 10;
@@ -32,6 +33,7 @@ type ViewMode = 'suppliers' | 'products';
     CategoryChipBarComponent,
     ProductCardComponent,
     SupplierCardComponent,
+    StoreReviewsDialogComponent,
   ],
   templateUrl: './supplier-list.component.html',
 })
@@ -190,5 +192,12 @@ export class SupplierListComponent implements OnInit {
   buyNow(product: ProductItem) {
     this.cartService.startBuyNow({ ...product, quantitySelect: 1 });
     this.router.navigate(['/resumo-pedido'], { queryParams: { modo: 'compra-direta' } });
+  }
+
+  // F7 §5.27: avaliações da loja, abertas pelas estrelas do card
+  reviewsStore?: Supplier;
+
+  openReviews(supplier: Supplier) {
+    this.reviewsStore = supplier;
   }
 }

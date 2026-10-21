@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { of } from 'rxjs';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 
 import { SupplierListComponent } from './supplier-list.component';
 import { SupplierService } from '../../../services/supplier.service';
@@ -26,7 +27,8 @@ describe('SupplierListComponent', () => {
 
   beforeEach(async () => {
     localStorage.clear();
-    supplierServiceSpy = jasmine.createSpyObj('SupplierService', ['getAllSupplierOpenAndActive']);
+    supplierServiceSpy = jasmine.createSpyObj('SupplierService', ['getAllSupplierOpenAndActive', 'getReviews']);
+    supplierServiceSpy.getReviews.and.returnValue(of({ ...emptyPage, data: [{ id: 1, customerFirstName: 'Maria', rating: 5, comment: 'Ótimo', reviewedAt: null }] } as any));
     supplierServiceSpy.getAllSupplierOpenAndActive.and.returnValue(of(emptyPage as any));
 
     productItemServiceSpy = jasmine.createSpyObj('ProductItemService', ['getProductsFromActiveSuppliers']);
@@ -42,6 +44,7 @@ describe('SupplierListComponent', () => {
     await TestBed.configureTestingModule({
       imports: [SupplierListComponent],
       providers: [
+        provideNoopAnimations(),
         { provide: SupplierService, useValue: supplierServiceSpy },
         { provide: ProductItemService, useValue: productItemServiceSpy },
         { provide: ProductTypeService, useValue: productTypeServiceSpy },
@@ -234,5 +237,20 @@ describe('SupplierListComponent', () => {
     expect(cartServiceSpy.startBuyNow).toHaveBeenCalledWith(jasmine.objectContaining({ id: 99, quantitySelect: 1 }));
     expect(cartServiceSpy.addProduct).not.toHaveBeenCalled();
     expect(router.navigate).toHaveBeenCalledWith(['/resumo-pedido'], { queryParams: { modo: 'compra-direta' } });
+  });
+
+  // ---- F7 §5.27 ----
+  it('deveAbrirAvaliacoesAoClicarNasEstrelas', () => {
+    component.openReviews({ id: 'loja-9', name: 'Gás Centro', averageRating: 4.2, reviewCount: 14 } as any);
+    fixture.detectChanges();
+
+    expect(supplierServiceSpy.getReviews).toHaveBeenCalledWith('loja-9', 0, 10);
+    const janela = fixture.nativeElement.querySelector('app-store-reviews-dialog [role="dialog"]') as HTMLElement;
+    expect(janela.textContent).toContain('Gás Centro');
+    expect(janela.textContent).toContain('Maria');
+
+    (fixture.nativeElement.querySelector('[data-testid="close-reviews"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-store-reviews-dialog')).toBeNull();
   });
 });

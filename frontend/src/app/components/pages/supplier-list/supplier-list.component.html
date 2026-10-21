@@ -63,7 +63,8 @@
         </div>
 
         <div class="flex flex-col gap-3" [class.opacity-60]="loading">
-            <app-supplier-card *ngFor="let supplier of suppliers" [supplier]="supplier" (viewProducts)="navigate($event)"></app-supplier-card>
+            <app-supplier-card *ngFor="let supplier of suppliers" [supplier]="supplier" (viewProducts)="navigate($event)"
+                (viewReviews)="openReviews($event)"></app-supplier-card>
         </div>
     </ng-container>
 
@@ -95,3 +96,6 @@
 
     <app-pagination [currentPage]="currentPage" [totalPages]="totalPages" (pageChange)="onPageChange($event)"></app-pagination>
 </div>
+
+<app-store-reviews-dialog *ngIf="reviewsStore" [supplierId]="reviewsStore.id!" [storeName]="reviewsStore.name"
+    [average]="reviewsStore.averageRating" [count]="reviewsStore.reviewCount" (closed)="reviewsStore = undefined"></app-store-reviews-dialog>

@@ -11,7 +11,8 @@
   <div class="flex-grow min-w-0">
     <h2 class="font-bold text-gray-800 truncate">{{ supplier.name }}</h2>
 
-    <app-store-rating [average]="supplier.averageRating" [count]="supplier.reviewCount"></app-store-rating>
+    <app-store-rating [average]="supplier.averageRating" [count]="supplier.reviewCount" [clickable]="true"
+      (openReviews)="viewReviews.emit(supplier)"></app-store-rating>
 
     <div class="flex items-center text-gray-500 text-xs gap-1 mt-1" *ngIf="supplier.openingTime && supplier.closingTime">
       <span class="material-icons text-sm">schedule</span>

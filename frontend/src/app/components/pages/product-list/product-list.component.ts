@@ -16,6 +16,7 @@ import { fadeIn, staggerList } from '../../../animations/checkout.animations';
 import { SupplierService } from '../../../services/supplier.service';
 import { Supplier } from '../../../models/supplier';
 import { StoreRatingComponent } from '../../store-rating/store-rating.component';
+import { StoreReviewsDialogComponent } from '../../store-reviews-dialog/store-reviews-dialog.component';
 import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
@@ -26,7 +27,8 @@ import { backendMessage } from '../../../utils/backend-message';
     PaginationComponent,
     CategoryChipBarComponent,
     ProductCardComponent,
-    StoreRatingComponent
+    StoreRatingComponent,
+    StoreReviewsDialogComponent
   ],
   templateUrl: './product-list.component.html',
   animations: [staggerList, fadeIn],
@@ -51,6 +53,7 @@ export class ProductListComponent implements OnInit {
   bannerBroken = false;
   logoBroken = false;
   descriptionExpanded = false;
+  reviewsOpen = false; // F7 §5.27
   readonly descriptionClampLength = 120;
   loading = false;
   listVersion = 0; // muda a cada resposta, para a lista entrar em sequência mesmo com a mesma quantidade

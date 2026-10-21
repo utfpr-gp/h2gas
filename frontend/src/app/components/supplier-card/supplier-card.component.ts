@@ -12,6 +12,8 @@ import { StoreRatingComponent } from '../store-rating/store-rating.component';
 export class SupplierCardComponent {
   @Input() supplier!: Supplier;
   @Output() viewProducts = new EventEmitter<string>();
+  // F7 §5.27: estrelas abrem as avaliações da loja
+  @Output() viewReviews = new EventEmitter<Supplier>();
   logoBroken = false;
 
   onViewProducts() {

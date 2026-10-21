@@ -43,7 +43,8 @@ describe('ProductListComponent', () => {
     productTypeServiceSpy.findAll.and.returnValue(of([{ id: 1, name: 'Gás' }, { id: 2, name: 'Água' }] as any));
 
     cartServiceSpy = jasmine.createSpyObj('CartService', ['addProduct', 'startBuyNow']);
-    supplierServiceSpy = jasmine.createSpyObj('SupplierService', ['findById']);
+    supplierServiceSpy = jasmine.createSpyObj('SupplierService', ['findById', 'getReviews']);
+    supplierServiceSpy.getReviews.and.returnValue(of({ ...emptyPage, data: [{ id: 1, customerFirstName: 'Maria', rating: 5, comment: 'Ótimo', reviewedAt: null }] } as any));
     supplierServiceSpy.findById.and.returnValue(of(loja));
 
     await TestBed.configureTestingModule({
@@ -198,5 +199,16 @@ describe('ProductListComponent', () => {
     expect(toastrSpy.error).toHaveBeenCalledWith(jasmine.stringContaining('Loja não encontrada'));
     expect(productItemServiceSpy.getProductsBySupplierId).toHaveBeenCalled();
     expect(byId('store-header')).toBeNull();
+  });
+
+  // ---- F7 §5.27 ----
+  it('deveAbrirAvaliacoesAoClicarNasEstrelas', () => {
+    (fixture.nativeElement.querySelector('[data-testid="store-header"] button[data-testid="supplier-rating"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(supplierServiceSpy.getReviews).toHaveBeenCalledWith('fixture-supplier-hu02', 0, 10);
+    const janela = fixture.nativeElement.querySelector('app-store-reviews-dialog [role="dialog"]') as HTMLElement;
+    expect(janela.textContent).toContain('Gás Centro Curitiba');
+    expect(janela.textContent).toContain('Maria');
   });
 });
