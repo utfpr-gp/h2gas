@@ -345,4 +345,22 @@ class SupplierControllerTest {
                 .andExpect(jsonPath("$.data[0].averageRating").value(4.3))
                 .andExpect(jsonPath("$.data[0].reviewCount").value(14));
     }
+
+    @Test
+    void deveListarAvaliacoesPaginadas() throws Exception {
+        com.h2gas.model.dto.StoreReviewDTO review = new com.h2gas.model.dto.StoreReviewDTO(
+                1L, "Maria", 4, "Entrega rápida", java.time.LocalDateTime.of(2026, 10, 18, 14, 30));
+        when(supplierService.findReviews(eq("loja-1"), any()))
+                .thenReturn(new PageImpl<>(List.of(review), PageRequest.of(0, 5), 1));
+
+        mockMvc.perform(get("/api/suppliers/loja-1/reviews").param("page", "0").param("size", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].customerFirstName").value("Maria"))
+                .andExpect(jsonPath("$.data[0].rating").value(4))
+                .andExpect(jsonPath("$.data[0].comment").value("Entrega rápida"))
+                .andExpect(jsonPath("$.totalElements").value(1));
+
+        verify(supplierService).findReviews(eq("loja-1"), eq(PageRequest.of(0, 5)));
+    }
+
 }

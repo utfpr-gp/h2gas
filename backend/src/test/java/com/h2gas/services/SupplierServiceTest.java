@@ -541,15 +541,21 @@ class SupplierServiceTest {
     }
 
     private void avaliar(Supplier loja, User cliente, int nota) {
+        avaliar(loja, cliente, nota, null, null);
+    }
+
+    private void avaliar(Supplier loja, User cliente, int nota, String comentario, java.time.LocalDateTime entregueEm) {
         com.h2gas.model.entity.Order pedido = new com.h2gas.model.entity.Order();
         pedido.setCustomer(cliente);
         pedido.setSupplier(loja);
         pedido.setStatus(com.h2gas.enums.OrderStatusEnum.DELIVERED);
+        pedido.setDeliveredAt(entregueEm);
         pedido = orderRepository.save(pedido);
         com.h2gas.model.entity.Review avaliacao = new com.h2gas.model.entity.Review();
         avaliacao.setOrder(pedido);
         avaliacao.setSupplier(loja);
         avaliacao.setRating(nota);
+        avaliacao.setComment(comentario);
         reviewRepository.save(avaliacao);
     }
 
@@ -602,5 +608,66 @@ class SupplierServiceTest {
 
         assertEquals(4.5, dto.getAverageRating());
         assertEquals(2L, dto.getReviewCount());
+    }
+
+    @Test
+    @DisplayName("F7 §5.27: lista as avaliações da loja só com o primeiro nome do cliente, nota, comentário e data")
+    void deveListarAvaliacoesComPrimeiroNomeEComentario() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        User cliente = userRepository.save(new User(null, "Maria Aparecida Souza", "maria@t", "41999990002", "99988877711", "x", UserTypeEnum.CUSTOMER));
+        Supplier loja = lojaAberta("Loja Comentada", curitiba);
+        java.time.LocalDateTime entrega = java.time.LocalDateTime.of(2026, 10, 18, 14, 30);
+        avaliar(loja, cliente, 4, "Entrega rápida, recomendo.", entrega);
+
+        Page<com.h2gas.model.dto.StoreReviewDTO> page = supplierService.findReviews(loja.getId(), PageRequest.of(0, 10));
+
+        assertEquals(1, page.getTotalElements());
+        com.h2gas.model.dto.StoreReviewDTO review = page.getContent().get(0);
+        assertEquals("Maria", review.customerFirstName());
+        assertEquals(4, review.rating());
+        assertEquals("Entrega rápida, recomendo.", review.comment());
+        assertEquals(entrega, review.reviewedAt());
+    }
+
+    @Test
+    @DisplayName("F7 §5.27: avaliações vêm da entrega mais recente para a mais antiga, paginadas")
+    void deveOrdenarAvaliacoesPelaEntregaMaisRecente() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        User ana = userRepository.save(new User(null, "Ana", "ana@t", "41999990003", "99988877722", "x", UserTypeEnum.CUSTOMER));
+        User bruno = userRepository.save(new User(null, "Bruno Lima", "bruno@t", "41999990004", "99988877733", "x", UserTypeEnum.CUSTOMER));
+        Supplier loja = lojaAberta("Loja Ordenada", curitiba);
+        Supplier outra = lojaAberta("Outra Loja", curitiba);
+        avaliar(loja, ana, 5, null, java.time.LocalDateTime.of(2026, 10, 1, 10, 0));
+        avaliar(loja, bruno, 3, null, java.time.LocalDateTime.of(2026, 10, 20, 10, 0));
+        avaliar(loja, ana, 4, null, java.time.LocalDateTime.of(2026, 10, 10, 10, 0));
+        avaliar(outra, bruno, 1, "não deve aparecer", java.time.LocalDateTime.of(2026, 10, 21, 10, 0));
+
+        Page<com.h2gas.model.dto.StoreReviewDTO> primeira = supplierService.findReviews(loja.getId(), PageRequest.of(0, 2));
+
+        assertEquals(3, primeira.getTotalElements());
+        assertEquals(List.of("Bruno", "Ana"), primeira.getContent().stream().map(com.h2gas.model.dto.StoreReviewDTO::customerFirstName).toList());
+        assertEquals(List.of(3, 4), primeira.getContent().stream().map(com.h2gas.model.dto.StoreReviewDTO::rating).toList());
+        assertEquals(5, supplierService.findReviews(loja.getId(), PageRequest.of(1, 2)).getContent().get(0).rating());
+    }
+
+    @Test
+    @DisplayName("F7 §5.27: comentário vazio ou só com espaços vem nulo")
+    void deveTratarComentarioEmBrancoComoNulo() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        User cliente = userRepository.save(new User(null, "  Carlos  Eduardo ", "carlos@t", "41999990005", "99988877744", "x", UserTypeEnum.CUSTOMER));
+        Supplier loja = lojaAberta("Loja Sem Texto", curitiba);
+        avaliar(loja, cliente, 5, "   ", null);
+
+        com.h2gas.model.dto.StoreReviewDTO review = supplierService.findReviews(loja.getId(), PageRequest.of(0, 10)).getContent().get(0);
+
+        assertNull(review.comment());
+        assertNull(review.reviewedAt());
+        assertEquals("Carlos", review.customerFirstName());
+    }
+
+    @Test
+    @DisplayName("F7 §5.27: avaliações de loja inexistente é 404")
+    void deveResponder404AoListarAvaliacoesDeLojaInexistente() {
+        assertThrows(com.h2gas.exceptions.ResourceNotFoundException.class, () -> supplierService.findReviews("nao-existe", PageRequest.of(0, 10)));
     }
 }

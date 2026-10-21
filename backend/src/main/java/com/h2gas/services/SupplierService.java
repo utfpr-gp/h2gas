@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.h2gas.model.dto.SupplierSummaryDTO;
 import com.h2gas.model.entity.*;
 import com.h2gas.model.mapper.*;
+import com.h2gas.model.dto.StoreReviewDTO;
 import com.h2gas.model.repository.ReviewRepository;
 import com.h2gas.model.repository.SupplierRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,6 +99,26 @@ public class SupplierService {
         Page<SupplierDTO> page = supplierRepository.findOpenForCatalog(cityId, term, pageable).map(supplierMapper::toDto);
         addRatings(page.getContent());
         return page;
+    }
+
+    // F7 §5.27: avaliações da loja com o primeiro nome do cliente; comentário em branco vira nulo
+    public Page<StoreReviewDTO> findReviews(String supplierId, Pageable pageable) {
+        if (!supplierRepository.existsById(supplierId)) {
+            throw new ResourceNotFoundException("Não encontrado nenhum Fornecedor com esse id: " + supplierId);
+        }
+        return reviewRepository.findStoreReviews(supplierId, pageable).map(row -> new StoreReviewDTO(
+                row.getId(),
+                firstName(row.getCustomerName()),
+                row.getRating(),
+                row.getComment() == null || row.getComment().isBlank() ? null : row.getComment().trim(),
+                row.getDeliveredAt()));
+    }
+
+    private static String firstName(String fullName) {
+        if (fullName == null || fullName.isBlank()) {
+            return "Cliente";
+        }
+        return fullName.trim().split("\\s+")[0];
     }
 
     // F7 §5.25: nota e contagem das lojas da página, lidas em uma consulta agrupada

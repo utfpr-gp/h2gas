@@ -230,6 +230,23 @@ public class SupplierController {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
+    @Operation(summary = "Lista as avaliações de uma loja",
+            description = "Avaliações da loja, da entrega mais recente para a mais antiga, com o primeiro nome do cliente, a nota (1 a 5), "
+                    + "o comentário (nulo quando não há) e a data da entrega avaliada. Aberta a qualquer usuário autenticado")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Página de avaliações"),
+            @ApiResponse(responseCode = "404", description = "Loja não encontrada")
+    })
+    @GetMapping("/{id}/reviews")
+    @ResponseBody
+    public ResponseEntity<PageResponse<StoreReviewDTO>> getStoreReviews(
+            @Parameter(description = "Id da loja (fornecedor)") @PathVariable String id,
+            @Parameter(description = "Número da página (0-based)") @RequestParam(value = "page", required = false) Integer page,
+            @Parameter(description = "Tamanho da página (padrão 10, máximo 50)") @RequestParam(value = "size", required = false) Integer size) {
+        Pageable pageable = PaginationUtil.getPageableRequest(page, size);
+        return ResponseEntity.ok(new PageResponse<>(supplierService.findReviews(id, pageable)));
+    }
+
     @Operation(summary = "Lê uma loja pelo id",
             description = "Dados públicos da loja para o cabeçalho da página de produtos: nome, logo, banner, horário, tempo médio, "
                     + "aberta/fechada, bairro/cidade, descrição e a nota (averageRating, 1 casa; nula sem avaliações) com reviewCount")
