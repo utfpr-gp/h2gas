@@ -285,21 +285,171 @@ depois da HU11.
   Address devem estar definidos…" → "Cidade e endereço devem estar
   definidos antes de salvar.".
 
-**Menu do usuário (`menu`):**
-- O ícone genérico de pessoa vira **avatar com as iniciais** do usuário
-  (círculo `bg-secondary`/`text-secondary-content`, 2 letras).
-- Dropdown no padrão F7: cabeçalho com nome e e-mail; itens Meus Dados,
-  Meus Pedidos, Meus Endereços (cliente) ou Dashboard/Configuração
-  (fornecedor), e Sair separado. Abre/fecha com a animação `fadeIn` da
-  HU05 (`animations/checkout.animations.ts`), fecha com Esc e clique
-  fora, `aria-expanded`/`aria-haspopup`, foco no primeiro item.
+### 5.11 Fatia 4 — Meus Dados e menu do usuário
 
-**Meus Dados (`customer-panel`):**
-- Cabeçalho com avatar grande de iniciais, nome e e-mail.
-- Campos com ícone e rótulo, estados de carregando (skeleton) e
-  salvando (spinner no botão, botão desabilitado sem alteração).
-- "Meus endereços" e "Meus pedidos" como itens de lista com chevron.
-- Tokens, `rounded-xl`, `pb-24` no mobile.
+> Escrita em 2026-10-20, depois da HU11 (que estava na frente desta
+> fatia). Substitui as duas últimas listas da §5.10. Decisões do autor:
+> (a) **cliente, fornecedor e entregador** passam a ter "Meus Dados";
+> (b) o **e-mail fica somente leitura** (é a identidade do login por
+> código da HU11; trocar de e-mail pede confirmação no endereço novo,
+> evolução futura).
+
+**Achados (diagnóstico do código atual)**
+- **Falha de segurança em `PUT /api/users/{id}`**: a rota não confere
+  o dono. Qualquer cliente ou fornecedor logado edita nome, **e-mail** e
+  telefone de qualquer usuário pelo id. Com o login por código, trocar o
+  e-mail da vítima pelo seu e pedir o código é **tomada de conta**
+  (CLAUDE.md: "nunca confiar em `userId` se o principal define o dono").
+  Entra nesta fatia por ser a rota que o "Meus Dados" usa.
+- Hoje a rota `PUT` aceita ADMIN, SUPPLIER e CUSTOMER; o **entregador
+  não está** na lista e não tem tela de dados.
+- `customer-panel` (rota `/painel-cliente`, só ADMIN/CUSTOMER) já está
+  no padrão F7 de cartões, mas sem avatar, com campos `input-bordered`
+  (sem borda visível no tema `h2gas`), sem skeleton nem estado de
+  salvando, e deixa editar o e-mail.
+- O `menu` usa o ícone genérico `fa-user` e um dropdown estreito
+  (`w-48`), sem nome nem e-mail, sem Esc, sem `aria`; o avatar do topo
+  **não atualiza** depois de salvar os dados (o `menu` lê o usuário uma
+  vez, no `ngOnInit`).
+- A tab bar do cliente tem "Perfil" apontando para `/painel-cliente`.
+
+**Backend**
+- `PUT /api/users/{id}` (`@RolesAllowed` ADMIN, SUPPLIER, CUSTOMER e
+  **DELIVERER**): o id vem da URL, mas só vale se for o **do usuário do
+  token** (ADMIN pode editar qualquer um). Outro usuário → **403**
+  (`ForbiddenResourceException`).
+- `UserService.update(id, dto, actor)`:
+  - e-mail ausente ou igual ao atual → mantém;
+  - e-mail **diferente** com ator não ADMIN → `BusinessRuleException`
+    ("O e-mail não pode ser alterado por aqui.", 400);
+  - e-mail diferente com ADMIN segue a regra de unicidade atual
+    ("E-mail já cadastrado.");
+  - nome e telefone continuam editáveis e validados (`name` com 3+
+    caracteres, `phoneNumber` não vazio).
+- OpenAPI no `PUT` (`@Operation`, 200/400/403/404, `@Parameter`).
+
+**Menu do usuário (`menu`)**
+- O ícone genérico vira **avatar com as iniciais** (primeira letra do
+  primeiro e do último nome; nome único usa as duas primeiras letras),
+  círculo `bg-secondary text-secondary-content`, e acompanha o nome
+  quando "Meus Dados" é salvo (o `UserService` expõe o usuário atual
+  como fluxo observável).
+- Dropdown no padrão F7 (`rounded-xl`, sombra, `w-64`): cabeçalho com
+  avatar, nome e e-mail; itens por perfil — **CUSTOMER**: Meus Dados,
+  Meus Pedidos, Meus Endereços; **SUPPLIER**: Meus Dados, Dashboard,
+  Pedidos recebidos, Configurações; **DELIVERER**: Meus Dados;
+  **ADMIN**: Meus Dados, Pedidos recebidos, Configurações — e **Sair**
+  separado no fim.
+- Abre e fecha com `fadeIn` (`animations/checkout.animations.ts`), fecha
+  com **Esc** e clique fora, `aria-expanded`, `aria-haspopup="menu"`,
+  `role="menu"`/`menuitem` e foco no primeiro item ao abrir.
+
+**Meus Dados (`customer-panel`)**
+- Rota nova **`/meus-dados`** (ADMIN, CUSTOMER, SUPPLIER, DELIVERER);
+  `/painel-cliente` vira redirecionamento para ela, e a tab "Perfil" do
+  cliente aponta para a rota nova.
+- Cabeçalho com **avatar grande de iniciais**, nome e e-mail.
+- Carrega os dados atuais da API (`/users/me`) com **skeleton**; campos
+  Nome e Telefone com ícone e rótulo; **E-mail somente leitura**, com a
+  dica "Para trocar o e-mail, fale com o suporte."
+- Botão "Salvar alterações" **desabilitado sem alteração** e com
+  spinner enquanto salva; sucesso atualiza o `localStorage` e o avatar
+  do menu; erro mostra a mensagem do backend pelo helper.
+- Itens de lista com chevron: **cliente** — Meus endereços e Meus
+  pedidos; **fornecedor** — Configurações da loja; entregador sem
+  atalhos.
+- Tokens F2, sem HEX novo, `rounded-xl`, `pb-24` no mobile; campos com
+  borda explícita (Tailwind), não `input-bordered`.
+
+### 5.12 Fatia 5 — navbar, footer, tema estrutural e varredura de HEX
+
+> Escrita em 2026-10-20, depois da Fatia 4. Pedido do autor: rodada de
+> UX/UI na "casca" do app (navbar, footer e etc.). Decisões do autor: as
+> quatro frentes abaixo entram juntas; a Fatia 4 vai antes para o PR.
+
+**Achados (diagnóstico do código atual)**
+- **Navbar**: os 18 links usam `href` — cada clique recarrega o app
+  inteiro (perde o estado, pisca e derruba o SSE da HU08). Não há
+  destaque do link ativo; os ícones misturam Font Awesome e Material; o
+  "Início" do fornecedor leva ao catálogo do cliente; o carrinho aparece
+  para fornecedor e admin (que não compram); o cliente no celular tem um
+  hambúrguer que repete a bottom tab bar; o menu mobile abre sem
+  animação e não fecha ao navegar.
+- **Footer**: `bg-[#0E2068]` e `hover:text-[#67E8F9]` (HEX), ano fixo
+  "© 2025", ocupa meia tela no celular, links por `href` e aparece nas
+  telas "de app" (entregador, login).
+- **Layout**: `app.component.html` tem `<!DOCTYPE>`/`<head>`/`<body>`
+  dentro do template.
+- **Tema**: o bloco `@plugin "daisyui/theme"` do tema `h2gas`
+  (`styles.css`) não define as variáveis estruturais do DaisyUI 5
+  (`--border`, `--radius-*`, `--size-*`, `--depth`, `--noise`): campos
+  `input-bordered`/`select` sem borda (remendados tela a tela) e raios
+  irregulares. Dívida registrada na HU05 e na Fatia 3.
+- **HEX solto** (pendência "Grupos A–E"): landing `/` (10), Sobre e
+  Contato; e as 4 telas de admin/fornecedor (`supplier-approval`,
+  `city-register`, `category-products`, `distribuitor-form`), cujos CSS
+  de 303 linhas reimplementam à mão classes do Tailwind com cor fixa
+  (sobrescrevendo o Tailwind real), além de `<!DOCTYPE>`/`<head>`, link
+  de Font Awesome por CDN (já carregado no `index.html`), título "Azul
+  Cidades" e um `#mobile-menu` sem uso nos templates.
+
+**Tema estrutural (`styles.css`)**
+- No tema `h2gas`: `--radius-selector: 0.5rem`, `--radius-field:
+  0.75rem`, `--radius-box: 1rem`, `--size-selector: 0.25rem`,
+  `--size-field: 0.25rem`, `--border: 1px`, `--depth: 0`, `--noise: 0`.
+  Campos `input-bordered`/`select-bordered` passam a ter borda visível
+  sem remendo; os remendos existentes (borda explícita do Tailwind)
+  continuam válidos e não são reescritos nesta fatia.
+
+**Layout do app (`app.component`)**
+- Template sem `<!DOCTYPE>`/`<head>`/`<body>`: casca `header` (menu) +
+  `main` (`flex-1`, coluna com altura mínima da tela, footer no fim) +
+  `footer`.
+- **Footer escondido** nas telas de autenticação/onboarding (as de
+  `hiddenMenuRoutes`, **exceto** a landing `/`, `/sobre` e `/contato`,
+  que são institucionais e têm no footer o caminho entre si) e nas do
+  entregador (`/entregas` e filhas — tela de app com abas fixas).
+
+**Navbar (`menu`)**
+- Todos os links internos (desktop, mobile e logo) por `routerLink` —
+  navegação sem recarregar o app.
+- Link ativo destacado: `routerLinkActive` com `bg-white/15` e
+  `aria-current="page"` (`ariaCurrentWhenActive`); "Início" com
+  correspondência exata.
+- Logo leva ao **início do perfil**: cliente e admin `/inicio`,
+  fornecedor `/dashboard`, entregador `/entregas` — a mesma regra do
+  login por senha e por código, extraída para `utils/home-route.ts`
+  (`homeFor`) e usada pelos três.
+- **Fornecedor** sem o link "Início" do catálogo; **carrinho só para o
+  cliente**.
+- **Admin não cadastra endereço** (pedido do autor no teste): o
+  `addressDefinedGuard` libera o ADMIN direto, sem buscar endereço nem
+  mandar para `/primeiro-acesso-endereco`; o catálogo do admin vem sem
+  `cityId` (o backend devolve todos os fornecedores ativos e abertos). O
+  cliente segue obrigado a ter endereço (RN05).
+- Ícones da navbar só Material (o dropdown do usuário já usa).
+- **Hambúrguer só para fornecedor e admin** (o cliente navega pela
+  bottom tab bar no celular; o entregador pelas abas dele). Painel
+  mobile com `expandCollapse` (`animations/checkout.animations.ts`),
+  fecha ao navegar (`NavigationEnd`) e com **Esc**; botão com
+  `aria-expanded`, `aria-controls="mobile-menu"` e rótulo acessível.
+
+**Footer (`footer`)**
+- Cores do tema (`bg-primary`, `text-primary-content`), sem HEX; ano
+  atual automático; versão compacta no celular (logo menor, marca e
+  links em linha); `routerLink` para Sobre e Contato.
+
+**Varredura de HEX**
+- Grupo E (`initial-screen`, `about`, `contact`): HEX → tokens, sem
+  wrappers de documento.
+- Grupos C/D (`supplier-approval`, `city-register`,
+  `category-products`, `distribuitor-form`): o CSS legado e o
+  `styleUrl` saem; saem também `<!DOCTYPE>`/`<head>`, o Font Awesome
+  por CDN, o título "Azul Cidades" e os blocos mortos; HEX → tokens;
+  `href` internos → `routerLink`. Layout mantido (só tokens, §5.7).
+- Resíduos do Grupo A (`forgot-password`, `reset-password`,
+  `check-email`: 1 HEX cada), `supplier-list.component.css` e
+  `menu.component.css`.
 
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
@@ -319,6 +469,16 @@ depois da HU11.
   (`--radius-*`, `--size-*`, `--border` — dívida registrada na HU05,
   pede revisão visual própria).
 
+- Fatia 4: trocar de e-mail com confirmação no endereço novo; trocar a
+  senha por esta tela; foto de perfil (upload); aba "Perfil" na barra do
+  entregador (segue fora, como na HU07); edição de CPF/CNPJ.
+
+- Fatia 5: sino de notificações das Figuras 13/16 (sem backend); trocar
+  o Font Awesome no app inteiro (só navbar e footer); redesenho
+  mobile-first das telas de admin/fornecedor (só tokens, §5.7);
+  reescrever os remendos de borda já existentes; `distributor-management`
+  (código morto); dark mode.
+
 ## 7. Plano de Testes (TDD)
 
 **Novos componentes:**
@@ -337,11 +497,34 @@ depois da HU11.
 7. `menu.component.spec.ts` — bottom tab bar visível só para `CUSTOMER`.
 
 **Fatia 3:**
-8. `menu.component.spec.ts` — `deveExibirIniciaisDoUsuarioNoAvatar`,
-   `deveAbrirMenuDoUsuarioComOpcoes`, `deveFecharMenuComEsc`.
+8. *(fatia 4, §5.11)* **Backend** — `UserServiceTest`:
+   `deveAtualizarNomeETelefoneDoProprioUsuario`,
+   `deveRejeitarEdicaoDeOutroUsuario` (403),
+   `devePermitirAdminEditarQualquerUsuario`,
+   `deveManterOEmailQuandoOCampoVierIgualOuAusente`,
+   `deveRejeitarTrocaDeEmailPorUsuarioComum` (400),
+   `devePermitirAdminTrocarEmailRespeitandoUnicidade`;
+   `UserControllerTest`: `deveRetornar403AoEditarOutroUsuario`,
+   `deveRetornar200AoEditarOProprioPerfil`,
+   `devePermitirEntregadorEditarOProprioPerfil`.
+   **Frontend** — `menu.component.spec.ts`:
+   `deveExibirIniciaisDoUsuarioNoAvatar`,
+   `deveAtualizarAvatarQuandoOsDadosForemSalvos`,
+   `deveAbrirMenuDoUsuarioComNomeEmailEOpcoesDoPerfil`,
+   `deveFocarOPrimeiroItemAoAbrir`, `deveFecharMenuComEsc`,
+   `deveFecharMenuAoClicarFora`;
+   `user.service.spec.ts`: `deveEmitirOUsuarioAtualAoSalvar`.
 9. `customer-panel.component.spec.ts` —
    `deveExibirAvatarComIniciaisENome`,
-   `deveDesabilitarSalvarSemAlteracoes`.
+   `deveExibirSkeletonEnquantoCarrega`,
+   `deveManterEmailSomenteLeitura`,
+   `deveDesabilitarSalvarSemAlteracoes`,
+   `deveHabilitarSalvarAoAlterarNomeOuTelefone`,
+   `deveSalvarENotificarOMenuComSucesso`,
+   `deveMostrarAMensagemDoBackendNoErro`,
+   `deveExibirAtalhosPorPerfil`;
+   `app.routes`/`bottom-tab-bar.component.spec.ts`:
+   `deveLevarAbaPerfilParaMeusDados`.
 10. Amostra da regra de toast — `order-list.component.spec.ts`
     (`naoDeveExibirToastDeSucessoAoBuscar`,
     `deveExibirUmUnicoAvisoAoRefazerComItensIndisponiveis`),
@@ -370,6 +553,20 @@ depois da HU11.
     `UserServiceTest` (`deveAvisarUsuarioNaoEncontradoEmPortugues`);
     `product-list.component.spec.ts`
     (`deveMostrarCausaAoFalharCarregarCategorias`).
+
+12. *(fatia 5, §5.12)* `app.component.spec.ts`:
+    `deveEsconderFooterNasTelasDeAppEAutenticacao` (e mostrar na
+    landing, Sobre, Contato e telas do cliente);
+    `menu.component.spec.ts` (Router real via `provideRouter`):
+    `deveNavegarSemRecarregarOApp` (todo link interno com `routerLink`,
+    clique sem recarregar), `deveDestacarOLinkAtivo`,
+    `deveLevarALogoParaOInicioDoPerfil`, `deveMostrarCarrinhoSoParaCliente`,
+    `deveMostrarHamburguerSoParaFornecedorEAdmin`,
+    `deveFecharMenuMobileAoNavegarEComEsc`;
+    `home-route.spec.ts`: `deveLevarCadaPerfilAoSeuInicio`;
+    `address-defined.guard.spec.ts`: `deveLiberarAdminSemExigirEndereco`;
+    `footer.component.spec.ts`: `deveMostrarOAnoAtual`,
+    `deveUsarRouterLinkNosLinks`, `naoDeveTerHexLiteral`.
 
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
@@ -408,14 +605,63 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > mostra 1 toast, um aviso seguinte substitui o erro, toast no topo
 > central, login certo e "Meus Pedidos" sem toast.
 
-**Fatia 3 — Meus Dados e menu do usuário (depois da HU11):**
-- [ ] Avatar com iniciais e dropdown do usuário no padrão.
-- [ ] `customer-panel` com cabeçalho de avatar e estados de carregando/
-      salvando.
-- [ ] Testes da seção 7 (itens 8-9) verdes; specs antigos falhando não
-      aumentam; teste manual.
+**Fatia 4 — Meus Dados e menu do usuário (§5.11):**
+- [x] `PUT /api/users/{id}` só edita o próprio usuário (403 nos demais;
+      ADMIN pode) e não troca e-mail por usuário comum; documentado no
+      Swagger.
+- [x] Avatar com iniciais (atualiza ao salvar) e dropdown do usuário no
+      padrão, com itens por perfil, Esc, clique fora e foco.
+- [x] `/meus-dados` para cliente, fornecedor e entregador, com avatar,
+      skeleton, e-mail somente leitura e estados de salvando; antiga
+      `/painel-cliente` redireciona.
+- [x] Testes da seção 7 (itens 8-9) verdes; `mvn test` e `ng test`
+      (≤ 19 falhas antigas); sem HEX novo; teste manual e E2E.
 
-**Pendente (próximas fatias):**
-- [ ] Grupos A–E migrados pros tokens (grep: zero hex novo fora de
+> Verificado em 2026-10-20: backend 256 testes (único erro: `BackendApplicationTests.contextLoads`, que precisa do MySQL local);
+> frontend 309 testes com 18 falhas antigas (uma a menos); E2E por API (11 checagens, incluindo o ataque ao `PUT /users/{id}` com
+> contas de fornecedor, cliente e entregador: 403 e banco intacto) e por interface (19 checagens: avatar, dropdown por perfil, Esc,
+> clique fora, foco, `/meus-dados`, redirecionamento da rota antiga, avatar atualizando sem recarregar, e carrinho sem sobrepor o
+> avatar em 390 e 360 px).
+>
+> **Defeitos encontrados no teste e corrigidos**: (1) o `PUT /api/users/{id}` aceitava editar qualquer usuário (tomada de conta com o
+> login por código); (2) o menu reaproveitava o usuário do início do app e mostraria a sessão anterior após novo login; (3) os itens
+> do dropdown eram recriados a cada ciclo de detecção, e o foco voltava ao `body`; (4) o carrinho encolhia para 6 px no celular e
+> ficava embaixo do avatar.
+>
+> **Dívidas registradas (fora desta fatia)**: `GET /api/users?id=` ainda lê o usuário de qualquer id (só leitura, sem checagem de
+> dono); `DELETE /api/users` e rotas de cadastro de ADMIN não foram revisadas; a troca de e-mail com confirmação no endereço novo.
+
+**Fatia 5 — navbar, footer, tema estrutural e varredura de HEX (§5.12):**
+- [x] Tema `h2gas` com as variáveis estruturais; campos com borda sem
+      remendo.
+- [x] Casca do app sem wrappers de documento; footer escondido nas telas
+      de autenticação e do entregador.
+- [x] Navbar sem recarregar o app, com link ativo, logo por perfil,
+      carrinho só do cliente, hambúrguer só de fornecedor/admin, ícones
+      Material e painel mobile animado que fecha ao navegar e com Esc.
+- [x] Footer nos tokens, com ano automático, compacto no celular.
+- [x] Testes da seção 7 (item 12) verdes; `ng test` (≤ 18 falhas
+      antigas) e `ng build`; teste manual e E2E (navegação sem recarregar,
+      SSE sem reconectar, prints em 390 e 1280 px).
+
+> Verificado em 2026-10-20: frontend 322 testes com as 18 falhas antigas (providers faltando em specs antigos); `ng build` sem
+> erro; E2E no Chromium com 14 checagens (admin pela navbar desktop, fornecedor pelo menu mobile, cliente em "Meus Pedidos":
+> marcador em `window` sobrevive, nenhum documento recarregado, `aria-current` no link ativo, painel fecha ao navegar e com Esc, o
+> SSE continua com uma conexão ao clicar em "Pedidos"); grep sem HEX nos componentes (fora `distributor-management` e specs que
+> verificam a ausência de HEX); prints antes/depois em 390 e 1280 px dos quatro perfis, landing, Sobre, Contato e telas de admin.
+>
+> **Achados do teste**: (1) com `href`, o próprio Karma recarregava a página ao clicar num link da navbar — o defeito reproduzido
+> no teste; (2) a coluna "Ativo" da aprovação de fornecedores não mostrava os interruptores (o `toggle` do DaisyUI depende das
+> variáveis estruturais do tema) — voltaram com o tema; (3) o "body" dentro dos templates de admin recebia a regra `body` do CSS
+> legado (fundo cinza, `min-h-screen`) — o fundo virou `bg-base-200` num wrapper; (4) os ícones dentro dos campos do Meus Dados,
+> do login por senha e do cadastro ficavam atrás do `input` do DaisyUI — sobem com `z-10`; (5) a página Sobre carregava uma
+> segunda cópia do Tailwind 2 por CDN.
+>
+> (6) o "Início" do admin (`/inicio`) caía no cadastro de primeiro endereço — o admin agora passa sem endereço e vê o catálogo
+> sem filtro de cidade.
+
+- [x] Grupos A–E migrados pros tokens (grep: zero hex novo fora de
       `styles.css`).
+
+**Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).

@@ -1,11 +1,20 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { Component } from '@angular/core';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { By } from '@angular/platform-browser';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
+import { Router, RouterLink, provideRouter } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 
 import { MenuComponent } from './menu.component';
 import { AuthService } from '../../services/auth.service';
 import { LocationContextService } from '../../services/location-context.service';
 import { CartService } from '../../services/cart.service';
+import { UserService } from '../../services/user.service';
+
+@Component({ template: '' })
+class TelaVazia {}
 
 describe('MenuComponent', () => {
   let component: MenuComponent;
@@ -19,9 +28,12 @@ describe('MenuComponent', () => {
     await TestBed.configureTestingModule({
       imports: [MenuComponent],
       providers: [
-        { provide: Router, useValue: jasmine.createSpyObj('Router', ['navigate']) },
+        provideRouter([{ path: '**', component: TelaVazia }]),
         { provide: AuthService, useValue: jasmine.createSpyObj('AuthService', ['logout', 'isLogged']) },
         { provide: ToastrService, useValue: jasmine.createSpyObj('ToastrService', ['success', 'error', 'warning']) },
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideNoopAnimations(),
       ]
     })
     .compileComponents();
@@ -47,7 +59,8 @@ describe('MenuComponent', () => {
   it('deveIrParaMeusEnderecosAoClicarNoEnderecoAtivo', () => {
     locationContextService.setAddress({ cityId: 1, cityName: 'Pato Branco', label: 'Rua XV, 100 · Pato Branco' });
     fixture.detectChanges();
-    const router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate');
 
     const botaoEndereco = Array.from(fixture.nativeElement.querySelectorAll('button') as HTMLButtonElement[])
       .find((b) => b.textContent?.includes('Rua XV, 100 · Pato Branco'));
@@ -119,5 +132,257 @@ describe('MenuComponent', () => {
     expect(el.querySelector('app-bottom-tab-bar')).toBeNull();
     expect(el.querySelector('app-deliverer-tab-bar')).toBeTruthy();
     expect((el.querySelector('a[aria-label="Ir para a tela inicial"]') as HTMLAnchorElement).getAttribute('href')).toBe('/entregas');
+  });
+
+  // ---- F7 fatia 4: avatar e dropdown do usuário ----
+  const entrarComo = (user: Record<string, unknown>) => {
+    localStorage.setItem('user', JSON.stringify(user));
+    fixture = TestBed.createComponent(MenuComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  };
+  const byId = (id: string) => (fixture.nativeElement as HTMLElement).querySelector(`[data-testid=${id}]`) as HTMLElement | null;
+  const abrirMenu = () => {
+    (byId('user-menu-button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+  };
+  const itens = () => Array.from((byId('user-menu') as HTMLElement).querySelectorAll('[role=menuitem] [data-menu-label]')).map((i) => i.textContent!.trim());
+
+  it('deveExibirIniciaisDoUsuarioNoAvatar', () => {
+    entrarComo({ id: 'u1', name: 'Maria Souza Lima', email: 'maria@h2gas.local', userType: 'CUSTOMER' });
+
+    expect(byId('user-avatar')!.textContent!.trim()).toBe('ML');
+    expect(byId('user-menu-button')!.querySelector('.fa-user')).toBeNull();
+  });
+
+  it('deveAtualizarAvatarQuandoOsDadosForemSalvos', () => {
+    entrarComo({ id: 'u1', name: 'Maria Souza', email: 'maria@h2gas.local', userType: 'CUSTOMER' });
+    expect(byId('user-avatar')!.textContent!.trim()).toBe('MS');
+
+    TestBed.inject(UserService).setCurrentUser({ id: 'u1', name: 'Ana Paula', email: 'maria@h2gas.local', userType: 'CUSTOMER' } as any);
+    fixture.detectChanges();
+
+    expect(byId('user-avatar')!.textContent!.trim()).toBe('AP');
+  });
+
+  it('deveAbrirMenuDoUsuarioComNomeEmailEOpcoesDoPerfil', () => {
+    entrarComo({ id: 'u1', name: 'Maria Souza', email: 'maria@h2gas.local', userType: 'CUSTOMER' });
+    expect(byId('user-menu')).toBeNull();
+
+    abrirMenu();
+
+    const menu = byId('user-menu')!;
+    expect(menu.textContent).toContain('Maria Souza');
+    expect(menu.textContent).toContain('maria@h2gas.local');
+    expect(menu.getAttribute('role')).toBe('menu');
+    expect(byId('user-menu-button')!.getAttribute('aria-expanded')).toBe('true');
+    expect(byId('user-menu-button')!.getAttribute('aria-haspopup')).toBe('menu');
+    expect(itens()).toEqual(['Meus Dados', 'Meus Pedidos', 'Meus Endereços', 'Sair']);
+  });
+
+  it('deveMostrarAsOpcoesDoFornecedor', () => {
+    entrarComo({ id: 'f1', name: 'Gás Centro', email: 'gas@h2gas.local', userType: 'SUPPLIER' });
+    abrirMenu();
+
+    expect(itens()).toEqual(['Meus Dados', 'Dashboard', 'Pedidos recebidos', 'Configurações', 'Sair']);
+  });
+
+  it('deveMostrarAsOpcoesDoEntregador', () => {
+    entrarComo({ id: 'd1', name: 'Carlos Silva', email: 'carlos@h2gas.local', userType: 'DELIVERER' });
+    abrirMenu();
+
+    expect(itens()).toEqual(['Meus Dados', 'Sair']);
+  });
+
+  it('deveLevarParaMeusDadosEFecharOMenu', () => {
+    entrarComo({ id: 'u1', name: 'Maria Souza', email: 'maria@h2gas.local', userType: 'CUSTOMER' });
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate');
+    abrirMenu();
+
+    (byId('menu-item-meus-dados') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/meus-dados']);
+    expect(byId('user-menu')).toBeNull();
+  });
+
+  it('deveFocarOPrimeiroItemAoAbrir', fakeAsync(() => {
+    entrarComo({ id: 'u1', name: 'Maria Souza', email: 'maria@h2gas.local', userType: 'CUSTOMER' });
+
+    abrirMenu();
+    tick();
+
+    expect(document.activeElement).toBe(byId('menu-item-meus-dados'));
+  }));
+
+  it('deveManterOFocoNoItemDepoisDeNovosCiclosDeDeteccao', fakeAsync(() => {
+    entrarComo({ id: 'u1', name: 'Maria Souza', email: 'maria@h2gas.local', userType: 'CUSTOMER' });
+    abrirMenu();
+    tick();
+    const primeiro = byId('menu-item-meus-dados');
+    expect(document.activeElement).toBe(primeiro);
+
+    fixture.detectChanges();
+    fixture.detectChanges();
+
+    // os itens não podem ser recriados a cada ciclo: o elemento focado precisa ser o mesmo
+    expect(byId('menu-item-meus-dados')).toBe(primeiro);
+    expect(document.activeElement).toBe(primeiro);
+  }));
+
+  it('deveFecharMenuComEsc', () => {
+    entrarComo({ id: 'u1', name: 'Maria Souza', email: 'maria@h2gas.local', userType: 'CUSTOMER' });
+    abrirMenu();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+
+    expect(byId('user-menu')).toBeNull();
+    expect(byId('user-menu-button')!.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('deveFecharMenuAoClicarFora', () => {
+    entrarComo({ id: 'u1', name: 'Maria Souza', email: 'maria@h2gas.local', userType: 'CUSTOMER' });
+    abrirMenu();
+
+    document.body.click();
+    fixture.detectChanges();
+
+    expect(byId('user-menu')).toBeNull();
+  });
+
+  it('deveManterOMenuAbertoAoClicarDentroDele', () => {
+    entrarComo({ id: 'u1', name: 'Maria Souza', email: 'maria@h2gas.local', userType: 'CUSTOMER' });
+    abrirMenu();
+
+    (byId('user-menu')!.querySelector('[data-testid=user-menu-header]') as HTMLElement).click();
+    fixture.detectChanges();
+
+    expect(byId('user-menu')).toBeTruthy();
+  });
+
+  // ---- F7 fatia 5: navegação da navbar ----
+  const perfis = {
+    cliente: { id: 'u1', name: 'Maria Souza', email: 'maria@h2gas.local', userType: 'CUSTOMER' },
+    fornecedor: { id: 'f1', name: 'Gás Centro', email: 'gas@h2gas.local', userType: 'SUPPLIER' },
+    entregador: { id: 'd1', name: 'Carlos Silva', email: 'carlos@h2gas.local', userType: 'DELIVERER' },
+    admin: { id: 'a1', name: 'Admin H2Gás', email: 'admin@h2gas.local', userType: 'ADMIN' },
+  };
+  const linkPara = (href: string) =>
+    (fixture.nativeElement as HTMLElement).querySelector(`nav a[href="${href}"]`) as HTMLAnchorElement | null;
+  const navegar = async (url: string) => {
+    await TestBed.inject(Router).navigateByUrl(url);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  };
+
+  it('deveNavegarSemRecarregarOApp', async () => {
+    for (const perfil of Object.values(perfis)) {
+      entrarComo(perfil);
+      (byId('mobile-menu-button') as HTMLButtonElement | null)?.click();
+      fixture.detectChanges();
+
+      const links = fixture.debugElement.queryAll(By.css('a'));
+      expect(links.length).withContext(perfil.userType).toBeGreaterThan(0);
+      links.forEach((link) =>
+        expect(link.injector.get(RouterLink, null)).withContext(`${perfil.userType} ${link.nativeElement.getAttribute('href')}`).not.toBeNull());
+    }
+
+    entrarComo(perfis.admin);
+    const clique = new MouseEvent('click', { bubbles: true, cancelable: true });
+    linkPara('/register-city')!.dispatchEvent(clique);
+    await fixture.whenStable();
+
+    expect(clique.defaultPrevented).toBeTrue();
+    expect(TestBed.inject(Router).url).toBe('/register-city');
+  });
+
+  it('deveDestacarOLinkAtivo', async () => {
+    entrarComo(perfis.admin);
+
+    await navegar('/register-city');
+
+    expect(linkPara('/register-city')!.classList).toContain('bg-white/15');
+    expect(linkPara('/register-city')!.getAttribute('aria-current')).toBe('page');
+    expect(linkPara('/inicio')!.classList).not.toContain('bg-white/15');
+    expect(linkPara('/inicio')!.getAttribute('aria-current')).toBeNull();
+  });
+
+  it('deveLevarALogoParaOInicioDoPerfil', () => {
+    const logo = () => (fixture.nativeElement as HTMLElement).querySelector('a[aria-label="Ir para a tela inicial"]')!.getAttribute('href');
+
+    entrarComo(perfis.cliente);
+    expect(logo()).toBe('/inicio');
+    entrarComo(perfis.fornecedor);
+    expect(logo()).toBe('/dashboard');
+    entrarComo(perfis.entregador);
+    expect(logo()).toBe('/entregas');
+    entrarComo(perfis.admin);
+    expect(logo()).toBe('/inicio');
+  });
+
+  it('naoDeveMostrarInicioDoCatalogoParaFornecedor', () => {
+    entrarComo(perfis.fornecedor);
+    (byId('mobile-menu-button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const hrefs = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('a')).map((a) => a.getAttribute('href'));
+    expect(hrefs.filter((h) => h === '/inicio')).toEqual([]);
+  });
+
+  it('deveMostrarCarrinhoSoParaCliente', () => {
+    entrarComo(perfis.cliente);
+    expect(fixture.nativeElement.querySelector('#cart-drawer')).withContext('cliente').toBeTruthy();
+
+    for (const perfil of [perfis.fornecedor, perfis.entregador, perfis.admin]) {
+      entrarComo(perfil);
+      expect(fixture.nativeElement.querySelector('#cart-drawer')).withContext(perfil.userType).toBeNull();
+    }
+  });
+
+  it('deveMostrarHamburguerSoParaFornecedorEAdmin', () => {
+    for (const perfil of [perfis.fornecedor, perfis.admin]) {
+      entrarComo(perfil);
+      expect(byId('mobile-menu-button')).withContext(perfil.userType).toBeTruthy();
+    }
+    for (const perfil of [perfis.cliente, perfis.entregador]) {
+      entrarComo(perfil);
+      expect(byId('mobile-menu-button')).withContext(perfil.userType).toBeNull();
+    }
+  });
+
+  it('deveUsarSoIconesMaterialNaNavbar', () => {
+    for (const perfil of Object.values(perfis)) {
+      entrarComo(perfil);
+      (byId('mobile-menu-button') as HTMLButtonElement | null)?.click();
+      fixture.detectChanges();
+      expect((fixture.nativeElement as HTMLElement).querySelectorAll('[class*="fa-"]').length).withContext(perfil.userType).toBe(0);
+    }
+  });
+
+  it('deveFecharMenuMobileAoNavegarEComEsc', async () => {
+    entrarComo(perfis.fornecedor);
+    const botao = () => byId('mobile-menu-button') as HTMLButtonElement;
+    const painel = () => (fixture.nativeElement as HTMLElement).querySelector('#mobile-menu');
+    expect(botao().getAttribute('aria-controls')).toBe('mobile-menu');
+    expect(botao().getAttribute('aria-expanded')).toBe('false');
+
+    botao().click();
+    fixture.detectChanges();
+    expect(painel()).toBeTruthy();
+    expect(botao().getAttribute('aria-expanded')).toBe('true');
+
+    await navegar('/dashboard-fornecedor');
+    expect(painel()).withContext('ao navegar').toBeNull();
+
+    botao().click();
+    fixture.detectChanges();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(painel()).withContext('com Esc').toBeNull();
+    expect(botao().getAttribute('aria-expanded')).toBe('false');
   });
 });

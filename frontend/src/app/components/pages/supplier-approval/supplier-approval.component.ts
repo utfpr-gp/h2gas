@@ -13,7 +13,7 @@ import { backendMessage } from '../../../utils/backend-message';
     DynamicTableComponent,
   ],
   templateUrl: './supplier-approval.component.html',
-  styleUrl: './supplier-approval.component.css'
+  host: { class: 'flex-1 flex flex-col' },
 })
 export class SupplierApprovalComponent implements OnInit {
 

@@ -64,6 +64,16 @@ describe('addressDefinedGuard', () => {
     });
   });
 
+  it('deveLiberarAdminSemExigirEndereco', () => {
+    userServiceSpy.getUserLocalStorage.and.returnValue({ id: 'admin-1', userType: 'ADMIN' });
+
+    const result = executeGuard({} as any, {} as any);
+
+    expect(result).toBeTrue();
+    expect(addressServiceSpy.findByUserId).not.toHaveBeenCalled();
+    expect(routerSpy.navigate).not.toHaveBeenCalled();
+  });
+
   it('deveLiberarNavegacaoSeEnderecoJaExiste', (done) => {
     addressServiceSpy.findByUserId.and.returnValue(
       of({ cityId: 1, cityName: 'Pato Branco', streetName: 'Rua XV', number: '100' })

@@ -25,11 +25,30 @@
   --color-warning-content: #1c1c1e;
   --color-error: #dc2626;
   --color-error-content: #ffffff;
+  --radius-selector: 0.5rem;
+  --radius-field: 0.75rem;
+  --radius-box: 1rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
 }
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* a tab bar fixa (cliente no celular, entregador sempre) cobriria o fim do footer */
+@media (max-width: 767px) {
+  body:has(app-bottom-tab-bar nav) app-footer > footer {
+    padding-bottom: 5rem;
+  }
+}
+body:has(app-deliverer-tab-bar nav) app-footer > footer {
+  padding-bottom: 5rem;
+}
+
 .product-card {
   @apply bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 flex flex-col transition-all duration-300 ease-in-out;
 }

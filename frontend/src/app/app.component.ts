@@ -35,7 +35,9 @@ export class AppComponent {
     '/contato',
     '/sobre'
   ];
-
+  // landing, Sobre e Contato não têm menu, mas o footer é o caminho entre elas
+  private institutionalRoutes = ['/', '/sobre', '/contato'];
+  showFooter = true;
 
   constructor(private router: Router) {
     this.router.events
@@ -43,6 +45,12 @@ export class AppComponent {
     .subscribe((event: NavigationEnd) => {
       const cleanUrl = event.urlAfterRedirects.split('?')[0];
       this.showMenu = !this.hiddenMenuRoutes.includes(cleanUrl);
+      this.showFooter = this.isFooterVisible(cleanUrl);
     });
+  }
+
+  private isFooterVisible(url: string): boolean {
+    if (url === '/entregas' || url.startsWith('/entregas/')) return false;
+    return this.institutionalRoutes.includes(url) || !this.hiddenMenuRoutes.includes(url);
   }
 }

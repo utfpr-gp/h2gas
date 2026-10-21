@@ -126,11 +126,13 @@ export const routes: Routes = [
         data: {roles: ['ADMIN', 'CUSTOMER']}
     },
     {
-        path: 'painel-cliente', 
+        path: 'meus-dados',
         component: CustomerPanelComponent,
         canActivate: [authGuard],
-        data: {roles: ['ADMIN', 'CUSTOMER']}
+        data: {roles: ['ADMIN', 'CUSTOMER', 'SUPPLIER', 'DELIVERER']}
     },
+    // rota antiga (favoritos e links): segue funcionando
+    {path: 'painel-cliente', redirectTo: 'meus-dados', pathMatch: 'full'},
     {
         path: 'meus-enderecos',
         component: ManageAddressesComponent,

@@ -21,7 +21,7 @@ import { backendMessage } from '../../../utils/backend-message';
     DynamicTableComponent,
   ],
   templateUrl: './city-register.component.html',
-  styleUrl: './city-register.component.css'
+  host: { class: 'flex-1 flex flex-col' },
 })
 export class CityRegisterComponent implements OnInit {
   isMenuOpen = false;

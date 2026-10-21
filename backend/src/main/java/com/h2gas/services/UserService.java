@@ -1,6 +1,7 @@
 package com.h2gas.services;
 
 import com.h2gas.enums.UserTypeEnum;
+import com.h2gas.exceptions.ForbiddenResourceException;
 import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.*;
@@ -85,17 +86,28 @@ public class UserService {
         passwordTokenRepository.save(myToken);
     }
 
-    public UserDto update(String id, UserDto userDto) {
+    // F7: só o próprio usuário (ou ADMIN) edita; o e-mail é a identidade do login por código (HU11),
+    // então usuário comum não o troca por aqui
+    public UserDto update(String id, UserDto userDto, User actor) {
+        boolean isAdmin = actor.getUserType() == UserTypeEnum.ADMIN;
+        if (!isAdmin && !actor.getId().equals(id)) {
+            throw new ForbiddenResourceException("Você só pode editar os seus próprios dados.");
+        }
         User userEdit = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
 
-        userEdit.setName(userDto.getName());
-        if (userRepository.existsByEmail(userDto.getEmail()) &&
-                !userEdit.getEmail().equals(userDto.getEmail())) {
+        boolean emailChanged = userDto.getEmail() != null && !userDto.getEmail().equals(userEdit.getEmail());
+        if (emailChanged && !isAdmin) {
+            throw new BusinessRuleException("O e-mail não pode ser alterado por aqui.");
+        }
+        if (emailChanged && userRepository.existsByEmail(userDto.getEmail())) {
             throw new BusinessRuleException("E-mail já cadastrado.");
         }
 
-        userEdit.setEmail(userDto.getEmail());
+        userEdit.setName(userDto.getName());
+        if (emailChanged) {
+            userEdit.setEmail(userDto.getEmail());
+        }
 //        if (userEdit.getUserType() != UserTypeEnum.CUSTOMER) {
 //            userEdit.setCnpj(userDto.getCnpj());
 //        }

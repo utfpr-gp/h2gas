@@ -21,7 +21,7 @@ export class BottomTabBarComponent {
     { id: 'inicio', label: 'Início', icon: 'home', path: '/inicio', queryParams: {} },
     { id: 'categorias', label: 'Categorias', icon: 'category', path: '/inicio', queryParams: { view: 'products' } },
     { id: 'pedidos', label: 'Pedidos', icon: 'shopping_bag', path: '/meus-pedidos', queryParams: {} },
-    { id: 'perfil', label: 'Perfil', icon: 'person', path: '/painel-cliente', queryParams: {} },
+    { id: 'perfil', label: 'Perfil', icon: 'person', path: '/meus-dados', queryParams: {} },
   ];
 
   constructor(private router: Router) {}

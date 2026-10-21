@@ -40,8 +40,8 @@ describe('BottomTabBarComponent', () => {
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/meus-pedidos'], { queryParams: {} });
   });
 
-  it('deveNavegarParaPainelClienteAoClicarEmPerfil', () => {
+  it('deveLevarAbaPerfilParaMeusDados', () => {
     (fixture.nativeElement.querySelector('[data-testid="tab-perfil"]') as HTMLButtonElement).click();
-    expect(routerSpy.navigate).toHaveBeenCalledWith(['/painel-cliente'], { queryParams: {} });
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/meus-dados'], { queryParams: {} });
   });
 });

@@ -24,7 +24,6 @@ import { backendMessage } from '../../../utils/backend-message';
     NgxMaskDirective
   ],
   templateUrl: './distribuitor-form.component.html',
-  styleUrl: './distribuitor-form.component.css'
 })
 export class DistribuitorFormComponent implements OnInit {
   registerFormSupplier!: FormGroup;

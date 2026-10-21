@@ -1,40 +1,104 @@
 <div class="max-w-2xl mx-auto p-4 pb-24 md:p-8">
-  <h1 class="text-2xl md:text-3xl font-bold text-gray-800">Meus dados</h1>
-  <p class="text-gray-500 text-sm mb-6">Mantenha suas informações de contato atualizadas.</p>
-
-  <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4 md:p-6 mb-4">
-    <form [formGroup]="registerFormUser" class="space-y-4">
-      <div class="form-control">
-        <label class="label"><span class="label-text">Nome</span></label>
-        <input formControlName="name" type="text" placeholder="Seu nome"
-          class="input input-bordered w-full rounded-xl" />
+  <!-- Carregando -->
+  <div *ngIf="loading" data-testid="profile-skeleton" class="space-y-4" aria-busy="true" aria-label="Carregando seus dados">
+    <div class="flex items-center gap-4">
+      <div class="skeleton w-20 h-20 rounded-full"></div>
+      <div class="space-y-2 flex-1">
+        <div class="skeleton h-5 w-2/3 rounded"></div>
+        <div class="skeleton h-4 w-1/2 rounded"></div>
       </div>
-
-      <div class="form-control">
-        <label class="label"><span class="label-text">Email</span></label>
-        <input formControlName="email" type="email" placeholder="email@exemplo.com"
-          class="input input-bordered w-full rounded-xl" />
-      </div>
-
-      <div class="form-control">
-        <label class="label"><span class="label-text">Telefone de contato</span></label>
-        <input formControlName="phoneNumber" type="text" mask="(00) 00000-0000" placeholder="(00) 00000-0000"
-          class="input input-bordered w-full rounded-xl" />
-      </div>
-
-      <button type="submit" (click)="update()" class="btn btn-primary w-full rounded-xl">
-        Salvar alterações
-      </button>
-    </form>
+    </div>
+    <div class="skeleton h-14 w-full rounded-xl"></div>
+    <div class="skeleton h-14 w-full rounded-xl"></div>
+    <div class="skeleton h-14 w-full rounded-xl"></div>
   </div>
 
-  <button type="button" data-testid="atalho-meus-enderecos" (click)="goToAddresses()"
-    class="w-full bg-white rounded-xl shadow-md border border-gray-200 p-4 flex items-center gap-3 text-left hover:border-primary transition">
-    <span class="material-icons text-primary">location_on</span>
-    <div class="flex-grow">
-      <p class="font-semibold text-gray-800">Meus endereços</p>
-      <p class="text-sm text-gray-500">Veja, adicione e escolha onde receber</p>
+  <ng-container *ngIf="!loading && user">
+    <!-- Cabeçalho do perfil -->
+    <header class="flex items-center gap-4 mb-6">
+      <span data-testid="profile-avatar"
+        class="w-20 h-20 shrink-0 rounded-full bg-secondary text-secondary-content flex items-center justify-center text-2xl font-bold">{{ initials }}</span>
+      <div class="min-w-0">
+        <h1 data-testid="profile-name" class="text-2xl font-bold text-gray-800 truncate">{{ user.name }}</h1>
+        <p data-testid="profile-email" class="text-sm text-gray-500 truncate">{{ user.email }}</p>
+      </div>
+    </header>
+
+    <section class="bg-white rounded-xl shadow-md border border-gray-200 p-4 md:p-6 mb-4">
+      <h2 class="text-xs font-bold tracking-wide text-primary uppercase mb-4">Dados de contato</h2>
+      <form [formGroup]="profileForm" (ngSubmit)="save()" class="space-y-4">
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">Nome</span>
+          <span class="relative mt-1 block">
+            <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-gray-400 text-base">person</span>
+            <input formControlName="name" type="text" placeholder="Seu nome" autocomplete="name"
+              class="input w-full rounded-xl border bg-white pl-10"
+              [ngClass]="profileForm.get('name')!.invalid && profileForm.get('name')!.touched ? 'border-red-400' : 'border-gray-300'" />
+          </span>
+          <span *ngIf="profileForm.get('name')!.invalid && profileForm.get('name')!.touched" class="text-red-500 text-sm">
+            Informe seu nome (mínimo de 3 letras).
+          </span>
+        </label>
+
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">E-mail</span>
+          <span class="relative mt-1 block">
+            <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-gray-400 text-base">mail</span>
+            <input data-testid="email-field" type="email" [value]="user.email" readonly aria-readonly="true"
+              class="input w-full rounded-xl border border-gray-200 bg-gray-100 text-gray-500 pl-10 cursor-not-allowed" />
+          </span>
+          <span class="text-xs text-gray-500">Para trocar o e-mail, fale com o suporte.</span>
+        </label>
+
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">Telefone de contato</span>
+          <span class="relative mt-1 block">
+            <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-gray-400 text-base">call</span>
+            <input formControlName="phoneNumber" type="text" mask="(00) 00000-0000" placeholder="(00) 00000-0000" autocomplete="tel"
+              class="input w-full rounded-xl border bg-white pl-10"
+              [ngClass]="profileForm.get('phoneNumber')!.invalid && profileForm.get('phoneNumber')!.touched ? 'border-red-400' : 'border-gray-300'" />
+          </span>
+        </label>
+
+        <button type="submit" data-testid="save-profile" [disabled]="!canSave" class="btn btn-primary w-full rounded-xl">
+          <span *ngIf="saving" class="loading loading-spinner loading-sm"></span>
+          {{ saving ? 'Salvando...' : 'Salvar alterações' }}
+        </button>
+      </form>
+    </section>
+
+    <!-- Atalhos por perfil -->
+    <div class="space-y-3">
+      <ng-container *ngIf="userType === 'CUSTOMER' || userType === 'ADMIN'">
+        <button type="button" data-testid="atalho-meus-enderecos" (click)="go('/meus-enderecos')"
+          class="w-full bg-white rounded-xl shadow-md border border-gray-200 p-4 flex items-center gap-3 text-left hover:border-primary transition">
+          <span class="material-icons text-primary">location_on</span>
+          <span class="flex-grow">
+            <span class="block font-semibold text-gray-800">Meus endereços</span>
+            <span class="block text-sm text-gray-500">Veja, adicione e escolha onde receber</span>
+          </span>
+          <span class="material-icons text-gray-400">chevron_right</span>
+        </button>
+        <button type="button" data-testid="atalho-meus-pedidos" (click)="go('/meus-pedidos')"
+          class="w-full bg-white rounded-xl shadow-md border border-gray-200 p-4 flex items-center gap-3 text-left hover:border-primary transition">
+          <span class="material-icons text-primary">receipt_long</span>
+          <span class="flex-grow">
+            <span class="block font-semibold text-gray-800">Meus pedidos</span>
+            <span class="block text-sm text-gray-500">Acompanhe e refaça seus pedidos</span>
+          </span>
+          <span class="material-icons text-gray-400">chevron_right</span>
+        </button>
+      </ng-container>
+
+      <button *ngIf="userType === 'SUPPLIER'" type="button" data-testid="atalho-configuracao" (click)="go('/configuracao')"
+        class="w-full bg-white rounded-xl shadow-md border border-gray-200 p-4 flex items-center gap-3 text-left hover:border-primary transition">
+        <span class="material-icons text-primary">settings</span>
+        <span class="flex-grow">
+          <span class="block font-semibold text-gray-800">Configurações da loja</span>
+          <span class="block text-sm text-gray-500">Horário de funcionamento e status da loja</span>
+        </span>
+        <span class="material-icons text-gray-400">chevron_right</span>
+      </button>
     </div>
-    <span class="material-icons text-gray-400">chevron_right</span>
-  </button>
+  </ng-container>
 </div>

@@ -30,7 +30,6 @@ import { backendMessage } from '../../../utils/backend-message';
     SupplierCardComponent
   ],
   templateUrl: './supplier-list.component.html',
-  styleUrl: './supplier-list.component.css'
 })
 export class SupplierListComponent implements OnInit {
 

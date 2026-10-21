@@ -2,141 +2,97 @@
     <div class="container mx-auto flex h-16 items-center justify-between px-4">
       <!-- LOGO + BOTÃO MOBILE -->
       <div class="flex items-center gap-2">
-        <!-- Botão do menu mobile -->
+        <!-- menu mobile só de fornecedor e admin: o cliente usa a bottom tab bar e o entregador as abas dele -->
         <button
-          *ngIf="!isDeliverer"
+          *ngIf="hasMobileMenu"
+          type="button"
+          data-testid="mobile-menu-button"
           (click)="toggleMobileMenu()"
-          class="lg:hidden text-white hover:bg-white/10 p-2 rounded-md focus:outline-none"
+          aria-controls="mobile-menu"
+          [attr.aria-expanded]="mobileMenuOpen"
+          [attr.aria-label]="mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'"
+          class="lg:hidden text-white hover:bg-white/10 p-2 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white flex items-center"
         >
-          <i class="fas fa-bars text-xl"></i>
+          <span class="material-icons" aria-hidden="true">{{ mobileMenuOpen ? 'close' : 'menu' }}</span>
         </button>
-  
+
         <!-- Logo -->
         <div class="flex items-center">
-            <a [href]="isDeliverer ? '/entregas' : '/inicio'" aria-label="Ir para a tela inicial" class="hover:bg-white/10 px-3 py-2 rounded-md">
-                <div class="h-9 w-9 rounded-full flex items-center justify-center mr-2">
-                    <img src="../assets/logo-sem-titulo.png" alt="logo" />
-                  </div>
-            </a>
-          <span
-            class="text-white text-xl font-bold tracking-tight hidden sm:inline-block"
-          >
-            H2Gás
-          </span>
+          <a [routerLink]="homeRoute" aria-label="Ir para a tela inicial" class="hover:bg-white/10 px-3 py-2 rounded-md">
+            <div class="h-9 w-9 rounded-full flex items-center justify-center mr-2">
+              <img src="../assets/logo-sem-titulo.png" alt="logo" />
+            </div>
+          </a>
+          <span class="text-white text-xl font-bold tracking-tight hidden sm:inline-block">H2Gás</span>
         </div>
       </div>
 
       <!-- ENDEREÇO ATIVO -->
       <button
-        *ngIf="user?.userType === 'CUSTOMER' && locationContext.current()"
+        *ngIf="isCustomer && locationContext.current()"
         (click)="editAddress()"
-        class="flex items-center gap-1 px-3 py-2 text-sm text-white hover:bg-white/10 rounded-md transition-colors"
+        class="flex items-center gap-1 min-w-0 px-2 sm:px-3 py-2 text-sm text-white hover:bg-white/10 rounded-md transition-colors"
       >
-        <i class="fas fa-location-dot"></i>
-        <span class="max-w-[140px] sm:max-w-[220px] truncate">{{ locationContext.current()?.label }}</span>
-        <i class="fas fa-pen text-xs opacity-70"></i>
+        <span class="material-icons text-[18px] shrink-0" aria-hidden="true">location_on</span>
+        <span class="max-w-[100px] min-[420px]:max-w-[140px] sm:max-w-[220px] truncate">{{ locationContext.current()?.label }}</span>
+        <span class="material-icons text-[14px] opacity-70" aria-hidden="true">edit</span>
       </button>
 
       <!-- MENU DESKTOP + CARRINHO (compartilhado) -->
-      <div class="flex items-center gap-2 relative z-40">
+      <div class="flex items-center gap-2 relative z-40 shrink-0">
         <!-- MENU DESKTOP -->
-        <nav *ngIf="!isDeliverer" class="hidden lg:flex items-center gap-2">
-          <a
-            href="/inicio"
-            class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
-          >
-            <i class="fas fa-home"></i><span class="ml-2">Início</span>
+        <nav *ngIf="!isDeliverer" aria-label="Navegação principal" class="hidden lg:flex items-center gap-1">
+          <a *ngIf="!isSupplier" routerLink="/inicio" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors [&>.material-icons]:text-[20px]">
+            <span class="material-icons" aria-hidden="true">home</span><span>Início</span>
           </a>
-  
+
           <!-- Dropdown Produtos -->
-          <div
-            *ngIf="user?.userType === 'ADMIN' || user?.userType === 'SUPPLIER'"
-            class="relative"
-          >
-            <button
-              (click)="toggleProductsMenu()"
-              class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors focus:outline-none"
-            >
-              <i class="fa-solid fa-fire-flame-simple"></i>
-              <span class="ml-2">Produtos</span>
-              <i
-                [ngClass]="{'rotate-180': productsMenuOpen}"
-                class="fas fa-chevron-down ml-1 text-xs transition-transform"
-              ></i>
+          <div *ngIf="isAdmin || isSupplier" class="relative">
+            <button type="button" (click)="toggleProductsMenu()" [attr.aria-expanded]="productsMenuOpen" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors focus:outline-none [&>.material-icons]:text-[20px]">
+              <span class="material-icons" aria-hidden="true">local_fire_department</span><span>Produtos</span>
+              <span class="material-icons text-[18px] transition-transform" [ngClass]="{ 'rotate-180': productsMenuOpen }" aria-hidden="true">expand_more</span>
             </button>
-  
-            <ul
-              *ngIf="productsMenuOpen"
-              class="absolute bg-white rounded-md shadow-md mt-2 min-w-[180px] z-50"
-            >
+
+            <ul *ngIf="productsMenuOpen" @fadeIn class="absolute bg-white rounded-xl shadow-xl border border-gray-200 py-1 mt-2 min-w-[200px] z-50">
               <li>
-                <a
-                  href="/product-items"
-                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >Item produtos</a
-                >
+                <a routerLink="/product-items" routerLinkActive="bg-gray-100 font-semibold" ariaCurrentWhenActive="page" (click)="productsMenuOpen = false"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Item produtos</a>
               </li>
               <li>
-                <a
-                  href="/category-products"
-                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >Categoria de produtos</a
-                >
+                <a routerLink="/category-products" routerLinkActive="bg-gray-100 font-semibold" ariaCurrentWhenActive="page" (click)="productsMenuOpen = false"
+                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Categoria de produtos</a>
               </li>
             </ul>
           </div>
-  
-          <a
-            *ngIf="user?.userType === 'SUPPLIER'"
-            href="/dashboard"
-            class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
-          >
-            <i class="fa-solid fa-chart-line"></i><span class="ml-2">Dashboard</span>
+
+          <ng-container *ngIf="isSupplier">
+            <a routerLink="/dashboard" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors [&>.material-icons]:text-[20px]">
+              <span class="material-icons" aria-hidden="true">insights</span><span>Dashboard</span>
+            </a>
+            <a routerLink="/dashboard-fornecedor" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors [&>.material-icons]:text-[20px]">
+              <span class="material-icons" aria-hidden="true">inbox</span><span>Pedidos</span>
+            </a>
+            <a routerLink="/entregadores" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors [&>.material-icons]:text-[20px]">
+              <span class="material-icons" aria-hidden="true">two_wheeler</span><span>Entregadores</span>
+            </a>
+          </ng-container>
+
+          <a *ngIf="isAdmin || isCustomer" routerLink="/meus-pedidos" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors [&>.material-icons]:text-[20px]">
+            <span class="material-icons" aria-hidden="true">receipt_long</span><span>Pedidos</span>
           </a>
 
-          <a
-            *ngIf="user?.userType === 'SUPPLIER'"
-            href="/dashboard-fornecedor"
-            class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
-          >
-            <i class="fa-solid fa-receipt"></i><span class="ml-2">Pedidos</span>
-          </a>
-
-          <a
-            *ngIf="user?.userType === 'SUPPLIER'"
-            href="/entregadores"
-            class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
-          >
-            <i class="fa-solid fa-motorcycle"></i><span class="ml-2">Entregadores</span>
-          </a>
-
-          <a
-            *ngIf="user?.userType === 'ADMIN' || user?.userType === 'CUSTOMER'"
-            href="/meus-pedidos"
-            class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
-          >
-            <i class="fas fa-clipboard-list"></i><span class="ml-2">Pedidos</span>
-          </a>
-  
-          <a
-            *ngIf="user?.userType === 'ADMIN'"
-            href="/register-city"
-            class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
-          >
-            <i class="fas fa-map-marked-alt"></i><span class="ml-2">Cidades</span>
-          </a>
-  
-          <a
-            *ngIf="user?.userType === 'ADMIN'"
-            href="/supplier-approval"
-            class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
-          >
-            <i class="fas fa-store"></i><span class="ml-2">Fornecedores</span>
-          </a>
+          <ng-container *ngIf="isAdmin">
+            <a routerLink="/register-city" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors [&>.material-icons]:text-[20px]">
+              <span class="material-icons" aria-hidden="true">map</span><span>Cidades</span>
+            </a>
+            <a routerLink="/supplier-approval" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors [&>.material-icons]:text-[20px]">
+              <span class="material-icons" aria-hidden="true">storefront</span><span>Fornecedores</span>
+            </a>
+          </ng-container>
         </nav>
-  
-        <!-- Drawer do carrinho (funciona em desktop e mobile) -->
-        <div *ngIf="!isDeliverer" class="drawer drawer-end">
+
+        <!-- Drawer do carrinho (desktop e mobile): só o cliente compra -->
+        <div *ngIf="isCustomer" class="drawer drawer-end">
           <input id="cart-drawer" type="checkbox" class="drawer-toggle" />
   
           <!-- Botões que abrem o carrinho -->
@@ -146,7 +102,7 @@
               for="cart-drawer"
               class="hidden lg:inline-block relative cursor-pointer p-2 rounded-md text-white hover:bg-white/10"
             >
-              <i class="fas fa-shopping-cart text-lg"></i>
+              <span class="material-icons block" aria-hidden="true">shopping_cart</span>
               <span
                 *ngIf="cartProducts?.length"
                 data-testid="cart-count"
@@ -161,7 +117,7 @@
               for="cart-drawer"
               class="lg:hidden relative cursor-pointer p-2 rounded-md text-white hover:bg-white/10"
             >
-              <i class="fas fa-shopping-cart text-lg"></i>
+              <span class="material-icons block" aria-hidden="true">shopping_cart</span>
               <span
                 *ngIf="cartProducts?.length"
                 data-testid="cart-count"
@@ -246,10 +202,11 @@
                     </button>
   
                     <button
-                      class="text-red-500 hover:text-red-700 cursor-pointer"
+                      class="text-red-500 hover:text-red-700 cursor-pointer flex items-center"
+                      aria-label="Remover do carrinho"
                       (click)="deleteItemCart(cartProduct)"
                     >
-                      <i class="fas fa-trash"></i>
+                      <span class="material-icons text-[20px]" aria-hidden="true">delete</span>
                     </button>
                   </div>
                 </div>
@@ -273,90 +230,88 @@
           </div>
         </div>
   
-        <!-- Dropdown Usuário -->
-        <div class="relative" (clickOutside)="closeUserMenu()">
-          <button
-            (click)="toggleUserMenu()"
-            class="text-white hover:bg-white/10 p-2 rounded-md flex items-center focus:outline-none"
-          >
-            <i class="fas fa-user text-lg"></i>
+        <!-- Dropdown Usuário (F7): avatar com iniciais, cabeçalho com nome e e-mail, itens por perfil -->
+        <div class="relative" data-user-menu>
+          <button type="button" data-testid="user-menu-button" (click)="toggleUserMenu()"
+            aria-haspopup="menu" [attr.aria-expanded]="userMenuOpen" aria-label="Menu do usuário"
+            class="rounded-full p-0.5 hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
+            <span data-testid="user-avatar"
+              class="w-9 h-9 rounded-full bg-secondary text-secondary-content flex items-center justify-center text-sm font-bold">{{ userInitials }}</span>
           </button>
-          <div
-            *ngIf="userMenuOpen"
-            class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-50"
-          >
-            <button
-              *ngIf="user?.userType === 'ADMIN' || user?.userType === 'SUPPLIER'"
-              (click)="navigate('/dashboard-fornecedor')"
-              class="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
-            >
-              Pedidos recebidos
-            </button>
-            <button
-              *ngIf="user?.userType === 'ADMIN' || user?.userType === 'CUSTOMER'"
-              (click)="navigate('/painel-cliente')"
-              class="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
-            >
-              Meus Dados
+
+          <div *ngIf="userMenuOpen" data-testid="user-menu" role="menu" aria-label="Opções do usuário" @fadeIn
+            class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 text-gray-800">
+            <div data-testid="user-menu-header" class="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
+              <span class="w-10 h-10 shrink-0 rounded-full bg-secondary text-secondary-content flex items-center justify-center font-bold">{{ userInitials }}</span>
+              <span class="min-w-0">
+                <span class="block font-semibold truncate">{{ user?.name }}</span>
+                <span class="block text-xs text-gray-500 truncate">{{ user?.email }}</span>
+              </span>
+            </div>
+
+            <button *ngFor="let item of userMenuItems; trackBy: trackByItemId" type="button" role="menuitem" [attr.data-testid]="'menu-item-' + item.id"
+              (click)="openUserMenuItem(item.route)"
+              class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none">
+              <span class="material-icons text-base text-gray-500" aria-hidden="true">{{ item.icon }}</span><span data-menu-label>{{ item.label }}</span>
             </button>
 
-            <button
-                *ngIf="user?.userType === 'ADMIN' || user?.userType === 'SUPPLIER'"
-              (click)="navigate('/configuracao')"
-              class="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
-            >
-              Configurações
-            </button>
-
-            <!-- <button *ngIf="user?.userType === 'ADMIN' || user?.userType === 'SUPPLIER'" (click)="navigate('/meus-pedidos')"
-                class="block cursor-pointer px-4 py-2 min-w-full text-sm text-gray-700 hover:bg-gray-100">
-                Meus Pedidos
-            </button> -->
-            <div class="border-t my-1"></div>
-            <button
-              (click)="logout()"
-              class="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
-            >
-              Sair
+            <div class="border-t border-gray-100 my-1"></div>
+            <button type="button" role="menuitem" data-testid="menu-item-sair" (click)="logout()"
+              class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left text-red-600 hover:bg-red-50 focus:bg-red-50 focus:outline-none">
+              <span class="material-icons text-base" aria-hidden="true">logout</span><span data-menu-label>Sair</span>
             </button>
           </div>
         </div>
       </div>
     </div>
   
-    <!-- MENU MOBILE -->
-    <div
+    <!-- MENU MOBILE (fornecedor e admin) -->
+    <nav
       *ngIf="mobileMenuOpen"
-      class="absolute top-16 left-0 w-full bg-primary text-white flex flex-col p-4 space-y-3 shadow-lg lg:hidden z-40"
+      id="mobile-menu"
+      @expandCollapse
+      aria-label="Navegação principal"
+      class="absolute top-16 left-0 w-full bg-primary text-white shadow-lg lg:hidden z-40"
     >
-      <a href="/inicio" class="hover:bg-white/10 px-3 py-2 rounded-md">Início</a>
-      <a *ngIf="user?.userType === 'SUPPLIER'" href="/dashboard" class="hover:bg-white/10 px-3 py-2 rounded-md">Dashboard</a>
-      <a *ngIf="user?.userType === 'SUPPLIER'" href="/dashboard-fornecedor" class="hover:bg-white/10 px-3 py-2 rounded-md">Pedidos</a>
-      <a *ngIf="user?.userType === 'SUPPLIER'" href="/entregadores" class="hover:bg-white/10 px-3 py-2 rounded-md">Entregadores</a>
-  
-      <ng-container *ngIf="user?.userType === 'ADMIN' || user?.userType === 'SUPPLIER'">
-        <button
-          (click)="toggleSubmenu()"
-          class="flex justify-between items-center px-3 py-2 hover:bg-white/10 rounded-md"
-        >
-          Produtos
-          <i
-            [ngClass]="{'rotate-180': submenuOpen}"
-            class="fas fa-chevron-down transition-transform"
-          ></i>
+      <div class="flex flex-col p-3 gap-1">
+        <a *ngIf="isAdmin" routerLink="/inicio" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }" class="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-white/10">
+          <span class="material-icons" aria-hidden="true">home</span>Início
+        </a>
+        <ng-container *ngIf="isSupplier">
+          <a routerLink="/dashboard" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-white/10">
+            <span class="material-icons" aria-hidden="true">insights</span>Dashboard
+          </a>
+          <a routerLink="/dashboard-fornecedor" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-white/10">
+            <span class="material-icons" aria-hidden="true">inbox</span>Pedidos
+          </a>
+          <a routerLink="/entregadores" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-white/10">
+            <span class="material-icons" aria-hidden="true">two_wheeler</span>Entregadores
+          </a>
+        </ng-container>
+
+        <button type="button" (click)="toggleSubmenu()" [attr.aria-expanded]="submenuOpen" class="flex items-center justify-between px-3 py-2.5 rounded-md hover:bg-white/10 text-left">
+          <span class="flex items-center gap-3"><span class="material-icons" aria-hidden="true">local_fire_department</span>Produtos</span>
+          <span class="material-icons transition-transform" [ngClass]="{ 'rotate-180': submenuOpen }" aria-hidden="true">expand_more</span>
         </button>
-  
-        <div *ngIf="submenuOpen" class="flex flex-col pl-4 space-y-2">
-          <a href="/product-items" class="hover:bg-white/10 px-3 py-1 rounded-md">Item produtos</a>
-          <a href="/category-products" class="hover:bg-white/10 px-3 py-1 rounded-md">Categoria de produtos</a>
+        <div *ngIf="submenuOpen" @expandCollapse class="flex flex-col pl-9 gap-1">
+          <a routerLink="/product-items" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="hover:bg-white/10 px-3 py-2 rounded-md">Item produtos</a>
+          <a routerLink="/category-products" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="hover:bg-white/10 px-3 py-2 rounded-md">Categoria de produtos</a>
         </div>
-      </ng-container>
-  
-      <a *ngIf="user?.userType === 'ADMIN' || user?.userType === 'CUSTOMER'" href="/meus-pedidos" class="hover:bg-white/10 px-3 py-2 rounded-md">Pedidos</a>
-      <a *ngIf="user?.userType === 'ADMIN'" href="/register-city" class="hover:bg-white/10 px-3 py-2 rounded-md">Cidades</a>
-      <a *ngIf="user?.userType === 'ADMIN'" href="/supplier-approval" class="hover:bg-white/10 px-3 py-2 rounded-md">Fornecedores</a>
-    </div>
+
+        <ng-container *ngIf="isAdmin">
+          <a routerLink="/meus-pedidos" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-white/10">
+            <span class="material-icons" aria-hidden="true">receipt_long</span>Pedidos
+          </a>
+          <a routerLink="/register-city" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-white/10">
+            <span class="material-icons" aria-hidden="true">map</span>Cidades
+          </a>
+          <a routerLink="/supplier-approval" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-white/10">
+            <span class="material-icons" aria-hidden="true">storefront</span>Fornecedores
+          </a>
+        </ng-container>
+      </div>
+    </nav>
   </div>
 
-  <app-bottom-tab-bar *ngIf="user?.userType === 'CUSTOMER'"></app-bottom-tab-bar>
+  <app-bottom-tab-bar *ngIf="isCustomer"></app-bottom-tab-bar>
   <app-deliverer-tab-bar *ngIf="isDeliverer"></app-deliverer-tab-bar>

@@ -8,6 +8,7 @@ import { UserService } from '../../../services/user.service';
 import { CartService } from '../../../services/cart.service';
 import { LocationContextService } from '../../../services/location-context.service';
 import { backendMessage } from '../../../utils/backend-message';
+import { homeFor } from '../../../utils/home-route';
 
 // HU11 (Figura 10a): entrada por código de 6 dígitos enviado por e-mail
 @Component({
@@ -116,16 +117,11 @@ export class LoginTokenComponent {
         localStorage.setItem('user', JSON.stringify(response));
         const firstName = (response?.name || '').trim().split(/\s+/)[0];
         this.toastr.success(firstName ? `Bem-vindo(a), ${firstName}!` : 'Bem-vindo(a)!');
-        this.router.navigate([this.homeFor(response.userType)]);
+        this.router.navigate([homeFor(response.userType)]);
       },
       error: (err) => {
         this.toastr.error(`Erro ao carregar seus dados: ${backendMessage(err)}`);
       },
     });
-  }
-
-  private homeFor(userType: string): string {
-    if (userType === 'DELIVERER') return '/entregas';
-    return userType === 'SUPPLIER' ? '/dashboard' : '/inicio';
   }
 }
