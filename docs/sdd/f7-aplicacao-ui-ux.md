@@ -732,13 +732,22 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
       `styles.css`).
 
 **Fatia 6 — configuração da loja (§5.15):**
-- [ ] Horário, tempo de entrega e estoque mínimo salvos no backend pelo
+- [x] Horário, tempo de entrega e estoque mínimo salvos no backend pelo
       fornecedor do token; `update-times` de outro fornecedor é 403;
       `V13` aplicada; OpenAPI.
-- [ ] Tela com um formulário, validação por campo, prévia, Salvar só com
+- [x] Tela com um formulário, validação por campo, prévia, Salvar só com
       alteração válida e um toast; tela de produtos usa o limite salvo.
-- [ ] Testes da seção 7 (item 15) verdes; `mvn test`, `ng test` (sem
+- [x] Testes da seção 7 (item 15) verdes; `mvn test`, `ng test` (sem
       falhas novas) e `ng build`; teste manual em 390 e 1280 px.
+
+> Verificado em 2026-10-21: backend 262 testes (único erro: `contextLoads`, que precisa do MySQL local); `V13` aplicada no MySQL
+> local; frontend 330 testes com 17 falhas antigas de providers (uma a menos: o spec antigo da tela); `ng build` sem erro; E2E em
+> 1280 e 390 px com 20 checagens (carrega do token, prévia, Salvar desabilitado sem alteração, erro de fechamento igual, horário
+> até 02:00 "do dia seguinte", um toast só, valor salvo após recarregar, contador de estoque baixo em Produtos seguindo o limite,
+> `update-times` de outro fornecedor 403, 400 da API, sem rolagem lateral nem erro de JS, dado original restaurado).
+>
+> **Achados do teste**: no celular, o aviso "Alterações não salvas" saía pela esquerda da barra fixa — passou para cima do botão.
+> O "Configurações" do menu do admin aponta para uma rota que agora é só do fornecedor; a HU12 já tira esse item do menu.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
