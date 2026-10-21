@@ -120,8 +120,8 @@
                         <span class="font-semibold text-gray-800 tabular-nums">{{ shortCode(o) }}</span>
                         <span class="badge badge-sm" [ngClass]="isDelivered(o) ? 'badge-success badge-outline' : 'badge-error'">{{ o.status }}</span>
                     </span>
-                    <span class="block text-sm text-gray-600 truncate">{{ o.customerName }} · {{ o.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
-                    <span class="block text-xs text-gray-500">{{ paymentLabel(o.paymentMethod) }} · {{ o.deliveryMode ? modeLabel[o.deliveryMode] : 'Entrega' }}</span>
+                    <span class="block text-sm text-gray-700 truncate">{{ o.customerName }}</span>
+                    <span class="block text-xs text-gray-500 tabular-nums">{{ o.createdAt | date:'dd/MM/yyyy HH:mm' }} · {{ paymentLabel(o.paymentMethod) }} · {{ o.deliveryMode ? modeLabel[o.deliveryMode] : 'Entrega' }}</span>
                 </span>
                 <span class="font-bold text-gray-800 tabular-nums">{{ o.totalPrice | currency:'BRL':'symbol':'1.2-2' }}</span>
                 <span class="material-icons text-gray-400 transition-transform" [class.rotate-180]="expanded.has(o.id)" aria-hidden="true">expand_more</span>

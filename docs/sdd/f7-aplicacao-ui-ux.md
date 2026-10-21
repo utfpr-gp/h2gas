@@ -1295,13 +1295,23 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > erro de JS); nome restaurado. O `navigateEdit` de Pedidos recebidos virou `goToStore()`, e o do Histórico (sem uso) saiu.
 
 **Fatia 6 — histórico de pedidos (§5.19):**
-- [ ] Histórico e resumo pelo fornecedor do token, filtrados e contados
+- [x] Histórico e resumo pelo fornecedor do token, filtrados e contados
       no banco; rotas antigas por `supplierId` dão 403 para outra loja;
       OpenAPI.
-- [ ] Tela com resumo, filtros, cards expansíveis, skeleton, estado vazio
+- [x] Tela com resumo, filtros, cards expansíveis, skeleton, estado vazio
       e paginação, sem o `orders-widget`.
-- [ ] Testes da seção 7 (item 19) verdes; `mvn test`, `ng test` (sem
+- [x] Testes da seção 7 (item 19) verdes; `mvn test`, `ng test` (sem
       falhas novas) e `ng build`; teste manual em 390 e 1280 px.
+
+> Verificado em 2026-10-21: backend 357 testes (único erro: `contextLoads`); frontend 434 testes com 10 falhas antigas de
+> providers (duas a menos: os specs antigos do histórico e do `orders-widget`); `ng build` sem erro; E2E em 1280 e 390 px com 16
+> checagens no Gás Centro, comparando a tela com o banco (resumo de 30 dias: 46 entregues, R$ 7.203,00, 19 cancelados; PIX
+> entregue no período todo; + retirada; Limpar; busca por cliente; motivo do cancelamento no detalhe; paginação; 403 de outra
+> loja em `exclude-status`, `by-supplier` e `PATCH /suppliers/{id}/status`; sem rolagem lateral nem erro de JS).
+>
+> **Achados**: (1) o `PATCH /api/suppliers/{id}/status` (abrir/fechar loja) também não conferia o dono — agora é 403 para outra
+> loja; (2) o link "Histórico" de Pedidos recebidos usava `href` e recarregava o app — virou `routerLink`; (3) no celular, a
+> data do card dividia a linha com o nome do cliente e era cortada — foi para a linha de pagamento.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
