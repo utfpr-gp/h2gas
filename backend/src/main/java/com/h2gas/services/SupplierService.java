@@ -57,8 +57,9 @@ public class SupplierService {
 //                .collect(Collectors.toList());
 //    }
 
-    public Page<SupplierDTO> findAllSuppliers(Pageable pageable) {
-        return supplierRepository.findAll(pageable)
+    public Page<SupplierDTO> findAllSuppliers(Boolean active, String q, Pageable pageable) {
+        String term = q == null || q.isBlank() ? null : q.trim();
+        return supplierRepository.findForApproval(active, term, pageable)
                 .map(supplierMapper::toDto);
     }
 
