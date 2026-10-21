@@ -496,4 +496,17 @@ class SupplierServiceTest {
                 new MockMultipartFile("file", "logo.jpg", "image/jpeg", new byte[0])));
         verifyNoInteractions(cloudinaryService);
     }
+
+    @Test
+    @DisplayName("F7 fatia 6: Cloudinary recusando o envio (credencial, rede) vira 502 com mensagem clara")
+    void deveResponder502QuandoOCloudinaryRecusa() throws Exception {
+        when(cloudinaryService.upload(any())).thenThrow(new RuntimeException("Invalid Signature abc"));
+
+        org.springframework.web.server.ResponseStatusException erro = assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> supplierService.updateMyLogo(validId, new MockMultipartFile("file", "logo.png", "image/png", new byte[10])));
+
+        assertEquals(org.springframework.http.HttpStatus.BAD_GATEWAY, erro.getStatusCode());
+        assertEquals("Não foi possível enviar a imagem. Tente novamente.", erro.getReason());
+        assertNull(supplierRepository.findById(validId).orElseThrow().getLogoUrl());
+    }
 }

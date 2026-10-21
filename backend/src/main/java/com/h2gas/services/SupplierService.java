@@ -256,7 +256,8 @@ public class SupplierService {
         Map<?, ?> uploaded;
         try {
             uploaded = cloudinaryService.upload(file);
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
+            // o SDK do Cloudinary lança RuntimeException quando a API recusa (credencial, assinatura, rede)
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Não foi possível enviar a imagem. Tente novamente.", e);
         }
         Object secure = uploaded.get("secure_url");
