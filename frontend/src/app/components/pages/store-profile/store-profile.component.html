@@ -57,7 +57,7 @@
                     class="w-full h-full object-cover" (error)="bannerBroken = !bannerPreview" />
                 <ng-template #bannerPadrao>
                     <div data-testid="banner-default" class="w-full h-full bg-linear-to-br from-primary to-accent flex items-center justify-end pr-6">
-                        <span class="material-icons text-white/15 text-8xl" aria-hidden="true">storefront</span>
+                        <span class="material-icons text-white/15 text-8xl!" aria-hidden="true">storefront</span>
                     </div>
                 </ng-template>
                 <span *ngIf="uploadingBanner" class="absolute inset-0 bg-white/60 flex items-center justify-center">
@@ -65,7 +65,7 @@
                 </span>
             </div>
             <div class="mt-3 space-y-2">
-                <p class="text-sm text-gray-500">Aparece no topo da página da sua loja. JPG, PNG ou WEBP de até 2 MB; imagem larga (3:1) fica melhor. Sem banner, usamos o padrão acima.</p>
+                <p class="text-sm text-gray-500">Aparece no topo da página da sua loja. JPG, PNG ou WEBP de até 2 MB; imagem larga (3:1) fica melhor. Sem banner, a página usa um fundo nas cores do H2Gás.</p>
                 <div class="flex flex-wrap gap-2">
                     <label class="btn btn-sm btn-primary rounded-lg" [class.btn-disabled]="uploadingBanner" for="banner-input">
                         <span class="material-icons text-base">photo_camera</span>
