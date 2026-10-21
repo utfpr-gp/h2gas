@@ -30,6 +30,8 @@ public class SupplierDTO {
     private String email;
     private String cnpj;
     private String logoUrl;
+    @Schema(description = "Banner da loja no Cloudinary; nulo sem banner (a página da loja usa o padrão)", nullable = true)
+    private String bannerUrl;
     @Schema(description = "Média das avaliações da loja, com 1 casa decimal; nula sem avaliações. Preenchida só no catálogo do cliente", example = "4.3", nullable = true)
     private Double averageRating;
     @Schema(description = "Quantidade de avaliações da loja; 0 sem avaliações. Preenchida só no catálogo do cliente", example = "14")

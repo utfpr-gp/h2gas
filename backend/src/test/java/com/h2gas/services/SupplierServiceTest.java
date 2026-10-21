@@ -588,4 +588,19 @@ class SupplierServiceTest {
         assertNull(dto.getAverageRating());
         assertEquals(0L, dto.getReviewCount());
     }
+
+    @Test
+    @DisplayName("F7 §5.26: a leitura da loja traz média e contagem de avaliações")
+    void deveTrazerNotaNaLeituraDaLoja() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        User cliente = userRepository.save(new User(null, "Cliente", "cli2@t", "41999990001", "99988877700", "x", UserTypeEnum.CUSTOMER));
+        Supplier loja = lojaAberta("Loja Lida", curitiba);
+        avaliar(loja, cliente, 5);
+        avaliar(loja, cliente, 4);
+
+        SupplierDTO dto = supplierService.findById(loja.getId());
+
+        assertEquals(4.5, dto.getAverageRating());
+        assertEquals(2L, dto.getReviewCount());
+    }
 }

@@ -230,9 +230,16 @@ public class SupplierController {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
+    @Operation(summary = "Lê uma loja pelo id",
+            description = "Dados públicos da loja para o cabeçalho da página de produtos: nome, logo, banner, horário, tempo médio, "
+                    + "aberta/fechada, bairro/cidade, descrição e a nota (averageRating, 1 casa; nula sem avaliações) com reviewCount")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Dados da loja"),
+            @ApiResponse(responseCode = "404", description = "Loja não encontrada")
+    })
     @GetMapping("/{id}")
     @ResponseBody
-    public ResponseEntity<SupplierDTO> getAddressById(@PathVariable String id) {
+    public ResponseEntity<SupplierDTO> getAddressById(@Parameter(description = "Id da loja (fornecedor)") @PathVariable String id) {
         SupplierDTO supplierDTO = supplierService.findById(id);
         return ResponseEntity.ok(supplierDTO);
     }

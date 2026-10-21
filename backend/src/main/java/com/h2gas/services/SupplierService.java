@@ -127,8 +127,10 @@ public class SupplierService {
 
     public SupplierDTO findById(String id) {
         Optional<Supplier> supplierOptional = supplierRepository.findById(id);
-        return supplierOptional.map(supplierMapper::toDto).orElseThrow(()
+        SupplierDTO dto = supplierOptional.map(supplierMapper::toDto).orElseThrow(()
                 -> new ResourceNotFoundException("Não encontrado nenhum Fornecedor com esse id: " + id));
+        addRatings(List.of(dto)); // F7 §5.26: cabeçalho da loja mostra a nota
+        return dto;
     }
 
     public Supplier findEntityById(String id) {

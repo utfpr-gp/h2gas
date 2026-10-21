@@ -68,6 +68,10 @@ public class Supplier extends User{
     @Column(name = "logo_url", length = 500)
     private String logoUrl;
 
+    // F7 §5.26: banner da loja no Cloudinary; nulo = a página da loja mostra o banner padrão
+    @Column(name = "banner_url", length = 500)
+    private String bannerUrl;
+
     @OneToMany(mappedBy = "supplier", cascade = CascadeType.ALL)
     private Set<CategoryProduct> categoryProducts = new HashSet<>();
 
