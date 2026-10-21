@@ -8,6 +8,7 @@ import { PaginatedResponse } from '../models/paginated-response';
 import { DashboardFilter, SupplierDashboard } from '../models/supplier-dashboard';
 import { SupplierSettings } from '../models/supplier-settings';
 import { SupplierProfile, SupplierProfileRequest } from '../models/supplier-profile';
+import { StoreReview } from '../models/store-review';
 
 @Injectable({
   providedIn: 'root'
@@ -36,6 +37,12 @@ export class SupplierService extends AbstractService<Supplier> {
 
   removeMyLogo(): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/mine/logo`);
+  }
+
+  // F7 §5.27: avaliações da loja, da entrega mais recente para a mais antiga
+  getReviews(supplierId: string, page = 0, size = 10): Observable<PaginatedResponse<StoreReview>> {
+    const params = new HttpParams().set('page', page).set('size', size);
+    return this.http.get<PaginatedResponse<StoreReview>>(`${this.baseUrl}/${supplierId}/reviews`, { params });
   }
 
   // o backend usa o fornecedor do token
@@ -70,15 +77,12 @@ export class SupplierService extends AbstractService<Supplier> {
   }
 
 
-  getAllSupplierOpenAndActive(page: number = 0, size: number = 10, cityId?: number): Observable<PaginatedResponse<Supplier>> {
-    const cityParam = cityId != null ? `&cityId=${cityId}` : '';
-    return this.http.get<PaginatedResponse<Supplier>>(
-      `${this.baseUrl}/actives/open?page=${page}&size=${size}${cityParam}`
-    );
-  }
-
-  searchSuppliers(name: string): Observable<PaginatedResponse<Supplier>> {
-    return this.http.get<PaginatedResponse<Supplier>>(`${this.baseUrl}/search?name=${name}`);
+  // RN05: sempre com a cidade do endereço ativo; q busca no nome da loja (F7 §5.21)
+  getAllSupplierOpenAndActive(page: number = 0, size: number = 10, cityId?: number, q?: string): Observable<PaginatedResponse<Supplier>> {
+    let params = new HttpParams().set('page', page).set('size', size);
+    if (cityId != null) params = params.set('cityId', cityId);
+    if (q?.trim()) params = params.set('q', q.trim());
+    return this.http.get<PaginatedResponse<Supplier>>(`${this.baseUrl}/actives/open`, { params });
   }
 
   getActiveSupplier(supplierId: string): Observable<boolean> {

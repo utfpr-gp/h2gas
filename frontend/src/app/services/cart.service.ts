@@ -59,6 +59,33 @@ export class CartService {
     this.saveToLocalStorage(this.cartProductsSubject.value.filter(item => item.id !== productId));
   }
 
+  // F7 §5.23: "Comprar agora" — um item avulso na sessão, separado do carrinho (que nunca é tocado)
+  private readonly BUY_NOW_KEY = 'buy-now-item';
+
+  startBuyNow(product: ProductItem) {
+    sessionStorage.setItem(this.BUY_NOW_KEY, JSON.stringify({ ...product, quantitySelect: 1 }));
+  }
+
+  getBuyNow(): ProductItem | null {
+    try {
+      const data = sessionStorage.getItem(this.BUY_NOW_KEY);
+      return data ? JSON.parse(data) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  updateBuyNowQuantity(quantity: number) {
+    const item = this.getBuyNow();
+    if (item) {
+      sessionStorage.setItem(this.BUY_NOW_KEY, JSON.stringify({ ...item, quantitySelect: Math.max(1, quantity) }));
+    }
+  }
+
+  clearBuyNow() {
+    sessionStorage.removeItem(this.BUY_NOW_KEY);
+  }
+
   addProduct(product: any) {
     const currentCart = this.cartProductsSubject.value;
     const existing = currentCart.find(p => p.id === product.id);

@@ -1,35 +1,29 @@
-<div class="flex justify-center mt-8 items-center space-x-2 text-sm">
-    <!-- Primeira página -->
-    <button (click)="goToPage(0)" [disabled]="!hasPrevious()"
-        class="px-3 py-1 rounded hover:bg-gray-300 disabled:bg-gray-200 disabled:cursor-not-allowed disabled:text-gray-400">
-        «
+<nav *ngIf="totalPages > 1" class="flex justify-center mt-8 items-center gap-1 text-sm" aria-label="Paginação">
+    <button type="button" (click)="goToPage(0)" [disabled]="!hasPrevious()" aria-label="Primeira página"
+        class="btn btn-sm btn-ghost btn-square rounded-lg min-h-11 min-w-11 sm:min-h-8 sm:min-w-8">
+        <span class="material-icons text-base" aria-hidden="true">first_page</span>
+    </button>
+    <button type="button" (click)="goToPage(currentPage - 1)" [disabled]="!hasPrevious()" aria-label="Página anterior"
+        class="btn btn-sm btn-ghost btn-square rounded-lg min-h-11 min-w-11 sm:min-h-8 sm:min-w-8">
+        <span class="material-icons text-base" aria-hidden="true">chevron_left</span>
     </button>
 
-    <!-- Anterior -->
-    <button (click)="goToPage(currentPage - 1)" [disabled]="!hasPrevious()"
-        class="px-3 py-1 rounded hover:bg-gray-300 disabled:bg-gray-200 disabled:cursor-not-allowed disabled:text-gray-400">
-        ‹
-    </button>
-
-    <!-- Números de página -->
     <ng-container *ngFor="let page of getPageNumbers()">
-        <span *ngIf="page === -1" class="px-2">...</span>
-        <button *ngIf="page !== -1" (click)="goToPage(page)" [disabled]="page === currentPage"
-            [class.bg-primary]="page === currentPage" [class.text-white]="page === currentPage"
-            class="px-3 py-1 rounded hover:bg-gray-300 disabled:bg-gray-200 disabled:cursor-not-allowed disabled:text-gray-400">
+        <span *ngIf="page === -1" class="px-2 text-gray-400">…</span>
+        <button *ngIf="page !== -1" type="button" (click)="goToPage(page)"
+            [attr.aria-current]="page === currentPage ? 'page' : null"
+            class="btn btn-sm btn-square rounded-lg tabular-nums min-h-11 min-w-11 sm:min-h-8 sm:min-w-8"
+            [ngClass]="page === currentPage ? 'border-primary bg-primary/10 text-primary' : 'btn-ghost text-gray-700'">
             {{ page + 1 }}
         </button>
     </ng-container>
 
-    <!-- Próximo -->
-    <button (click)="goToPage(currentPage + 1)" [disabled]="!hasNext()"
-        class="px-3 py-1 rounded hover:bg-gray-300 disabled:bg-gray-200 disabled:cursor-not-allowed disabled:text-gray-400">
-        ›
+    <button type="button" (click)="goToPage(currentPage + 1)" [disabled]="!hasNext()" aria-label="Próxima página"
+        class="btn btn-sm btn-ghost btn-square rounded-lg min-h-11 min-w-11 sm:min-h-8 sm:min-w-8">
+        <span class="material-icons text-base" aria-hidden="true">chevron_right</span>
     </button>
-
-    <!-- Última página -->
-    <button (click)="goToPage(totalPages - 1)" [disabled]="!hasNext()"
-        class="px-3 py-1 rounded hover:bg-gray-300 disabled:bg-gray-200 disabled:cursor-not-allowed disabled:text-gray-400">
-        »
+    <button type="button" (click)="goToPage(totalPages - 1)" [disabled]="!hasNext()" aria-label="Última página"
+        class="btn btn-sm btn-ghost btn-square rounded-lg min-h-11 min-w-11 sm:min-h-8 sm:min-w-8">
+        <span class="material-icons text-base" aria-hidden="true">last_page</span>
     </button>
-</div>
+</nav>

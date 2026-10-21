@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { of, Subject, throwError } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
@@ -23,6 +23,8 @@ describe('OrderResumeComponent', () => {
   let cart: any[];
   let routerSpy: jasmine.SpyObj<Router>;
   let supplierServiceSpy: jasmine.SpyObj<SupplierService>;
+  let queryModo: string | null;
+  let buyNowItem: any;
 
   const casa: Address = { id: 1, addressName: 'Casa', streetName: 'Rua Um', number: '10', cityId: 1, cityName: 'Pato Branco' };
   const trabalho: Address = { id: 2, addressName: 'Trabalho', streetName: 'Rua Dois', number: '20', cityId: 1, cityName: 'Pato Branco' };
@@ -31,7 +33,13 @@ describe('OrderResumeComponent', () => {
     localStorage.clear();
     cart = [{ id: 5, supplierId: 'sup-1', priceDelivery: 110, pricePickup: 95, quantitySelect: 1 }];
     cartServiceSpy = jasmine.createSpyObj('CartService',
-      ['getCart', 'setCart', 'getDeliveryMode', 'setDeliveryMode', 'updateQuantity', 'removeProduct']);
+      ['getCart', 'setCart', 'getDeliveryMode', 'setDeliveryMode', 'updateQuantity', 'removeProduct',
+        'getBuyNow', 'updateBuyNowQuantity', 'clearBuyNow']);
+    queryModo = null;
+    buyNowItem = null;
+    cartServiceSpy.getBuyNow.and.callFake(() => (buyNowItem ? { ...buyNowItem } : null));
+    cartServiceSpy.updateBuyNowQuantity.and.callFake((q: number) => { buyNowItem = { ...buyNowItem, quantitySelect: q }; });
+    cartServiceSpy.clearBuyNow.and.callFake(() => { buyNowItem = null; });
     cartServiceSpy.getDeliveryMode.and.returnValue('DELIVERY');
     cartServiceSpy.getCart.and.callFake(() => cart.map((item) => ({ ...item })));
     cartServiceSpy.updateQuantity.and.callFake((id: number, quantity: number) => {
@@ -67,6 +75,7 @@ describe('OrderResumeComponent', () => {
         { provide: UserService, useValue: userServiceSpy },
         { provide: OrderService, useValue: orderServiceSpy },
         { provide: Router, useValue: routerSpy },
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParamMap: { get: (k: string) => (k === 'modo' ? queryModo : null) } } } },
         { provide: SupplierService, useValue: supplierServiceSpy },
         provideNoopAnimations(),
         { provide: ToastrService, useValue: toastrSpy },
@@ -319,5 +328,80 @@ describe('OrderResumeComponent', () => {
     expect(toastrSpy.error).toHaveBeenCalledWith(jasmine.stringMatching('Estoque insuficiente para o produto: Botijão P5'));
     expect(component.isLoading).toBeFalse();
     expect(component.orderPlaced).toBeFalse();
+  });
+
+  // ---- F7 §5.23: compra direta ----
+  const abrirCompraDireta = (item: any = { id: 9, supplierId: 'sup-2', brand: 'Ultragaz', category: 'Gás 13kg', priceDelivery: 125, pricePickup: 110, quantitySelect: 1 }) => {
+    queryModo = 'compra-direta';
+    buyNowItem = item;
+    fixture = TestBed.createComponent(OrderResumeComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  };
+  const byId = (id: string) => fixture.nativeElement.querySelector(`[data-testid="${id}"]`) as HTMLElement | null;
+
+  it('deveAbrirNaEtapaDeEntregaNaCompraDireta', () => {
+    abrirCompraDireta();
+
+    expect(component.step).toBe(2);
+    expect(byId('step-address')).not.toBeNull();
+    expect(byId('buy-now-summary')!.textContent).toContain('Ultragaz');
+    expect(byId('buy-now-summary')!.textContent).toContain('Gás 13kg');
+  });
+
+  it('deveUsarSoOProdutoDaCompraDireta', () => {
+    abrirCompraDireta();
+
+    expect(component.productsCarts!.map((p) => p.id)).toEqual([9]);
+    expect(orderServiceSpy.previewOrder.calls.mostRecent().args[0].items).toEqual([{ productItemRef: 9, quantity: 1 }]);
+  });
+
+  it('deveManterOCarrinhoAoConcluirACompraDireta', () => {
+    abrirCompraDireta();
+    component.selectedAddressId = 1;
+    component.step = 3;
+    component.formOrder.patchValue({ paymentMethod: 'PIX' });
+
+    component.createOrder();
+
+    expect(orderServiceSpy.createOrder).toHaveBeenCalledTimes(1);
+    expect(orderServiceSpy.createOrder.calls.mostRecent().args[0]).toEqual(jasmine.objectContaining({
+      supplierRef: 'sup-2', items: [{ productItemRef: 9, quantity: 1 }],
+    }));
+    expect(cartServiceSpy.clearBuyNow).toHaveBeenCalled();
+    expect(cartServiceSpy.setCart).not.toHaveBeenCalled();
+    expect(cart.length).toBe(1);
+  });
+
+  it('deveIgnorarItemAvulsoSemOParametroDeCompraDireta', () => {
+    buyNowItem = { id: 9, supplierId: 'sup-2', quantitySelect: 1 };
+    queryModo = null;
+    fixture = TestBed.createComponent(OrderResumeComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+
+    expect(component.step).toBe(1);
+    expect(component.productsCarts!.map((p) => p.id)).toEqual([5]);
+    expect(cartServiceSpy.clearBuyNow).toHaveBeenCalled();
+  });
+
+  it('deveVoltarParaOInicioSemItemAvulso', () => {
+    abrirCompraDireta(null);
+
+    expect(toastrSpy.warning).toHaveBeenCalledWith('Escolha um produto para comprar agora.');
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/inicio']);
+  });
+
+  it('deveAjustarAQuantidadeNoResumoDoItem', () => {
+    abrirCompraDireta();
+    orderServiceSpy.previewOrder.calls.reset();
+
+    (byId('buy-now-increase') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(cartServiceSpy.updateBuyNowQuantity).toHaveBeenCalledWith(2);
+    expect(cartServiceSpy.updateQuantity).not.toHaveBeenCalled();
+    expect(orderServiceSpy.previewOrder.calls.mostRecent().args[0].items).toEqual([{ productItemRef: 9, quantity: 2 }]);
+    expect(byId('buy-now-quantity')!.textContent).toContain('2');
   });
 });

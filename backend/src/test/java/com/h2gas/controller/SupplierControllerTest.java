@@ -135,24 +135,24 @@ class SupplierControllerTest {
         dto.setName("Fornecedor Curitiba");
         Page<SupplierDTO> page = new PageImpl<>(List.of(dto), PageRequest.of(0, 10), 1);
 
-        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), any())).thenReturn(page);
+        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), isNull(), any())).thenReturn(page);
 
         mockMvc.perform(get("/api/suppliers/actives/open").param("cityId", "7"))
                 .andExpect(status().isOk());
 
-        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), any());
+        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), isNull(), any());
     }
 
     @Test
     void deveFuncionarSemCityIdMantendoComportamentoAtual() throws Exception {
         Page<SupplierDTO> page = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
 
-        when(supplierService.findAllSuppliersOpenAndActive(isNull(), any())).thenReturn(page);
+        when(supplierService.findAllSuppliersOpenAndActive(isNull(), isNull(), any())).thenReturn(page);
 
         mockMvc.perform(get("/api/suppliers/actives/open"))
                 .andExpect(status().isOk());
 
-        verify(supplierService).findAllSuppliersOpenAndActive(isNull(), any());
+        verify(supplierService).findAllSuppliersOpenAndActive(isNull(), isNull(), any());
     }
 
     @Test
@@ -319,4 +319,48 @@ class SupplierControllerTest {
 
         verify(supplierDashboardService, never()).buildDashboard(any(), any(), any());
     }
+
+    @Test
+    void deveRepassarABuscaComACidade() throws Exception {
+        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), eq("gás azul"), any()))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
+
+        mockMvc.perform(get("/api/suppliers/actives/open").param("cityId", "7").param("q", "gás azul"))
+                .andExpect(status().isOk());
+
+        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), eq("gás azul"), any());
+    }
+
+    @Test
+    void deveExporNotaEContagemNoCatalogo() throws Exception {
+        SupplierDTO loja = new SupplierDTO();
+        loja.setName("Gás Centro");
+        loja.setAverageRating(4.3);
+        loja.setReviewCount(14L);
+        when(supplierService.findAllSuppliersOpenAndActive(isNull(), isNull(), any()))
+                .thenReturn(new PageImpl<>(List.of(loja), PageRequest.of(0, 10), 1));
+
+        mockMvc.perform(get("/api/suppliers/actives/open"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].averageRating").value(4.3))
+                .andExpect(jsonPath("$.data[0].reviewCount").value(14));
+    }
+
+    @Test
+    void deveListarAvaliacoesPaginadas() throws Exception {
+        com.h2gas.model.dto.StoreReviewDTO review = new com.h2gas.model.dto.StoreReviewDTO(
+                1L, "Maria", 4, "Entrega rápida", java.time.LocalDateTime.of(2026, 10, 18, 14, 30));
+        when(supplierService.findReviews(eq("loja-1"), any()))
+                .thenReturn(new PageImpl<>(List.of(review), PageRequest.of(0, 5), 1));
+
+        mockMvc.perform(get("/api/suppliers/loja-1/reviews").param("page", "0").param("size", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].customerFirstName").value("Maria"))
+                .andExpect(jsonPath("$.data[0].rating").value(4))
+                .andExpect(jsonPath("$.data[0].comment").value("Entrega rápida"))
+                .andExpect(jsonPath("$.totalElements").value(1));
+
+        verify(supplierService).findReviews(eq("loja-1"), eq(PageRequest.of(0, 5)));
+    }
+
 }

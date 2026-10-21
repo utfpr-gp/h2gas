@@ -63,12 +63,14 @@ export class ProductItemService extends AbstractService<ProductItem> {
     size: number = 20,
     cityId?: number,
     category?: string,
-    sort?: string
+    sort?: string,
+    q?: string
   ): Observable<PaginatedResponse<ProductItem>> {
     let params: Record<string, string> = { page: page.toString(), size: size.toString() };
     if (cityId != null) params['cityId'] = cityId.toString();
     if (category) params['category'] = category;
     if (sort) params['sort'] = sort;
+    if (q?.trim()) params['q'] = q.trim();
 
     return this.http.get<PaginatedResponse<ProductItem>>(`${this.baseUrl}/by-supplier-open`, { params });
   }

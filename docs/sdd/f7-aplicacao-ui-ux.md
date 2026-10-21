@@ -870,9 +870,255 @@ PDF; reabrir pedido; avaliações; histórico do admin.
 relatório; comparar lojas; abrir o histórico já filtrado; biblioteca de
 gráficos (o SVG é feito à mão, como hoje).
 
+### 5.21 Cliente — Início e Produtos (`/inicio`)
+
+> Escrita em 2026-10-21. Pedido do autor: melhorar o básico para o
+> cliente final; "botões com cores muito escuras não são legais".
+> Decisões do autor: **hierarquia** (uma ação forte em azul vivo, o resto
+> leve com contorno, banners em fundo azul suave) e **busca sem botão
+> Filtrar**. Escopo desta rodada: só `/inicio` (lojas e produtos); a
+> navbar fica para depois.
+
+**Achados**
+- Tudo usa o azul-marinho da marca cheio: Filtrar, Ver Produtos/Ver
+  Fornecedores, banners em gradiente escuro, "Ver Produtos" das lojas,
+  chip ativo, Adicionar e página ativa; nenhuma ação se destaca.
+- **RN05 quebrada na busca de lojas**: `GET /suppliers/search?name=` não
+  filtra pela cidade do endereço ativo — a busca mostra lojas de outras
+  cidades.
+- Na visão Produtos a busca não faz nada (chama a busca de lojas); a
+  paginação chama a lista de lojas também na visão Produtos, e os
+  produtos carregam só 20.
+- Template com `<!DOCTYPE>`/`<html>`/`<body>` e Font Awesome.
+
+**Contrato**
+- Tema: `--color-accent` `#2772ca` (azul vivo, texto branco 4,83:1, AA)
+  e `--color-accent-content` branco, para a ação principal.
+- `GET /api/suppliers/actives/open` e `GET /api/product-items/by-supplier-open`
+  ganham `q` (loja: nome; produto: marca, categoria ou tipo), sem
+  diferenciar maiúsculas, mantendo o `cityId` (RN05); OpenAPI.
+- Tela: busca única com debounce, sem botão, na visão atual e na cidade do
+  endereço ativo, com botão de limpar; alternância Lojas/Produtos em
+  controle segmentado claro; banners em fundo azul suave com texto
+  escuro; "Ver produtos" da loja em contorno; chip de tipo ativo em fundo
+  claro com borda e texto primários; "Menor preço" como chip claro;
+  **"Adicionar" é a única ação cheia** (accent); página ativa em fundo
+  claro; paginação dos produtos e contador pelo total do backend; sem
+  wrappers de documento nem Font Awesome.
+
+**Fora de escopo (desta tela)**: navbar do cliente; carrinho, checkout,
+pedidos e endereços; produtos de uma loja (`/fornecedores/:id/produtos`);
+avaliações; banners dinâmicos.
+
+### 5.22 Cliente — barra de navegação clara
+
+> Escrita em 2026-10-21, continuação da §5.21 (pedido do autor: tirar o
+> peso do azul-marinho cheio também no topo).
+
+**Achado**: a barra é um componente só, escuro para todos os perfis, com a
+cor repetida em 36 trechos do template.
+
+**Contrato**
+- Barra do **cliente** clara: fundo branco com filete inferior, texto
+  neutro (`gray-700`), marca e link ativo em `primary` (fundo `primary/10`),
+  foco em `primary`. Fornecedor, admin e entregador **mantêm a barra
+  escura**.
+- As cores vêm de um getter por perfil (`t`), em vez de classes soltas no
+  template; o link ativo usa `[routerLinkActive]="t.active"`.
+- "Finalizar Pedido" no carrinho passa a ser a ação de destaque (`accent`),
+  como o "Adicionar".
+- Contraste ≥ 4,5:1 em links, endereço e marca; a logo continua visível.
+
+**Fora de escopo**: tema escuro; barra clara para os outros perfis; o
+painel móvel do fornecedor e do admin.
+
+### 5.23 Cliente — "Comprar agora" (direto para o checkout)
+
+> Escrita em 2026-10-21. Pedido do autor: uma função de comprar agora, que
+> vai direto para o checkout, sem passar pelo carrinho. Decisões do autor:
+> o checkout recebe **só o produto, com o carrinho intacto**; o cliente
+> cai na **etapa 2 (Entrega)**; o botão fica no **card de produto**, junto
+> do "Adicionar".
+
+**Estado atual**: o checkout (`order-resume`, `/resumo-pedido`) lê tudo do
+`CartService`; o preview (RN01), o pedido e a validação de estoque já
+trabalham por itens. **Sem mudança de backend.**
+
+**Contrato**
+- `CartService` guarda um **item avulso** em `sessionStorage`
+  (`buy-now-item`, some ao fechar a aba): `startBuyNow(produto)` (quantidade
+  1), `getBuyNow()`, `updateBuyNowQuantity(n)` e `clearBuyNow()`. O carrinho
+  (`cart-product`) nunca é lido nem alterado por esse caminho.
+- Rota `/resumo-pedido?modo=compra-direta`. Sem o parâmetro, o checkout usa
+  o carrinho e descarta qualquer item avulso velho (não sequestra um
+  checkout normal).
+- Com o parâmetro, o checkout usa **só** o item avulso para exibir,
+  ajustar a quantidade, calcular o preview e criar o pedido (um pedido de
+  uma loja); ao concluir, limpa só o item avulso — o carrinho continua como
+  estava. Abre na **etapa 2** com um cartão-resumo do item (nome,
+  quantidade com +/− e subtotal do preview) no topo das etapas 2 e 3; "Ver
+  itens" leva à etapa 1 pelo indicador de etapas. Sem item avulso (aba nova
+  ou sessão limpa), volta para `/inicio` com aviso.
+- Card de produto: "Comprar agora" em contorno, abaixo do "Adicionar", que
+  segue como a única ação cheia (accent); alvo de 44 px no celular. As duas
+  telas que usam o card (início/produtos e produtos de uma loja) iniciam a
+  compra direta e navegam.
+
+**Fora de escopo**: tela de detalhe de produto; pagamento online; comprar
+de mais de uma loja de uma vez; mudanças no backend.
+
+### 5.24 Cliente — Produtos de uma loja: fundo, tipo ativo e animações
+
+> Escrita em 2026-10-21. Pedido do autor (tela
+> `/fornecedores/:id/produtos`, ao filtrar produtos): há diferença entre os
+> dois brancos do fundo; faltam animações; o tipo selecionado poderia ter
+> outra cor. Decisões: fundo **cinza claro (`gray-50`) na tela toda** (1ª versão em
+> branco foi recusada: o autor não via mudança); tipo ativo em
+> **azul vivo cheio (accent)**, valendo também no `/inicio`, que usa o mesmo
+> componente de chips.
+
+**Estado atual**: `product-list` tem `<html>`/`<body class="bg-gray-50">`
+aninhados no template, que pintam só o container; o resto da página fica no
+branco do tema. O chip ativo é `border-primary bg-primary/10 text-primary`,
+pouco distinto do normal. O grid troca de produtos sem transição.
+
+**Contrato**
+- `product-list`: sem `<html>`/`<body>` no template nem `body {}` no CSS; o
+  host da página (`flex flex-1 flex-col bg-gray-50`) pinta o cinza do menu ao
+  rodapé e sobe `-mt-5` para cobrir a folga (`mb-5`) do menu no shell, sem
+  faixa branca no topo.
+- `CategoryChipBarComponent`: chip ativo com círculo `bg-accent border-accent
+  text-white`, rótulo `text-accent font-semibold`, leve `scale-105` e
+  `transition-all`; inativo como hoje; `aria-pressed` preservado.
+- Grid de `product-list` entra em sequência (`staggerList`, já existente) a
+  cada nova lista e fica atenuado (`opacity-60`) enquanto a busca roda, para
+  o filtro não "pular". `prefers-reduced-motion` já é tratado em `styles.css`.
+- Sem HEX novo; sem mudança de backend.
+
+**Fora de escopo**: levar a busca desta tela ao padrão do `/inicio` (sem
+botão, debounce, `q`); paginação; redesenho do card; estado vazio.
+
+### 5.25 Cliente — Média e contagem de avaliações da loja no catálogo
+
+> Escrita em 2026-10-21. Pedido do autor: gerar avaliações de lojas (feito
+> como dado de teste local); o card seguia com "Sem avaliações ainda" porque
+> o backend não agrega as notas (item da §6 desta versão). Esta seção
+> entrega só a **leitura agregada**.
+
+**Estado atual**: a tabela `reviews` (nota 1–5, `supplier_id`, `order_id`)
+existe, mas nenhuma rota a lê e `SupplierDTO` não traz nota. O card do
+catálogo (`/inicio`) mostra sempre "Sem avaliações ainda".
+
+**Contrato**
+- `SupplierDTO` ganha `averageRating` (decimal com 1 casa, ex.: `4.3`; `null`
+  sem avaliações) e `reviewCount` (inteiro, `0` sem avaliações), preenchidos
+  **só** na listagem do catálogo (`GET /suppliers/actives/open`, a mesma
+  rota paginada que já filtra por cidade, RN05, e por `q`). Demais rotas de
+  fornecedor devolvem `averageRating = null` e `reviewCount = 0`.
+- A média e a contagem vêm de **uma consulta agrupada** por loja da página
+  (`ReviewRepository`), no banco — sem N+1 e sem calcular no frontend (RN01
+  por analogia: agregação no backend).
+- OpenAPI: `@Schema` nos dois campos novos; a descrição da rota passa a
+  citar a nota.
+- Card (`supplier-card`): com avaliações, mostra estrela cheia, a média com
+  uma casa decimal e a contagem entre parênteses ("4,3 (14)"; "1 avaliação"
+  no singular); sem avaliações mantém "Sem avaliações ainda". Leitor de tela:
+  `aria-label` "Nota 4,3 de 5, 14 avaliações".
+
+**Fora de escopo**: criar/editar avaliação (rota de escrita e a regra RN04
+na API); lista de comentários; média do entregador; ordenar ou filtrar
+lojas por nota; mostrar a nota em outras telas.
+
+### 5.26 Cliente — Cabeçalho da loja com banner, nota e dados (`/fornecedores/:id/produtos`)
+
+> Escrita em 2026-10-21. Pedido do autor, com referência de app de delivery
+> (banner no topo, logo redonda, nome e nota da loja): exibir assim o nome da
+> loja e a avaliação na página de vendas do fornecedor, com banner.
+> Decisões do autor: banner **enviado pelo fornecedor, com padrão** quando não
+> houver; cabeçalho com **horário e tempo de entrega**, **aberta/fechada**,
+> **descrição com "Ver mais"** e **bairro/cidade**.
+
+**Estado atual**: `product-list` não carrega a loja; o topo é um título
+genérico ("Nossos Produtos"). A logo já tem envio (`PUT/DELETE
+/suppliers/mine/logo`, Cloudinary, até 1 MB). Não existe banner. A nota só
+vem no catálogo (§5.25). `GET /suppliers/{id}` não tem OpenAPI.
+
+**Contrato — backend**
+- Flyway `V15__supplier_banner.sql`: `suppliers.banner_url VARCHAR(500) NULL`;
+  `Supplier.bannerUrl`; `SupplierDTO.bannerUrl` e `SupplierProfileDTO.bannerUrl`
+  (`@Schema`).
+- `PUT /suppliers/mine/banner` (multipart `file`; JPG, PNG ou WEBP de até
+  2 MB) → `200 {"bannerUrl"}`; `400` arquivo inválido; `403` sem papel
+  SUPPLIER; `502` Cloudinary recusou. `DELETE /suppliers/mine/banner` →
+  `204`. A loja vem do token. A validação e o envio ao Cloudinary são os
+  mesmos da logo (extraídos num método comum, mudando só o limite e a
+  mensagem).
+- `GET /suppliers/{id}` passa a trazer `averageRating`/`reviewCount` (mesma
+  consulta agrupada da §5.25) e ganha `@Operation`/`@ApiResponses` (`200`,
+  `404`).
+
+**Contrato — frontend**
+- `product-list` carrega a loja por `SupplierService.findById` e mostra um
+  cabeçalho no lugar do título genérico:
+  - banner (`bannerUrl`, `object-cover`, ~160 px no celular e ~220 px no
+    desktop); sem banner ou com imagem quebrada, faixa padrão em gradiente
+    dos tokens do tema (`primary` → `accent`), sem HEX;
+  - logo redonda sobreposta ao banner (ou ícone de loja), nome em `h1`, nota
+    "★ 4,2 (14)" (ou "Sem avaliações ainda"), selo **Aberta**/**Fechada**
+    (`open`), "07:00 – 20:00 · 60 min", "Batel · Curitiba";
+  - descrição com 2 linhas e "Ver mais"/"Ver menos" quando passa disso
+    (mais de 120 caracteres);
+  - enquanto carrega, esqueleto do cabeçalho; erro ao carregar a loja →
+    toast com a causa e a lista de produtos segue funcionando.
+- A nota e o rótulo acessível reaproveitam a formatação do `supplier-card`
+  (extraída para um componente `app-store-rating` usado pelos dois).
+- "Minha loja" (`store-profile`) ganha a seção **Banner** (prévia larga,
+  Enviar/Trocar, Remover com confirmação), igual à da logo.
+
+**Fora de escopo**: recorte/redimensionamento da imagem; pedido mínimo,
+taxa de entrega e modo Entrega/Retirada no cabeçalho; lista de comentários;
+apagar o banner antigo no Cloudinary (mesma dívida da logo).
+
+### 5.27 Cliente — Ver as avaliações da loja ao clicar nas estrelas
+
+> Escrita em 2026-10-21. Pedido do autor: ao clicar nas estrelas, ver as
+> avaliações, com o **primeiro nome** do cliente que avaliou e o comentário,
+> quando houver.
+
+**Estado atual**: a nota (média e contagem) aparece no card do catálogo e no
+cabeçalho da loja (§5.25/§5.26), mas não é clicável e nenhuma rota lista as
+avaliações.
+
+**Contrato — backend**
+- `GET /suppliers/{id}/reviews?page&size` (autenticado, qualquer papel) →
+  `200` `PageResponse<StoreReviewDTO>`; `404` se a loja não existe. Tamanho
+  padrão 10, máximo 50 (`PaginationUtil`).
+- `StoreReviewDTO`: `id`, `customerFirstName` (só a primeira palavra do nome;
+  nunca sobrenome, e-mail ou telefone), `rating` (1–5), `comment` (`null`
+  quando vazio ou só espaços), `reviewedAt` (data de entrega do pedido
+  avaliado; `null` se o pedido não tiver).
+- Ordem: entrega mais recente primeiro (`deliveredAt` desc, depois `id`
+  desc). Consulta paginada no banco, com contagem própria.
+- OpenAPI: `@Operation`, `@ApiResponses` (200, 404), `@Parameter` e `@Schema`
+  no DTO.
+
+**Contrato — frontend**
+- `app-store-rating` com nota fica clicável (botão, `aria-label` "Ver as 14
+  avaliações da loja, nota 4,2 de 5"); sem avaliações continua texto.
+- Clicar abre a janela **Avaliações** (`app-store-reviews-dialog`), no
+  cabeçalho da loja e no card do catálogo: topo com a média e a contagem;
+  lista com primeiro nome, estrelas da nota (`aria-label` "Nota 4 de 5"), data
+  (dd/mm/aaaa) e o comentário, se houver; "Ver mais avaliações" carrega a
+  próxima página; esqueleto ao carregar; erro → mensagem com a causa e
+  "Tentar de novo". Fecha no X, no fundo e no Esc; no celular abre de baixo.
+- Clicar nas estrelas do card **não** navega para os produtos.
+
+**Fora de escopo**: escrever/editar/responder avaliação; filtrar ou ordenar
+por nota; avaliações do entregador; foto do cliente; denunciar comentário.
+
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
-- Agregação de rating médio por fornecedor (gap de backend).
+- Agregação de rating médio por fornecedor (entregue na §5.25; criar avaliação segue fora).
 - Agregação de "preço mínimo de entrega" por fornecedor.
 - Categoria resumida no card de fornecedor.
 - Mover a barra de busca para dentro da navbar global (fica no corpo de
@@ -1135,6 +1381,79 @@ gráficos (o SVG é feito à mão, como hoje).
     só os ímpares, para não sobrepor). Ajuste: o melhor dia deixou de ter
     cor própria (o laranja parecia outra série/tipo); segue no texto
     "Melhor dia" e no número em negrito.
+
+21. *(cliente, §5.21)* **Backend** — `SupplierServiceTest`:
+    `deveBuscarLojasAbertasDaCidadePeloNome`; `ProductItemServiceTest`:
+    `deveBuscarProdutosDisponiveisDaCidade`; `SupplierControllerTest` e
+    `ProductItemControllerTest`: `deveRepassarABuscaComACidade`.
+    **Frontend** — services: parâmetros `q`, `cityId` e `page`;
+    `supplier-list.component.spec.ts`: `deveBuscarLojasDaCidadeAoDigitar`,
+    `deveBuscarProdutosNaVisaoProdutos`, `deveLimparABusca`,
+    `devePaginarProdutos`, `deveAlternarEntreLojasEProdutos`;
+    `product-card.component.spec.ts`: `deveUsarAAcaoDeDestaqueNoAdicionar`;
+    `category-chip-bar.component.spec.ts`:
+    `deveDestacarOChipAtivoSemFundoEscuro`; `pagination.component.spec.ts`:
+    `deveMarcarAPaginaAtualSemFundoEscuro`.
+22. *(cliente, §5.22)* `menu.component.spec.ts`: `deveUsarBarraClaraParaCliente`,
+    `deveDestacarOLinkAtivoDoClienteEmTomClaro`,
+    `deveManterBarraEscuraParaOsOutrosPerfis`,
+    `deveUsarAAcaoDeDestaqueNoFinalizarPedido`.
+
+23. *(cliente, §5.23)* `cart.service.spec.ts`:
+    `deveGuardarOItemAvulsoSemTocarNoCarrinho`,
+    `deveAjustarAQuantidadeDoItemAvulso`, `deveLimparSoOItemAvulso`;
+    `order-resume.component.spec.ts`: `deveAbrirNaEtapaDeEntregaNaCompraDireta`,
+    `deveUsarSoOProdutoDaCompraDireta`,
+    `deveManterOCarrinhoAoConcluirACompraDireta`,
+    `deveIgnorarItemAvulsoSemOParametroDeCompraDireta`,
+    `deveVoltarParaOInicioSemItemAvulso`,
+    `deveAjustarAQuantidadeNoResumoDoItem`;
+    `product-card.component.spec.ts`: `deveEmitirCompraDiretaComQuantidadeUm`;
+    `supplier-list` e `product-list`: `deveIrParaOCheckoutNaCompraDireta`.
+
+24. *(cliente, §5.24)* `category-chip-bar.component.spec.ts`:
+    `deveDestacarOChipAtivoComAccent` (substitui
+    `deveDestacarOChipAtivoSemFundoEscuro`);
+    `product-list.component.spec.ts`: `deveUsarFundoCinzaClaroNaTelaToda`,
+    `deveAtenuarOGridEnquantoBusca`.
+
+25. *(cliente, §5.25)* **Backend** — `SupplierServiceTest`:
+    `deveTrazerMediaEContagemDeAvaliacoesNoCatalogo`,
+    `deveTrazerNulaESemContagemQuandoAindaNaoHaAvaliacao`;
+    `SupplierControllerTest`: a resposta do catálogo expõe
+    `averageRating` e `reviewCount`. **Frontend** —
+    `supplier-card.component.spec.ts`: `deveMostrarNotaEContagemDaLoja`,
+    `deveMostrarSingularComUmaAvaliacao`,
+    `deveMostrarSemAvaliacoesQuandoNaoHa`.
+
+26. *(cliente, §5.26)* **Backend** — `SupplierServiceTest`:
+    `deveSalvarOBannerEnviadoPeloFornecedor`,
+    `deveRecusarBannerDeOutroTipoOuAcimaDe2MB`, `deveRemoverOBanner`,
+    `deveTrazerNotaNaLeituraDaLoja`; `SupplierControllerTest`:
+    `deveEnviarOBannerDoFornecedorDoToken`, `deveBloquearBannerParaQuemNaoEFornecedor`.
+    **Frontend** — `supplier.service.spec.ts`: `deveEnviarOBannerComoMultipart`,
+    `deveRemoverOBanner`; `store-rating.component.spec.ts` (os 3 casos da §5.25,
+    movidos do card); `product-list.component.spec.ts`:
+    `deveMostrarOCabecalhoDaLoja`, `deveUsarOBannerPadraoSemBanner`,
+    `deveMostrarFechadaQuandoALojaNaoEstaAberta`,
+    `deveAlternarVerMaisNaDescricaoLonga`, `deveSeguirComOsProdutosSeALojaFalhar`;
+    `store-profile.component.spec.ts`: `deveEnviarBannerEscolhido`,
+    `deveRemoverBannerComConfirmacao`, `deveRecusarBannerInvalidoSemEnviar`.
+
+27. *(cliente, §5.27)* **Backend** — `SupplierServiceTest`:
+    `deveListarAvaliacoesComPrimeiroNomeEComentario`,
+    `deveOrdenarAvaliacoesPelaEntregaMaisRecente`,
+    `deveTratarComentarioEmBrancoComoNulo`,
+    `deveResponder404AoListarAvaliacoesDeLojaInexistente`;
+    `SupplierControllerTest`: `deveListarAvaliacoesPaginadas`.
+    **Frontend** — `supplier.service.spec.ts`: `deveBuscarAsAvaliacoesDaLoja`;
+    `store-rating.component.spec.ts`: `deveEmitirAoClicarNaNota`,
+    `naoDeveSerClicavelSemAvaliacoes`; `store-reviews-dialog.component.spec.ts`:
+    `deveListarNomeNotaEComentario`, `naoDeveMostrarComentarioQuandoNaoHa`,
+    `deveCarregarMaisAvaliacoes`, `deveFecharNoEsc`,
+    `deveMostrarErroComTentarDeNovo`; `product-list` e `supplier-list`:
+    `deveAbrirAvaliacoesAoClicarNasEstrelas`; `supplier-card`:
+    `naoDeveAbrirProdutosAoClicarNasEstrelas`.
 
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
@@ -1403,6 +1722,109 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > categóricas foram validadas pelo script do skill de visualização (a paleta antiga reprovava: azul-marinho fora da faixa de
 > luminosidade e par rosa/verde com ΔE 3,9 para daltônicos) e entraram como tokens `--color-chart-1..5` no tema. **Achado**: no
 > celular, rótulos longos ("Cartão de crédito") colavam nos valores — as linhas passaram a quebrar.
+
+**Cliente — Início e Produtos (§5.21):**
+- [x] Busca de lojas e de produtos no backend com a cidade do endereço
+      ativo (RN05); OpenAPI.
+- [x] Hierarquia visual: só "Adicionar" cheio (accent); demais ações
+      claras; banners suaves; busca sem botão; paginação dos produtos.
+- [x] Testes da seção 7 (item 21) verdes; `mvn test`, `ng test` (sem
+      falhas novas) e `ng build`; teste manual em 390 e 1280 px.
+
+> Verificado em 2026-10-21: backend 369 testes (único erro: `contextLoads`); frontend 456 testes com as 10 falhas antigas; `ng
+> build` sem erro; E2E em 1280 e 390 px com 17 checagens como `cliente.teste` em Curitiba (nenhum botão marinho cheio no
+> conteúdo, "Adicionar" em `rgb(42,120,214)`, lojas da cidade, busca "centro" sem botão só na cidade, limpar, 14 produtos pelo
+> total do backend, paginação 12 + 2, busca "minalba" na visão Produtos, sem rolagem lateral nem erro de JS).
+>
+> **Auditoria com a skill Impeccable (2026-10-21, 13/20)** e correções: (1) o `accent` `#2a78d6` dava 4,42:1 com texto branco
+> (a conta anterior de ≈4,6:1 estava errada) — virou `#2772ca`, 4,83:1; (2) "Sem avaliações ainda" em `gray-400` (2,6:1) passou
+> para `gray-600`; (3) o banner prometia "Até 15% OFF" sem promoção real — o texto virou "Botijões de vários tamanhos, com
+> entrega ou retirada"; (4) alvos de toque de 44 px no celular (alternância, busca, "Menor preço", "Adicionar", "Ver produtos" e
+> paginação), mantendo 32 px no desktop; (5) imagem do produto com `loading="lazy"` e tamanho reservado; (6) `h2` "Produtos
+> disponíveis" (oculto) para não pular de `h1` para `h3`. Os 2 avisos de imagem quebrada do detector estático são falsos
+> positivos (`src` ligado por Angular). Navegação por teclado não foi verificada. Spec: `deveManterAHierarquiaDeTitulosNaVisaoProdutos`,
+> `deveUsarTextoVerdadeiroNosBanners`, `deveTerAlvosDeToqueDe44px…`, `deveCarregarAImagemSobDemandaComTamanhoReservado`.
+>
+> **Achados**: (1) a busca antiga de lojas (`/suppliers/search`) ignorava a cidade (RN05) — o frontend passou a usar
+> `/actives/open?q=` e o `searchSuppliers` saiu; (2) a visão Produtos não buscava nem paginava — agora busca pelo backend e pagina
+> de 12 em 12. A rota `/suppliers/search` continua no backend, mas sem uso no frontend (candidata a sair).
+
+**Cliente — barra de navegação (§5.22):**
+- [x] Barra clara para o cliente (contraste ≥ 4,5:1, logo visível), barra
+      escura mantida nos outros perfis; "Finalizar Pedido" em destaque.
+- [x] Testes (item 22) verdes; `ng test` com as 10 falhas antigas; `ng
+      build`; E2E em 1280 e 390 px: 16 checagens (barra branca, contrastes
+      medidos no navegador, logo, dropdown, carrinho, fornecedor ainda
+      escuro, sem erro de JS).
+
+**Cliente — Comprar agora (§5.23):**
+- [x] Item avulso separado do carrinho; checkout com `modo=compra-direta`
+      usa só o produto e deixa o carrinho intacto; abre na etapa Entrega.
+- [x] Botão "Comprar agora" no card, nas duas telas; testes (item 23)
+      verdes; `ng test` (sem falhas novas) e `ng build`; E2E em 390 e
+      1280 px, conferindo o pedido no banco.
+
+> **Verificação (2026-10-21)**: `ng test` 469 testes, só as 10 falhas antigas de providers; `ng build` ok. E2E com
+> `cliente.teste@h2gas.local` (carrinho com 2 itens): "Comprar agora" abriu o checkout na etapa Entrega só com o produto;
+> +/− atualizou o preview; concluir criou **um** pedido (`PENDING`, R$ 28,00 = 2 × R$ 14,00, só o produto escolhido) e o carrinho
+> seguiu com os 2 itens, sem item avulso na sessão. Sem item avulso, `?modo=compra-direta` volta a `/inicio`; o checkout sem o
+> parâmetro usa o carrinho. Conferido em 1280 e 390 px (o fluxo completo até o pedido foi feito em 1280 px; em 390 px,
+> até a etapa Entrega). Pedido de teste removido e estoque devolvido.
+
+**Cliente — Produtos de uma loja (§5.24):**
+- [x] Fundo cinza claro contínuo do menu ao rodapé; chip ativo em accent; grid com entrada em
+      sequência e atenuado durante a busca; testes (item 24) verdes;
+      `ng test` (sem falhas novas) e `ng build`; E2E em 390 e 1280 px.
+
+> **Verificação (2026-10-21)**: `ng test` 472 testes, só as 10 falhas antigas de providers; `ng build` ok. E2E com
+> `cliente.teste@h2gas.local` em 1280 e 390 px: host da página `gray-50` colado ao menu (sem faixa branca) (sem `<body>` aninhado); chip "Água" ativo com `rgb(39,114,202)` e texto branco; lista entra em sequência ao trocar o tipo.
+> **Achado**: o ajuste de contraste do accent (`#2772ca`, 4,83:1) da auditoria nunca tinha sido commitado — o token
+> seguia `#2a78d6` (4,42:1, abaixo do AA); corrigido em commit à parte, e o texto da §5.21 foi acertado.
+
+**Cliente — Avaliações da loja no catálogo (§5.25):**
+- [x] `averageRating`/`reviewCount` no catálogo por consulta agrupada,
+      documentados no OpenAPI; card com nota e contagem; testes (item 25)
+      verdes; `mvn test` e `ng test` (sem falhas novas); conferido no
+      navegador com as avaliações geradas.
+
+> **Verificação (2026-10-21)**: `mvn test` 372 testes, só o `contextLoads` antigo (precisa de MySQL local);
+> `ng test` 475, só as 10 falhas antigas de providers; `ng build` ok. No navegador (`/inicio`, 1280 e 390 px), com as
+> avaliações geradas no banco local: Gás Centro "4,2 (14)", Água Pura "4,3 (6)", Fornecedor Teste HU02 "Sem avaliações
+> ainda". As 6 avaliações da Água Pura estão em pedidos `DELIVERED` de teste (observação `seed-avaliacoes`), só no
+> banco local.
+
+**Cliente — Cabeçalho da loja (§5.26):**
+- [x] V15 + envio/remoção do banner (OpenAPI) e nota no `GET /suppliers/{id}`;
+      cabeçalho com banner (ou padrão), logo, nome, nota, aberta/fechada,
+      horário, bairro e descrição com "Ver mais"; seção Banner em "Minha loja";
+      testes (item 26) verdes; `mvn test`, `ng test` (sem falhas novas) e
+      `ng build`; E2E em 390 e 1280 px, com e sem banner, envio real ao
+      Cloudinary.
+
+> **Verificação (2026-10-21)**: `mvn test` 379 testes, só o `contextLoads` antigo; `ng test` 486, só as 10 falhas
+> antigas de providers; `ng build` ok; V15 aplicada no MySQL do Docker. E2E (front 4400, backend 8090) em 1280 e 390 px:
+> Gás Centro sem banner mostra o gradiente padrão; o fornecedor enviou um banner real pelo "Minha loja" (Cloudinary) e o
+> cliente passou a vê-lo; cabeçalho com "4,2 (14)", "Aberta", "07:00 – 20:00 · 60 min", "Centro · Curitiba" e a
+> descrição. Pela API: banner de 2,5 MB → 400 com a mensagem do banner; banner de 1,5 MB passa do limite multipart e
+> é validado no service; logo de 1,5 MB segue 400 (1 MB).
+> **Achados**: (1) o limite multipart do Spring era 1 MB e barraria o banner antes do service — subiu para 2 MB
+> (arquivo) / 3 MB (requisição), e o handler escolhe a mensagem pela rota; (2) o CSS do Material Icons fica fora das
+> camadas do Tailwind 4 e vence `text-*xl` — os ícones novos usam o modificador `!` (o `text-3xl` do ícone do
+> `supplier-card` tem o mesmo problema, fora desta seção); (3) o banner fica `relative` e cobria a logo — a logo
+> ganhou `relative z-10`.
+
+**Cliente — Avaliações da loja (§5.27):**
+- [x] `GET /suppliers/{id}/reviews` paginado com primeiro nome, nota,
+      comentário e data (OpenAPI); estrelas clicáveis no cabeçalho e no card
+      abrindo a janela de avaliações com "Ver mais"; testes (item 27) verdes;
+      `mvn test`, `ng test` (sem falhas novas), `ng build`; E2E em 390 e
+      1280 px com as avaliações geradas.
+
+> **Verificação (2026-10-21)**: `mvn test` 384 testes, só o `contextLoads` antigo; `ng test` 497, só as 10 falhas
+> antigas de providers; `ng build` ok. E2E em 1280 e 390 px: estrelas do card da Gás Centro no `/inicio` abriram a
+> janela sem sair da página; 10 avaliações, "Ver mais" levou a 14 e sumiu; Esc fechou; estrelas do cabeçalho da Água
+> Pura abriram as 6 avaliações com comentário. Todas mostram "Cliente" porque as avaliações geradas são do usuário
+> de teste "Cliente Teste E2E" (dado, não defeito).
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).

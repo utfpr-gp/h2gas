@@ -7,6 +7,7 @@ describe('CartService', () => {
 
   beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
     TestBed.configureTestingModule({});
     service = TestBed.inject(CartService);
   });
@@ -42,5 +43,45 @@ describe('CartService', () => {
 
     expect(service.getCart().map((p) => p.id)).toEqual([7]);
     expect(JSON.parse(localStorage.getItem('cart-product')!).map((p: any) => p.id)).toEqual([7]);
+  });
+
+  // ---- F7 §5.23: compra direta ----
+  it('deveGuardarOItemAvulsoSemTocarNoCarrinho', () => {
+    service.setCart([{ id: 1, quantitySelect: 2 }, { id: 2, quantitySelect: 1 }]);
+
+    service.startBuyNow({ id: 9, brand: 'Ultragaz', supplierId: 's1', quantitySelect: 5 } as any);
+
+    expect(service.getBuyNow()).toEqual(jasmine.objectContaining({ id: 9, quantitySelect: 1 }));
+    expect(service.getCart().map((p) => p.id)).toEqual([1, 2]);
+    expect(JSON.parse(localStorage.getItem('cart-product')!).length).toBe(2);
+    expect(JSON.parse(sessionStorage.getItem('buy-now-item')!).id).toBe(9);
+  });
+
+  it('deveAjustarAQuantidadeDoItemAvulso', () => {
+    service.startBuyNow({ id: 9, brand: 'Ultragaz' } as any);
+
+    service.updateBuyNowQuantity(3);
+    expect(service.getBuyNow()!.quantitySelect).toBe(3);
+    service.updateBuyNowQuantity(0);
+    expect(service.getBuyNow()!.quantitySelect).toBe(1);
+  });
+
+  it('deveLimparSoOItemAvulso', () => {
+    service.setCart([{ id: 1, quantitySelect: 2 }]);
+    service.startBuyNow({ id: 9 } as any);
+
+    service.clearBuyNow();
+
+    expect(service.getBuyNow()).toBeNull();
+    expect(sessionStorage.getItem('buy-now-item')).toBeNull();
+    expect(service.getCart().length).toBe(1);
+  });
+
+  it('deveLerOItemAvulsoDaSessaoAoRecarregar', () => {
+    sessionStorage.setItem('buy-now-item', JSON.stringify({ id: 9, quantitySelect: 2 }));
+
+    expect(service.getBuyNow()).toEqual(jasmine.objectContaining({ id: 9, quantitySelect: 2 }));
+    sessionStorage.setItem('buy-now-item', '{quebrado');
+    expect(service.getBuyNow()).toBeNull();
   });
 });

@@ -59,4 +59,42 @@ describe('ProductCardComponent', () => {
     expect(entrega.textContent).toMatch(/110[.,]00/);
     expect(retirada.textContent).toMatch(/95[.,]00/);
   });
+
+  it('deveUsarAAcaoDeDestaqueNoAdicionar', () => {
+    component.product = { id: 1, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as any;
+    fixture.detectChanges();
+
+    const botao = fixture.nativeElement.querySelector('[data-testid="add-to-cart"]') as HTMLButtonElement;
+    expect(botao.classList).toContain('btn-accent');
+    expect(botao.classList).not.toContain('bg-primary');
+  });
+
+  it('deveCarregarAImagemSobDemandaComTamanhoReservado', () => {
+    component.product = { id: 1, brand: 'Ultragaz', imageUrl: 'x.jpg', priceDelivery: 120, pricePickup: 100 } as any;
+    fixture.detectChanges();
+
+    const img = fixture.nativeElement.querySelector('img') as HTMLImageElement;
+    expect(img.getAttribute('loading')).toBe('lazy');
+    expect(img.getAttribute('width')).toBeTruthy();
+    expect(img.getAttribute('height')).toBeTruthy();
+  });
+
+  it('deveTerAlvoDeToque44pxNoCelular', () => {
+    component.product = { id: 1, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as any;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="add-to-cart"]').classList).toContain('min-h-11');
+  });
+
+  it('deveEmitirCompraDiretaComQuantidadeUm', () => {
+    component.product = { id: 10, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as ProductItem;
+    fixture.detectChanges();
+    spyOn(component.buyNow, 'emit');
+    spyOn(component.addToCart, 'emit');
+
+    (fixture.nativeElement.querySelector('[data-testid="buy-now"]') as HTMLButtonElement).click();
+
+    expect(component.buyNow.emit).toHaveBeenCalledWith(jasmine.objectContaining({ id: 10, quantitySelect: 1 }));
+    expect(component.addToCart.emit).not.toHaveBeenCalled();
+  });
 });

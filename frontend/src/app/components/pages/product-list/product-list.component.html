@@ -1,50 +1,106 @@
-<!DOCTYPE html>
-<html lang="pt-br">
+<div class="container w-full mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-20 md:pb-12">
+    <!-- F7 §5.26: cabeçalho da loja -->
+    <div *ngIf="storeLoading" data-testid="store-header-loading" class="rounded-xl overflow-hidden border border-gray-200 bg-white mb-6" aria-hidden="true">
+        <div class="skeleton h-40 md:h-56 w-full rounded-none"></div>
+        <div class="p-4 md:p-6 space-y-2">
+            <div class="skeleton h-7 w-2/3 md:w-1/3"></div>
+            <div class="skeleton h-4 w-1/2 md:w-1/4"></div>
+        </div>
+    </div>
 
-<body class="bg-gray-50">
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 pb-20 md:pb-12">
-        <header class="text-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800 animate-fade-in-down">Nossos Produtos</h1>
-            <p class="mt-2 text-lg text-gray-600 max-w-3xl mx-auto animate-fade-in-up">Encontre os melhores produtos
-                de gás e água com a melhor qualidade e preços competitivos do mercado.</p>
-        </header>
+    <section *ngIf="store" data-testid="store-header" @fadeIn
+        class="rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm mb-6" aria-labelledby="store-name">
+        <div class="relative h-40 md:h-56">
+            <img *ngIf="store.bannerUrl && !bannerBroken; else bannerPadrao" data-testid="store-banner-image" [src]="store.bannerUrl"
+                alt="" class="w-full h-full object-cover" (error)="bannerBroken = true" />
+            <ng-template #bannerPadrao>
+                <div data-testid="store-banner-default" class="w-full h-full bg-linear-to-br from-primary to-accent flex items-center justify-end pr-6 md:pr-12">
+                    <span class="material-icons text-white/15 text-8xl! md:text-9xl!" aria-hidden="true">storefront</span>
+                </div>
+            </ng-template>
+        </div>
 
-        <!-- Busca -->
-        <div class="mb-6">
-            <div class="relative">
-                <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
-                <input
-                  class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-full bg-white focus:ring-primary focus:border-primary"
-                  placeholder="Filtre por marca do produto"
-                  type="text"
-                  [(ngModel)]="searchTerm"
-                  (keyup.enter)="getProducts(idSupplier!)"
-                />
+        <div class="px-4 md:px-6 pb-4 md:pb-5">
+            <div class="relative z-10 flex items-end gap-3 md:gap-4 -mt-10 md:-mt-12">
+                <div class="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden ring-4 ring-white bg-white shadow-md flex items-center justify-center shrink-0">
+                    <img *ngIf="store.logoUrl && !logoBroken; else iconeLoja" data-testid="store-logo" [src]="store.logoUrl"
+                        [alt]="'Logo de ' + store.name" class="w-full h-full object-cover" (error)="logoBroken = true" />
+                    <ng-template #iconeLoja>
+                        <span class="material-icons text-primary text-4xl!" aria-hidden="true">storefront</span>
+                    </ng-template>
+                </div>
+            </div>
+
+            <div class="mt-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+                <h1 id="store-name" class="text-2xl md:text-3xl font-bold text-gray-800 text-balance">{{ store.name }}</h1>
+                <app-store-rating size="sm" [average]="store.averageRating" [count]="store.reviewCount" [clickable]="true"
+                    (openReviews)="reviewsOpen = true" class="mt-1 md:mt-2"></app-store-rating>
+            </div>
+
+            <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-gray-600">
+                <span data-testid="store-status" class="badge badge-sm badge-soft font-semibold"
+                    [ngClass]="store.open ? 'badge-success' : 'badge-neutral'">{{ store.open ? 'Aberta' : 'Fechada' }}</span>
+                <span *ngIf="store.openingTime && store.closingTime" data-testid="store-hours" class="flex items-center gap-1">
+                    <span class="material-icons text-base text-gray-400" aria-hidden="true">schedule</span>
+                    {{ store.openingTime }} – {{ store.closingTime }}<ng-container *ngIf="store.averageDeliveryTime"> · {{ store.averageDeliveryTime }} min</ng-container>
+                </span>
+                <span *ngIf="storeLocation" data-testid="store-location" class="flex items-center gap-1">
+                    <span class="material-icons text-base text-gray-400" aria-hidden="true">location_on</span>
+                    {{ storeLocation }}
+                </span>
+            </div>
+
+            <div *ngIf="store.description" class="mt-3 max-w-3xl">
+                <p id="store-description" data-testid="store-description" class="text-sm text-gray-600 leading-relaxed"
+                    [class.line-clamp-2]="hasLongDescription && !descriptionExpanded">{{ store.description }}</p>
+                <button *ngIf="hasLongDescription" type="button" data-testid="toggle-description"
+                    class="mt-1 text-sm font-semibold text-accent hover:underline min-h-11 sm:min-h-0"
+                    aria-controls="store-description" [attr.aria-expanded]="descriptionExpanded"
+                    (click)="descriptionExpanded = !descriptionExpanded">
+                    {{ descriptionExpanded ? 'Ver menos' : 'Ver mais' }}
+                </button>
             </div>
         </div>
+    </section>
 
-        <!-- Chips de categoria -->
-        <app-category-chip-bar
-            [categories]="categories"
-            [selected]="selectedCategory"
-            (categorySelected)="onCategorySelected($event)">
-        </app-category-chip-bar>
-
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-            <app-product-card
-                *ngFor="let product of products"
-                [product]="product"
-                (addToCart)="addToCart($event)">
-            </app-product-card>
+    <!-- Busca -->
+    <div class="mb-6">
+        <div class="relative">
+            <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+            <input
+              class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-full bg-white focus:ring-primary focus:border-primary"
+              placeholder="Filtre por marca do produto"
+              type="text"
+              [(ngModel)]="searchTerm"
+              (keyup.enter)="getProducts(idSupplier!)"
+            />
         </div>
-
-        <!-- Paginação -->
-        <app-pagination
-        [currentPage]="currentPageProducts"
-        [totalPages]="totalPagesProducts"
-        (pageChange)="getProducts(idSupplier!, $event)">
-        </app-pagination>
     </div>
-</body>
 
-</html>
+    <!-- Chips de categoria -->
+    <app-category-chip-bar
+        [categories]="categories"
+        [selected]="selectedCategory"
+        (categorySelected)="onCategorySelected($event)">
+    </app-category-chip-bar>
+
+    <div data-testid="product-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6 transition-opacity duration-200"
+        [class.opacity-60]="loading" [@staggerList]="listVersion">
+        <app-product-card
+            *ngFor="let product of products"
+            [product]="product"
+            (addToCart)="addToCart($event)"
+            (buyNow)="buyNow($event)">
+        </app-product-card>
+    </div>
+
+    <!-- Paginação -->
+    <app-pagination
+    [currentPage]="currentPageProducts"
+    [totalPages]="totalPagesProducts"
+    (pageChange)="getProducts(idSupplier!, $event)">
+    </app-pagination>
+</div>
+
+<app-store-reviews-dialog *ngIf="reviewsOpen && store" [supplierId]="store.id!" [storeName]="store.name"
+    [average]="store.averageRating" [count]="store.reviewCount" (closed)="reviewsOpen = false"></app-store-reviews-dialog>

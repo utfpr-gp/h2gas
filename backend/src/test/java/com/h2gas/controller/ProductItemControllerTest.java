@@ -33,6 +33,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -85,7 +86,7 @@ class ProductItemControllerTest {
         dto.setBrand("Botijão Curitiba");
         Page<ProductItemDTO> page = new PageImpl<>(List.of(dto), PageRequest.of(0, 10), 1);
 
-        when(productItemService.findBySupplierActiveAndSupplierOpen(eq(7L), eq("Gás"), any()))
+        when(productItemService.findBySupplierActiveAndSupplierOpen(eq(7L), eq("Gás"), isNull(), any()))
                 .thenReturn(page);
 
         mockMvc.perform(get("/api/product-items/by-supplier-open")
@@ -94,7 +95,7 @@ class ProductItemControllerTest {
                         .param("sort", "priceDelivery,asc"))
                 .andExpect(status().isOk());
 
-        verify(productItemService).findBySupplierActiveAndSupplierOpen(eq(7L), eq("Gás"), any());
+        verify(productItemService).findBySupplierActiveAndSupplierOpen(eq(7L), eq("Gás"), isNull(), any());
     }
 
     private void autenticarComo(String papel) {
@@ -238,5 +239,17 @@ class ProductItemControllerTest {
         mockMvc.perform(delete("/api/product-items/9")).andExpect(status().isOk());
 
         verify(productItemService).deleteProductItem(eq(9L), org.mockito.ArgumentMatchers.argThat(u -> "forn-1".equals(u.getId())));
+    }
+
+    @Test
+    void deveRepassarABuscaComACidade() throws Exception {
+        autenticarComo("CUSTOMER");
+        when(productItemService.findBySupplierActiveAndSupplierOpen(eq(7L), isNull(), eq("minalba"), any()))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
+
+        mockMvc.perform(get("/api/product-items/by-supplier-open").param("cityId", "7").param("q", "minalba"))
+                .andExpect(status().isOk());
+
+        verify(productItemService).findBySupplierActiveAndSupplierOpen(eq(7L), isNull(), eq("minalba"), any());
     }
 }

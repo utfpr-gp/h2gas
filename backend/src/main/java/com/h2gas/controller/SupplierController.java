@@ -120,7 +120,8 @@ public class SupplierController {
     }
 
     @Operation(summary = "Lista fornecedores ativos e abertos",
-            description = "Retorna fornecedores ativos e abertos, opcionalmente filtrados por cidade do endereço ativo do cliente (RN05)")
+            description = "Retorna fornecedores ativos e abertos, ordenados por nome, opcionalmente filtrados por cidade do endereço ativo "
+                    + "do cliente (RN05) e pela busca q no nome da loja. Cada loja traz averageRating (média, 1 casa; nula sem avaliações) e reviewCount")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista paginada de fornecedores ativos e abertos")
     })
@@ -129,10 +130,11 @@ public class SupplierController {
     public ResponseEntity<PageResponse<SupplierDTO>> getAllSuppliersOpenAndActive(
             @Parameter(description = "Número da página (0-based)") @RequestParam(value = "page", required = false) Integer page,
             @Parameter(description = "Tamanho da página") @RequestParam(value = "size", required = false) Integer size,
-            @Parameter(description = "Filtra por cidade do endereço ativo do cliente (RN05)") @RequestParam(value = "cityId", required = false) Long cityId
+            @Parameter(description = "Filtra por cidade do endereço ativo do cliente (RN05)") @RequestParam(value = "cityId", required = false) Long cityId,
+            @Parameter(description = "Trecho do nome da loja", example = "gás") @RequestParam(value = "q", required = false) String q
     ) {
         Pageable pageable = PaginationUtil.getPageableRequest(page, size);
-        Page<SupplierDTO> result = supplierService.findAllSuppliersOpenAndActive(cityId, pageable);
+        Page<SupplierDTO> result = supplierService.findAllSuppliersOpenAndActive(cityId, q, pageable);
         PageResponse<SupplierDTO> response = new PageResponse<>(result);
 
         return ResponseEntity.ok(response);
@@ -228,9 +230,33 @@ public class SupplierController {
         return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
 
+    @Operation(summary = "Lista as avaliações de uma loja",
+            description = "Avaliações da loja, da entrega mais recente para a mais antiga, com o primeiro nome do cliente, a nota (1 a 5), "
+                    + "o comentário (nulo quando não há) e a data da entrega avaliada. Aberta a qualquer usuário autenticado")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Página de avaliações"),
+            @ApiResponse(responseCode = "404", description = "Loja não encontrada")
+    })
+    @GetMapping("/{id}/reviews")
+    @ResponseBody
+    public ResponseEntity<PageResponse<StoreReviewDTO>> getStoreReviews(
+            @Parameter(description = "Id da loja (fornecedor)") @PathVariable String id,
+            @Parameter(description = "Número da página (0-based)") @RequestParam(value = "page", required = false) Integer page,
+            @Parameter(description = "Tamanho da página (padrão 10, máximo 50)") @RequestParam(value = "size", required = false) Integer size) {
+        Pageable pageable = PaginationUtil.getPageableRequest(page, size);
+        return ResponseEntity.ok(new PageResponse<>(supplierService.findReviews(id, pageable)));
+    }
+
+    @Operation(summary = "Lê uma loja pelo id",
+            description = "Dados públicos da loja para o cabeçalho da página de produtos: nome, logo, banner, horário, tempo médio, "
+                    + "aberta/fechada, bairro/cidade, descrição e a nota (averageRating, 1 casa; nula sem avaliações) com reviewCount")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Dados da loja"),
+            @ApiResponse(responseCode = "404", description = "Loja não encontrada")
+    })
     @GetMapping("/{id}")
     @ResponseBody
-    public ResponseEntity<SupplierDTO> getAddressById(@PathVariable String id) {
+    public ResponseEntity<SupplierDTO> getAddressById(@Parameter(description = "Id da loja (fornecedor)") @PathVariable String id) {
         SupplierDTO supplierDTO = supplierService.findById(id);
         return ResponseEntity.ok(supplierDTO);
     }
