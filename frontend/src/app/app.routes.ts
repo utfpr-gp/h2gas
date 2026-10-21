@@ -9,6 +9,7 @@ import { activeDeliveryGuard } from './guards/active-delivery.guard';
 import { addressDefinedGuard } from './guards/address-defined.guard';
 import { FirstAccessAddressComponent } from './components/pages/first-access-address/first-access-address.component';
 import { SupplierApprovalComponent } from './components/pages/supplier-approval/supplier-approval.component';
+import { AdminDashboardComponent } from './components/pages/admin-dashboard/admin-dashboard.component';
 import { DistribuitorFormComponent } from './components/pages/distribuitor-form/distribuitor-form.component';
 import { CategoryProductsComponent } from './components/pages/category-products/category-products.component';
 import { ProductItemComponent } from './components/pages/product-item/product-item.component';
@@ -83,6 +84,12 @@ export const routes: Routes = [
         component: ProductItemFormComponent,
         canActivate: [authGuard],
         data: {roles: ['ADMIN', 'SUPPLIER']}
+    },
+    {
+        path: 'admin',
+        component: AdminDashboardComponent,
+        canActivate: [authGuard],
+        data: {roles: ['ADMIN']}
     },
     {
         path: 'register-city', 
