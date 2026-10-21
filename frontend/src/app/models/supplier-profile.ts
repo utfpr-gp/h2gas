@@ -1,6 +1,7 @@
 // F7 fatia 6: GET/PUT /suppliers/mine/profile (dados da loja do fornecedor logado)
 export interface SupplierProfile {
   name: string;
+  email?: string;
   phone: string;
   description?: string;
   cnpj?: string;

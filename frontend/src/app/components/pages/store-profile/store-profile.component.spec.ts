@@ -17,9 +17,10 @@ describe('StoreProfileComponent', () => {
   let supplierSpy: jasmine.SpyObj<SupplierService>;
   let addressSpy: jasmine.SpyObj<AddressService>;
   let toastrSpy: jasmine.SpyObj<ToastrService>;
+  let userSpy: jasmine.SpyObj<UserService>;
 
   const perfil: SupplierProfile = {
-    name: 'Gás Centro Curitiba', phone: '41991110000', description: 'Desde 1990', cnpj: '12345678000101', logoUrl: null,
+    name: 'Gás Centro Curitiba', email: 'gascentro@h2gas.local', phone: '41991110000', description: 'Desde 1990', cnpj: '12345678000101', logoUrl: null,
     addressId: 3, addressStreetName: 'Rua XV de Novembro', addressNumber: '700', addressNeighborhood: 'Centro',
     cityName: 'Curitiba', cityState: 'PR',
   };
@@ -50,8 +51,8 @@ describe('StoreProfileComponent', () => {
     addressSpy.findByUserId.and.returnValue(of({ id: 3, zipCode: '80020000', complement: 'Loja 2' }));
     const citySpy = jasmine.createSpyObj('CityService', ['findAll']);
     citySpy.findAll.and.returnValue(of([{ id: 1, name: 'Curitiba', state: 'PR', ibgeCode: 4106902 }]));
-    const userSpy = jasmine.createSpyObj('UserService', ['getUserLocalStorage']);
-    userSpy.getUserLocalStorage.and.returnValue({ id: 'forn-1', supplierId: 'forn-1', userType: 'SUPPLIER' });
+    userSpy = jasmine.createSpyObj('UserService', ['getUserLocalStorage', 'setCurrentUser']);
+    userSpy.getUserLocalStorage.and.returnValue({ id: 'forn-1', name: 'Gás Centro Curitiba', email: 'gascentro@h2gas.local', supplierId: 'forn-1', userType: 'SUPPLIER' });
     toastrSpy = jasmine.createSpyObj('ToastrService', ['success', 'error', 'warning']);
 
     await TestBed.configureTestingModule({
@@ -164,5 +165,24 @@ describe('StoreProfileComponent', () => {
 
     expect(byId('logo-image')).toBeNull();
     expect(byId('logo-initials')?.textContent).toContain('GC');
+  });
+
+  it('deveMostrarEmailSomenteLeitura', async () => {
+    await setup();
+
+    expect(fixture.nativeElement.querySelector('h1')?.textContent).toContain('Minha loja');
+    expect(byId('store-email')?.textContent).toContain('gascentro@h2gas.local');
+    expect(byId('store-email')?.tagName).not.toBe('INPUT');
+    expect(fixture.nativeElement.textContent).toContain('Para trocar o e-mail, fale com o suporte.');
+  });
+
+  it('deveAtualizarOMenuAoSalvarONome', async () => {
+    await setup();
+    preencher('store-name', 'Gás Centro');
+
+    salvar().click();
+    fixture.detectChanges();
+
+    expect(userSpy.setCurrentUser).toHaveBeenCalledWith(jasmine.objectContaining({ id: 'forn-1', name: 'Gás Centro', phoneNumber: '41991110000' }));
   });
 });

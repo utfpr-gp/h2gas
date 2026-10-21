@@ -1,7 +1,7 @@
 <div class="max-w-3xl w-full mx-auto px-4 md:px-8 pt-6 pb-24 md:pb-10">
     <header class="mb-5">
-        <h1 class="text-2xl font-bold text-gray-800">Dados da loja</h1>
-        <p class="text-sm text-gray-500">Como a sua loja aparece para os clientes no catálogo.</p>
+        <h1 class="text-2xl font-bold text-gray-800">Minha loja</h1>
+        <p class="text-sm text-gray-500">Seus dados e como a loja aparece para os clientes.</p>
     </header>
 
     <div *ngIf="loading" class="space-y-3" aria-busy="true">
@@ -60,6 +60,12 @@
                     class="input input-bordered rounded-xl w-full" [class.input-error]="invalid('name')" />
                 <span *ngIf="invalid('name')" data-testid="error-name" class="text-xs text-error mt-1">Informe o nome da loja.</span>
             </label>
+
+            <div class="form-control w-full">
+                <span class="label-text text-sm text-gray-700">E-mail</span>
+                <p data-testid="store-email" class="input input-bordered rounded-xl w-full bg-base-200 flex items-center text-gray-600 break-all">{{ profile.email }}</p>
+                <span class="text-xs text-gray-500 mt-1">Para trocar o e-mail, fale com o suporte.</span>
+            </div>
 
             <div class="grid sm:grid-cols-2 gap-3">
                 <label class="form-control w-full" for="store-phone">

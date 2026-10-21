@@ -17,7 +17,7 @@ import { fadeIn } from '../../../animations/checkout.animations';
 
 const LOGO_ERROR = 'Envie uma imagem JPG, PNG ou WEBP de até 1 MB.';
 
-// F7 fatia 6: dados da loja do fornecedor logado (logo, nome, telefone, descrição e endereço)
+// F7 fatia 6: "Minha loja", a tela única do fornecedor (conta e loja são o mesmo cadastro)
 @Component({
   selector: 'app-store-profile',
   standalone: true,
@@ -153,6 +153,9 @@ export class StoreProfileComponent implements OnInit, OnDestroy {
       next: (profile) => {
         this.saving = false;
         this.applyProfile({ ...this.profile, ...profile });
+        // nome e telefone da loja são os da conta (Supplier herda de User): o menu acompanha
+        const user = this.userService.getUserLocalStorage();
+        if (user) this.userService.setCurrentUser({ ...user, name: profile.name, phoneNumber: profile.phone });
         this.toastr.success('Dados da loja salvos.');
       },
       error: (err) => {
