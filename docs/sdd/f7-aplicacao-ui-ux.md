@@ -932,6 +932,41 @@ cor repetida em 36 trechos do template.
 **Fora de escopo**: tema escuro; barra clara para os outros perfis; o
 painel móvel do fornecedor e do admin.
 
+### 5.23 Cliente — "Comprar agora" (direto para o checkout)
+
+> Escrita em 2026-10-21. Pedido do autor: uma função de comprar agora, que
+> vai direto para o checkout, sem passar pelo carrinho. Decisões do autor:
+> o checkout recebe **só o produto, com o carrinho intacto**; o cliente
+> cai na **etapa 2 (Entrega)**; o botão fica no **card de produto**, junto
+> do "Adicionar".
+
+**Estado atual**: o checkout (`order-resume`, `/resumo-pedido`) lê tudo do
+`CartService`; o preview (RN01), o pedido e a validação de estoque já
+trabalham por itens. **Sem mudança de backend.**
+
+**Contrato**
+- `CartService` guarda um **item avulso** em `sessionStorage`
+  (`buy-now-item`, some ao fechar a aba): `startBuyNow(produto)` (quantidade
+  1), `getBuyNow()`, `updateBuyNowQuantity(n)` e `clearBuyNow()`. O carrinho
+  (`cart-product`) nunca é lido nem alterado por esse caminho.
+- Rota `/resumo-pedido?modo=compra-direta`. Sem o parâmetro, o checkout usa
+  o carrinho e descarta qualquer item avulso velho (não sequestra um
+  checkout normal).
+- Com o parâmetro, o checkout usa **só** o item avulso para exibir,
+  ajustar a quantidade, calcular o preview e criar o pedido (um pedido de
+  uma loja); ao concluir, limpa só o item avulso — o carrinho continua como
+  estava. Abre na **etapa 2** com um cartão-resumo do item (nome,
+  quantidade com +/− e subtotal do preview) no topo das etapas 2 e 3; "Ver
+  itens" leva à etapa 1 pelo indicador de etapas. Sem item avulso (aba nova
+  ou sessão limpa), volta para `/inicio` com aviso.
+- Card de produto: "Comprar agora" em contorno, abaixo do "Adicionar", que
+  segue como a única ação cheia (accent); alvo de 44 px no celular. As duas
+  telas que usam o card (início/produtos e produtos de uma loja) iniciam a
+  compra direta e navegam.
+
+**Fora de escopo**: tela de detalhe de produto; pagamento online; comprar
+de mais de uma loja de uma vez; mudanças no backend.
+
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
 - Agregação de rating médio por fornecedor (gap de backend).
@@ -1214,6 +1249,18 @@ painel móvel do fornecedor e do admin.
     `deveDestacarOLinkAtivoDoClienteEmTomClaro`,
     `deveManterBarraEscuraParaOsOutrosPerfis`,
     `deveUsarAAcaoDeDestaqueNoFinalizarPedido`.
+
+23. *(cliente, §5.23)* `cart.service.spec.ts`:
+    `deveGuardarOItemAvulsoSemTocarNoCarrinho`,
+    `deveAjustarAQuantidadeDoItemAvulso`, `deveLimparSoOItemAvulso`;
+    `order-resume.component.spec.ts`: `deveAbrirNaEtapaDeEntregaNaCompraDireta`,
+    `deveUsarSoOProdutoDaCompraDireta`,
+    `deveManterOCarrinhoAoConcluirACompraDireta`,
+    `deveIgnorarItemAvulsoSemOParametroDeCompraDireta`,
+    `deveVoltarParaOInicioSemItemAvulso`,
+    `deveAjustarAQuantidadeNoResumoDoItem`;
+    `product-card.component.spec.ts`: `deveEmitirCompraDiretaComQuantidadeUm`;
+    `supplier-list` e `product-list`: `deveIrParaOCheckoutNaCompraDireta`.
 
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
@@ -1516,6 +1563,13 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
       build`; E2E em 1280 e 390 px: 16 checagens (barra branca, contrastes
       medidos no navegador, logo, dropdown, carrinho, fornecedor ainda
       escuro, sem erro de JS).
+
+**Cliente — Comprar agora (§5.23):**
+- [ ] Item avulso separado do carrinho; checkout com `modo=compra-direta`
+      usa só o produto e deixa o carrinho intacto; abre na etapa Entrega.
+- [ ] Botão "Comprar agora" no card, nas duas telas; testes (item 23)
+      verdes; `ng test` (sem falhas novas) e `ng build`; E2E em 390 e
+      1280 px, conferindo o pedido no banco.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
