@@ -870,6 +870,46 @@ PDF; reabrir pedido; avaliações; histórico do admin.
 relatório; comparar lojas; abrir o histórico já filtrado; biblioteca de
 gráficos (o SVG é feito à mão, como hoje).
 
+### 5.21 Cliente — Início e Produtos (`/inicio`)
+
+> Escrita em 2026-10-21. Pedido do autor: melhorar o básico para o
+> cliente final; "botões com cores muito escuras não são legais".
+> Decisões do autor: **hierarquia** (uma ação forte em azul vivo, o resto
+> leve com contorno, banners em fundo azul suave) e **busca sem botão
+> Filtrar**. Escopo desta rodada: só `/inicio` (lojas e produtos); a
+> navbar fica para depois.
+
+**Achados**
+- Tudo usa o azul-marinho da marca cheio: Filtrar, Ver Produtos/Ver
+  Fornecedores, banners em gradiente escuro, "Ver Produtos" das lojas,
+  chip ativo, Adicionar e página ativa; nenhuma ação se destaca.
+- **RN05 quebrada na busca de lojas**: `GET /suppliers/search?name=` não
+  filtra pela cidade do endereço ativo — a busca mostra lojas de outras
+  cidades.
+- Na visão Produtos a busca não faz nada (chama a busca de lojas); a
+  paginação chama a lista de lojas também na visão Produtos, e os
+  produtos carregam só 20.
+- Template com `<!DOCTYPE>`/`<html>`/`<body>` e Font Awesome.
+
+**Contrato**
+- Tema: `--color-accent` `#2a78d6` (azul vivo, texto branco ≈ 4,6:1, AA)
+  e `--color-accent-content` branco, para a ação principal.
+- `GET /api/suppliers/actives/open` e `GET /api/product-items/by-supplier-open`
+  ganham `q` (loja: nome; produto: marca, categoria ou tipo), sem
+  diferenciar maiúsculas, mantendo o `cityId` (RN05); OpenAPI.
+- Tela: busca única com debounce, sem botão, na visão atual e na cidade do
+  endereço ativo, com botão de limpar; alternância Lojas/Produtos em
+  controle segmentado claro; banners em fundo azul suave com texto
+  escuro; "Ver produtos" da loja em contorno; chip de tipo ativo em fundo
+  claro com borda e texto primários; "Menor preço" como chip claro;
+  **"Adicionar" é a única ação cheia** (accent); página ativa em fundo
+  claro; paginação dos produtos e contador pelo total do backend; sem
+  wrappers de documento nem Font Awesome.
+
+**Fora de escopo (desta tela)**: navbar do cliente; carrinho, checkout,
+pedidos e endereços; produtos de uma loja (`/fornecedores/:id/produtos`);
+avaliações; banners dinâmicos.
+
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
 - Agregação de rating médio por fornecedor (gap de backend).
@@ -1135,6 +1175,19 @@ gráficos (o SVG é feito à mão, como hoje).
     só os ímpares, para não sobrepor). Ajuste: o melhor dia deixou de ter
     cor própria (o laranja parecia outra série/tipo); segue no texto
     "Melhor dia" e no número em negrito.
+
+21. *(cliente, §5.21)* **Backend** — `SupplierServiceTest`:
+    `deveBuscarLojasAbertasDaCidadePeloNome`; `ProductItemServiceTest`:
+    `deveBuscarProdutosDisponiveisDaCidade`; `SupplierControllerTest` e
+    `ProductItemControllerTest`: `deveRepassarABuscaComACidade`.
+    **Frontend** — services: parâmetros `q`, `cityId` e `page`;
+    `supplier-list.component.spec.ts`: `deveBuscarLojasDaCidadeAoDigitar`,
+    `deveBuscarProdutosNaVisaoProdutos`, `deveLimparABusca`,
+    `devePaginarProdutos`, `deveAlternarEntreLojasEProdutos`;
+    `product-card.component.spec.ts`: `deveUsarAAcaoDeDestaqueNoAdicionar`;
+    `category-chip-bar.component.spec.ts`:
+    `deveDestacarOChipAtivoSemFundoEscuro`; `pagination.component.spec.ts`:
+    `deveMarcarAPaginaAtualSemFundoEscuro`.
 
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
@@ -1403,6 +1456,14 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > categóricas foram validadas pelo script do skill de visualização (a paleta antiga reprovava: azul-marinho fora da faixa de
 > luminosidade e par rosa/verde com ΔE 3,9 para daltônicos) e entraram como tokens `--color-chart-1..5` no tema. **Achado**: no
 > celular, rótulos longos ("Cartão de crédito") colavam nos valores — as linhas passaram a quebrar.
+
+**Cliente — Início e Produtos (§5.21):**
+- [ ] Busca de lojas e de produtos no backend com a cidade do endereço
+      ativo (RN05); OpenAPI.
+- [ ] Hierarquia visual: só "Adicionar" cheio (accent); demais ações
+      claras; banners suaves; busca sem botão; paginação dos produtos.
+- [ ] Testes da seção 7 (item 21) verdes; `mvn test`, `ng test` (sem
+      falhas novas) e `ng build`; teste manual em 390 e 1280 px.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
