@@ -1,0 +1,220 @@
+<div class="max-w-5xl w-full mx-auto px-4 md:px-8 pt-6 pb-24 md:pb-10">
+    <header class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Usuários</h1>
+            <p class="text-sm text-gray-500">{{ totalElements }} {{ totalElements === 1 ? 'usuário' : 'usuários' }} na plataforma.</p>
+        </div>
+        <button type="button" data-testid="new-user" class="btn btn-primary rounded-xl" (click)="openCreate()">
+            <span class="material-icons text-base">person_add</span>
+            Novo usuário
+        </button>
+    </header>
+
+    <div class="flex flex-col md:flex-row md:items-center gap-3 mb-4">
+        <div class="flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Filtrar por perfil">
+            <button *ngFor="let c of chips" type="button" [attr.data-testid]="'chip-' + (c.type ?? 'ALL')"
+                class="btn btn-sm rounded-full whitespace-nowrap"
+                [ngClass]="type === c.type ? 'btn-primary' : 'btn-ghost bg-white border border-gray-200'"
+                [attr.aria-pressed]="type === c.type" (click)="selectType(c.type)">
+                {{ c.label }}
+            </button>
+        </div>
+        <label class="input input-bordered rounded-xl flex items-center gap-2 md:ml-auto md:w-72 bg-white">
+            <span class="material-icons text-base text-gray-400">search</span>
+            <input data-testid="user-search" type="search" class="grow" placeholder="Nome ou e-mail"
+                aria-label="Buscar por nome ou e-mail" (input)="onSearch($any($event.target).value)" />
+        </label>
+    </div>
+
+    <div *ngIf="loading && !users.length" class="space-y-2" aria-busy="true">
+        <div *ngFor="let n of [1,2,3,4,5]" class="skeleton h-16 rounded-xl"></div>
+    </div>
+
+    <div *ngIf="!loading && !users.length" class="text-center bg-white rounded-xl border border-gray-200 py-12 px-4">
+        <span class="material-icons text-gray-300" style="font-size: 56px">person_search</span>
+        <p class="text-gray-700 font-semibold mt-2">Nenhum usuário encontrado</p>
+        <p class="text-sm text-gray-500">Troque o filtro de perfil ou o termo da busca.</p>
+    </div>
+
+    <ul *ngIf="users.length" class="space-y-2" [class.opacity-60]="loading">
+        <li *ngFor="let u of users" [attr.data-testid]="'user-' + u.id"
+            class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 flex flex-wrap items-center gap-3">
+            <div class="min-w-0 flex-1">
+                <p class="font-semibold text-gray-800 truncate">
+                    {{ u.name }}
+                    <span *ngIf="u.id === myId" class="text-xs font-normal text-gray-400">(você)</span>
+                </p>
+                <p class="text-sm text-gray-500 truncate">{{ u.email }}<span *ngIf="u.phoneNumber"> · {{ u.phoneNumber }}</span></p>
+            </div>
+            <span class="badge badge-ghost">{{ typeLabel[u.userType] }}</span>
+            <span [attr.data-testid]="'status-' + u.id" class="badge"
+                [ngClass]="u.enabled ? 'badge-success badge-outline' : 'badge-error'">
+                {{ u.enabled ? 'Ativo' : 'Desativado' }}
+            </span>
+            <div class="flex gap-1">
+                <button type="button" [attr.data-testid]="'edit-' + u.id" class="btn btn-sm btn-ghost rounded-lg"
+                    [attr.aria-label]="'Editar ' + u.name" (click)="openEdit(u)">
+                    <span class="material-icons text-base">edit</span>
+                </button>
+                <button *ngIf="u.id !== myId" type="button" [attr.data-testid]="'toggle-' + u.id"
+                    class="btn btn-sm rounded-lg" [ngClass]="u.enabled ? 'btn-ghost text-error' : 'btn-ghost text-success'"
+                    [attr.aria-label]="(u.enabled ? 'Desativar ' : 'Reativar ') + u.name" (click)="askToggle(u)">
+                    <span class="material-icons text-base">{{ u.enabled ? 'block' : 'check_circle' }}</span>
+                    <span class="hidden sm:inline">{{ u.enabled ? 'Desativar' : 'Reativar' }}</span>
+                </button>
+            </div>
+        </li>
+    </ul>
+
+    <nav *ngIf="totalPages > 1" class="flex items-center justify-center gap-3 mt-4" aria-label="Paginação">
+        <button type="button" class="btn btn-sm btn-ghost rounded-lg" [disabled]="page === 0 || loading" (click)="load(page - 1)">
+            <span class="material-icons text-base">chevron_left</span> Anterior
+        </button>
+        <span class="text-sm text-gray-600">Página {{ page + 1 }} de {{ totalPages }}</span>
+        <button type="button" class="btn btn-sm btn-ghost rounded-lg" [disabled]="page + 1 >= totalPages || loading" (click)="load(page + 1)">
+            Próxima <span class="material-icons text-base">chevron_right</span>
+        </button>
+    </nav>
+
+    <!-- Confirmação de desativar/reativar -->
+    <div *ngIf="toggleTarget" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-gray-900/40 p-4"
+        (click)="closeToggle()">
+        <div data-testid="toggle-modal" role="dialog" aria-modal="true" aria-labelledby="toggle-title" @fadeIn
+            class="w-full max-w-md bg-white rounded-xl shadow-xl p-5" (click)="$event.stopPropagation()">
+            <h3 id="toggle-title" class="text-lg font-bold text-gray-800">
+                {{ toggleTarget.enabled ? 'Desativar' : 'Reativar' }} {{ toggleTarget.name }}?
+            </h3>
+            <p class="text-sm text-gray-500 mt-1" *ngIf="toggleTarget.enabled">
+                A conta deixa de entrar por senha e por código, e a sessão aberta é encerrada. Dá para reativar depois.
+            </p>
+            <p class="text-sm text-gray-500 mt-1" *ngIf="!toggleTarget.enabled">
+                A conta volta a entrar normalmente.
+            </p>
+            <div class="grid grid-cols-2 gap-2 mt-4">
+                <button type="button" class="btn btn-outline btn-primary rounded-xl" (click)="closeToggle()">Voltar</button>
+                <button type="button" data-testid="confirm-toggle" class="btn rounded-xl"
+                    [ngClass]="toggleTarget.enabled ? 'btn-error' : 'btn-success'" [disabled]="toggling" (click)="confirmToggle()">
+                    <span *ngIf="toggling" class="loading loading-spinner loading-sm"></span>
+                    {{ toggleTarget.enabled ? 'Desativar' : 'Reativar' }}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edição -->
+    <div *ngIf="editTarget" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-gray-900/40 p-4"
+        (click)="closeEdit()">
+        <form data-testid="edit-modal" role="dialog" aria-modal="true" aria-labelledby="edit-title" @fadeIn
+            [formGroup]="editForm" (ngSubmit)="saveEdit()"
+            class="w-full max-w-md bg-white rounded-xl shadow-xl p-5 space-y-3" (click)="$event.stopPropagation()">
+            <h3 id="edit-title" class="text-lg font-bold text-gray-800">Editar {{ editTarget.name }}</h3>
+            <label class="form-control w-full">
+                <span class="label-text text-sm text-gray-700">Nome</span>
+                <input data-testid="edit-name" formControlName="name" class="input input-bordered rounded-xl w-full" autocomplete="off" />
+            </label>
+            <label class="form-control w-full">
+                <span class="label-text text-sm text-gray-700">E-mail</span>
+                <input data-testid="edit-email" type="email" formControlName="email" class="input input-bordered rounded-xl w-full" autocomplete="off" />
+            </label>
+            <label class="form-control w-full">
+                <span class="label-text text-sm text-gray-700">Telefone</span>
+                <input data-testid="edit-phone" formControlName="phoneNumber" class="input input-bordered rounded-xl w-full" autocomplete="off" />
+            </label>
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <button type="button" class="btn btn-outline btn-primary rounded-xl" (click)="closeEdit()">Voltar</button>
+                <button type="submit" data-testid="save-edit" class="btn btn-primary rounded-xl" [disabled]="saving">
+                    <span *ngIf="saving" class="loading loading-spinner loading-sm"></span>
+                    Salvar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Novo usuário -->
+    <div *ngIf="creating" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-gray-900/40 p-4"
+        (click)="closeCreate()">
+        <form data-testid="new-user-modal" role="dialog" aria-modal="true" aria-labelledby="new-title" @fadeIn
+            [formGroup]="createForm" (ngSubmit)="saveCreate()" novalidate
+            class="w-full max-w-lg max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-xl p-5 space-y-3"
+            (click)="$event.stopPropagation()">
+            <h3 id="new-title" class="text-lg font-bold text-gray-800">Novo usuário</h3>
+
+            <label class="form-control w-full">
+                <span class="label-text text-sm text-gray-700">Perfil</span>
+                <select data-testid="new-type" formControlName="userType" class="select select-bordered rounded-xl w-full">
+                    <option *ngFor="let t of userTypes" [value]="t">{{ typeLabel[t] }}</option>
+                </select>
+            </label>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label class="form-control w-full sm:col-span-2">
+                    <span class="label-text text-sm text-gray-700">Nome</span>
+                    <input data-testid="new-name" formControlName="name" class="input input-bordered rounded-xl w-full"
+                        [class.input-error]="invalid('name')" autocomplete="off" />
+                    <span *ngIf="invalid('name')" class="text-xs text-error mt-1">Informe o nome (3 letras ou mais).</span>
+                </label>
+                <label class="form-control w-full">
+                    <span class="label-text text-sm text-gray-700">E-mail</span>
+                    <input data-testid="new-email" type="email" formControlName="email" class="input input-bordered rounded-xl w-full"
+                        [class.input-error]="invalid('email')" autocomplete="off" />
+                    <span *ngIf="invalid('email')" class="text-xs text-error mt-1">Informe um e-mail válido.</span>
+                </label>
+                <label class="form-control w-full">
+                    <span class="label-text text-sm text-gray-700">Telefone</span>
+                    <input data-testid="new-phone" formControlName="phoneNumber" class="input input-bordered rounded-xl w-full"
+                        [class.input-error]="invalid('phoneNumber')" autocomplete="off" />
+                    <span *ngIf="invalid('phoneNumber')" class="text-xs text-error mt-1">Informe o telefone.</span>
+                </label>
+                <label class="form-control w-full">
+                    <span class="label-text text-sm text-gray-700">Senha inicial</span>
+                    <input data-testid="new-password" type="password" formControlName="password" class="input input-bordered rounded-xl w-full"
+                        [class.input-error]="invalid('password')" autocomplete="new-password" />
+                    <span *ngIf="invalid('password')" class="text-xs text-error mt-1">Mínimo de 6 caracteres.</span>
+                </label>
+                <label class="form-control w-full">
+                    <span class="label-text text-sm text-gray-700">CPF <span class="text-gray-400">(opcional)</span></span>
+                    <input data-testid="new-cpf" formControlName="cpf" class="input input-bordered rounded-xl w-full" autocomplete="off" />
+                </label>
+            </div>
+
+            <div *ngIf="newType === 'SUPPLIER'" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label class="form-control w-full">
+                    <span class="label-text text-sm text-gray-700">CNPJ</span>
+                    <input data-testid="new-cnpj" formControlName="cnpj" class="input input-bordered rounded-xl w-full"
+                        [class.input-error]="invalid('cnpj')" autocomplete="off" />
+                    <span *ngIf="invalid('cnpj')" class="text-xs text-error mt-1">Informe o CNPJ.</span>
+                </label>
+                <label class="form-control w-full">
+                    <span class="label-text text-sm text-gray-700">Cidade</span>
+                    <select data-testid="new-city" formControlName="cityId" class="select select-bordered rounded-xl w-full"
+                        [class.select-error]="invalid('cityId')">
+                        <option value="" disabled>Escolha a cidade</option>
+                        <option *ngFor="let c of cities" [value]="c.id">{{ c.name }} - {{ c.state }}</option>
+                    </select>
+                    <span *ngIf="invalid('cityId')" class="text-xs text-error mt-1">Escolha a cidade.</span>
+                </label>
+                <p class="text-xs text-gray-500 sm:col-span-2">O fornecedor nasce aguardando aprovação, como no cadastro público.</p>
+            </div>
+
+            <label *ngIf="newType === 'DELIVERER'" class="form-control w-full">
+                <span class="label-text text-sm text-gray-700">Fornecedor da frota</span>
+                <select data-testid="new-supplier" formControlName="supplierId" class="select select-bordered rounded-xl w-full"
+                    [class.select-error]="invalid('supplierId')">
+                    <option value="" disabled>Escolha o fornecedor</option>
+                    <option *ngFor="let s of suppliers" [value]="s.id">{{ s.name }}</option>
+                </select>
+                <span *ngIf="invalid('supplierId')" data-testid="new-supplier-error" class="text-xs text-error mt-1">
+                    Escolha o fornecedor do entregador.
+                </span>
+            </label>
+
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <button type="button" class="btn btn-outline btn-primary rounded-xl" (click)="closeCreate()">Voltar</button>
+                <button type="submit" data-testid="save-new-user" class="btn btn-primary rounded-xl" [disabled]="saving">
+                    <span *ngIf="saving" class="loading loading-spinner loading-sm"></span>
+                    Criar usuário
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
