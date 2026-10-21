@@ -52,4 +52,29 @@ describe('CategoryChipBarComponent', () => {
       .map((el) => el.textContent?.trim());
     expect(icones).toEqual(['apps', 'ac_unit', 'category']);
   });
+
+  it('deveDestacarOChipAtivoComAccent', () => {
+    component.categories = [{ id: 1, name: 'Gás', icon: 'local_fire_department' }] as any;
+    component.selected = 'Gás';
+    fixture.detectChanges();
+
+    const chip = fixture.nativeElement.querySelector('[data-testid="chip-Gás"]') as HTMLElement;
+    const circulo = chip.querySelector('span') as HTMLElement;
+    const rotulo = chip.querySelectorAll('span')[2] as HTMLElement;
+    expect(circulo.classList).toContain('bg-accent');
+    expect(circulo.classList).toContain('border-accent');
+    expect(circulo.classList).toContain('text-white');
+    expect(rotulo.classList).toContain('text-accent');
+    expect(rotulo.classList).toContain('font-semibold');
+    expect(chip.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('naoDeveDestacarOChipInativo', () => {
+    component.categories = [{ id: 1, name: 'Gás', icon: 'local_fire_department' }] as any;
+    component.selected = null;
+    fixture.detectChanges();
+
+    const circulo = fixture.nativeElement.querySelector('[data-testid="chip-Gás"] span') as HTMLElement;
+    expect(circulo.classList).not.toContain('bg-accent');
+  });
 });
