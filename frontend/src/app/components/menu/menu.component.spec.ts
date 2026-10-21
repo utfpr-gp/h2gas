@@ -423,4 +423,45 @@ describe('MenuComponent', () => {
     expect(painel()).withContext('com Esc').toBeNull();
     expect(botao().getAttribute('aria-expanded')).toBe('false');
   });
+
+  // ---- F7 §5.22: barra clara para o cliente; os outros perfis mantêm a escura ----
+  const barra = () => (fixture.nativeElement as HTMLElement).firstElementChild as HTMLElement;
+
+  it('deveUsarBarraClaraParaCliente', () => {
+    entrarComo(perfis.cliente);
+
+    expect(barra().classList).toContain('bg-white');
+    expect(barra().classList).not.toContain('bg-primary');
+    expect(linkPara('/inicio')!.classList).toContain('text-gray-700');
+    expect(linkPara('/inicio')!.classList).not.toContain('text-white');
+    expect(fixture.nativeElement.querySelector('span.text-xl')!.classList).toContain('text-primary');
+  });
+
+  it('deveDestacarOLinkAtivoDoClienteEmTomClaro', async () => {
+    entrarComo(perfis.cliente);
+    await navegar('/inicio');
+
+    expect(linkPara('/inicio')!.classList).toContain('bg-primary/10');
+    expect(linkPara('/inicio')!.classList).toContain('text-primary');
+    expect(linkPara('/inicio')!.getAttribute('aria-current')).toBe('page');
+  });
+
+  it('deveUsarAAcaoDeDestaqueNoFinalizarPedido', () => {
+    TestBed.inject(CartService).setCart([{ id: 1, quantitySelect: 1, priceDelivery: 10 }]);
+    entrarComo(perfis.cliente);
+    fixture.detectChanges();
+
+    const botao = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="checkout-button"]') as HTMLElement;
+    expect(botao.classList).toContain('btn-accent');
+    expect(botao.classList).not.toContain('bg-primary');
+  });
+
+  it('deveManterBarraEscuraParaOsOutrosPerfis', () => {
+    for (const perfil of [perfis.fornecedor, perfis.admin, perfis.entregador]) {
+      entrarComo(perfil);
+
+      expect(barra().classList).withContext(perfil.userType).toContain('bg-primary');
+      expect(barra().classList).withContext(perfil.userType).not.toContain('bg-white');
+    }
+  });
 });

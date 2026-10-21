@@ -910,6 +910,28 @@ gráficos (o SVG é feito à mão, como hoje).
 pedidos e endereços; produtos de uma loja (`/fornecedores/:id/produtos`);
 avaliações; banners dinâmicos.
 
+### 5.22 Cliente — barra de navegação clara
+
+> Escrita em 2026-10-21, continuação da §5.21 (pedido do autor: tirar o
+> peso do azul-marinho cheio também no topo).
+
+**Achado**: a barra é um componente só, escuro para todos os perfis, com a
+cor repetida em 36 trechos do template.
+
+**Contrato**
+- Barra do **cliente** clara: fundo branco com filete inferior, texto
+  neutro (`gray-700`), marca e link ativo em `primary` (fundo `primary/10`),
+  foco em `primary`. Fornecedor, admin e entregador **mantêm a barra
+  escura**.
+- As cores vêm de um getter por perfil (`t`), em vez de classes soltas no
+  template; o link ativo usa `[routerLinkActive]="t.active"`.
+- "Finalizar Pedido" no carrinho passa a ser a ação de destaque (`accent`),
+  como o "Adicionar".
+- Contraste ≥ 4,5:1 em links, endereço e marca; a logo continua visível.
+
+**Fora de escopo**: tema escuro; barra clara para os outros perfis; o
+painel móvel do fornecedor e do admin.
+
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
 - Agregação de rating médio por fornecedor (gap de backend).
@@ -1188,6 +1210,10 @@ avaliações; banners dinâmicos.
     `category-chip-bar.component.spec.ts`:
     `deveDestacarOChipAtivoSemFundoEscuro`; `pagination.component.spec.ts`:
     `deveMarcarAPaginaAtualSemFundoEscuro`.
+22. *(cliente, §5.22)* `menu.component.spec.ts`: `deveUsarBarraClaraParaCliente`,
+    `deveDestacarOLinkAtivoDoClienteEmTomClaro`,
+    `deveManterBarraEscuraParaOsOutrosPerfis`,
+    `deveUsarAAcaoDeDestaqueNoFinalizarPedido`.
 
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
@@ -1482,6 +1508,14 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > **Achados**: (1) a busca antiga de lojas (`/suppliers/search`) ignorava a cidade (RN05) — o frontend passou a usar
 > `/actives/open?q=` e o `searchSuppliers` saiu; (2) a visão Produtos não buscava nem paginava — agora busca pelo backend e pagina
 > de 12 em 12. A rota `/suppliers/search` continua no backend, mas sem uso no frontend (candidata a sair).
+
+**Cliente — barra de navegação (§5.22):**
+- [x] Barra clara para o cliente (contraste ≥ 4,5:1, logo visível), barra
+      escura mantida nos outros perfis; "Finalizar Pedido" em destaque.
+- [x] Testes (item 22) verdes; `ng test` com as 10 falhas antigas; `ng
+      build`; E2E em 1280 e 390 px: 16 checagens (barra branca, contrastes
+      medidos no navegador, logo, dropdown, carrinho, fornecedor ainda
+      escuro, sem erro de JS).
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
