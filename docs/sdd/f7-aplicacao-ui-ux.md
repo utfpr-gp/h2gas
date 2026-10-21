@@ -780,6 +780,46 @@ menu e nos pedidos; recortar ou redimensionar a imagem no cliente; apagar
 a imagem antiga no Cloudinary; checar o dono no `PUT /addresses/{id}`
 (dívida registrada); refazer `/distributor/new`.
 
+### 5.19 Fatia 6 — histórico de pedidos do fornecedor (`/historico-pedidos`)
+
+> Escrita em 2026-10-21. Pedido do autor: melhorar o histórico e, depois,
+> o dashboard, mantendo as duas telas separadas.
+
+**Achados**
+- `GET /api/orders/{supplierId}/exclude-status` e `/by-supplier/{supplierId}`
+  não conferem o dono: um fornecedor lista pedidos de outro, com nome,
+  telefone e endereço dos clientes.
+- A tela carrega só os 10 primeiros pedidos e calcula receita e contagens
+  no navegador sobre eles; sem paginação.
+- Só filtra por status; template com `<!DOCTYPE>`/`<html>`/`<body>`, Font
+  Awesome e `console.log`; o `orders-widget` (só usado aqui) traz ações de
+  mudar status, que não cabem em pedido finalizado.
+
+**Contrato**
+- `GET /api/orders/mine/history` (SUPPLIER, dono do token): só pedidos
+  entregues ou cancelados; filtros opcionais `status` (`delivered` |
+  `canceled`), `from`/`to` (datas `YYYY-MM-DD`, pela criação do pedido),
+  `payment` (`PIX` | `DINHEIRO` | `CREDIT_CARD`), `mode` (`DELIVERY` |
+  `PICKUP`) e `q` (nome do cliente ou início do código do pedido);
+  paginado, mais recente primeiro. Filtro inválido ou `from` depois de
+  `to` → **400**.
+- `GET /api/orders/mine/history/summary`, mesmos filtros: `delivered`,
+  `canceled`, `revenue` (soma dos entregues) e `averageTicket`, contados
+  no banco (RN01).
+- Rotas antigas por `supplierId`: SUPPLIER só o próprio (**403**); ADMIN
+  continua. OpenAPI em todas.
+- Tela: cabeçalho com o interruptor de loja aberta/fechada (fica, decisão
+  anterior); cartões de resumo que acompanham os filtros; período (7 dias,
+  30 dias, este mês, mês passado, personalizado), status, pagamento,
+  entrega/retirada e busca com debounce; chips dos filtros ativos com
+  "Limpar"; cards com código curto, data, cliente, total, status,
+  pagamento e modo, que expandem para itens, endereço, entregador, entrega
+  e motivo do cancelamento; skeleton, estado vazio e paginação; rota só do
+  fornecedor e sob demanda; o `orders-widget` sai.
+
+**Fora de escopo (desta tela)**: dashboard (próxima tela); exportar CSV ou
+PDF; reabrir pedido; avaliações; histórico do admin.
+
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
 - Agregação de rating médio por fornecedor (gap de backend).
@@ -1010,6 +1050,21 @@ a imagem antiga no Cloudinary; checar o dono no `PUT /addresses/{id}`
     `deveDeixarOutrosPerfisEmMeusDados`; `menu.component.spec.ts`:
     `deveMostrarMinhaLojaNoLugarDeMeusDadosParaFornecedor`.
 
+19. *(fatia 6, §5.19)* **Backend** — `OrderServiceTest`:
+    `deveListarSoFinalizadosDoFornecedor`,
+    `deveFiltrarPorPeriodoPagamentoModoEBusca`,
+    `deveResumirReceitaEContagensComOsFiltros`; `OrderControllerTest`:
+    `deveUsarOFornecedorDoTokenNoHistorico`,
+    `deveRetornar400ComFiltroInvalido`,
+    `deveRetornar403AoListarPedidosDeOutroFornecedor`.
+    **Frontend** — `order.service.spec.ts`: `deveEnviarFiltrosDoHistorico`,
+    `deveBuscarResumoDoHistorico`; `order-history.component.spec.ts`:
+    `deveMostrarResumoDoBackend`, `deveFiltrarPorStatusEPeriodo`,
+    `deveFiltrarPorPagamentoEModo`, `deveBuscarComDebounce`,
+    `deveLimparFiltros`, `deveExpandirDetalhesDoPedido`,
+    `deveMostrarMotivoDoCancelamento`, `devePaginar`,
+    `deveExibirEstadoVazio`.
+
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
 ## 8. Definição de Pronto
@@ -1238,6 +1293,15 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > leitura, `/meus-dados` e `/distributor/edit/<id>` caindo em `/minha-loja`, iniciais do menu atualizadas ao salvar o nome sem
 > recarregar, "Editar loja" de Pedidos recebidos levando a `/minha-loja`, cliente seguindo no Meus Dados, sem rolagem lateral nem
 > erro de JS); nome restaurado. O `navigateEdit` de Pedidos recebidos virou `goToStore()`, e o do Histórico (sem uso) saiu.
+
+**Fatia 6 — histórico de pedidos (§5.19):**
+- [ ] Histórico e resumo pelo fornecedor do token, filtrados e contados
+      no banco; rotas antigas por `supplierId` dão 403 para outra loja;
+      OpenAPI.
+- [ ] Tela com resumo, filtros, cards expansíveis, skeleton, estado vazio
+      e paginação, sem o `orders-widget`.
+- [ ] Testes da seção 7 (item 19) verdes; `mvn test`, `ng test` (sem
+      falhas novas) e `ng build`; teste manual em 390 e 1280 px.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
