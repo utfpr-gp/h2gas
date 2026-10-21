@@ -330,10 +330,10 @@ dele vira o Painel.
       telas.
 - [x] Admin escolhe o ícone do tipo numa grade fechada; o catálogo do
       cliente mostra o ícone gravado; migração `V10` aplicada.
-- [ ] Admin troca o próprio e-mail só com o código enviado ao e-mail
+- [x] Admin troca o próprio e-mail só com o código enviado ao e-mail
       novo e continua logado; sem atalhos de cliente em Meus Dados;
       migração `V11` aplicada.
-- [ ] Testes da seção 6 verdes; `mvn test`, `ng test` (sem falha nova
+- [x] Testes da seção 6 verdes; `mvn test`, `ng test` (sem falha nova
       além das 18 antigas) e `ng build`; E2E e prints em 390 e 1280 px.
 
 **Verificação (20/10/2026):** `mvn test` 288 testes, só o
@@ -352,3 +352,13 @@ chama, Água → gota, demais → genérico); `mvn test` 292 testes, só o
 mesmas 17 falhas antigas; `ng build` ok. E2E de tipos 20/20 (ícone fora
 da lista → 400, troca de ícone gravada e restaurada) e 18/18 no de
 usuários; prints em 390 e 1280 px.
+
+**Verificação da troca de e-mail (21/10/2026):** `V11` aplicada no
+MySQL; `mvn test` 302 testes, só o `BackendApplicationTests` com erro de
+ambiente; `ng test` 353 testes, as mesmas 17 falhas antigas; `ng build`
+ok; Swagger com as duas rotas na tag Usuários (202/200, 400, 401, 403).
+E2E 13/13: fornecedor recebe 403, `PUT` do próprio e-mail dá 400, código
+errado não troca, código certo troca e devolve token novo (o antigo deixa
+de valer; a sessão segue após recarregar), login por senha com o e-mail
+novo, e o e-mail original restaurado pelo mesmo fluxo. Prints em 390 e
+1280 px.
