@@ -464,4 +464,48 @@ describe('MenuComponent', () => {
       expect(barra().classList).withContext(perfil.userType).not.toContain('bg-white');
     }
   });
+
+  // ---- HU13: visitante (sem login) ----
+  const comoVisitante = () => {
+    localStorage.removeItem('user');
+    fixture = TestBed.createComponent(MenuComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  };
+
+  it('deveMostrarEntrarECarrinhoParaVisitante', () => {
+    comoVisitante();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelector('[data-testid="visitor-login"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="user-menu-button"]')).toBeNull();
+    expect(el.querySelector('label[for="cart-drawer"]')).not.toBeNull();
+    expect(el.querySelector('a[routerLink="/meus-pedidos"]')).toBeNull();
+    expect(el.querySelector('app-bottom-tab-bar [data-testid="tab-entrar"]')).not.toBeNull();
+    expect(el.querySelector('app-bottom-tab-bar [data-testid="tab-pedidos"]')).toBeNull();
+  });
+
+  it('deveMostrarACidadeDoVisitante', () => {
+    locationContextService.setAddress({ cityId: 3, cityName: 'Curitiba', label: 'Batel · Curitiba' });
+    comoVisitante();
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate');
+
+    const botao = Array.from(fixture.nativeElement.querySelectorAll('button') as HTMLButtonElement[])
+      .find((b) => b.textContent?.includes('Batel · Curitiba'));
+    botao!.click();
+
+    expect((router.navigate as jasmine.Spy).calls.mostRecent().args[0]).toEqual(['/onde-voce-esta']);
+  });
+
+  it('deveLevarOVisitanteAoLoginVoltandoParaAPaginaAtual', () => {
+    comoVisitante();
+    const router = TestBed.inject(Router);
+    spyOnProperty(router, 'url', 'get').and.returnValue('/fornecedores/loja-1/produtos');
+    spyOn(router, 'navigate');
+
+    (fixture.nativeElement.querySelector('[data-testid="visitor-login"]') as HTMLButtonElement).click();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/login'], { queryParams: { returnUrl: '/fornecedores/loja-1/produtos' } });
+  });
 });

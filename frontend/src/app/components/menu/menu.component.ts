@@ -1,4 +1,5 @@
 import { CommonModule } from '@angular/common';
+import { navigateKeepingReturnUrl } from '../../utils/return-url';
 import { Component, ElementRef, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -168,10 +169,23 @@ export class MenuComponent implements OnInit, OnDestroy {
     return this.user?.userType === 'CUSTOMER';
   }
 
+  // HU13: sem login, a vitrine trata o visitante como quem compra (barra clara, cidade, carrinho) e oferece "Entrar"
+  get isVisitor(): boolean {
+    return !this.user;
+  }
+
+  get isShopper(): boolean {
+    return this.isCustomer || this.isVisitor;
+  }
+
+  visitorLogin() {
+    navigateKeepingReturnUrl(this.router, '/login', this.router.url);
+  }
+
   // F7 §5.22: a barra do cliente é clara (fundo branco, texto neutro, ativo em azul suave); fornecedor, admin e
   // entregador mantêm a barra escura. Classes literais aqui para o Tailwind gerar.
   get t(): { bar: string; text: string; hover: string; active: string; ring: string; brand: string } {
-    return this.isCustomer
+    return this.isShopper
       ? { bar: 'bg-white border-b border-gray-200', text: 'text-gray-700', hover: 'hover:bg-primary/5',
           active: 'bg-primary/10 text-primary', ring: 'focus-visible:ring-primary', brand: 'text-primary' }
       : { bar: 'bg-primary', text: 'text-white', hover: 'hover:bg-white/10',
@@ -230,6 +244,10 @@ export class MenuComponent implements OnInit, OnDestroy {
   }
 
   editAddress() {
+    if (this.isVisitor) {
+      navigateKeepingReturnUrl(this.router, '/onde-voce-esta', this.router.url); // HU13: o visitante troca o CEP
+      return;
+    }
     this.router.navigate(['/meus-enderecos']);
   }
 

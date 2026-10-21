@@ -44,4 +44,16 @@ describe('BottomTabBarComponent', () => {
     (fixture.nativeElement.querySelector('[data-testid="tab-perfil"]') as HTMLButtonElement).click();
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/meus-dados'], { queryParams: {} });
   });
+
+  // HU13: o visitante vê Início, Categorias e Entrar
+  it('deveMostrarEntrarParaVisitante', () => {
+    fixture.componentRef.setInput('visitor', true);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelector('[data-testid="tab-pedidos"]')).toBeNull();
+    expect(el.querySelector('[data-testid="tab-perfil"]')).toBeNull();
+    (el.querySelector('[data-testid="tab-entrar"]') as HTMLButtonElement).click();
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/login']);
+  });
 });
