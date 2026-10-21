@@ -967,6 +967,34 @@ trabalham por itens. **Sem mudança de backend.**
 **Fora de escopo**: tela de detalhe de produto; pagamento online; comprar
 de mais de uma loja de uma vez; mudanças no backend.
 
+### 5.24 Cliente — Produtos de uma loja: fundo, tipo ativo e animações
+
+> Escrita em 2026-10-21. Pedido do autor (tela
+> `/fornecedores/:id/produtos`, ao filtrar produtos): há diferença entre os
+> dois brancos do fundo; faltam animações; o tipo selecionado poderia ter
+> outra cor. Decisões: fundo **branco, igual ao `/inicio`**; tipo ativo em
+> **azul vivo cheio (accent)**, valendo também no `/inicio`, que usa o mesmo
+> componente de chips.
+
+**Estado atual**: `product-list` tem `<html>`/`<body class="bg-gray-50">`
+aninhados no template, que pintam só o container; o resto da página fica no
+branco do tema. O chip ativo é `border-primary bg-primary/10 text-primary`,
+pouco distinto do normal. O grid troca de produtos sem transição.
+
+**Contrato**
+- `product-list`: sem `<html>`/`<body>` no template nem `body {}` no CSS; o
+  container é o único wrapper e a página tem um só branco (o do `/inicio`).
+- `CategoryChipBarComponent`: chip ativo com círculo `bg-accent border-accent
+  text-white`, rótulo `text-accent font-semibold`, leve `scale-105` e
+  `transition-all`; inativo como hoje; `aria-pressed` preservado.
+- Grid de `product-list` entra em sequência (`staggerList`, já existente) a
+  cada nova lista e fica atenuado (`opacity-60`) enquanto a busca roda, para
+  o filtro não "pular". `prefers-reduced-motion` já é tratado em `styles.css`.
+- Sem HEX novo; sem mudança de backend.
+
+**Fora de escopo**: levar a busca desta tela ao padrão do `/inicio` (sem
+botão, debounce, `q`); paginação; redesenho do card; estado vazio.
+
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
 - Agregação de rating médio por fornecedor (gap de backend).
@@ -1261,6 +1289,12 @@ de mais de uma loja de uma vez; mudanças no backend.
     `deveAjustarAQuantidadeNoResumoDoItem`;
     `product-card.component.spec.ts`: `deveEmitirCompraDiretaComQuantidadeUm`;
     `supplier-list` e `product-list`: `deveIrParaOCheckoutNaCompraDireta`.
+
+24. *(cliente, §5.24)* `category-chip-bar.component.spec.ts`:
+    `deveDestacarOChipAtivoComAccent` (substitui
+    `deveDestacarOChipAtivoSemFundoEscuro`);
+    `product-list.component.spec.ts`: `deveManterSoUmFundoNaTelaDeProdutos`,
+    `deveAtenuarOGridEnquantoBusca`.
 
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
@@ -1577,6 +1611,11 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > seguiu com os 2 itens, sem item avulso na sessão. Sem item avulso, `?modo=compra-direta` volta a `/inicio`; o checkout sem o
 > parâmetro usa o carrinho. Conferido em 1280 e 390 px (o fluxo completo até o pedido foi feito em 1280 px; em 390 px,
 > até a etapa Entrega). Pedido de teste removido e estoque devolvido.
+
+**Cliente — Produtos de uma loja (§5.24):**
+- [ ] Um só branco no fundo; chip ativo em accent; grid com entrada em
+      sequência e atenuado durante a busca; testes (item 24) verdes;
+      `ng test` (sem falhas novas) e `ng build`; E2E em 390 e 1280 px.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
