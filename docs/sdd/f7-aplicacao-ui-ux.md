@@ -1742,12 +1742,24 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > banco local.
 
 **Cliente — Cabeçalho da loja (§5.26):**
-- [ ] V15 + envio/remoção do banner (OpenAPI) e nota no `GET /suppliers/{id}`;
+- [x] V15 + envio/remoção do banner (OpenAPI) e nota no `GET /suppliers/{id}`;
       cabeçalho com banner (ou padrão), logo, nome, nota, aberta/fechada,
       horário, bairro e descrição com "Ver mais"; seção Banner em "Minha loja";
       testes (item 26) verdes; `mvn test`, `ng test` (sem falhas novas) e
       `ng build`; E2E em 390 e 1280 px, com e sem banner, envio real ao
       Cloudinary.
+
+> **Verificação (2026-10-21)**: `mvn test` 379 testes, só o `contextLoads` antigo; `ng test` 486, só as 10 falhas
+> antigas de providers; `ng build` ok; V15 aplicada no MySQL do Docker. E2E (front 4400, backend 8090) em 1280 e 390 px:
+> Gás Centro sem banner mostra o gradiente padrão; o fornecedor enviou um banner real pelo "Minha loja" (Cloudinary) e o
+> cliente passou a vê-lo; cabeçalho com "4,2 (14)", "Aberta", "07:00 – 20:00 · 60 min", "Centro · Curitiba" e a
+> descrição. Pela API: banner de 2,5 MB → 400 com a mensagem do banner; banner de 1,5 MB passa do limite multipart e
+> é validado no service; logo de 1,5 MB segue 400 (1 MB).
+> **Achados**: (1) o limite multipart do Spring era 1 MB e barraria o banner antes do service — subiu para 2 MB
+> (arquivo) / 3 MB (requisição), e o handler escolhe a mensagem pela rota; (2) o CSS do Material Icons fica fora das
+> camadas do Tailwind 4 e vence `text-*xl` — os ícones novos usam o modificador `!` (o `text-3xl` do ícone do
+> `supplier-card` tem o mesmo problema, fora desta seção); (3) o banner fica `relative` e cobria a logo — a logo
+> ganhou `relative z-10`.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
