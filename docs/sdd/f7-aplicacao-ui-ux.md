@@ -285,21 +285,81 @@ depois da HU11.
   Address devem estar definidos…" → "Cidade e endereço devem estar
   definidos antes de salvar.".
 
-**Menu do usuário (`menu`):**
-- O ícone genérico de pessoa vira **avatar com as iniciais** do usuário
-  (círculo `bg-secondary`/`text-secondary-content`, 2 letras).
-- Dropdown no padrão F7: cabeçalho com nome e e-mail; itens Meus Dados,
-  Meus Pedidos, Meus Endereços (cliente) ou Dashboard/Configuração
-  (fornecedor), e Sair separado. Abre/fecha com a animação `fadeIn` da
-  HU05 (`animations/checkout.animations.ts`), fecha com Esc e clique
-  fora, `aria-expanded`/`aria-haspopup`, foco no primeiro item.
+### 5.11 Fatia 4 — Meus Dados e menu do usuário
 
-**Meus Dados (`customer-panel`):**
-- Cabeçalho com avatar grande de iniciais, nome e e-mail.
-- Campos com ícone e rótulo, estados de carregando (skeleton) e
-  salvando (spinner no botão, botão desabilitado sem alteração).
-- "Meus endereços" e "Meus pedidos" como itens de lista com chevron.
-- Tokens, `rounded-xl`, `pb-24` no mobile.
+> Escrita em 2026-10-20, depois da HU11 (que estava na frente desta
+> fatia). Substitui as duas últimas listas da §5.10. Decisões do autor:
+> (a) **cliente, fornecedor e entregador** passam a ter "Meus Dados";
+> (b) o **e-mail fica somente leitura** (é a identidade do login por
+> código da HU11; trocar de e-mail pede confirmação no endereço novo,
+> evolução futura).
+
+**Achados (diagnóstico do código atual)**
+- **Falha de segurança em `PUT /api/users/{id}`**: a rota não confere
+  o dono. Qualquer cliente ou fornecedor logado edita nome, **e-mail** e
+  telefone de qualquer usuário pelo id. Com o login por código, trocar o
+  e-mail da vítima pelo seu e pedir o código é **tomada de conta**
+  (CLAUDE.md: "nunca confiar em `userId` se o principal define o dono").
+  Entra nesta fatia por ser a rota que o "Meus Dados" usa.
+- Hoje a rota `PUT` aceita ADMIN, SUPPLIER e CUSTOMER; o **entregador
+  não está** na lista e não tem tela de dados.
+- `customer-panel` (rota `/painel-cliente`, só ADMIN/CUSTOMER) já está
+  no padrão F7 de cartões, mas sem avatar, com campos `input-bordered`
+  (sem borda visível no tema `h2gas`), sem skeleton nem estado de
+  salvando, e deixa editar o e-mail.
+- O `menu` usa o ícone genérico `fa-user` e um dropdown estreito
+  (`w-48`), sem nome nem e-mail, sem Esc, sem `aria`; o avatar do topo
+  **não atualiza** depois de salvar os dados (o `menu` lê o usuário uma
+  vez, no `ngOnInit`).
+- A tab bar do cliente tem "Perfil" apontando para `/painel-cliente`.
+
+**Backend**
+- `PUT /api/users/{id}` (`@RolesAllowed` ADMIN, SUPPLIER, CUSTOMER e
+  **DELIVERER**): o id vem da URL, mas só vale se for o **do usuário do
+  token** (ADMIN pode editar qualquer um). Outro usuário → **403**
+  (`ForbiddenResourceException`).
+- `UserService.update(id, dto, actor)`:
+  - e-mail ausente ou igual ao atual → mantém;
+  - e-mail **diferente** com ator não ADMIN → `BusinessRuleException`
+    ("O e-mail não pode ser alterado por aqui.", 400);
+  - e-mail diferente com ADMIN segue a regra de unicidade atual
+    ("E-mail já cadastrado.");
+  - nome e telefone continuam editáveis e validados (`name` com 3+
+    caracteres, `phoneNumber` não vazio).
+- OpenAPI no `PUT` (`@Operation`, 200/400/403/404, `@Parameter`).
+
+**Menu do usuário (`menu`)**
+- O ícone genérico vira **avatar com as iniciais** (primeira letra do
+  primeiro e do último nome; nome único usa as duas primeiras letras),
+  círculo `bg-secondary text-secondary-content`, e acompanha o nome
+  quando "Meus Dados" é salvo (o `UserService` expõe o usuário atual
+  como fluxo observável).
+- Dropdown no padrão F7 (`rounded-xl`, sombra, `w-64`): cabeçalho com
+  avatar, nome e e-mail; itens por perfil — **CUSTOMER**: Meus Dados,
+  Meus Pedidos, Meus Endereços; **SUPPLIER**: Meus Dados, Dashboard,
+  Pedidos recebidos, Configurações; **DELIVERER**: Meus Dados;
+  **ADMIN**: Meus Dados, Pedidos recebidos, Configurações — e **Sair**
+  separado no fim.
+- Abre e fecha com `fadeIn` (`animations/checkout.animations.ts`), fecha
+  com **Esc** e clique fora, `aria-expanded`, `aria-haspopup="menu"`,
+  `role="menu"`/`menuitem` e foco no primeiro item ao abrir.
+
+**Meus Dados (`customer-panel`)**
+- Rota nova **`/meus-dados`** (ADMIN, CUSTOMER, SUPPLIER, DELIVERER);
+  `/painel-cliente` vira redirecionamento para ela, e a tab "Perfil" do
+  cliente aponta para a rota nova.
+- Cabeçalho com **avatar grande de iniciais**, nome e e-mail.
+- Carrega os dados atuais da API (`/users/me`) com **skeleton**; campos
+  Nome e Telefone com ícone e rótulo; **E-mail somente leitura**, com a
+  dica "Para trocar o e-mail, fale com o suporte."
+- Botão "Salvar alterações" **desabilitado sem alteração** e com
+  spinner enquanto salva; sucesso atualiza o `localStorage` e o avatar
+  do menu; erro mostra a mensagem do backend pelo helper.
+- Itens de lista com chevron: **cliente** — Meus endereços e Meus
+  pedidos; **fornecedor** — Configurações da loja; entregador sem
+  atalhos.
+- Tokens F2, sem HEX novo, `rounded-xl`, `pb-24` no mobile; campos com
+  borda explícita (Tailwind), não `input-bordered`.
 
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
@@ -319,6 +379,10 @@ depois da HU11.
   (`--radius-*`, `--size-*`, `--border` — dívida registrada na HU05,
   pede revisão visual própria).
 
+- Fatia 4: trocar de e-mail com confirmação no endereço novo; trocar a
+  senha por esta tela; foto de perfil (upload); aba "Perfil" na barra do
+  entregador (segue fora, como na HU07); edição de CPF/CNPJ.
+
 ## 7. Plano de Testes (TDD)
 
 **Novos componentes:**
@@ -337,11 +401,34 @@ depois da HU11.
 7. `menu.component.spec.ts` — bottom tab bar visível só para `CUSTOMER`.
 
 **Fatia 3:**
-8. `menu.component.spec.ts` — `deveExibirIniciaisDoUsuarioNoAvatar`,
-   `deveAbrirMenuDoUsuarioComOpcoes`, `deveFecharMenuComEsc`.
+8. *(fatia 4, §5.11)* **Backend** — `UserServiceTest`:
+   `deveAtualizarNomeETelefoneDoProprioUsuario`,
+   `deveRejeitarEdicaoDeOutroUsuario` (403),
+   `devePermitirAdminEditarQualquerUsuario`,
+   `deveManterOEmailQuandoOCampoVierIgualOuAusente`,
+   `deveRejeitarTrocaDeEmailPorUsuarioComum` (400),
+   `devePermitirAdminTrocarEmailRespeitandoUnicidade`;
+   `UserControllerTest`: `deveRetornar403AoEditarOutroUsuario`,
+   `deveRetornar200AoEditarOProprioPerfil`,
+   `devePermitirEntregadorEditarOProprioPerfil`.
+   **Frontend** — `menu.component.spec.ts`:
+   `deveExibirIniciaisDoUsuarioNoAvatar`,
+   `deveAtualizarAvatarQuandoOsDadosForemSalvos`,
+   `deveAbrirMenuDoUsuarioComNomeEmailEOpcoesDoPerfil`,
+   `deveFocarOPrimeiroItemAoAbrir`, `deveFecharMenuComEsc`,
+   `deveFecharMenuAoClicarFora`;
+   `user.service.spec.ts`: `deveEmitirOUsuarioAtualAoSalvar`.
 9. `customer-panel.component.spec.ts` —
    `deveExibirAvatarComIniciaisENome`,
-   `deveDesabilitarSalvarSemAlteracoes`.
+   `deveExibirSkeletonEnquantoCarrega`,
+   `deveManterEmailSomenteLeitura`,
+   `deveDesabilitarSalvarSemAlteracoes`,
+   `deveHabilitarSalvarAoAlterarNomeOuTelefone`,
+   `deveSalvarENotificarOMenuComSucesso`,
+   `deveMostrarAMensagemDoBackendNoErro`,
+   `deveExibirAtalhosPorPerfil`;
+   `app.routes`/`bottom-tab-bar.component.spec.ts`:
+   `deveLevarAbaPerfilParaMeusDados`.
 10. Amostra da regra de toast — `order-list.component.spec.ts`
     (`naoDeveExibirToastDeSucessoAoBuscar`,
     `deveExibirUmUnicoAvisoAoRefazerComItensIndisponiveis`),
@@ -408,12 +495,17 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > mostra 1 toast, um aviso seguinte substitui o erro, toast no topo
 > central, login certo e "Meus Pedidos" sem toast.
 
-**Fatia 3 — Meus Dados e menu do usuário (depois da HU11):**
-- [ ] Avatar com iniciais e dropdown do usuário no padrão.
-- [ ] `customer-panel` com cabeçalho de avatar e estados de carregando/
-      salvando.
-- [ ] Testes da seção 7 (itens 8-9) verdes; specs antigos falhando não
-      aumentam; teste manual.
+**Fatia 4 — Meus Dados e menu do usuário (§5.11):**
+- [ ] `PUT /api/users/{id}` só edita o próprio usuário (403 nos demais;
+      ADMIN pode) e não troca e-mail por usuário comum; documentado no
+      Swagger.
+- [ ] Avatar com iniciais (atualiza ao salvar) e dropdown do usuário no
+      padrão, com itens por perfil, Esc, clique fora e foco.
+- [ ] `/meus-dados` para cliente, fornecedor e entregador, com avatar,
+      skeleton, e-mail somente leitura e estados de salvando; antiga
+      `/painel-cliente` redireciona.
+- [ ] Testes da seção 7 (itens 8-9) verdes; `mvn test` e `ng test`
+      (≤ 19 falhas antigas); sem HEX novo; teste manual e E2E.
 
 **Pendente (próximas fatias):**
 - [ ] Grupos A–E migrados pros tokens (grep: zero hex novo fora de
