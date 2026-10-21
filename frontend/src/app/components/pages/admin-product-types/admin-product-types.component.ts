@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { ProductTypeService } from '../../../services/product-type.service';
-import { ProductType } from '../../../models/product-type';
+import { DEFAULT_PRODUCT_TYPE_ICON, PRODUCT_TYPE_ICONS, ProductType } from '../../../models/product-type';
 import { backendMessage } from '../../../utils/backend-message';
 
 // HU12: o admin mantém os tipos de produto (Gás, Água…) que os fornecedores usam nas categorias
@@ -18,14 +18,21 @@ export class AdminProductTypesComponent implements OnInit {
   private readonly toastr = inject(ToastrService);
   private readonly fb = inject(FormBuilder);
 
+  readonly icons = PRODUCT_TYPE_ICONS;
   types: ProductType[] = [];
   loading = true;
   creating = false;
-  readonly newForm = this.fb.nonNullable.group({ name: ['', [Validators.required, Validators.maxLength(60)]] });
+  readonly newForm = this.fb.nonNullable.group({
+    name: ['', [Validators.required, Validators.maxLength(60)]],
+    icon: [DEFAULT_PRODUCT_TYPE_ICON],
+  });
 
   renamingId?: number;
   renaming = false;
-  readonly renameForm = this.fb.nonNullable.group({ name: ['', [Validators.required, Validators.maxLength(60)]] });
+  readonly renameForm = this.fb.nonNullable.group({
+    name: ['', [Validators.required, Validators.maxLength(60)]],
+    icon: [DEFAULT_PRODUCT_TYPE_ICON],
+  });
 
   ngOnInit(): void {
     this.productTypeService.findAll().subscribe({
@@ -47,7 +54,7 @@ export class AdminProductTypesComponent implements OnInit {
       return;
     }
     this.creating = true;
-    this.productTypeService.create({ name }).subscribe({
+    this.productTypeService.create({ name, icon: this.newForm.controls.icon.value }).subscribe({
       next: (created) => {
         this.creating = false;
         this.types = [...this.types, created];
@@ -61,9 +68,13 @@ export class AdminProductTypesComponent implements OnInit {
     });
   }
 
+  iconOf(type: ProductType): string {
+    return type.icon ?? DEFAULT_PRODUCT_TYPE_ICON;
+  }
+
   startRename(type: ProductType): void {
     this.renamingId = type.id;
-    this.renameForm.setValue({ name: type.name ?? '' });
+    this.renameForm.setValue({ name: type.name ?? '', icon: type.icon ?? DEFAULT_PRODUCT_TYPE_ICON });
   }
 
   cancelRename(): void {
@@ -77,7 +88,7 @@ export class AdminProductTypesComponent implements OnInit {
       return;
     }
     this.renaming = true;
-    this.productTypeService.update(type.id, { name }).subscribe({
+    this.productTypeService.update(type.id, { name, icon: this.renameForm.controls.icon.value }).subscribe({
       next: (updated) => {
         this.renaming = false;
         this.types = this.types.map((t) => (t.id === updated.id ? updated : t));

@@ -4,7 +4,8 @@
         <p class="text-sm text-gray-500">Os fornecedores escolhem um destes tipos ao criar as próprias categorias.</p>
     </header>
 
-    <form class="flex flex-col sm:flex-row gap-2 mb-4" [formGroup]="newForm" (ngSubmit)="create()">
+    <form class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 mb-4 space-y-3" [formGroup]="newForm" (ngSubmit)="create()">
+        <div class="flex flex-col sm:flex-row gap-2">
         <label class="sr-only" for="new-type-name">Nome do novo tipo</label>
         <input id="new-type-name" data-testid="new-type-name" type="text" maxlength="60"
             class="input input-bordered rounded-xl bg-white grow" placeholder="Ex.: Gás, Água Mineral"
@@ -14,6 +15,8 @@
             <span *ngIf="!creating" class="material-icons text-base">add</span>
             Novo tipo
         </button>
+        </div>
+        <ng-container *ngTemplateOutlet="iconGrid; context: { $implicit: newForm.controls.icon, prefix: 'new' }"></ng-container>
     </form>
 
     <div *ngIf="loading" class="space-y-2" aria-busy="true">
@@ -30,7 +33,7 @@
         <li *ngFor="let t of types" [attr.data-testid]="'type-' + t.id"
             class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 flex items-center gap-2">
             <ng-container *ngIf="renamingId !== t.id; else editando">
-                <span class="material-icons text-gray-400">category</span>
+                <span class="material-icons text-primary" aria-hidden="true" [attr.data-testid]="'type-icon-' + t.id">{{ iconOf(t) }}</span>
                 <span class="font-semibold text-gray-800 truncate grow">{{ t.name }}</span>
                 <button type="button" [attr.data-testid]="'rename-' + t.id" class="btn btn-sm btn-ghost rounded-lg"
                     [attr.aria-label]="'Renomear ' + t.name" (click)="startRename(t)">
@@ -39,11 +42,12 @@
                 </button>
             </ng-container>
             <ng-template #editando>
-                <form class="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full" [formGroup]="renameForm" (ngSubmit)="saveRename(t)">
+                <form class="flex flex-wrap items-center gap-2 w-full" [formGroup]="renameForm" (ngSubmit)="saveRename(t)">
                     <label class="sr-only" [for]="'rename-input-' + t.id">Novo nome de {{ t.name }}</label>
                     <input [id]="'rename-input-' + t.id" [attr.data-testid]="'rename-input-' + t.id" type="text" maxlength="60"
-                        class="input input-bordered input-sm rounded-lg grow min-w-0 basis-full sm:basis-auto"
+                        class="input input-bordered input-sm rounded-lg grow min-w-0 basis-full"
                         formControlName="name" [class.input-error]="renameForm.controls.name.touched && renameForm.controls.name.invalid" />
+                    <ng-container *ngTemplateOutlet="iconGrid; context: { $implicit: renameForm.controls.icon, prefix: 'edit' }"></ng-container>
                     <div class="flex gap-1 ml-auto">
                         <button type="button" class="btn btn-sm btn-ghost rounded-lg" (click)="cancelRename()">Cancelar</button>
                         <button type="submit" [attr.data-testid]="'save-rename-' + t.id" class="btn btn-sm btn-primary rounded-lg" [disabled]="renaming">
@@ -54,4 +58,16 @@
             </ng-template>
         </li>
     </ul>
+
+    <ng-template #iconGrid let-ctrl let-prefix="prefix">
+        <div role="group" aria-label="Ícone do tipo" class="flex flex-wrap gap-1">
+            <button *ngFor="let i of icons" type="button" [attr.data-testid]="prefix + '-icon-' + i.icon"
+                class="btn btn-sm btn-square rounded-lg"
+                [ngClass]="ctrl.value === i.icon ? 'btn-primary' : 'btn-ghost bg-white border border-gray-200'"
+                [attr.aria-pressed]="ctrl.value === i.icon" [attr.aria-label]="i.label" [title]="i.label"
+                (click)="ctrl.setValue(i.icon)">
+                <span class="material-icons text-base" aria-hidden="true">{{ i.icon }}</span>
+            </button>
+        </div>
+    </ng-template>
 </div>
