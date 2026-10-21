@@ -34,9 +34,27 @@ describe('SupplierService', () => {
   it('deveEnviarMesSelecionado', () => {
     service.getDashboard('2026-09').subscribe();
 
-    const req = httpMock.expectOne(`${environment.apiUrl}/suppliers/mine/dashboard?month=2026-09`);
+    const req = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/suppliers/mine/dashboard` && r.params.get('month') === '2026-09');
     expect(req.request.method).toBe('GET');
     req.flush({ month: '2026-09' });
+  });
+
+  it('deveBuscarConfiguracoesDoFornecedorLogado', () => {
+    service.getMySettings().subscribe((c) => expect(c.lowStockThreshold).toBe(8));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/suppliers/mine/settings`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ openingTime: '08:00', closingTime: '18:00', averageDeliveryTime: 30, lowStockThreshold: 8 });
+  });
+
+  it('deveSalvarConfiguracoes', () => {
+    const settings = { openingTime: '09:00', closingTime: '02:00', averageDeliveryTime: 40, lowStockThreshold: 5 };
+    service.updateMySettings(settings).subscribe((c) => expect(c).toEqual(settings));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/suppliers/mine/settings`);
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual(settings);
+    req.flush(settings);
   });
 
   it('deveEnviarFiltrosNaListagem', () => {
@@ -57,5 +75,55 @@ describe('SupplierService', () => {
     expect(req.request.params.has('active')).toBeFalse();
     expect(req.request.params.has('q')).toBeFalse();
     req.flush({ data: [], page: 0, size: 10, totalElements: 0, totalPages: 0, hasNext: false, hasPrevious: false });
+  });
+
+  it('deveBuscarPerfilDaLoja', () => {
+    service.getMyProfile().subscribe((p) => expect(p.cnpj).toBe('12345678000101'));
+    const get = httpMock.expectOne(`${environment.apiUrl}/suppliers/mine/profile`);
+    expect(get.request.method).toBe('GET');
+    get.flush({ name: 'Gás Centro', phone: '41991110000', cnpj: '12345678000101' });
+
+    service.updateMyProfile({ name: 'Gás Centro', phone: '41991110000', description: 'Desde 1990' }).subscribe();
+    const put = httpMock.expectOne(`${environment.apiUrl}/suppliers/mine/profile`);
+    expect(put.request.method).toBe('PUT');
+    expect(put.request.body).toEqual({ name: 'Gás Centro', phone: '41991110000', description: 'Desde 1990' });
+    put.flush({});
+  });
+
+  it('deveEnviarLogoComoFormData', () => {
+    const arquivo = new File([new Uint8Array([1, 2, 3])], 'logo.png', { type: 'image/png' });
+    service.uploadMyLogo(arquivo).subscribe((r) => expect(r.logoUrl).toBe('https://cdn/logo.png'));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/suppliers/mine/logo`);
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body instanceof FormData).toBeTrue();
+    expect((req.request.body as FormData).get('file')).toBe(arquivo);
+    req.flush({ logoUrl: 'https://cdn/logo.png' });
+  });
+
+  it('deveRemoverLogo', () => {
+    service.removeMyLogo().subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/suppliers/mine/logo`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null, { status: 204, statusText: 'No Content' });
+  });
+
+  it('deveEnviarFiltrosDoDashboard', () => {
+    service.getDashboard('2026-10', { payment: 'PIX', mode: 'PICKUP', typeId: 2, categoryId: 7, productId: 4 }).subscribe();
+
+    const req = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/suppliers/mine/dashboard`);
+    expect(req.request.params.get('month')).toBe('2026-10');
+    expect(req.request.params.get('payment')).toBe('PIX');
+    expect(req.request.params.get('mode')).toBe('PICKUP');
+    expect(req.request.params.get('typeId')).toBe('2');
+    expect(req.request.params.get('categoryId')).toBe('7');
+    expect(req.request.params.get('productId')).toBe('4');
+    req.flush({ month: '2026-10' });
+
+    service.getDashboard('2026-10').subscribe();
+    const semFiltro = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/suppliers/mine/dashboard`);
+    expect(semFiltro.request.params.keys()).toEqual(['month']);
+    semFiltro.flush({ month: '2026-10' });
   });
 });

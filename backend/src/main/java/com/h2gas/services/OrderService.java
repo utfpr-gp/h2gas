@@ -1,5 +1,7 @@
 package com.h2gas.services;
 
+import com.h2gas.model.dto.OrderHistorySummaryDTO;
+import com.h2gas.model.dto.OrderHistoryFilter;
 import com.h2gas.events.OrderStatusChangedEvent;
 import com.h2gas.enums.DeliveryModeEnum;
 import com.h2gas.enums.OrderStatusEnum;
@@ -430,5 +432,30 @@ public class OrderService {
 //        List<OrderStatusEnum> excludedStatuses = List.of(OrderStatusEnum.DELIVERED, OrderStatusEnum.CANCELED);
         return orderRepository.findBySupplierIdAndStatusNotInOrderByCreatedAtDesc(id, excludeStatuses, pageable)
                 .map(orderMapper::toResponseDto);
+    }
+
+    // F7 fatia 6: histórico de pedidos finalizados do fornecedor do token
+    public Page<OrderResponseDTO> findMyHistory(String supplierId, OrderHistoryFilter f, Pageable pageable) {
+        return orderRepository.findHistory(supplierId, f.statuses(), f.from(), f.toExclusive(), f.payment(), f.mode(), f.q(), pageable)
+                .map(orderMapper::toResponseDto);
+    }
+
+    // RN01: contagens e receita calculadas no banco; a receita é só dos entregues
+    public OrderHistorySummaryDTO summarizeMyHistory(String supplierId, OrderHistoryFilter f) {
+        long delivered = 0;
+        BigDecimal revenue = BigDecimal.ZERO;
+        long canceled = 0;
+        if (f.statuses().contains(OrderStatusEnum.DELIVERED)) {
+            Object[] row = orderRepository.summarizeHistory(supplierId, List.of(OrderStatusEnum.DELIVERED),
+                    f.from(), f.toExclusive(), f.payment(), f.mode(), f.q()).get(0);
+            delivered = ((Number) row[0]).longValue();
+            revenue = new BigDecimal(row[1].toString());
+        }
+        if (f.statuses().contains(OrderStatusEnum.CANCELED)) {
+            canceled = ((Number) orderRepository.summarizeHistory(supplierId, List.of(OrderStatusEnum.CANCELED),
+                    f.from(), f.toExclusive(), f.payment(), f.mode(), f.q()).get(0)[0]).longValue();
+        }
+        BigDecimal averageTicket = delivered == 0 ? null : revenue.divide(BigDecimal.valueOf(delivered), 2, java.math.RoundingMode.HALF_UP);
+        return new OrderHistorySummaryDTO(delivered, canceled, revenue.setScale(2, java.math.RoundingMode.HALF_UP), averageTicket);
     }
 }

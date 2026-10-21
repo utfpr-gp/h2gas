@@ -5,7 +5,9 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
 import { PaginatedResponse } from '../models/paginated-response';
-import { SupplierDashboard } from '../models/supplier-dashboard';
+import { DashboardFilter, SupplierDashboard } from '../models/supplier-dashboard';
+import { SupplierSettings } from '../models/supplier-settings';
+import { SupplierProfile, SupplierProfileRequest } from '../models/supplier-profile';
 
 @Injectable({
   providedIn: 'root'
@@ -15,6 +17,34 @@ export class SupplierService extends AbstractService<Supplier> {
 
   constructor(protected override http: HttpClient) {
     super(http);
+  }
+
+  // F7 fatia 6: dados e logo da loja; o backend usa o fornecedor do token
+  getMyProfile(): Observable<SupplierProfile> {
+    return this.http.get<SupplierProfile>(`${this.baseUrl}/mine/profile`);
+  }
+
+  updateMyProfile(request: SupplierProfileRequest): Observable<SupplierProfile> {
+    return this.http.put<SupplierProfile>(`${this.baseUrl}/mine/profile`, request);
+  }
+
+  uploadMyLogo(file: File): Observable<{ logoUrl: string }> {
+    const body = new FormData();
+    body.append('file', file);
+    return this.http.put<{ logoUrl: string }>(`${this.baseUrl}/mine/logo`, body);
+  }
+
+  removeMyLogo(): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl}/mine/logo`);
+  }
+
+  // o backend usa o fornecedor do token
+  getMySettings(): Observable<SupplierSettings> {
+    return this.http.get<SupplierSettings>(`${this.baseUrl}/mine/settings`);
+  }
+
+  updateMySettings(settings: SupplierSettings): Observable<SupplierSettings> {
+    return this.http.put<SupplierSettings>(`${this.baseUrl}/mine/settings`, settings);
   }
 
   // F7 fatia 6: active=false traz quem aguarda aprovação; filtro e busca no backend
@@ -56,9 +86,14 @@ export class SupplierService extends AbstractService<Supplier> {
   }
 
   // o fornecedor vem do token; month (YYYY-MM) omitido = mês corrente
-  getDashboard(month?: string): Observable<SupplierDashboard> {
-    const query = month ? `?month=${month}` : '';
-    return this.http.get<SupplierDashboard>(`${this.baseUrl}/mine/dashboard${query}`);
+  // F7 fatia 6: filtros opcionais (pagamento e modo filtram o pedido; tipo, categoria e produto, os itens)
+  getDashboard(month?: string, filter: DashboardFilter = {}): Observable<SupplierDashboard> {
+    let params = new HttpParams();
+    if (month) params = params.set('month', month);
+    for (const key of ['payment', 'mode', 'typeId', 'categoryId', 'productId'] as const) {
+      if (filter[key] != null) params = params.set(key, String(filter[key]));
+    }
+    return this.http.get<SupplierDashboard>(`${this.baseUrl}/mine/dashboard`, { params });
   }
 
   getOpen(supplierId: string): Observable<boolean> {

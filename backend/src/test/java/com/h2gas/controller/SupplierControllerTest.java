@@ -1,5 +1,6 @@
 package com.h2gas.controller;
 
+import com.h2gas.model.dto.DashboardFilter;
 import com.h2gas.configuration.security.SecurityConfigurations;
 import com.h2gas.configuration.security.SecurityFilter;
 import com.h2gas.configuration.security.TokenService;
@@ -7,6 +8,11 @@ import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.model.dto.SupplierDTO;
 import com.h2gas.model.dto.SupplierDashboardDTO;
+import com.h2gas.model.dto.SupplierSettingsDTO;
+import com.h2gas.model.dto.SupplierProfileDTO;
+import com.h2gas.model.dto.SupplierProfileRequestDTO;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.http.MediaType;
 import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.SupplierMapper;
 import com.h2gas.model.repository.UserRepository;
@@ -32,12 +38,17 @@ import java.time.YearMonth;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -85,29 +96,29 @@ class SupplierControllerTest {
         autenticarComoFornecedor("fornecedor-1");
         SupplierDashboardDTO dashboard = new SupplierDashboardDTO();
         dashboard.setMonth("2026-10");
-        when(supplierDashboardService.buildDashboard("fornecedor-1", YearMonth.of(2026, 10))).thenReturn(dashboard);
+        when(supplierDashboardService.buildDashboard(eq("fornecedor-1"), eq(YearMonth.of(2026, 10)), any())).thenReturn(dashboard);
 
         mockMvc.perform(get("/api/suppliers/mine/dashboard").param("month", "2026-10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.month").value("2026-10"));
 
-        verify(supplierDashboardService).buildDashboard("fornecedor-1", YearMonth.of(2026, 10));
+        verify(supplierDashboardService).buildDashboard("fornecedor-1", YearMonth.of(2026, 10), DashboardFilter.NONE);
     }
 
     @Test
     void deveUsarMesCorrenteQuandoNaoInformado() throws Exception {
         autenticarComoFornecedor("fornecedor-1");
-        when(supplierDashboardService.buildDashboard(eq("fornecedor-1"), any())).thenReturn(new SupplierDashboardDTO());
+        when(supplierDashboardService.buildDashboard(eq("fornecedor-1"), any(), any())).thenReturn(new SupplierDashboardDTO());
 
         mockMvc.perform(get("/api/suppliers/mine/dashboard")).andExpect(status().isOk());
 
-        verify(supplierDashboardService).buildDashboard("fornecedor-1", YearMonth.now());
+        verify(supplierDashboardService).buildDashboard("fornecedor-1", YearMonth.now(), DashboardFilter.NONE);
     }
 
     @Test
     void deveRetornar400ParaMesFuturoOuInvalido() throws Exception {
         autenticarComoFornecedor("fornecedor-1");
-        when(supplierDashboardService.buildDashboard(eq("fornecedor-1"), any()))
+        when(supplierDashboardService.buildDashboard(eq("fornecedor-1"), any(), any()))
                 .thenThrow(new BusinessRuleException("Mês futuro não tem indicadores."));
 
         mockMvc.perform(get("/api/suppliers/mine/dashboard").param("month", "2099-01"))
@@ -115,7 +126,7 @@ class SupplierControllerTest {
         mockMvc.perform(get("/api/suppliers/mine/dashboard").param("month", "outubro"))
                 .andExpect(status().isBadRequest());
 
-        verify(supplierDashboardService, never()).buildDashboard(any(), eq(YearMonth.of(2026, 10)));
+        verify(supplierDashboardService, never()).buildDashboard(any(), eq(YearMonth.of(2026, 10)), any());
     }
 
     @Test
@@ -142,6 +153,48 @@ class SupplierControllerTest {
                 .andExpect(status().isOk());
 
         verify(supplierService).findAllSuppliersOpenAndActive(isNull(), any());
+    }
+
+    @Test
+    void deveUsarOFornecedorDoToken() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+        when(supplierService.findMySettings("fornecedor-1")).thenReturn(new SupplierSettingsDTO("08:00", "18:00", 30, 8));
+        when(supplierService.updateMySettings(eq("fornecedor-1"), any())).thenReturn(new SupplierSettingsDTO("09:00", "19:00", 40, 6));
+
+        mockMvc.perform(get("/api/suppliers/mine/settings"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.lowStockThreshold").value(8));
+        mockMvc.perform(put("/api/suppliers/mine/settings").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"openingTime\":\"09:00\",\"closingTime\":\"19:00\",\"averageDeliveryTime\":40,\"lowStockThreshold\":6}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.openingTime").value("09:00"));
+
+        verify(supplierService).updateMySettings("fornecedor-1", new SupplierSettingsDTO("09:00", "19:00", 40, 6));
+    }
+
+    @Test
+    void deveRetornar400ComTempoDeEntregaForaDoLimite() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+
+        mockMvc.perform(put("/api/suppliers/mine/settings").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"openingTime\":\"09:00\",\"closingTime\":\"19:00\",\"averageDeliveryTime\":500,\"lowStockThreshold\":6}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(put("/api/suppliers/mine/settings").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"openingTime\":\"9h\",\"closingTime\":\"19:00\",\"averageDeliveryTime\":30,\"lowStockThreshold\":6}"))
+                .andExpect(status().isBadRequest());
+
+        verify(supplierService, never()).updateMySettings(any(), any());
+    }
+
+    @Test
+    void deveRetornar403AoAlterarHorarioDeOutroFornecedor() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+
+        mockMvc.perform(patch("/api/suppliers/fornecedor-2/update-times").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"openingTime\":\"00:00\"}"))
+                .andExpect(status().isForbidden());
+
+        verify(supplierService, never()).updateTimesSupplier(any(), any());
     }
 
     private void autenticarComoAdmin() {
@@ -175,5 +228,95 @@ class SupplierControllerTest {
         mockMvc.perform(get("/api/suppliers")).andExpect(status().isOk());
 
         verify(supplierService).findAllSuppliers(isNull(), isNull(), any());
+    }
+
+    @Test
+    void deveUsarALojaDoTokenNoPerfil() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+        SupplierProfileDTO perfil = new SupplierProfileDTO("Gás Centro", "gascentro@h2gas.local", "41999999999", "Desde 1990", "12345678000101",
+                null, 3L, "Rua XV", "700", "Centro", "Curitiba", "PR");
+        when(supplierService.findMyProfile("fornecedor-1")).thenReturn(perfil);
+        when(supplierService.updateMyProfile(eq("fornecedor-1"), any())).thenReturn(perfil);
+
+        mockMvc.perform(get("/api/suppliers/mine/profile"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cnpj").value("12345678000101"));
+        mockMvc.perform(put("/api/suppliers/mine/profile").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Gás Centro\",\"phone\":\"41999999999\",\"description\":\"Desde 1990\"}"))
+                .andExpect(status().isOk());
+
+        verify(supplierService).updateMyProfile("fornecedor-1", new SupplierProfileRequestDTO("Gás Centro", "41999999999", "Desde 1990"));
+    }
+
+    @Test
+    void deveRetornar400ComNomeVazio() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+
+        mockMvc.perform(put("/api/suppliers/mine/profile").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"  \",\"phone\":\"41999999999\"}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(put("/api/suppliers/mine/profile").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Gás\",\"phone\":\"123\"}"))
+                .andExpect(status().isBadRequest());
+
+        verify(supplierService, never()).updateMyProfile(any(), any());
+    }
+
+    @Test
+    void deveRetornar403AoEditarLojaDeOutroPeloId() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+
+        mockMvc.perform(put("/api/suppliers/fornecedor-2").contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"Invadida\"}"))
+                .andExpect(status().isForbidden());
+
+        verify(supplierService, never()).update(any(), any());
+    }
+
+    @Test
+    void deveEnviarALogoComoMultipart() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+        when(supplierService.updateMyLogo(eq("fornecedor-1"), any())).thenReturn("https://res.cloudinary.com/h2gas/logo.png");
+
+        mockMvc.perform(multipart("/api/suppliers/mine/logo")
+                        .file(new MockMultipartFile("file", "logo.png", "image/png", new byte[]{1, 2, 3}))
+                        .with(r -> { r.setMethod("PUT"); return r; }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.logoUrl").value("https://res.cloudinary.com/h2gas/logo.png"));
+        mockMvc.perform(delete("/api/suppliers/mine/logo")).andExpect(status().isNoContent());
+
+        verify(supplierService).removeMyLogo("fornecedor-1");
+    }
+
+    @Test
+    void deveRetornar403AoAbrirOuFecharLojaDeOutro() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+
+        mockMvc.perform(patch("/api/suppliers/fornecedor-2/status").contentType(MediaType.APPLICATION_JSON).content("{\"status\":true}"))
+                .andExpect(status().isForbidden());
+
+        verify(supplierService, never()).updateStatusOpenClosed(any(), anyBoolean());
+    }
+
+    @Test
+    void deveRepassarOsFiltrosDoDashboard() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+        when(supplierDashboardService.buildDashboard(eq("fornecedor-1"), any(), any())).thenReturn(new SupplierDashboardDTO());
+
+        mockMvc.perform(get("/api/suppliers/mine/dashboard").param("month", "2026-10").param("payment", "pix")
+                        .param("mode", "PICKUP").param("typeId", "2").param("categoryId", "7").param("productId", "4"))
+                .andExpect(status().isOk());
+
+        verify(supplierDashboardService).buildDashboard("fornecedor-1", YearMonth.of(2026, 10),
+                DashboardFilter.parse("PIX", "PICKUP", "2", "7", "4"));
+    }
+
+    @Test
+    void deveRetornar400ComFiltroInvalidoNoDashboard() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+
+        mockMvc.perform(get("/api/suppliers/mine/dashboard").param("payment", "BOLETO")).andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/suppliers/mine/dashboard").param("typeId", "abc")).andExpect(status().isBadRequest());
+
+        verify(supplierDashboardService, never()).buildDashboard(any(), any(), any());
     }
 }

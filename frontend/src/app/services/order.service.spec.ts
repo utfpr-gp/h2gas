@@ -96,4 +96,28 @@ describe('OrderService', () => {
     expect(req.request.method).toBe('PATCH');
     req.flush({ id: 'pedido-1', status: 'Entregue' });
   });
+
+  it('deveEnviarFiltrosDoHistorico', () => {
+    service.listMyHistory({ status: 'delivered', from: '2026-10-01', to: '2026-10-31', payment: 'PIX', mode: 'PICKUP', q: ' maria ', page: 1, size: 10 }).subscribe();
+
+    const req = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/orders/mine/history`);
+    expect(req.request.params.get('status')).toBe('delivered');
+    expect(req.request.params.get('from')).toBe('2026-10-01');
+    expect(req.request.params.get('to')).toBe('2026-10-31');
+    expect(req.request.params.get('payment')).toBe('PIX');
+    expect(req.request.params.get('mode')).toBe('PICKUP');
+    expect(req.request.params.get('q')).toBe('maria');
+    expect(req.request.params.get('page')).toBe('1');
+    req.flush({ data: [], page: 1, size: 10, totalElements: 0, totalPages: 0, hasNext: false, hasPrevious: true });
+  });
+
+  it('deveBuscarResumoDoHistorico', () => {
+    service.getMyHistorySummary({ payment: 'PIX' }).subscribe((r) => expect(r.delivered).toBe(2));
+
+    const req = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/orders/mine/history/summary`);
+    expect(req.request.params.get('payment')).toBe('PIX');
+    expect(req.request.params.has('status')).toBeFalse();
+    expect(req.request.params.has('page')).toBeFalse();
+    req.flush({ delivered: 2, canceled: 1, revenue: 150, averageTicket: 75 });
+  });
 });

@@ -1,5 +1,13 @@
 package com.h2gas.services;
 
+import com.h2gas.exceptions.ForbiddenResourceException;
+import com.h2gas.model.dto.CategoryRequestDTO;
+import com.h2gas.model.dto.SupplierCategoryDTO;
+import com.h2gas.model.entity.ProductItem;
+import com.h2gas.model.repository.ProductItemRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.dto.CategoryProductDTO;
 import com.h2gas.model.dto.CityDTO;
@@ -50,6 +58,15 @@ class CategoryProductServiceTest {
 
     private Long validCategotyIdSecond;
 
+    private String supplierFirstId;
+
+    private String supplierSecondId;
+
+    private ProductType tipoAgua;
+
+    @Autowired
+    private ProductItemRepository productItemRepository;
+
     @BeforeEach
     public void setUp() {
 
@@ -98,6 +115,10 @@ class CategoryProductServiceTest {
         typeIdAux = productTypeGas.getId();
 
         validCategotyIdSecond = categoryProductSecond.getId();
+
+        supplierFirstId = supplierFirst.getId();
+        supplierSecondId = supplierSecond.getId();
+        tipoAgua = productTypeAgua;
     }
 
     @Test
@@ -133,15 +154,8 @@ class CategoryProductServiceTest {
     void createCategory() {
         Supplier supplier = createSupplierForTest(2);
 
-        CategoryProductDTO novaCategoria = new CategoryProductDTO(
-            null,
-            "Teste categoria criada",
-            null,
-            typeIdAux,
-            supplier.getId()
-        );
-
-        CategoryProductDTO categoriaCriada = categoryProductService.createCategory(novaCategoria);
+        CategoryProductDTO categoriaCriada = categoryProductService.createCategory(supplier.getId(),
+                new CategoryRequestDTO("Teste categoria criada", typeIdAux));
 
         assertNotNull(categoriaCriada);
         assertNotNull(categoriaCriada.getId());
@@ -156,7 +170,7 @@ class CategoryProductServiceTest {
     @DisplayName("Deleta uma categoria com sucesso")
     void deleteCategory() {
         assertTrue(categoryProductRepository.findById(validCategoryId).isPresent());
-        categoryProductService.deleteCategory(validCategoryId);
+        categoryProductService.deleteCategory(validCategoryId, supplierFirstId);
         assertFalse(categoryProductRepository.findById(validCategoryId).isPresent());
     }
 
@@ -166,7 +180,7 @@ class CategoryProductServiceTest {
         Long invalidId = 999L;
 
         Exception exception = assertThrows(RuntimeException.class, () -> {
-            categoryProductService.deleteCategory(invalidId);
+            categoryProductService.deleteCategory(invalidId, supplierFirstId);
         });
 
         assertEquals("Categoria não encontrada com ID: " + invalidId, exception.getMessage());
@@ -175,14 +189,8 @@ class CategoryProductServiceTest {
     @Test
     @DisplayName("Deve atualizar uma categoria")
     void update() {
-        CategoryProductDTO categoryProductDTO = new CategoryProductDTO(
-                null,
-                "Teste update",
-                null,
-                typeIdAux,
-                null
-        );
-        CategoryProductDTO result = categoryProductService.update(validCategotyIdSecond, categoryProductDTO);
+        CategoryProductDTO result = categoryProductService.update(validCategotyIdSecond,
+                new CategoryRequestDTO("Teste update", typeIdAux), supplierSecondId);
         assertEquals("Teste update", result.getName());
     }
 
@@ -274,5 +282,82 @@ class CategoryProductServiceTest {
         } else {
             return supplierSecond;
         }
+    }
+
+    private void salvarProduto(Long categoriaId, String supplierId) {
+        ProductItem p = new ProductItem();
+        p.setBrand("Minalba");
+        p.setPriceDelivery(new java.math.BigDecimal("10.00"));
+        p.setPricePickup(new java.math.BigDecimal("10.00"));
+        p.setImageUrl("x");
+        p.setStockQuantity(5);
+        p.setCategoryProduct(categoryProductRepository.findById(categoriaId).orElseThrow());
+        p.setSupplier(supplierRepository.findById(supplierId).orElseThrow());
+        productItemRepository.save(p);
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: lista só as categorias do fornecedor, com tipo, ícone e contagem de produtos")
+    void deveListarCategoriasDoFornecedorComContagemDeProdutos() {
+        salvarProduto(validCategoryId, supplierFirstId);
+        salvarProduto(validCategoryId, supplierFirstId);
+        categoryProductService.createCategory(supplierFirstId, new CategoryRequestDTO("10L", tipoAgua.getId()));
+
+        List<SupplierCategoryDTO> minhas = categoryProductService.findMine(supplierFirstId);
+
+        assertEquals(List.of("10L", "20L"), minhas.stream().map(SupplierCategoryDTO::name).toList());
+        SupplierCategoryDTO vinte = minhas.get(1);
+        assertEquals("Água Mineral", vinte.type());
+        assertEquals(tipoAgua.getId(), vinte.productTypeId());
+        assertEquals("category", vinte.typeIcon());
+        assertEquals(2, vinte.productCount());
+        assertEquals(0, minhas.get(0).productCount());
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: a categoria nasce na loja do token")
+    void deveCriarCategoriaNaLojaDoToken() {
+        CategoryProductDTO criada = categoryProductService.createCategory(supplierSecondId, new CategoryRequestDTO("  P45 ", typeIdAux));
+
+        CategoryProduct entidade = categoryProductRepository.findById(criada.getId()).orElseThrow();
+        assertEquals(supplierSecondId, entidade.getSupplier().getId());
+        assertEquals("P45", entidade.getName());
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: nome repetido no mesmo tipo e na mesma loja é 409")
+    void deveRecusarNomeRepetidoNoMesmoTipo() {
+        ResponseStatusException erro = assertThrows(ResponseStatusException.class,
+                () -> categoryProductService.createCategory(supplierFirstId, new CategoryRequestDTO("20l", tipoAgua.getId())));
+        assertEquals(HttpStatus.CONFLICT, erro.getStatusCode());
+        assertEquals("Você já tem a categoria 20l em Água Mineral.", erro.getReason());
+
+        // outro fornecedor ou outro tipo pode usar o mesmo nome
+        assertNotNull(categoryProductService.createCategory(supplierSecondId, new CategoryRequestDTO("20L", tipoAgua.getId())));
+        assertNotNull(categoryProductService.createCategory(supplierFirstId, new CategoryRequestDTO("20L", typeIdAux)));
+        // editar mantendo o próprio nome não conflita
+        assertNotNull(categoryProductService.update(validCategoryId, new CategoryRequestDTO("20L", tipoAgua.getId()), supplierFirstId));
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: fornecedor não edita nem exclui categoria de outro")
+    void deveRecusarEditarOuExcluirCategoriaDeOutroFornecedor() {
+        assertThrows(ForbiddenResourceException.class,
+                () -> categoryProductService.update(validCategoryId, new CategoryRequestDTO("Invadida", typeIdAux), supplierSecondId));
+        assertThrows(ForbiddenResourceException.class, () -> categoryProductService.deleteCategory(validCategoryId, supplierSecondId));
+        assertEquals("20L", categoryProductRepository.findById(validCategoryId).orElseThrow().getName());
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: categoria com produtos não é excluída (409)")
+    void deveRecusarExcluirCategoriaComProdutos() {
+        salvarProduto(validCategoryId, supplierFirstId);
+
+        ResponseStatusException erro = assertThrows(ResponseStatusException.class,
+                () -> categoryProductService.deleteCategory(validCategoryId, supplierFirstId));
+
+        assertEquals(HttpStatus.CONFLICT, erro.getStatusCode());
+        assertEquals("20L tem 1 produto. Mova ou exclua os produtos antes de excluir a categoria.", erro.getReason());
+        assertTrue(categoryProductRepository.findById(validCategoryId).isPresent());
     }
 }

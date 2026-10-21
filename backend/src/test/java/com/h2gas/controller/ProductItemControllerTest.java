@@ -5,6 +5,8 @@ import com.h2gas.configuration.security.SecurityFilter;
 import com.h2gas.configuration.security.TokenService;
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.dto.ProductItemDTO;
+import com.h2gas.model.dto.ProductStockSummaryDTO;
+import com.h2gas.enums.StockFilterEnum;
 import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.CreateProductItemMapper;
 import com.h2gas.model.mapper.ProductItemMapper;
@@ -35,6 +37,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -197,5 +201,42 @@ class ProductItemControllerTest {
                 .andExpect(status().isOk());
 
         verify(productItemService).updateProductItem(eq(12L), any(), any());
+    }
+
+    @Test
+    void deveListarSoOsProdutosDoToken() throws Exception {
+        autenticarFornecedor();
+        when(productItemService.findMine(eq("forn-1"), eq("ultra"), eq(StockFilterEnum.LOW), any()))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
+        when(productItemService.summarizeMine("forn-1")).thenReturn(new ProductStockSummaryDTO(7, 6, 2, 1, 8));
+
+        mockMvc.perform(get("/api/product-items/mine").param("q", "ultra").param("stock", "low"))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/product-items/mine/summary"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.lowStock").value(2))
+                .andExpect(jsonPath("$.lowStockThreshold").value(8));
+
+        verify(productItemService).findMine(eq("forn-1"), eq("ultra"), eq(StockFilterEnum.LOW), any());
+    }
+
+    @Test
+    void deveRetornar400ComFiltroDeEstoqueInvalido() throws Exception {
+        autenticarFornecedor();
+
+        mockMvc.perform(get("/api/product-items/mine").param("stock", "metade"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Filtro de estoque inválido: use all, available, low ou out."));
+
+        verify(productItemService, never()).findMine(any(), any(), any(), any());
+    }
+
+    @Test
+    void deveRepassarOFornecedorDoTokenAoExcluir() throws Exception {
+        autenticarFornecedor();
+
+        mockMvc.perform(delete("/api/product-items/9")).andExpect(status().isOk());
+
+        verify(productItemService).deleteProductItem(eq(9L), org.mockito.ArgumentMatchers.argThat(u -> "forn-1".equals(u.getId())));
     }
 }

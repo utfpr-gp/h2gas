@@ -184,7 +184,19 @@ describe('MenuComponent', () => {
     entrarComo({ id: 'f1', name: 'Gás Centro', email: 'gas@h2gas.local', userType: 'SUPPLIER' });
     abrirMenu();
 
-    expect(itens()).toEqual(['Meus Dados', 'Dashboard', 'Pedidos recebidos', 'Configurações', 'Sair']);
+    expect(itens()).toEqual(['Minha loja', 'Dashboard', 'Pedidos recebidos', 'Configurações', 'Sair']);
+  });
+
+  it('deveMostrarMinhaLojaNoLugarDeMeusDadosParaFornecedor', () => {
+    entrarComo({ id: 'f1', name: 'Gás Centro', email: 'gas@h2gas.local', userType: 'SUPPLIER' });
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate');
+    abrirMenu();
+
+    expect(byId('menu-item-meus-dados')).toBeNull();
+    (byId('menu-item-minha-loja') as HTMLButtonElement).click();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/minha-loja']);
   });
 
   it('deveMostrarAsOpcoesDoEntregador', () => {

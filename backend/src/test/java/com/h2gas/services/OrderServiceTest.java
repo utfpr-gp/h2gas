@@ -1,5 +1,7 @@
 package com.h2gas.services;
 
+import com.h2gas.model.dto.OrderHistorySummaryDTO;
+import com.h2gas.model.dto.OrderHistoryFilter;
 import com.h2gas.enums.DeliveryModeEnum;
 import com.h2gas.enums.OrderStatusEnum;
 import com.h2gas.exceptions.BusinessRuleException;
@@ -1310,4 +1312,99 @@ class OrderServiceTest {
         return supplier;
     }
 
+
+    // ---- F7 fatia 6: histórico do fornecedor ----
+    @jakarta.persistence.PersistenceContext
+    private jakarta.persistence.EntityManager entityManager;
+
+    private Order pedidoFinalizado(Supplier supplier, User customer, OrderStatusEnum status, String payment,
+                                   DeliveryModeEnum mode, String total, String createdAt) {
+        Order o = new Order();
+        o.setCustomer(customer);
+        o.setSupplier(supplier);
+        o.setStatus(status);
+        o.setPaymentMethod(payment);
+        o.setDeliveryMode(mode);
+        o.setTotalPrice(new BigDecimal(total));
+        o = orderRepository.saveAndFlush(o);
+        entityManager.createNativeQuery("UPDATE orders SET created_at = :d WHERE id = :id")
+                .setParameter("d", java.sql.Timestamp.valueOf(createdAt + " 10:00:00")).setParameter("id", o.getId()).executeUpdate();
+        return o;
+    }
+
+    private void criarHistorico() {
+        Supplier supplier = supplierRepository.findById(validSupplierId).orElseThrow();
+        User cliente = userRepository.findById(validCustomerId).orElseThrow();
+        User maria = userRepository.save(new User(null, "Maria Busca", "maria@teste.com", "41900000000", "11122233344", "senha", UserTypeEnum.CUSTOMER));
+        pedidoFinalizado(supplier, cliente, OrderStatusEnum.DELIVERED, "PIX", DeliveryModeEnum.DELIVERY, "100.00", "2026-10-05");
+        pedidoFinalizado(supplier, maria, OrderStatusEnum.DELIVERED, "DINHEIRO", DeliveryModeEnum.PICKUP, "50.00", "2026-09-20");
+        pedidoFinalizado(supplier, cliente, OrderStatusEnum.CANCELED, "PIX", DeliveryModeEnum.DELIVERY, "80.00", "2026-10-10");
+        Supplier outro = supplierRepository.save(createSupplier("Outra Loja", "outra@teste.com", "41911112222", "55566677788",
+                "senha", "11222333000155", "outra", true, true, null, testCity));
+        pedidoFinalizado(outro, cliente, OrderStatusEnum.DELIVERED, "PIX", DeliveryModeEnum.DELIVERY, "999.00", "2026-10-05");
+        entityManager.clear();
+    }
+
+    private OrderHistoryFilter filtro(String status, String from, String to, String payment, String mode, String q) {
+        return OrderHistoryFilter.parse(status, from, to, payment, mode, q);
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: histórico traz só entregues e cancelados do fornecedor, mais recentes primeiro")
+    void deveListarSoFinalizadosDoFornecedor() {
+        criarHistorico();
+
+        Page<OrderResponseDTO> todos = orderService.findMyHistory(validSupplierId, filtro(null, null, null, null, null, null), PageRequest.of(0, 10));
+
+        assertEquals(3, todos.getTotalElements()); // o PENDING do setUp e o pedido da outra loja ficam de fora
+        assertEquals(List.of(new BigDecimal("80.00"), new BigDecimal("100.00"), new BigDecimal("50.00")),
+                todos.getContent().stream().map(OrderResponseDTO::getTotalPrice).toList());
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: filtros de status, período, pagamento, modo e busca")
+    void deveFiltrarPorPeriodoPagamentoModoEBusca() {
+        criarHistorico();
+        java.util.function.Function<OrderHistoryFilter, Long> total =
+                f -> orderService.findMyHistory(validSupplierId, f, PageRequest.of(0, 10)).getTotalElements();
+
+        assertEquals(2, total.apply(filtro("delivered", null, null, null, null, null)));
+        assertEquals(1, total.apply(filtro("canceled", null, null, null, null, null)));
+        assertEquals(2, total.apply(filtro(null, "2026-10-01", "2026-10-31", null, null, null)));
+        assertEquals(2, total.apply(filtro(null, null, null, "PIX", null, null)));
+        assertEquals(1, total.apply(filtro(null, null, null, null, "PICKUP", null)));
+        assertEquals(1, total.apply(filtro(null, null, null, null, null, "maria")));
+        assertEquals(1, total.apply(filtro("delivered", "2026-10-01", "2026-10-31", "PIX", "DELIVERY", "cliente")));
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: resumo do histórico conta e soma no banco com os mesmos filtros")
+    void deveResumirReceitaEContagensComOsFiltros() {
+        criarHistorico();
+
+        OrderHistorySummaryDTO tudo = orderService.summarizeMyHistory(validSupplierId, filtro(null, null, null, null, null, null));
+        assertEquals(2, tudo.delivered());
+        assertEquals(1, tudo.canceled());
+        assertEquals(0, new BigDecimal("150.00").compareTo(tudo.revenue()));
+        assertEquals(0, new BigDecimal("75.00").compareTo(tudo.averageTicket()));
+
+        OrderHistorySummaryDTO pix = orderService.summarizeMyHistory(validSupplierId, filtro(null, null, null, "PIX", null, null));
+        assertEquals(1, pix.delivered());
+        assertEquals(0, new BigDecimal("100.00").compareTo(pix.revenue()));
+
+        OrderHistorySummaryDTO vazio = orderService.summarizeMyHistory(validSupplierId, filtro(null, "2020-01-01", "2020-01-31", null, null, null));
+        assertEquals(0, vazio.delivered());
+        assertEquals(0, BigDecimal.ZERO.compareTo(vazio.revenue()));
+        assertNull(vazio.averageTicket());
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: filtro inválido no histórico é 400")
+    void deveRecusarFiltroInvalidoNoHistorico() {
+        assertThrows(BusinessRuleException.class, () -> filtro("pendente", null, null, null, null, null));
+        assertThrows(BusinessRuleException.class, () -> filtro(null, "ontem", null, null, null, null));
+        assertThrows(BusinessRuleException.class, () -> filtro(null, "2026-10-31", "2026-10-01", null, null, null));
+        assertThrows(BusinessRuleException.class, () -> filtro(null, null, null, "BOLETO", null, null));
+        assertThrows(BusinessRuleException.class, () -> filtro(null, null, null, null, "DRONE", null));
+    }
 }

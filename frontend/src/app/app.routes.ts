@@ -3,6 +3,7 @@ import { LoginComponent } from './components/pages/login/login.component';
 import { InitialScreenComponent } from './components/pages/initial-screen/initial-screen.component';
 import { RegisterComponent } from './components/pages/register/register.component';
 import { RegisterSupplierComponent } from './components/pages/register-supplier/register-supplier.component';
+import { supplierStoreGuard } from './guards/supplier-store.guard';
 import { authGuard } from './guards/auth.guard';
 import { activeDeliveryGuard } from './guards/active-delivery.guard';
 import { addressDefinedGuard } from './guards/address-defined.guard';
@@ -11,8 +12,6 @@ import { AdminDashboardComponent } from './components/pages/admin-dashboard/admi
 import { AdminUsersComponent } from './components/pages/admin-users/admin-users.component';
 import { AdminProductTypesComponent } from './components/pages/admin-product-types/admin-product-types.component';
 import { DistribuitorFormComponent } from './components/pages/distribuitor-form/distribuitor-form.component';
-import { CategoryProductsComponent } from './components/pages/category-products/category-products.component';
-import { ProductItemComponent } from './components/pages/product-item/product-item.component';
 import { ProductItemFormComponent } from './components/pages/product-item-form/product-item-form.component';
 import { UnauthorizedComponent } from './components/pages/unauthorized/unauthorized.component';
 import { SupplierListComponent } from './components/pages/supplier-list/supplier-list.component';
@@ -23,7 +22,6 @@ import { CustomerPanelComponent } from './components/pages/customer-panel/custom
 import { ManageAddressesComponent } from './components/pages/manage-addresses/manage-addresses.component';
 import { ReceivedOrdersComponent } from './components/pages/received-orders/received-orders.component';
 import { AwaitingApprovalComponent } from './components/pages/awaiting-approval/awaiting-approval.component';
-import { OrderHistoryComponent } from './components/pages/order-history/order-history.component';
 import { ManageDeliverersComponent } from './components/pages/manage-deliverers/manage-deliverers.component';
 import { DelivererRoutesComponent } from './components/pages/deliverer-routes/deliverer-routes.component';
 import { DelivererRouteDetailComponent } from './components/pages/deliverer-route-detail/deliverer-route-detail.component';
@@ -34,7 +32,6 @@ import { ForgotPasswordComponent } from './components/pages/forgot-password/forg
 import { CheckEmailComponent } from './components/pages/check-email/check-email.component';
 import { ResetPasswordComponent } from './components/pages/reset-password/reset-password.component';
 import { EmailSentComponent } from './components/pages/email-sent/email-sent.component';
-import { ConfigurationComponent } from './components/pages/configuration/configuration.component';
 import { AboutComponent } from './components/pages/about/about.component';
 import { ContactComponent } from './components/pages/contact/contact.component';
 
@@ -55,21 +52,26 @@ export const routes: Routes = [
         canActivate: [authGuard],
         data: {roles: ['ADMIN', 'SUPPLIER']}
     },
+    // links antigos da tela da loja (o id da URL não é mais usado)
+    {path: 'distributor/edit/:id', redirectTo: 'minha-loja'},
     {
-        path: 'distributor/edit/:id', 
-        component: DistribuitorFormComponent,
+        path: 'minha-loja',
+        // F7 fatia 6: tela única do fornecedor (conta e loja são o mesmo cadastro)
+        loadComponent: () => import('./components/pages/store-profile/store-profile.component').then((m) => m.StoreProfileComponent),
         canActivate: [authGuard],
-        data: {roles: ['ADMIN', 'SUPPLIER']}
+        data: {roles: ['SUPPLIER']}
     },
     {
-        path: 'category-products', 
-        component: CategoryProductsComponent,
+        path: 'category-products',
+        // tela só do fornecedor: fora do bundle inicial
+        loadComponent: () => import('./components/pages/category-products/category-products.component').then((m) => m.CategoryProductsComponent),
         canActivate: [authGuard],
         data: {roles: ['SUPPLIER']}
     },
     {
         path: 'product-items', 
-        component: ProductItemComponent,
+        // tela só do fornecedor: fora do bundle inicial
+        loadComponent: () => import('./components/pages/product-item/product-item.component').then((m) => m.ProductItemComponent),
         canActivate: [authGuard],
         data: {roles: ['SUPPLIER']}
     },
@@ -150,7 +152,7 @@ export const routes: Routes = [
     {
         path: 'meus-dados',
         component: CustomerPanelComponent,
-        canActivate: [authGuard],
+        canActivate: [authGuard, supplierStoreGuard],
         data: {roles: ['ADMIN', 'CUSTOMER', 'SUPPLIER', 'DELIVERER']}
     },
     // rota antiga (favoritos e links): segue funcionando
@@ -204,10 +206,11 @@ export const routes: Routes = [
         data: {roles: ['SUPPLIER']}
     },
     {
-        path: 'historico-pedidos', 
-        component: OrderHistoryComponent,
+        path: 'historico-pedidos',
+        // tela só do fornecedor (o histórico vem do token): fora do bundle inicial
+        loadComponent: () => import('./components/pages/order-history/order-history.component').then((m) => m.OrderHistoryComponent),
         canActivate: [authGuard],
-        data: {roles: ['ADMIN', 'SUPPLIER']}
+        data: {roles: ['SUPPLIER']}
     },
     {
         path: 'recuperar-senha', 
@@ -234,10 +237,11 @@ export const routes: Routes = [
         component: ContactComponent
     },
     {
-        path: 'configuracao', 
-        component: ConfigurationComponent,
+        path: 'configuracao',
+        // tela só do fornecedor (o admin não tem loja): fora do bundle inicial
+        loadComponent: () => import('./components/pages/configuration/configuration.component').then((m) => m.ConfigurationComponent),
         canActivate: [authGuard],
-        data: {roles: ['ADMIN', 'SUPPLIER']}
+        data: {roles: ['SUPPLIER']}
     },
 
 ];

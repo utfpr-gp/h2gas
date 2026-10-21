@@ -1,5 +1,7 @@
 package com.h2gas.controller;
 
+import com.h2gas.model.dto.OrderHistorySummaryDTO;
+import com.h2gas.model.dto.OrderHistoryFilter;
 import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.configuration.security.SecurityConfigurations;
 import com.h2gas.configuration.security.SecurityFilter;
@@ -315,5 +317,47 @@ class OrderControllerTest {
         mockMvc.perform(patch("/api/orders/pedido-rota/complete-delivery"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("Entregue"));
+    }
+
+    @Test
+    void deveUsarOFornecedorDoTokenNoHistorico() throws Exception {
+        autenticarComo(UserTypeEnum.SUPPLIER, "fornecedor-1");
+        when(orderService.findMyHistory(eq("fornecedor-1"), any(), any()))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(), org.springframework.data.domain.PageRequest.of(0, 10), 0));
+        when(orderService.summarizeMyHistory(eq("fornecedor-1"), any()))
+                .thenReturn(new OrderHistorySummaryDTO(2, 1, new java.math.BigDecimal("150.00"), new java.math.BigDecimal("75.00")));
+
+        mockMvc.perform(get("/api/orders/mine/history").param("status", "delivered").param("payment", "PIX")
+                        .param("from", "2026-10-01").param("to", "2026-10-31").param("mode", "DELIVERY").param("q", "maria"))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/orders/mine/history/summary").param("payment", "PIX"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.delivered").value(2))
+                .andExpect(jsonPath("$.revenue").value(150.00));
+
+        verify(orderService).findMyHistory(eq("fornecedor-1"),
+                eq(OrderHistoryFilter.parse("delivered", "2026-10-01", "2026-10-31", "PIX", "DELIVERY", "maria")), any());
+    }
+
+    @Test
+    void deveRetornar400ComFiltroInvalido() throws Exception {
+        autenticarComo(UserTypeEnum.SUPPLIER, "fornecedor-1");
+
+        mockMvc.perform(get("/api/orders/mine/history").param("payment", "BOLETO")).andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/orders/mine/history/summary").param("from", "2026-10-31").param("to", "2026-10-01"))
+                .andExpect(status().isBadRequest());
+
+        verify(orderService, never()).findMyHistory(any(), any(), any());
+    }
+
+    @Test
+    void deveRetornar403AoListarPedidosDeOutroFornecedor() throws Exception {
+        autenticarComo(UserTypeEnum.SUPPLIER, "fornecedor-1");
+
+        mockMvc.perform(get("/api/orders/fornecedor-2/exclude-status")).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/orders/by-supplier/fornecedor-2")).andExpect(status().isForbidden());
+
+        verify(orderService, never()).findBySupplierId(any(), any());
+        verify(orderService, never()).findBySupplierIdAndStatusNotDeliveryAndCanceled(any(), any(), any());
     }
 }

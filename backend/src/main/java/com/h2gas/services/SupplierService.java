@@ -4,6 +4,14 @@ import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
+import com.h2gas.model.dto.SupplierSettingsDTO;
+import com.h2gas.model.dto.SupplierProfileDTO;
+import com.h2gas.model.dto.SupplierProfileRequestDTO;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+import java.io.IOException;
+import org.springframework.transaction.annotation.Transactional;
 import com.h2gas.model.dto.SupplierSummaryDTO;
 import com.h2gas.model.entity.*;
 import com.h2gas.model.mapper.*;
@@ -25,6 +33,9 @@ public class SupplierService {
 
     @Autowired
     private SupplierRepository supplierRepository;
+
+    @Autowired
+    private CloudinaryService cloudinaryService;
 
     @Autowired
     private SupplierMapper supplierMapper;
@@ -216,6 +227,91 @@ public class SupplierService {
     }
 
 
+
+    public static final String INVALID_LOGO_MESSAGE = "Envie uma imagem JPG, PNG ou WEBP de até 1 MB.";
+    private static final long MAX_LOGO_BYTES = 1_048_576;
+    private static final java.util.Set<String> LOGO_TYPES = java.util.Set.of("image/jpeg", "image/png", "image/webp");
+
+    // F7 fatia 6: perfil e logo da loja; o id vem sempre do token (controller)
+    public SupplierProfileDTO findMyProfile(String supplierId) {
+        return toProfile(findSupplier(supplierId));
+    }
+
+    // horário, cidade e aprovação ficam de fora: são da configuração, do endereço e do admin
+    @Transactional
+    public SupplierProfileDTO updateMyProfile(String supplierId, SupplierProfileRequestDTO request) {
+        Supplier supplier = findSupplier(supplierId);
+        supplier.setName(request.name().trim());
+        supplier.setPhoneNumber(request.phone());
+        supplier.setDescription(request.description() == null ? null : request.description().trim());
+        return toProfile(supplierRepository.save(supplier));
+    }
+
+    @Transactional
+    public String updateMyLogo(String supplierId, MultipartFile file) {
+        if (file == null || file.isEmpty() || file.getSize() > MAX_LOGO_BYTES || !LOGO_TYPES.contains(file.getContentType())) {
+            throw new BusinessRuleException(INVALID_LOGO_MESSAGE);
+        }
+        Supplier supplier = findSupplier(supplierId);
+        Map<?, ?> uploaded;
+        try {
+            uploaded = cloudinaryService.upload(file);
+        } catch (IOException | RuntimeException e) {
+            // o SDK do Cloudinary lança RuntimeException quando a API recusa (credencial, assinatura, rede)
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Não foi possível enviar a imagem. Tente novamente.", e);
+        }
+        Object secure = uploaded.get("secure_url");
+        supplier.setLogoUrl(String.valueOf(secure != null ? secure : uploaded.get("url")));
+        return supplierRepository.save(supplier).getLogoUrl();
+    }
+
+    @Transactional
+    public void removeMyLogo(String supplierId) {
+        Supplier supplier = findSupplier(supplierId);
+        supplier.setLogoUrl(null);
+        supplierRepository.save(supplier);
+    }
+
+    private static SupplierProfileDTO toProfile(Supplier s) {
+        Address a = s.getAddress();
+        City city = a != null && a.getCity() != null ? a.getCity() : s.getCity();
+        return new SupplierProfileDTO(s.getName(), s.getEmail(), s.getPhoneNumber(), s.getDescription(), s.getCnpj(), s.getLogoUrl(),
+                a == null ? null : a.getId(), a == null ? null : a.getStreetName(), a == null ? null : a.getNumber(),
+                a == null ? null : a.getNeighborhood(), city == null ? null : city.getName(), city == null ? null : city.getState());
+    }
+
+    // F7 fatia 6: configurações da loja; o id vem sempre do token (controller)
+    public SupplierSettingsDTO findMySettings(String supplierId) {
+        return toSettings(findSupplier(supplierId));
+    }
+
+    @Transactional
+    public SupplierSettingsDTO updateMySettings(String supplierId, SupplierSettingsDTO settings) {
+        LocalTime opening = LocalTime.parse(settings.openingTime());
+        LocalTime closing = LocalTime.parse(settings.closingTime());
+        if (opening.equals(closing)) {
+            throw new BusinessRuleException("O horário de fechamento precisa ser diferente da abertura.");
+        }
+        Supplier supplier = findSupplier(supplierId);
+        supplier.setOpeningTime(opening);
+        supplier.setClosingTime(closing);
+        supplier.setAverageDeliveryTime(Duration.ofMinutes(settings.averageDeliveryTime()));
+        supplier.setLowStockThreshold(settings.lowStockThreshold());
+        return toSettings(supplierRepository.save(supplier));
+    }
+
+    private Supplier findSupplier(String id) {
+        return supplierRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Fornecedor com " + id + " não encontrado"));
+    }
+
+    private static SupplierSettingsDTO toSettings(Supplier supplier) {
+        return new SupplierSettingsDTO(
+                supplier.getOpeningTime() == null ? null : supplier.getOpeningTime().toString(),
+                supplier.getClosingTime() == null ? null : supplier.getClosingTime().toString(),
+                supplier.getAverageDeliveryTime() == null ? null : (int) supplier.getAverageDeliveryTime().toMinutes(),
+                supplier.getLowStockThreshold());
+    }
 
     public void updateStatusOpenClosed(String id, boolean openClose) {
         Supplier supplier = supplierRepository.findById(id)

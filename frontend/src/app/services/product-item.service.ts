@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { AbstractService } from './abstract.service';
 import { ProductItem } from '../models/product-item';
 import { environment } from '../../environments/environment';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { ProductStockSummary, StockFilter } from '../models/product-stock-summary';
 import { Observable } from 'rxjs';
 import { PaginatedResponse } from '../models/paginated-response';
 
@@ -14,6 +15,20 @@ export class ProductItemService extends AbstractService<ProductItem> {
 
   constructor(protected override http: HttpClient) {
     super(http);
+  }
+
+  // F7 fatia 6: produtos do fornecedor logado (o backend usa o token)
+  listMine(filter: { q?: string; stock?: StockFilter; page?: number; size?: number }): Observable<PaginatedResponse<ProductItem>> {
+    let params = new HttpParams();
+    if (filter.q?.trim()) params = params.set('q', filter.q.trim());
+    if (filter.stock) params = params.set('stock', filter.stock);
+    if (filter.page != null) params = params.set('page', filter.page);
+    if (filter.size != null) params = params.set('size', filter.size);
+    return this.http.get<PaginatedResponse<ProductItem>>(`${this.baseUrl}/mine`, { params });
+  }
+
+  getStockSummary(): Observable<ProductStockSummary> {
+    return this.http.get<ProductStockSummary>(`${this.baseUrl}/mine/summary`);
   }
 
   // getProductsBySupllierId(supplierId: string): Observable<PaginatedResponse<ProductItem>> {

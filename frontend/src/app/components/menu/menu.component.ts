@@ -133,7 +133,7 @@ export class MenuComponent implements OnInit, OnDestroy {
         ];
       case 'SUPPLIER':
         return [
-          meusDados,
+          { id: 'minha-loja', label: 'Minha loja', icon: 'storefront', route: '/minha-loja' },
           { id: 'dashboard', label: 'Dashboard', icon: 'insights', route: '/dashboard' },
           { id: 'pedidos-recebidos', label: 'Pedidos recebidos', icon: 'inbox', route: '/dashboard-fornecedor' },
           { id: 'configuracao', label: 'Configurações', icon: 'settings', route: '/configuracao' },

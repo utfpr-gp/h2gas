@@ -12,6 +12,9 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @Schema(description = "Vendas de um produto no mês")
 public class ProductSalesDTO {
+    @Schema(description = "Id do produto (usado no filtro productId)", example = "4")
+    private Long productId;
+
     @Schema(description = "Marca e categoria do produto", example = "Ultragaz Gás 13kg")
     private String productName;
 

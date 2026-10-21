@@ -5,6 +5,15 @@ import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.dto.AddressDTO;
 import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
+import com.h2gas.model.dto.SupplierSettingsDTO;
+import com.h2gas.model.dto.SupplierProfileDTO;
+import com.h2gas.model.dto.SupplierProfileRequestDTO;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import java.util.Map;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 import com.h2gas.model.entity.Address;
 import com.h2gas.model.entity.City;
 import com.h2gas.model.entity.Supplier;
@@ -364,6 +373,40 @@ class SupplierServiceTest {
         assertEquals("Tempo médio de entrega inválido: informe os minutos.", erro.getMessage());
     }
 
+    @Test
+    @DisplayName("F7 fatia 6: lê horário, tempo de entrega e estoque mínimo do fornecedor")
+    void deveLerConfiguracoesDoProprioFornecedor() {
+        SupplierSettingsDTO settings = supplierService.findMySettings(validId);
+
+        assertEquals("08:00", settings.openingTime());
+        assertEquals("18:00", settings.closingTime());
+        assertEquals(30, settings.averageDeliveryTime());
+        assertEquals(8, settings.lowStockThreshold());
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: salva horário (até depois da meia-noite), tempo de entrega e estoque mínimo")
+    void deveSalvarHorarioTempoEEstoqueMinimo() {
+        SupplierSettingsDTO salvo = supplierService.updateMySettings(validId,
+                new SupplierSettingsDTO("18:00", "02:00", 45, 5));
+
+        Supplier supplier = supplierRepository.findById(validId).orElseThrow();
+        assertEquals(LocalTime.of(18, 0), supplier.getOpeningTime());
+        assertEquals(LocalTime.of(2, 0), supplier.getClosingTime());
+        assertEquals(Duration.ofMinutes(45), supplier.getAverageDeliveryTime());
+        assertEquals(5, supplier.getLowStockThreshold());
+        assertEquals(new SupplierSettingsDTO("18:00", "02:00", 45, 5), salvo);
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: fechamento igual à abertura é 400")
+    void deveRecusarFechamentoIgualAAbertura() {
+        BusinessRuleException erro = assertThrows(BusinessRuleException.class,
+                () -> supplierService.updateMySettings(validId, new SupplierSettingsDTO("08:00", "08:00", 30, 8)));
+
+        assertEquals("O horário de fechamento precisa ser diferente da abertura.", erro.getMessage());
+    }
+
     private Supplier salvarFornecedor(String nome, String email, String cnpj, boolean active) {
         City city = cityRepository.save(new City(null, "Francisco Beltrão", "PR"));
         Address address = addressRepository.save(new Address(
@@ -395,5 +438,81 @@ class SupplierServiceTest {
         assertEquals(1, supplierService.findAllSuppliers(null, "CONTATO@OMEGA", PageRequest.of(0, 10)).getTotalElements());
         assertEquals(1, supplierService.findAllSuppliers(false, "99888777", PageRequest.of(0, 10)).getTotalElements());
         assertEquals(0, supplierService.findAllSuppliers(true, "99888777", PageRequest.of(0, 10)).getTotalElements());
+    }
+
+    @MockitoBean
+    private CloudinaryService cloudinaryService;
+
+    @Test
+    @DisplayName("F7 fatia 6: perfil da loja muda nome, telefone e descrição sem mexer no horário")
+    void deveAtualizarPerfilSemMexerNoHorario() {
+        SupplierProfileDTO perfil = supplierService.updateMyProfile(validId,
+                new SupplierProfileRequestDTO("  Gás Nova Era ", "46999990000", "Entrega rápida no centro"));
+
+        Supplier supplier = supplierRepository.findById(validId).orElseThrow();
+        assertEquals("Gás Nova Era", supplier.getName());
+        assertEquals("46999990000", supplier.getPhoneNumber());
+        assertEquals("Entrega rápida no centro", supplier.getDescription());
+        assertEquals(LocalTime.of(8, 0), supplier.getOpeningTime());
+        assertEquals(LocalTime.of(18, 0), supplier.getClosingTime());
+        assertEquals(Duration.ofMinutes(30), supplier.getAverageDeliveryTime());
+        assertEquals("Gás Nova Era", perfil.name());
+        assertEquals("12345678901234", perfil.cnpj());
+        assertEquals("Pato Branco", perfil.cityName());
+        assertEquals("PR", perfil.cityState());
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: o perfil da loja traz o e-mail da conta (só leitura)")
+    void deveTrazerOEmailNoPerfil() {
+        assertEquals("fornecedor@gmail", supplierService.findMyProfile(validId).email());
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: logo enviada ao Cloudinary, gravada e removida")
+    void deveSalvarERemoverALogo() throws Exception {
+        when(cloudinaryService.upload(any())).thenReturn(Map.of("secure_url", "https://res.cloudinary.com/h2gas/logo.png", "url", "http://x/logo.png"));
+
+        String url = supplierService.updateMyLogo(validId, new MockMultipartFile("file", "logo.png", "image/png", new byte[2048]));
+
+        assertEquals("https://res.cloudinary.com/h2gas/logo.png", url);
+        assertEquals(url, supplierRepository.findById(validId).orElseThrow().getLogoUrl());
+        assertEquals(url, supplierService.findMyProfile(validId).logoUrl());
+
+        supplierService.removeMyLogo(validId);
+        assertNull(supplierRepository.findById(validId).orElseThrow().getLogoUrl());
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: arquivo que não é JPG, PNG ou WEBP é 400")
+    void deveRecusarArquivoQueNaoEImagem() {
+        BusinessRuleException erro = assertThrows(BusinessRuleException.class, () -> supplierService.updateMyLogo(validId,
+                new MockMultipartFile("file", "logo.gif", "image/gif", new byte[100])));
+
+        assertEquals("Envie uma imagem JPG, PNG ou WEBP de até 1 MB.", erro.getMessage());
+        verifyNoInteractions(cloudinaryService);
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: imagem acima de 1 MB é 400")
+    void deveRecusarImagemMaiorQue1MB() {
+        assertThrows(BusinessRuleException.class, () -> supplierService.updateMyLogo(validId,
+                new MockMultipartFile("file", "logo.jpg", "image/jpeg", new byte[1_048_577])));
+        assertThrows(BusinessRuleException.class, () -> supplierService.updateMyLogo(validId,
+                new MockMultipartFile("file", "logo.jpg", "image/jpeg", new byte[0])));
+        verifyNoInteractions(cloudinaryService);
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: Cloudinary recusando o envio (credencial, rede) vira 502 com mensagem clara")
+    void deveResponder502QuandoOCloudinaryRecusa() throws Exception {
+        when(cloudinaryService.upload(any())).thenThrow(new RuntimeException("Invalid Signature abc"));
+
+        org.springframework.web.server.ResponseStatusException erro = assertThrows(org.springframework.web.server.ResponseStatusException.class,
+                () -> supplierService.updateMyLogo(validId, new MockMultipartFile("file", "logo.png", "image/png", new byte[10])));
+
+        assertEquals(org.springframework.http.HttpStatus.BAD_GATEWAY, erro.getStatusCode());
+        assertEquals("Não foi possível enviar a imagem. Tente novamente.", erro.getReason());
+        assertNull(supplierRepository.findById(validId).orElseThrow().getLogoUrl());
     }
 }

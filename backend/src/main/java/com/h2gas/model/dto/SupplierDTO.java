@@ -28,6 +28,7 @@ public class SupplierDTO {
     private Long cityId;
     private String email;
     private String cnpj;
+    private String logoUrl;
     private List<ProductItemDTO> products;
 //    private UserDto user;
 

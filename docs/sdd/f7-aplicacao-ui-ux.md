@@ -561,6 +561,315 @@ pertence ao `cityId` enviado; preencher o código IBGE das cidades
 antigas de outros ambientes (o casamento por nome + UF cobre); bairros
 ou faixas de CEP atendidas; editar cidade.
 
+### 5.15 Fatia 6 — configuração da loja do fornecedor
+
+> Escrita em 2026-10-21. Pedido do autor: melhorar a UI/UX das telas de
+> fornecedor uma a uma; primeira: `/configuracao`. Revoga, só para esta
+> tela, o item "Redesenho mobile-first das telas de admin/fornecedor" do
+> Fora de Escopo. Branch `feature/f7-back-office` (da `develop`); as
+> §5.13 e §5.14 estão na branch da HU12, que entra antes. Decisões do
+> autor: o estoque mínimo vai para o backend; abrir/fechar a loja fica
+> onde está (Pedidos recebidos e Histórico).
+
+**Achados**
+- `PATCH /api/suppliers/{id}/update-times` aceita qualquer `id` de
+  qualquer SUPPLIER: um fornecedor muda o horário de outro.
+- O estoque mínimo fica só no `localStorage` (`ConfigurationService`):
+  some em outro aparelho; só alimenta o contador "estoque baixo" da tela
+  de produtos (padrão 8).
+- Um botão salva duas coisas: com estoque inválido avisa e ainda envia
+  o horário (dois toasts); sem validação de horário nem estado de
+  carregando/salvando; Salvar sempre habilitado.
+- Visual fora do padrão (azul fixo, gradiente, Font Awesome, `p-10` no
+  celular, `min-h-screen`, `console.log`); a rota aceita ADMIN, que não
+  tem `supplierId` (a tela quebra).
+
+**Contrato**
+- Flyway `V13__supplier_low_stock_threshold.sql`:
+  `suppliers.low_stock_threshold INT NOT NULL DEFAULT 8`. Número 13
+  porque a HU12 traz `V9`–`V12` e é mergeada antes.
+- `GET /api/suppliers/mine/settings` e `PUT /api/suppliers/mine/settings`
+  (SUPPLIER): o fornecedor vem do token, nunca do corpo nem da URL.
+  Corpo/resposta `SupplierSettingsDTO`: `openingTime` e `closingTime`
+  (`HH:mm`, obrigatórios), `averageDeliveryTime` (minutos, 1–240),
+  `lowStockThreshold` (1–9999). Fechamento igual à abertura → **400**
+  "O horário de fechamento precisa ser diferente da abertura." (fechar
+  depois da meia-noite é permitido). OpenAPI nas duas rotas.
+- `PATCH /{id}/update-times`: SUPPLIER só altera o próprio id (**403**);
+  ADMIN continua podendo. OpenAPI.
+- Frontend: `SupplierService.getMySettings`/`updateMySettings`; a tela de
+  produtos lê o `lowStockThreshold` salvo; `ConfigurationService` sai.
+- Tela "Configurações da loja": um formulário só, seções Horário de
+  funcionamento, Entrega e Estoque, com ajuda por campo e prévia
+  ("Aberta das 08:00 às 18:00 · entrega em ~30 min"; fechamento depois
+  da meia-noite mostra "do dia seguinte"); erros por campo; Salvar
+  desabilitado sem alteração ou inválido, com spinner; um toast só;
+  erro com a causa; skeleton ao carregar; rota só SUPPLIER e sob
+  demanda; sem HEX nem `console.log`.
+
+**Fora de escopo (desta tela)**: abrir/fechar a loja aqui; horário por
+dia da semana e feriados; fechar sozinho fora do horário; alerta ou
+e-mail de estoque baixo; `distributor-management` (código morto).
+
+### 5.16 Fatia 6 — produtos do fornecedor (`/product-items`)
+
+> Escrita em 2026-10-21, segunda tela de fornecedor da Fatia 6 (§5.15).
+
+**Achados**
+- `DELETE /api/product-items/{id}` não confere o dono: qualquer
+  fornecedor apaga produto de outro.
+- Produto que já aparece em pedido não pode ser apagado (FK de
+  `order_items`), e a rota devolve 500. Todos os produtos do fornecedor
+  de teste têm vendas.
+- A tela busca só a 1ª página (10) e conta Total, Disponíveis, Estoque
+  baixo e Esgotados em cima dela: com mais de 10 produtos os números
+  erram, e não há paginação.
+- Todo card mostra o selo "Disponível", até o esgotado; o rótulo
+  "Fornecedor:" mostra a marca; sem busca nem filtro; imagem quebrada sem
+  alternativa; exclusão por checkbox escondido; azul/verde/vermelho
+  fixos, Font Awesome, `console.log`.
+
+**Contrato**
+- `GET /api/product-items/mine` (SUPPLIER, dono do token): `q`
+  (marca, categoria ou tipo, sem diferenciar maiúsculas), `stock`
+  (`all` | `available` = estoque > 0 | `low` = de 1 até o estoque
+  mínimo | `out` = 0; padrão `all`), `page`, `size`; ordenado por marca.
+- `GET /api/product-items/mine/summary` (SUPPLIER): `total`,
+  `available`, `lowStock`, `outOfStock` e `lowStockThreshold`, contados
+  no banco com o estoque mínimo da configuração (§5.15).
+- `DELETE /api/product-items/{id}`: **403** se o produto é de outro
+  fornecedor; **409** "Este produto já está em pedidos e não pode ser
+  excluído. Zere o estoque para tirá-lo do catálogo." se já foi vendido.
+- OpenAPI nas três rotas.
+- Tela: cabeçalho com "Novo produto"; os quatro contadores viram os
+  filtros (com `aria-pressed`) e o de estoque baixo diz o limite e leva à
+  configuração; busca com debounce no backend; cards com imagem (ícone
+  do tipo quando falta ou falha), marca, categoria, tipo, preços de
+  entrega e retirada, selo de entrega grátis, estoque com selo
+  Disponível / Estoque baixo / Esgotado e data da atualização; editar e
+  excluir com rótulo acessível; exclusão com modal próprio e a mensagem
+  do 409; skeleton, estado vazio por filtro e paginação; rota sob
+  demanda; sem HEX nem `console.log`.
+
+**Fora de escopo (desta tela)**: ajustar estoque direto na lista;
+exclusão lógica/arquivar produto; ordenar por coluna; mexer no
+formulário de produto (`product-item-form`).
+
+### 5.17 Fatia 6 — categorias do fornecedor (`/category-products`)
+
+> Escrita em 2026-10-21, terceira tela de fornecedor da Fatia 6, já
+> com a HU12 mergeada na branch.
+
+**Achados**
+- `POST /api/category-products` usa o `supplierId` do corpo: um
+  fornecedor cria categoria na loja de outro. `PUT` e `DELETE` não
+  conferem o dono.
+- Excluir categoria que tem produtos estoura a FK (500). Sem validação
+  (nome vazio passa) nem checagem de nome repetido no mesmo tipo.
+- A tela busca só a 1ª página (10) do `by-supplier`; tem um formulário
+  morto (`mostrarFormulario`), emoji no título, azul fixo, Font Awesome,
+  exclusão por checkbox escondido e `console.log`; a checagem "nenhuma
+  alteração" compara objetos por referência e nunca dispara.
+
+**Contrato**
+- `GET /api/category-products/mine` (SUPPLIER): todas as categorias do
+  fornecedor do token (lista curta, sem paginação), ordenadas por tipo e
+  nome, com `id`, `name`, `type`, `productTypeId`, `typeIcon` e
+  `productCount`.
+- `POST /api/category-products` e `PUT /{id}` recebem
+  `CategoryRequestDTO` (`name` obrigatório, até 60 caracteres;
+  `productTypeId` obrigatório); o fornecedor vem do token. Nome repetido
+  no mesmo tipo e na mesma loja (sem diferenciar maiúsculas) → **409**
+  "Você já tem a categoria 20L em Água." `POST` devolve **201**.
+- `PUT` e `DELETE` de categoria de outro fornecedor → **403**.
+  `DELETE` de categoria com produtos → **409** "20L tem 3 produtos.
+  Mova ou exclua os produtos antes de excluir a categoria."
+- OpenAPI atualizado nas quatro rotas. `by-supplier` segue igual (usado
+  pelo formulário de produto).
+- Tela: cabeçalho com "Nova categoria"; categorias agrupadas por tipo
+  (com o ícone do tipo, HU12), cada uma com a contagem de produtos;
+  editar e excluir com rótulo acessível; modal de criar/editar com tipo
+  e nome, erro por campo, Salvar só com alteração válida; excluir com
+  modal próprio — com produtos, o modal explica e não deixa confirmar;
+  mensagens do 409; skeleton e estado vazio; rota sob demanda; sem HEX,
+  emoji nem `console.log`.
+
+**Ajuste do popup de criar/editar** (pedido do autor, 2026-10-21):
+- tipo escolhido em cartões com o ícone do tipo (`role="radiogroup"`,
+  `aria-checked`), no lugar do select;
+- sugestões de nome do tipo escolhido em chips que preenchem o campo
+  (Gás: P2, P5, P8, P13, P20, P45; Água: 5L, 10L, 20L; outros tipos sem
+  sugestão), escondendo as que a loja já tem;
+- prévia "Gás · P13" e aviso de nome repetido no mesmo tipo antes de
+  enviar (com as categorias já carregadas; o 409 do backend continua
+  valendo); contador de caracteres (até 60);
+- botão de fechar no cabeçalho, Esc fecha, foco no nome ao abrir.
+
+**Fora de escopo (desta tela)**: mover produtos entre categorias;
+reordenar categorias; descrição da categoria; o formulário de produto
+(`product-item-form`) continua lendo `by-supplier` com 10 por página —
+registrar como dívida para a tela dele.
+
+### 5.18 Fatia 6 — dados da loja com logo (`/distributor/edit/:id`)
+
+> Escrita em 2026-10-21. Pedido do autor: o fornecedor ganha foto/logo
+> da loja ("importante só para ele; usuários não querem foto"). Decisões
+> do autor: a logo aparece no card da loja do catálogo; a tela recebe
+> logo, correção de segurança e redesenho.
+
+**Achados**
+- `PUT /api/suppliers/{id}` não confere o dono: qualquer fornecedor
+  edita a loja de outro; a tela usa o `id` da URL.
+- O `PUT` exige e regrava horário e tempo de entrega (hoje da
+  Configuração, §5.15): editar o nome sobrescreve o horário, e campo
+  vazio estoura `LocalTime.parse`. A cidade vem do formulário, mas é do
+  endereço.
+- Tela fora do padrão (azul fixo, Font Awesome, `select` manual de
+  cidade no endereço, toasts errados como "Erro ao buscar cidades" ao
+  salvar, `console.log`, sem validação visível). `/distributor/new` só é
+  aberto pelo `distributor-management` (código morto).
+- Não existe imagem de fornecedor; o upload de produto já usa o
+  `CloudinaryService` (502 em falha) com limite multipart de 1 MB.
+
+**Contrato**
+- Flyway `V14__supplier_logo.sql`: `suppliers.logo_url VARCHAR(500)
+  NULL`; `SupplierDTO.logoUrl` (o catálogo recebe sem rota nova).
+- `GET /api/suppliers/mine/profile` (SUPPLIER): nome, telefone,
+  descrição, CNPJ (só leitura), logo e endereço resumido.
+- `PUT /api/suppliers/mine/profile` (SUPPLIER): só `name` (obrigatório,
+  até 80), `phone` (obrigatório, 10 ou 11 dígitos) e `description` (até
+  500); não mexe em horário, cidade nem aprovação.
+- `PUT /api/suppliers/mine/logo` (multipart `file`): só JPG, PNG ou WEBP
+  de até 1 MB, senão **400** "Envie uma imagem JPG, PNG ou WEBP de até
+  1 MB."; falha no Cloudinary → **502**; devolve `{ logoUrl }`.
+  `DELETE /api/suppliers/mine/logo` → **204**.
+- `PUT /{id}`: SUPPLIER só a própria loja (**403**); ADMIN continua.
+  OpenAPI em todas.
+- Tela "Dados da loja" (componente novo `store-profile` na rota
+  `distributor/edit/:id`; o `distribuitor-form` fica só para o
+  `/distributor/new`): logo com prévia (iniciais da loja sem logo),
+  trocar e remover (com confirmação), checagem de tipo e tamanho antes de
+  enviar e upload na hora; formulário de nome, telefone e descrição com
+  contador, CNPJ só leitura, erro por campo, Salvar só com alteração
+  válida e um toast; endereço em cartão com modal restilizado (o CEP
+  define a cidade); link para Horário e entrega (`/configuracao`); lê e
+  grava pelos `/mine`, sem depender do `:id`; rota sob demanda; sem HEX
+  nem `console.log`.
+- `supplier-card` do catálogo: a logo no lugar do ícone de loja, com o
+  ícone de volta sem logo ou se a imagem falhar.
+
+**Ajuste: uma tela só para o fornecedor** (pedido do autor, 2026-10-21:
+"meus dados e dados da loja devem ser a mesma coisa, está ambíguo").
+`Supplier` herda de `User`: nome e telefone são a mesma linha do banco,
+e `/meus-dados` e a tela da loja editavam os mesmos campos com rótulos
+diferentes. Decisão:
+- rota canônica `/minha-loja` (só SUPPLIER, sob demanda), título "Minha
+  loja"; `/meus-dados` do fornecedor redireciona para ela (guard que
+  devolve `UrlTree`; os outros perfis seguem no Meus Dados);
+  `/distributor/edit/:id` vira redirecionamento para `/minha-loja`;
+- `SupplierProfileDTO` ganha `email` (só leitura); a tela mostra o
+  e-mail com "Para trocar o e-mail, fale com o suporte.";
+- salvar o nome atualiza o nome e as iniciais do menu
+  (`UserService.setCurrentUser`);
+- menu do fornecedor: "Minha loja" no lugar de "Meus Dados"; os botões
+  de Pedidos recebidos e Histórico levam a `/minha-loja`; o Meus Dados
+  perde o ramo de fornecedor.
+
+**Fora de escopo (desta tela)**: foto de cliente e entregador; logo no
+menu e nos pedidos; recortar ou redimensionar a imagem no cliente; apagar
+a imagem antiga no Cloudinary; checar o dono no `PUT /addresses/{id}`
+(dívida registrada); refazer `/distributor/new`.
+
+### 5.19 Fatia 6 — histórico de pedidos do fornecedor (`/historico-pedidos`)
+
+> Escrita em 2026-10-21. Pedido do autor: melhorar o histórico e, depois,
+> o dashboard, mantendo as duas telas separadas.
+
+**Achados**
+- `GET /api/orders/{supplierId}/exclude-status` e `/by-supplier/{supplierId}`
+  não conferem o dono: um fornecedor lista pedidos de outro, com nome,
+  telefone e endereço dos clientes.
+- A tela carrega só os 10 primeiros pedidos e calcula receita e contagens
+  no navegador sobre eles; sem paginação.
+- Só filtra por status; template com `<!DOCTYPE>`/`<html>`/`<body>`, Font
+  Awesome e `console.log`; o `orders-widget` (só usado aqui) traz ações de
+  mudar status, que não cabem em pedido finalizado.
+
+**Contrato**
+- `GET /api/orders/mine/history` (SUPPLIER, dono do token): só pedidos
+  entregues ou cancelados; filtros opcionais `status` (`delivered` |
+  `canceled`), `from`/`to` (datas `YYYY-MM-DD`, pela criação do pedido),
+  `payment` (`PIX` | `DINHEIRO` | `CREDIT_CARD`), `mode` (`DELIVERY` |
+  `PICKUP`) e `q` (nome do cliente ou início do código do pedido);
+  paginado, mais recente primeiro. Filtro inválido ou `from` depois de
+  `to` → **400**.
+- `GET /api/orders/mine/history/summary`, mesmos filtros: `delivered`,
+  `canceled`, `revenue` (soma dos entregues) e `averageTicket`, contados
+  no banco (RN01).
+- Rotas antigas por `supplierId`: SUPPLIER só o próprio (**403**); ADMIN
+  continua. OpenAPI em todas.
+- Tela: cabeçalho com o interruptor de loja aberta/fechada (fica, decisão
+  anterior); cartões de resumo que acompanham os filtros; período (7 dias,
+  30 dias, este mês, mês passado, personalizado), status, pagamento,
+  entrega/retirada e busca com debounce; chips dos filtros ativos com
+  "Limpar"; cards com código curto, data, cliente, total, status,
+  pagamento e modo, que expandem para itens, endereço, entregador, entrega
+  e motivo do cancelamento; skeleton, estado vazio e paginação; rota só do
+  fornecedor e sob demanda; o `orders-widget` sai.
+
+**Fora de escopo (desta tela)**: dashboard (próxima tela); exportar CSV ou
+PDF; reabrir pedido; avaliações; histórico do admin.
+
+### 5.20 Fatia 6 — dashboard do fornecedor com filtros (`/dashboard`)
+
+> Escrita em 2026-10-21. Pedido do autor: "relatório muito simples; os
+> dados precisam ser dinâmicos, clicar em PIX filtra, filtrar por produto,
+> tipo, categoria, dinheiro; dados mais bonitos". Histórico e dashboard
+> seguem em telas separadas (decisão do autor).
+
+**Achados**
+- Os números só mudam com o mês; pagamento, produtos e tipos são listas
+  estáticas, sem clique nem filtro.
+- Não há quebra por entrega/retirada nem pelas categorias da loja (P13,
+  20L); o top 5 de produtos não mostra a receita.
+- Gráfico diário sem eixo, sem valores e sem destaque do melhor dia;
+  pizza sem total no centro.
+
+**Contrato**
+- `GET /api/suppliers/mine/dashboard` ganha filtros opcionais
+  `payment` (`PIX` | `DINHEIRO` | `CREDIT_CARD`), `mode` (`DELIVERY` |
+  `PICKUP`), `typeId`, `categoryId` e `productId`; valor inválido → **400**.
+  Os filtros valem também para o mês anterior da variação. "Pendentes
+  agora" e "Em rota agora" continuam sem filtro.
+- Regra dos filtros de item (tipo, categoria, produto): entram os pedidos
+  com pelo menos um item que bate, e receita, ticket, série diária,
+  pagamentos e quebras somam **só os itens que batem**. Pagamento e modo
+  filtram o pedido inteiro.
+- Resposta: `salesByProduct` com `productId` e receita; `salesByCategory`
+  (tipo) com `productTypeId`; novos `salesByStoreCategory` (categorias da
+  loja, com `categoryId` e o tipo) e `deliveryModeBreakdown` (entrega ×
+  retirada, pedidos, receita e %). OpenAPI atualizado.
+- Pagamento e modo são validados por uma regra só, compartilhada com o
+  histórico (§5.19).
+- Tela: barra de filtros (mês, pagamento, entrega/retirada, tipo,
+  categoria e produto, com as listas da loja) e chips dos filtros ativos
+  com "Limpar"; **clicar** numa forma de pagamento, num tipo da pizza,
+  numa categoria, num produto ou em entrega/retirada aplica o filtro (de
+  novo, tira), com destaque do item ativo e `aria-pressed`; cartões de
+  indicadores com ícone e variação; gráfico diário em SVG com eixo de
+  valores, área, linha, destaque do melhor dia e valor por dia no
+  `title`; pizza com o total no centro; barras com quantidade e receita;
+  estado vazio que diz se é por causa do filtro; sem HEX.
+
+- Atalho para a central de pedidos (Pedidos recebidos,
+  `/dashboard-fornecedor`, pedido do autor): botão "Central de pedidos"
+  no cabeçalho e os cartões "Pendentes agora" e "Em rota agora" viram
+  links para ela (`routerLink`, sem recarregar).
+
+**Fora de escopo (desta tela)**: período livre (segue por mês); exportar
+relatório; comparar lojas; abrir o histórico já filtrado; biblioteca de
+gráficos (o SVG é feito à mão, como hoje).
+
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
 - Agregação de rating médio por fornecedor (gap de backend).
@@ -711,6 +1020,121 @@ ou faixas de CEP atendidas; editar cidade.
     `deveMostrarMensagemQuandoCidadeEmUso`;
     `address-form.component.spec.ts`:
     `devePreencherCidadePeloCodigoIbgeDoCep`.
+15. *(fatia 6, §5.15)* **Backend** — `SupplierServiceTest`:
+    `deveLerConfiguracoesDoProprioFornecedor`,
+    `deveSalvarHorarioTempoEEstoqueMinimo`,
+    `deveRecusarFechamentoIgualAAbertura`;
+    `SupplierControllerTest`: `deveUsarOFornecedorDoToken`,
+    `deveRetornar400ComTempoDeEntregaForaDoLimite`,
+    `deveRetornar403AoAlterarHorarioDeOutroFornecedor`.
+    **Frontend** — `supplier.service.spec.ts`:
+    `deveBuscarConfiguracoesDoFornecedorLogado`, `deveSalvarConfiguracoes`;
+    `product-item.component.spec.ts`:
+    `deveUsarOEstoqueMinimoSalvoNoBackend`;
+    `configuration.component.spec.ts`:
+    `deveCarregarConfiguracoesDoFornecedor`,
+    `deveDesabilitarSalvarSemAlteracao`,
+    `deveMostrarErroComFechamentoIgualAAbertura`,
+    `deveSalvarTudoNumaChamadaComUmToast`,
+    `deveMostrarMensagemDoBackendNoErro`, `deveMostrarPreviaDoHorario`.
+
+16. *(fatia 6, §5.16)* **Backend** — `ProductItemServiceTest`:
+    `deveListarProdutosDoFornecedorPorEstoque`,
+    `deveBuscarPorMarcaCategoriaOuTipo`,
+    `deveResumirEstoqueComOLimiteDaConfiguracao`,
+    `deveRecusarExcluirProdutoDeOutroFornecedor`,
+    `deveRecusarExcluirProdutoJaVendido`;
+    `ProductItemControllerTest`: `deveListarSoOsProdutosDoToken`,
+    `deveRetornar400ComFiltroDeEstoqueInvalido`.
+    **Frontend** — `product-item.service.spec.ts`:
+    `deveListarMeusProdutosComFiltros`, `deveBuscarResumoDoEstoque`;
+    `product-item.component.spec.ts`: `deveMostrarContadoresDoResumo`,
+    `deveFiltrarPeloContador`, `deveBuscarComDebounce`,
+    `deveMostrarSeloDeEstoquePorProduto`, `deveConfirmarAntesDeExcluir`,
+    `deveMostrarMensagemQuandoProdutoJaVendido`, `devePaginar`.
+
+17. *(fatia 6, §5.17)* **Backend** — `CategoryProductServiceTest`:
+    `deveListarCategoriasDoFornecedorComContagemDeProdutos`,
+    `deveCriarCategoriaNaLojaDoToken`,
+    `deveRecusarNomeRepetidoNoMesmoTipo`,
+    `deveRecusarEditarOuExcluirCategoriaDeOutroFornecedor`,
+    `deveRecusarExcluirCategoriaComProdutos`;
+    `CategoryProductControllerTest`: `deveRetornar201AoCriarCategoria`,
+    `deveRetornar400SemNomeOuTipo`, `deveListarAsCategoriasDoToken`.
+    **Frontend** — `category-product.service.spec.ts`:
+    `deveListarMinhasCategorias`, `deveCriarSoComNomeETipo`;
+    `category-products.component.spec.ts`:
+    `deveAgruparCategoriasPorTipo`, `deveCriarCategoria`,
+    `deveDesabilitarSalvarSemAlteracaoNaEdicao`,
+    `deveMostrarMensagemDoBackendQuandoNomeRepetido`,
+    `deveImpedirExcluirCategoriaComProdutos`,
+    `deveExcluirCategoriaVazia`, `deveExibirEstadoVazio`.
+    Popup: `deveEscolherTipoPorCartaoComIcone`,
+    `deveSugerirNomesDoTipoSemOsQueJaExistem`,
+    `deveAvisarNomeRepetidoAntesDeEnviar`,
+    `deveMostrarPreviaEContador`, `deveFecharComEsc`.
+
+18. *(fatia 6, §5.18)* **Backend** — `SupplierServiceTest`:
+    `deveAtualizarPerfilSemMexerNoHorario`, `deveSalvarERemoverALogo`,
+    `deveRecusarArquivoQueNaoEImagem`, `deveRecusarImagemMaiorQue1MB`;
+    `SupplierControllerTest`: `deveUsarALojaDoTokenNoPerfil`,
+    `deveRetornar400ComNomeVazio`,
+    `deveRetornar403AoEditarLojaDeOutroPeloId`,
+    `deveEnviarALogoComoMultipart`; `SupplierServiceTest`:
+    `deveResponder502QuandoOCloudinaryRecusa`;
+    `GlobalExceptionHandlerTest`: `deveResponder400QuandoArquivoPassaDoLimite`.
+    **Frontend** — `supplier.service.spec.ts`: `deveBuscarPerfilDaLoja`,
+    `deveEnviarLogoComoFormData`, `deveRemoverLogo`;
+    `store-profile.component.spec.ts`: `deveCarregarPerfilDaLoja`,
+    `deveSalvarSoNomeTelefoneEDescricao`,
+    `deveDesabilitarSalvarSemAlteracao`, `deveEnviarLogoEscolhida`,
+    `deveRecusarArquivoGrandeAntesDeEnviar`,
+    `deveRemoverLogoComConfirmacao`, `deveMostrarIniciaisSemLogo`,
+    `deveMostrarMensagemDoBackendAoFalharOEnvio`,
+    `deveVoltarParaAsIniciaisSeALogoNaoCarregar`,
+    `deveMostrarEmailSomenteLeitura`, `deveAtualizarOMenuAoSalvarONome`;
+    `supplier-card.component.spec.ts`: `deveMostrarLogoDaLojaOuIcone`.
+    Tela única: `SupplierServiceTest.deveTrazerOEmailNoPerfil`;
+    `supplier-store.guard.spec.ts`:
+    `deveLevarFornecedorDeMeusDadosParaMinhaLoja`,
+    `deveDeixarOutrosPerfisEmMeusDados`; `menu.component.spec.ts`:
+    `deveMostrarMinhaLojaNoLugarDeMeusDadosParaFornecedor`.
+
+19. *(fatia 6, §5.19)* **Backend** — `OrderServiceTest`:
+    `deveListarSoFinalizadosDoFornecedor`,
+    `deveFiltrarPorPeriodoPagamentoModoEBusca`,
+    `deveResumirReceitaEContagensComOsFiltros`; `OrderControllerTest`:
+    `deveUsarOFornecedorDoTokenNoHistorico`,
+    `deveRetornar400ComFiltroInvalido`,
+    `deveRetornar403AoListarPedidosDeOutroFornecedor`.
+    **Frontend** — `order.service.spec.ts`: `deveEnviarFiltrosDoHistorico`,
+    `deveBuscarResumoDoHistorico`; `order-history.component.spec.ts`:
+    `deveMostrarResumoDoBackend`, `deveFiltrarPorStatusEPeriodo`,
+    `deveFiltrarPorPagamentoEModo`, `deveBuscarComDebounce`,
+    `deveLimparFiltros`, `deveExpandirDetalhesDoPedido`,
+    `deveMostrarMotivoDoCancelamento`, `devePaginar`,
+    `deveExibirEstadoVazio`.
+
+20. *(fatia 6, §5.20)* **Backend** — `SupplierDashboardServiceTest`:
+    `deveFiltrarPorPagamentoEModo`,
+    `deveSomarSoOsItensQueBatemComTipoCategoriaOuProduto`,
+    `deveAplicarOFiltroNaVariacaoDoMesAnterior`,
+    `deveQuebrarPorCategoriaDaLojaEPorModo`,
+    `deveTrazerIdsNasQuebrasParaOFiltro`; `SupplierControllerTest`:
+    `deveRepassarOsFiltrosDoDashboard`,
+    `deveRetornar400ComFiltroInvalidoNoDashboard`.
+    **Frontend** — `supplier.service.spec.ts`:
+    `deveEnviarFiltrosDoDashboard`; `supplier-dashboard.component.spec.ts`:
+    `deveFiltrarAoClicarNoPagamento`, `deveTirarOFiltroAoClicarDeNovo`,
+    `deveFiltrarAoClicarNoTipoCategoriaProdutoEModo`,
+    `deveFiltrarPelosSelects`, `deveMostrarChipsELimpar`,
+    `deveDestacarOMelhorDiaNoGrafico`, `deveMostrarTotalNoCentroDaPizza`,
+    `deveExplicarVazioCausadoPeloFiltro`,
+    `deveLevarParaACentralDePedidos`, `deveMostrarCadaDiaDoMesNoEixo`
+    (pedido do autor: cada dia do mês abaixo da sua coluna; no celular,
+    só os ímpares, para não sobrepor). Ajuste: o melhor dia deixou de ter
+    cor própria (o laranja parecia outra série/tipo); segue no texto
+    "Melhor dia" e no número em negrito.
 
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
@@ -841,6 +1265,144 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > de cidade sem uso, celular sem rolagem lateral). A cidade de teste foi removida no fim.
 >
 > **Achados do teste**: o `address-form` não mostrava qual cidade o CEP casou — ganhou o campo "Cidade" só leitura.
+
+**Fatia 6 — configuração da loja (§5.15):**
+- [x] Horário, tempo de entrega e estoque mínimo salvos no backend pelo
+      fornecedor do token; `update-times` de outro fornecedor é 403;
+      `V13` aplicada; OpenAPI.
+- [x] Tela com um formulário, validação por campo, prévia, Salvar só com
+      alteração válida e um toast; tela de produtos usa o limite salvo.
+- [x] Testes da seção 7 (item 15) verdes; `mvn test`, `ng test` (sem
+      falhas novas) e `ng build`; teste manual em 390 e 1280 px.
+
+> Verificado em 2026-10-21: backend 262 testes (único erro: `contextLoads`, que precisa do MySQL local); `V13` aplicada no MySQL
+> local; frontend 330 testes com 17 falhas antigas de providers (uma a menos: o spec antigo da tela); `ng build` sem erro; E2E em
+> 1280 e 390 px com 20 checagens (carrega do token, prévia, Salvar desabilitado sem alteração, erro de fechamento igual, horário
+> até 02:00 "do dia seguinte", um toast só, valor salvo após recarregar, contador de estoque baixo em Produtos seguindo o limite,
+> `update-times` de outro fornecedor 403, 400 da API, sem rolagem lateral nem erro de JS, dado original restaurado).
+>
+> **Achados do teste**: no celular, o aviso "Alterações não salvas" saía pela esquerda da barra fixa — passou para cima do botão.
+> O "Configurações" do menu do admin aponta para uma rota que agora é só do fornecedor; a HU12 já tira esse item do menu.
+
+**Fatia 6 — produtos do fornecedor (§5.16):**
+- [x] Lista, filtros e contadores calculados no backend para o
+      fornecedor do token; exclusão de produto alheio é 403 e de produto
+      vendido é 409 com orientação; OpenAPI.
+- [x] Tela com contadores-filtro, busca, selo de estoque correto,
+      confirmação de exclusão, skeleton, estado vazio e paginação.
+- [x] Testes da seção 7 (item 16) verdes; `mvn test`, `ng test` (sem
+      falhas novas) e `ng build`; teste manual em 390 e 1280 px.
+
+> Verificado em 2026-10-21: backend 270 testes (único erro: `contextLoads`, que precisa do MySQL local); frontend 338 testes com as
+> 17 falhas antigas de providers; `ng build` sem erro; E2E em 1280 e 390 px com 22 checagens no Gás Centro (resumo 7/6/1/1 com
+> limite 8, 403 ao excluir produto alheio, 409 ao excluir produto vendido com toast orientando a zerar o estoque, 400 para filtro
+> inválido, selos Esgotado/Estoque baixo, filtro pelo contador, busca "minalba", estado vazio, link para a configuração, sem
+> rolagem lateral nem erro de JS); o estoque mexido para o teste foi restaurado.
+>
+> **Observação**: com a HU12 mergeada, a rota da tela é só do fornecedor, como as rotas `/mine`.
+
+**Fatia 6 — categorias do fornecedor (§5.17):**
+- [x] Categoria criada, editada e excluída só pelo dono do token;
+      nome repetido e categoria com produtos dão 409 com mensagem;
+      validação no boundary; OpenAPI.
+- [x] Tela agrupada por tipo, com contagem de produtos, modal com
+      validação e exclusão protegida.
+- [x] Popup com tipo em cartões, sugestões de nome, prévia, aviso de
+      repetido antes de enviar, contador e Esc (ajuste pedido).
+
+> Popup verificado em 2026-10-21: 13 specs da tela verdes; frontend 405 testes com as 12 falhas antigas; `ng build` sem erro; E2E
+> em 1280 e 390 px com 14 checagens (foco no nome, sugestões sem as que a loja já tem, repetido avisado antes de enviar, prévia,
+> criação pela sugestão, Esc fecha, sem rolagem lateral nem erro de JS); categoria de teste removida. **Achado**: as categorias
+> do banco local se chamam "Água 10L"/"Água 20L", e o popup ainda sugeria "10L"/"20L" — a sugestão some quando já aparece como
+> palavra no nome de uma categoria do mesmo tipo.
+- [x] Testes da seção 7 (item 17) verdes; `mvn test`, `ng test` (sem
+      falhas novas) e `ng build`; teste manual em 390 e 1280 px.
+
+> Verificado em 2026-10-21: backend 338 testes (único erro: `contextLoads`, que precisa do MySQL local); frontend 400 testes com 12
+> falhas antigas de providers (duas a menos: os specs antigos do service e da tela); `ng build` sem erro; E2E em 1280 e 390 px com
+> 16 checagens (contagem por categoria, 403 ao editar categoria alheia, 409 ao excluir com produtos, `supplierId` do corpo
+> ignorado, criação pela tela, 409 de nome repetido com o modal aberto, modal de exclusão bloqueada, exclusão da vazia, sem
+> rolagem lateral nem erro de JS); as categorias criadas no teste foram removidas.
+>
+> **Achado do teste (dado, não código)**: no banco local, os produtos de gás do Gás Centro estão em categorias de outro
+> fornecedor (`fixture-supplier-hu02`) ou sem dono, criadas antes da regra da HU10. A tela mostra só as categorias da loja (as de
+> Água); esses produtos não aparecem em nenhum grupo dele.
+
+**Fatia 6 — dados da loja com logo (§5.18):**
+- [x] Perfil e logo da loja pelo fornecedor do token; editar a loja de
+      outro é 403; editar o perfil não altera o horário; imagem validada
+      (400) e falha de upload 502; `V14` aplicada; OpenAPI.
+- [x] Tela "Dados da loja" com logo, formulário validado e endereço pelo
+      CEP; logo no card do catálogo com o ícone de reserva.
+- [x] Testes da seção 7 (item 18) verdes; `mvn test`, `ng test` (sem
+      falhas novas) e `ng build`; teste manual em 390 e 1280 px.
+
+> Verificado em 2026-10-21: backend 348 testes (único erro: `contextLoads`, que precisa do MySQL local); `V14` aplicada no MySQL
+> local; frontend 420 testes com as 12 falhas antigas de providers; `ng build` sem erro; E2E em 1280 e 390 px com 19 checagens
+> (403 ao editar outra loja pelo id, dados e iniciais, .txt e imagem > 1 MB recusados antes de enviar, falha do Cloudinary com o
+> 502 amigável, logo salva na tela, um toast ao salvar, horário intacto ao salvar o perfil, cidade no modal de endereço, logo no
+> card do catálogo para o cliente e ícone na loja sem logo, remoção da logo, sem rolagem lateral nem erro de JS); dados do Gás
+> Centro restaurados no fim.
+>
+> **Achados do teste**: (1) as credenciais do Cloudinary no `.env` local são recusadas ("Invalid Signature") — o envio real não
+> pôde ser testado; a exibição foi testada com uma imagem pública de demonstração do Cloudinary gravada no banco. (2) O SDK do
+> Cloudinary lança `RuntimeException` quando a API recusa, e o envio virava 500 — agora é 502 com mensagem clara. O upload de
+> foto de produto (`ProductItemService`) tem o mesmo defeito: **dívida registrada**. (3) A logo que não carrega volta para as
+> iniciais também na tela da loja. Dívida também registrada: o `PUT /addresses/{id}` não confere o dono.
+>
+> **Envio real verificado depois (2026-10-21)**: o `.env` local tinha a API Key no lugar do secret, depois ficou sem o
+> `@<cloud>` no fim, e a chave tinha permissão restrita ("missing permissions (actions=create)"). Com o `CLOUDINARY_URL`
+> corrigido pelo autor, o E2E passou 5/5: upload aceito, URL `https://res.cloudinary.com/<cloud>/...` gravada, imagem pública e
+> logo no card do catálogo para o cliente. A logo de teste foi tirada do Gás Centro no fim.
+
+- [x] Tela única "Minha loja" para o fornecedor: `/meus-dados` e
+      `/distributor/edit/:id` levam a `/minha-loja`, e-mail só leitura,
+      menu com "Minha loja" e atualizado ao salvar o nome (ajuste pedido).
+
+> Tela única verificada em 2026-10-21: backend 349 testes (único erro: `contextLoads`); frontend 425 testes com as 12 falhas
+> antigas; `ng build` sem erro; E2E em 1280 e 390 px com 15 checagens (menu com "Minha loja" e sem "Meus Dados", e-mail só
+> leitura, `/meus-dados` e `/distributor/edit/<id>` caindo em `/minha-loja`, iniciais do menu atualizadas ao salvar o nome sem
+> recarregar, "Editar loja" de Pedidos recebidos levando a `/minha-loja`, cliente seguindo no Meus Dados, sem rolagem lateral nem
+> erro de JS); nome restaurado. O `navigateEdit` de Pedidos recebidos virou `goToStore()`, e o do Histórico (sem uso) saiu.
+
+**Fatia 6 — histórico de pedidos (§5.19):**
+- [x] Histórico e resumo pelo fornecedor do token, filtrados e contados
+      no banco; rotas antigas por `supplierId` dão 403 para outra loja;
+      OpenAPI.
+- [x] Tela com resumo, filtros, cards expansíveis, skeleton, estado vazio
+      e paginação, sem o `orders-widget`.
+- [x] Testes da seção 7 (item 19) verdes; `mvn test`, `ng test` (sem
+      falhas novas) e `ng build`; teste manual em 390 e 1280 px.
+
+> Verificado em 2026-10-21: backend 357 testes (único erro: `contextLoads`); frontend 434 testes com 10 falhas antigas de
+> providers (duas a menos: os specs antigos do histórico e do `orders-widget`); `ng build` sem erro; E2E em 1280 e 390 px com 16
+> checagens no Gás Centro, comparando a tela com o banco (resumo de 30 dias: 46 entregues, R$ 7.203,00, 19 cancelados; PIX
+> entregue no período todo; + retirada; Limpar; busca por cliente; motivo do cancelamento no detalhe; paginação; 403 de outra
+> loja em `exclude-status`, `by-supplier` e `PATCH /suppliers/{id}/status`; sem rolagem lateral nem erro de JS).
+>
+> **Achados**: (1) o `PATCH /api/suppliers/{id}/status` (abrir/fechar loja) também não conferia o dono — agora é 403 para outra
+> loja; (2) o link "Histórico" de Pedidos recebidos usava `href` e recarregava o app — virou `routerLink`; (3) no celular, a
+> data do card dividia a linha com o nome do cliente e era cortada — foi para a linha de pagamento.
+
+**Fatia 6 — dashboard com filtros (§5.20):**
+- [x] Filtros de pagamento, modo, tipo, categoria e produto no backend
+      (itens que batem), com ids nas quebras, quebra por categoria da
+      loja e por modo; 400 em filtro inválido; OpenAPI.
+- [x] Tela com filtros, gráficos clicáveis que filtram, chips, gráfico
+      diário com eixo e destaque, pizza com total; estado vazio do filtro.
+- [x] Testes da seção 7 (item 20) verdes; `mvn test`, `ng test` (sem
+      falhas novas) e `ng build`; teste manual em 390 e 1280 px.
+
+> Verificado em 2026-10-21: backend 365 testes (único erro: `contextLoads`); frontend 443 testes com 10 falhas antigas; `ng
+> build` sem erro; E2E em 1280 e 390 px com 13 checagens no Gás Centro comparando com o banco (receita e pedidos do mês; clicar
+> em PIX filtra e clicar de novo tira; clicar no tipo Gás soma só os itens de gás; retirada; retirada + cartão; melhor dia e
+> eixo; sem rolagem lateral nem erro de JS).
+>
+> **Decisões da implementação**: o gráfico diário ficou em colunas (total por dia é discreto), com eixo de três marcas nos
+> valores alcançados, grade tracejada discreta, o melhor dia em outra cor e o valor de cada dia no `title`; as cores
+> categóricas foram validadas pelo script do skill de visualização (a paleta antiga reprovava: azul-marinho fora da faixa de
+> luminosidade e par rosa/verde com ΔE 3,9 para daltônicos) e entraram como tokens `--color-chart-1..5` no tema. **Achado**: no
+> celular, rótulos longos ("Cartão de crédito") colavam nos valores — as linhas passaram a quebrar.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).

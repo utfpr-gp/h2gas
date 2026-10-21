@@ -34,4 +34,14 @@ class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.BAD_GATEWAY, resposta.getStatusCode());
         assertEquals("Não foi possível enviar a imagem. Tente novamente.", resposta.getBody().getMessage());
     }
+
+    @Test
+    @DisplayName("F7 fatia 6: arquivo acima do limite de upload vira 400 com a regra da imagem")
+    void deveResponder400QuandoArquivoPassaDoLimite() {
+        ResponseEntity<ErrorResponse> resposta = handler.handleMaxUploadSize(
+                new org.springframework.web.multipart.MaxUploadSizeExceededException(1_048_576), request);
+
+        assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
+        assertEquals("Envie uma imagem JPG, PNG ou WEBP de até 1 MB.", resposta.getBody().getMessage());
+    }
 }

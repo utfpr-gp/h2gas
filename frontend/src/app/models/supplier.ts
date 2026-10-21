@@ -20,6 +20,7 @@ export class Supplier {
     open?: boolean;
     email?: string;
     cnpj?: string;
+    logoUrl?: string | null;
 
     constructor(
         id?: string,

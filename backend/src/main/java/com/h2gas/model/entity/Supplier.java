@@ -60,6 +60,14 @@ public class Supplier extends User{
 
     private boolean open = false;
 
+    // abaixo disso o produto aparece como estoque baixo na tela de produtos do fornecedor
+    @Column(name = "low_stock_threshold", nullable = false)
+    private int lowStockThreshold = 8;
+
+    // logo da loja no Cloudinary; nula = o catálogo mostra o ícone de loja
+    @Column(name = "logo_url", length = 500)
+    private String logoUrl;
+
     @OneToMany(mappedBy = "supplier", cascade = CascadeType.ALL)
     private Set<CategoryProduct> categoryProducts = new HashSet<>();
 

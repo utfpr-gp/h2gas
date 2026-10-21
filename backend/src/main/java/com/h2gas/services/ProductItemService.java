@@ -11,6 +11,10 @@ import com.h2gas.model.mapper.CategoryProductMapper;
 import com.h2gas.model.mapper.CreateProductItemMapper;
 import com.h2gas.model.mapper.ProductItemMapper;
 import com.h2gas.model.repository.ProductItemRepository;
+import com.h2gas.model.repository.OrderItemRepository;
+import com.h2gas.model.repository.SupplierRepository;
+import com.h2gas.model.dto.ProductStockSummaryDTO;
+import com.h2gas.enums.StockFilterEnum;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -46,6 +50,42 @@ public class ProductItemService {
 
     @Autowired
     private CloudinaryService cloudinaryService;
+
+    @Autowired
+    private SupplierRepository supplierRepository;
+
+    @Autowired
+    private OrderItemRepository orderItemRepository;
+
+    // F7 fatia 6: lista do fornecedor logado; "estoque baixo" usa o estoque mínimo da configuração da loja
+    public Page<ProductItemDTO> findMine(String supplierId, String q, StockFilterEnum stock, Pageable pageable) {
+        String term = q == null || q.isBlank() ? null : q.trim();
+        Integer min = null;
+        Integer max = null;
+        switch (stock) {
+            case AVAILABLE -> min = 1;
+            case LOW -> { min = 1; max = lowStockThreshold(supplierId); }
+            case OUT -> { min = 0; max = 0; }
+            case ALL -> { }
+        }
+        return productItemRepository.findMine(supplierId, term, min, max, pageable).map(productItemMapper::toDto);
+    }
+
+    public ProductStockSummaryDTO summarizeMine(String supplierId) {
+        int threshold = lowStockThreshold(supplierId);
+        return new ProductStockSummaryDTO(
+                productItemRepository.countBySupplierId(supplierId),
+                productItemRepository.countBySupplierIdAndStockQuantityGreaterThan(supplierId, 0),
+                productItemRepository.countBySupplierIdAndStockQuantityBetween(supplierId, 1, threshold),
+                productItemRepository.countBySupplierIdAndStockQuantity(supplierId, 0),
+                threshold);
+    }
+
+    private int lowStockThreshold(String supplierId) {
+        return supplierRepository.findById(supplierId)
+                .orElseThrow(() -> new ResourceNotFoundException("Fornecedor com " + supplierId + " não encontrado"))
+                .getLowStockThreshold();
+    }
 
     public List<ProductItemDTO> findAllProductItems() {
         return productItemRepository.findAll()
@@ -111,9 +151,17 @@ public class ProductItemService {
     }
 
 
-    public void deleteProductItem(Long id) {
+    public void deleteProductItem(Long id, User actor) {
         ProductItem productItem = productItemRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Produto com " + id + " não encontrado"));
+        if (productItem.getSupplier() == null || !productItem.getSupplier().getId().equals(actor.getId())) {
+            throw new ForbiddenResourceException("Você só pode excluir produtos da sua loja.");
+        }
+        // o histórico de pedidos aponta para o produto (FK de order_items)
+        if (orderItemRepository.existsByProductId(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Este produto já está em pedidos e não pode ser excluído. Zere o estoque para tirá-lo do catálogo.");
+        }
 
         productItemRepository.delete(productItem);
     }

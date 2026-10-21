@@ -1,0 +1,195 @@
+<div class="max-w-3xl w-full mx-auto px-4 md:px-8 pt-6 pb-24 md:pb-10">
+    <header class="mb-5">
+        <h1 class="text-2xl font-bold text-gray-800">Minha loja</h1>
+        <p class="text-sm text-gray-500">Seus dados e como a loja aparece para os clientes.</p>
+    </header>
+
+    <div *ngIf="loading" class="space-y-3" aria-busy="true">
+        <div class="skeleton h-28 rounded-xl"></div>
+        <div class="skeleton h-64 rounded-xl"></div>
+    </div>
+
+    <div *ngIf="!loading && loadFailed" class="text-center bg-white rounded-xl border border-gray-200 py-12 px-4">
+        <span class="material-icons text-gray-300" style="font-size: 56px">cloud_off</span>
+        <p class="text-gray-700 font-semibold mt-2">Não foi possível carregar os dados da loja</p>
+        <button type="button" class="btn btn-primary btn-sm rounded-xl mt-3" (click)="load()">Tentar de novo</button>
+    </div>
+
+    <div *ngIf="!loading && !loadFailed && profile" class="space-y-4">
+        <!-- Logo -->
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-5" aria-labelledby="logo-title">
+            <h2 id="logo-title" class="font-semibold text-gray-800 mb-3">Logo</h2>
+            <div class="flex flex-wrap items-center gap-4">
+                <div class="relative w-24 h-24 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center shrink-0 border border-gray-200">
+                    <img *ngIf="logoSrc; else iniciais" data-testid="logo-image" [src]="logoSrc" [alt]="'Logo de ' + profile.name"
+                        class="w-full h-full object-cover" (error)="logoBroken = !logoPreview" />
+                    <ng-template #iniciais>
+                        <span data-testid="logo-initials" class="text-2xl font-bold text-primary">{{ initials }}</span>
+                    </ng-template>
+                    <span *ngIf="uploadingLogo" class="absolute inset-0 bg-white/60 flex items-center justify-center">
+                        <span class="loading loading-spinner loading-md text-primary"></span>
+                    </span>
+                </div>
+                <div class="min-w-0 flex-1 space-y-2">
+                    <p class="text-sm text-gray-500">Aparece no card da sua loja no catálogo. JPG, PNG ou WEBP de até 1 MB; quadrada fica melhor.</p>
+                    <div class="flex flex-wrap gap-2">
+                        <label class="btn btn-sm btn-primary rounded-lg" [class.btn-disabled]="uploadingLogo" for="logo-input">
+                            <span class="material-icons text-base">photo_camera</span>
+                            {{ profile.logoUrl ? 'Trocar logo' : 'Enviar logo' }}
+                        </label>
+                        <input id="logo-input" data-testid="logo-input" type="file" class="sr-only" [accept]="logoAccept"
+                            [disabled]="uploadingLogo" (change)="onLogoSelected($event)" />
+                        <button *ngIf="profile.logoUrl" type="button" data-testid="remove-logo" class="btn btn-sm btn-ghost text-error rounded-lg"
+                            [disabled]="uploadingLogo" (click)="confirmRemoveLogo = true">
+                            <span class="material-icons text-base">delete</span> Remover
+                        </button>
+                    </div>
+                    <p *ngIf="logoError" data-testid="logo-error" class="text-xs text-error" role="alert">{{ logoError }}</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dados -->
+        <form [formGroup]="form" (ngSubmit)="save()" novalidate
+            class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-5 space-y-3" aria-labelledby="data-title">
+            <h2 id="data-title" class="font-semibold text-gray-800">Informações</h2>
+
+            <label class="form-control w-full" for="store-name">
+                <span class="label-text text-sm text-gray-700">Nome da loja</span>
+                <input id="store-name" data-testid="store-name" formControlName="name" maxlength="80" autocomplete="organization"
+                    class="input input-bordered rounded-xl w-full" [class.input-error]="invalid('name')" />
+                <span *ngIf="invalid('name')" data-testid="error-name" class="text-xs text-error mt-1">Informe o nome da loja.</span>
+            </label>
+
+            <div class="form-control w-full">
+                <span class="label-text text-sm text-gray-700">E-mail</span>
+                <p data-testid="store-email" class="input input-bordered rounded-xl w-full bg-base-200 flex items-center text-gray-600 break-all">{{ profile.email }}</p>
+                <span class="text-xs text-gray-500 mt-1">Para trocar o e-mail, fale com o suporte.</span>
+            </div>
+
+            <div class="grid sm:grid-cols-2 gap-3">
+                <label class="form-control w-full" for="store-phone">
+                    <span class="label-text text-sm text-gray-700">Telefone</span>
+                    <input id="store-phone" data-testid="store-phone" formControlName="phone" mask="(00) 0000-0000||(00) 00000-0000"
+                        inputmode="tel" autocomplete="tel" class="input input-bordered rounded-xl w-full" [class.input-error]="invalid('phone')" />
+                    <span *ngIf="invalid('phone')" class="text-xs text-error mt-1">Informe o telefone com DDD.</span>
+                </label>
+                <div class="form-control w-full">
+                    <span class="label-text text-sm text-gray-700">CNPJ</span>
+                    <p data-testid="store-cnpj" class="input input-bordered rounded-xl w-full bg-base-200 flex items-center tabular-nums text-gray-600">{{ formattedCnpj }}</p>
+                    <span class="text-xs text-gray-500 mt-1">Para alterar o CNPJ, fale com o suporte.</span>
+                </div>
+            </div>
+
+            <label class="form-control w-full" for="store-description">
+                <span class="flex items-baseline justify-between">
+                    <span class="label-text text-sm text-gray-700">Descrição</span>
+                    <span class="text-xs text-gray-400 tabular-nums">{{ form.controls.description.value.length }}/500</span>
+                </span>
+                <textarea id="store-description" data-testid="store-description" formControlName="description" rows="3" maxlength="500"
+                    placeholder="Ex.: Entrega rápida no centro, aceitamos cartão na entrega."
+                    class="textarea textarea-bordered rounded-xl w-full"></textarea>
+            </label>
+
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2">
+                <span *ngIf="changed" class="text-xs sm:text-sm text-gray-500 text-center">Alterações não salvas</span>
+                <button type="submit" data-testid="save-profile" class="btn btn-primary rounded-xl w-full sm:w-auto" [disabled]="!canSave">
+                    <span *ngIf="saving" class="loading loading-spinner loading-sm"></span>
+                    Salvar dados
+                </button>
+            </div>
+        </form>
+
+        <!-- Endereço e horário -->
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-5 space-y-3" aria-labelledby="address-title">
+            <h2 id="address-title" class="font-semibold text-gray-800">Endereço</h2>
+            <div class="flex flex-wrap items-center gap-3">
+                <span class="material-icons text-primary" aria-hidden="true">location_on</span>
+                <p data-testid="store-address" class="min-w-0 flex-1 text-sm text-gray-700">{{ addressLine || 'Sem endereço cadastrado.' }}</p>
+                <button *ngIf="profile.addressId" type="button" data-testid="edit-address" class="btn btn-sm btn-ghost rounded-lg" (click)="openAddress()">
+                    <span class="material-icons text-base">edit</span> Editar endereço
+                </button>
+            </div>
+            <a routerLink="/configuracao" data-testid="hours-link" class="flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:border-primary/40">
+                <span class="material-icons text-primary" aria-hidden="true">schedule</span>
+                <span class="min-w-0 flex-1 text-sm">
+                    <span class="block font-medium text-gray-800">Horário e entrega</span>
+                    <span class="block text-gray-500">Abertura, fechamento, tempo de entrega e estoque mínimo</span>
+                </span>
+                <span class="material-icons text-gray-400" aria-hidden="true">chevron_right</span>
+            </a>
+        </section>
+    </div>
+
+    <!-- Remover logo -->
+    <div *ngIf="confirmRemoveLogo" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-gray-900/40 p-4"
+        (click)="!removingLogo && (confirmRemoveLogo = false)">
+        <div role="dialog" aria-modal="true" aria-labelledby="remove-logo-title" @fadeIn
+            class="w-full max-w-md bg-white rounded-xl shadow-xl p-5" (click)="$event.stopPropagation()">
+            <h3 id="remove-logo-title" class="text-lg font-bold text-gray-800">Remover a logo?</h3>
+            <p class="text-sm text-gray-500 mt-1">O catálogo volta a mostrar o ícone de loja até você enviar outra.</p>
+            <div class="grid grid-cols-2 gap-2 mt-4">
+                <button type="button" class="btn btn-outline btn-primary rounded-xl" [disabled]="removingLogo" (click)="confirmRemoveLogo = false">Voltar</button>
+                <button type="button" data-testid="confirm-remove-logo" class="btn btn-error rounded-xl" [disabled]="removingLogo" (click)="removeLogo()">
+                    <span *ngIf="removingLogo" class="loading loading-spinner loading-sm"></span>
+                    Remover
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Endereço -->
+    <div *ngIf="addressOpen" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-gray-900/40 p-4"
+        (click)="closeAddress()">
+        <form data-testid="address-modal" role="dialog" aria-modal="true" aria-labelledby="address-modal-title" @fadeIn
+            [formGroup]="addressForm" (ngSubmit)="saveAddress()" novalidate
+            class="w-full max-w-md max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-xl p-5 space-y-3" (click)="$event.stopPropagation()">
+            <h3 id="address-modal-title" class="text-lg font-bold text-gray-800">Endereço da loja</h3>
+
+            <label class="form-control w-full" for="address-cep">
+                <span class="label-text text-sm text-gray-700">CEP</span>
+                <span class="flex gap-2">
+                    <input id="address-cep" data-testid="address-cep" formControlName="zipCode" mask="00000-000" inputmode="numeric"
+                        class="input input-bordered rounded-xl w-full" (blur)="searchCep()" />
+                    <button type="button" class="btn btn-outline btn-primary rounded-xl" [disabled]="searchingCep" (click)="searchCep()">
+                        <span *ngIf="searchingCep" class="loading loading-spinner loading-xs"></span> Buscar
+                    </button>
+                </span>
+            </label>
+
+            <div class="form-control w-full">
+                <span class="label-text text-sm text-gray-700">Cidade</span>
+                <p data-testid="address-city" class="input input-bordered rounded-xl w-full bg-base-200 flex items-center text-gray-600">
+                    {{ addressCity ? addressCity.name + ' - ' + addressCity.state : 'Busque o CEP para definir a cidade' }}
+                </p>
+            </div>
+
+            <label class="form-control w-full" for="address-street">
+                <span class="label-text text-sm text-gray-700">Rua</span>
+                <input id="address-street" formControlName="streetName" class="input input-bordered rounded-xl w-full" />
+            </label>
+            <label class="form-control w-full" for="address-neighborhood">
+                <span class="label-text text-sm text-gray-700">Bairro</span>
+                <input id="address-neighborhood" formControlName="neighborhood" class="input input-bordered rounded-xl w-full" />
+            </label>
+            <div class="grid grid-cols-2 gap-3">
+                <label class="form-control w-full" for="address-number">
+                    <span class="label-text text-sm text-gray-700">Número</span>
+                    <input id="address-number" formControlName="number" class="input input-bordered rounded-xl w-full" />
+                </label>
+                <label class="form-control w-full" for="address-complement">
+                    <span class="label-text text-sm text-gray-700">Complemento</span>
+                    <input id="address-complement" formControlName="complement" class="input input-bordered rounded-xl w-full" />
+                </label>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <button type="button" class="btn btn-outline btn-primary rounded-xl" [disabled]="savingAddress" (click)="closeAddress()">Voltar</button>
+                <button type="submit" data-testid="save-address" class="btn btn-primary rounded-xl" [disabled]="!canSaveAddress">
+                    <span *ngIf="savingAddress" class="loading loading-spinner loading-sm"></span>
+                    Salvar endereço
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
