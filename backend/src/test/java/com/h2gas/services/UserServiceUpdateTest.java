@@ -118,4 +118,20 @@ class UserServiceUpdateTest {
                 () -> userService.update("u-maria", dto("Maria", "ocupado@h2gas.local", "41988887777"), admin));
         assertEquals("E-mail já cadastrado.", erro.getMessage());
     }
+
+    @Test
+    @DisplayName("HU12: o ADMIN não troca o próprio e-mail pelo PUT (só com o código em Meus Dados)")
+    void naoDeveTrocarOProprioEmailDoAdminPeloPut() {
+        when(userRepository.findById("u-admin")).thenReturn(Optional.of(admin));
+
+        BusinessRuleException erro = assertThrows(BusinessRuleException.class,
+                () -> userService.update("u-admin", dto("Admin", "outro.admin@h2gas.local", "41999999999"), admin));
+
+        assertEquals("Para trocar o seu e-mail, confirme pelo código em Meus Dados.", erro.getMessage());
+        assertEquals("admin@h2gas.local", admin.getEmail());
+        verify(userRepository, never()).save(any(User.class));
+
+        userService.update("u-admin", dto("Admin Novo", "admin@h2gas.local", "41999999999"), admin);
+        assertEquals("Admin Novo", admin.getName());
+    }
 }

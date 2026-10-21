@@ -272,7 +272,7 @@ dele vira o Painel.
     `deveContarTentativaComCodigoErrado`,
     `deveRecusarCodigoExpiradoOuEsgotado`,
     `deveRecusarSeOEmailFoiOcupadoAntesDeConfirmar`.
-6f. `UserServiceTest`: `naoDeveTrocarOProprioEmailDoAdminPeloPut`.
+6f. `UserServiceUpdateTest`: `naoDeveTrocarOProprioEmailDoAdminPeloPut`.
 6g. `EmailChangeControllerTest`: `deveRetornar202AoPedirCodigo`,
     `deveRetornar200ComTokenAoConfirmar`, `deveRetornar403ParaNaoAdmin`.
 

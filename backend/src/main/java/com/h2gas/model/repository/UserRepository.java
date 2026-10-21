@@ -18,6 +18,8 @@ public interface UserRepository extends JpaRepository<User, String> {
     Optional<User> findByName(String name);
     boolean existsByEmail(String email);
 
+    boolean existsByEmailIgnoreCase(String email);
+
     // HU12: term já vem em minúsculas, ou null para não filtrar. LOCATE em vez de LIKE: o Spring Data
     // reescreve o parâmetro do LIKE e a consulta de contagem da paginação perde essa reescrita
     @Query("SELECT u FROM User u WHERE (:type IS NULL OR u.userType = :type) "

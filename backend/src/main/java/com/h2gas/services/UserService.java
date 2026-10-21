@@ -100,6 +100,10 @@ public class UserService {
         if (emailChanged && !isAdmin) {
             throw new BusinessRuleException("O e-mail não pode ser alterado por aqui.");
         }
+        // HU12: o próprio e-mail do admin só muda com o código enviado ao endereço novo
+        if (emailChanged && actor.getId().equals(id)) {
+            throw new BusinessRuleException("Para trocar o seu e-mail, confirme pelo código em Meus Dados.");
+        }
         if (emailChanged && userRepository.existsByEmail(userDto.getEmail())) {
             throw new BusinessRuleException("E-mail já cadastrado.");
         }
