@@ -302,4 +302,15 @@ describe('SupplierDashboardComponent', () => {
     clicar('empty-clear-filters');
     expect(ultimoFiltro()).toEqual({});
   });
+
+  it('deveLevarParaACentralDePedidos', async () => {
+    await setup();
+
+    const atalho = byId('orders-center-link') as HTMLAnchorElement;
+    expect(atalho.textContent).toContain('Central de pedidos');
+    expect(atalho.getAttribute('href')).toBe('/dashboard-fornecedor');
+    expect(byId('kpi-pending-link')!.getAttribute('href')).toBe('/dashboard-fornecedor');
+    expect(byId('kpi-route-link')!.getAttribute('href')).toBe('/dashboard-fornecedor');
+    expect(byId('kpi-pending-link')!.textContent).toContain('3');
+  });
 });

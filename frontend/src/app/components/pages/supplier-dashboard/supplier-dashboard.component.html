@@ -4,6 +4,11 @@
             <h1 class="text-2xl font-bold text-gray-800">Visão Geral</h1>
             <p class="text-sm text-gray-500">Vendas e entregas da sua loja. Clique num pagamento, tipo, categoria ou produto para filtrar.</p>
         </div>
+        <div class="flex flex-wrap items-center gap-2">
+        <a routerLink="/dashboard-fornecedor" data-testid="orders-center-link" class="btn btn-sm btn-primary rounded-xl">
+            <span class="material-icons text-base" aria-hidden="true">inbox</span>
+            Central de pedidos
+        </a>
         <label class="flex items-center gap-2 text-sm text-gray-600">
             <span class="material-icons text-base">calendar_month</span>
             <select data-testid="month-select" (change)="changeMonth($any($event.target).value)" aria-label="Mês dos indicadores"
@@ -11,6 +16,7 @@
                 <option *ngFor="let m of months" [value]="m.value" [selected]="m.value === selectedMonth">{{ m.label }}</option>
             </select>
         </label>
+        </div>
     </header>
 
     <!-- Filtros: uma linha acima dos gráficos -->
@@ -99,14 +105,19 @@
                 <p class="text-xs text-gray-500 flex items-center gap-1"><span class="material-icons text-sm text-primary" aria-hidden="true">hourglass_top</span>A receber</p>
                 <p data-testid="kpi-receivable" class="text-xl font-bold text-gray-800 mt-1 tabular-nums">{{ dashboard.receivable | currency:'BRL':'symbol':'1.2-2' }}</p>
             </div>
-            <div class="bg-white rounded-xl border border-gray-200 p-4">
-                <p class="text-xs text-gray-500 flex items-center gap-1"><span class="material-icons text-sm text-warning" aria-hidden="true">pending_actions</span>Pendentes agora</p>
+            <!-- pendentes e em rota são tratados na central de pedidos -->
+            <a routerLink="/dashboard-fornecedor" data-testid="kpi-pending-link" aria-label="Ver os pedidos pendentes na central de pedidos"
+                class="group bg-white rounded-xl border border-gray-200 p-4 hover:border-primary/40 transition-colors">
+                <p class="text-xs text-gray-500 flex items-center gap-1"><span class="material-icons text-sm text-warning" aria-hidden="true">pending_actions</span>Pendentes agora
+                    <span class="material-icons text-sm text-gray-300 group-hover:text-primary ml-auto" aria-hidden="true">arrow_forward</span></p>
                 <p data-testid="kpi-pending" class="text-xl font-bold text-gray-800 mt-1 tabular-nums">{{ dashboard.pendingOrders }}</p>
-            </div>
-            <div class="bg-white rounded-xl border border-gray-200 p-4">
-                <p class="text-xs text-gray-500 flex items-center gap-1"><span class="material-icons text-sm text-info" aria-hidden="true">local_shipping</span>Em rota agora</p>
+            </a>
+            <a routerLink="/dashboard-fornecedor" data-testid="kpi-route-link" aria-label="Ver os pedidos em rota na central de pedidos"
+                class="group bg-white rounded-xl border border-gray-200 p-4 hover:border-primary/40 transition-colors">
+                <p class="text-xs text-gray-500 flex items-center gap-1"><span class="material-icons text-sm text-info" aria-hidden="true">local_shipping</span>Em rota agora
+                    <span class="material-icons text-sm text-gray-300 group-hover:text-primary ml-auto" aria-hidden="true">arrow_forward</span></p>
                 <p data-testid="kpi-route" class="text-xl font-bold text-gray-800 mt-1 tabular-nums">{{ dashboard.outForDeliveryOrders }}</p>
-            </div>
+            </a>
             <div class="bg-white rounded-xl border border-gray-200 p-4">
                 <p class="text-xs text-gray-500 flex items-center gap-1"><span class="material-icons text-sm text-success" aria-hidden="true">check_circle</span>Entregas concluídas</p>
                 <p data-testid="kpi-delivered" class="text-xl font-bold text-gray-800 mt-1 tabular-nums">{{ dashboard.deliveredOrders }}</p>

@@ -861,6 +861,11 @@ PDF; reabrir pedido; avaliações; histórico do admin.
   `title`; pizza com o total no centro; barras com quantidade e receita;
   estado vazio que diz se é por causa do filtro; sem HEX.
 
+- Atalho para a central de pedidos (Pedidos recebidos,
+  `/dashboard-fornecedor`, pedido do autor): botão "Central de pedidos"
+  no cabeçalho e os cartões "Pendentes agora" e "Em rota agora" viram
+  links para ela (`routerLink`, sem recarregar).
+
 **Fora de escopo (desta tela)**: período livre (segue por mês); exportar
 relatório; comparar lojas; abrir o histórico já filtrado; biblioteca de
 gráficos (o SVG é feito à mão, como hoje).
@@ -1124,7 +1129,8 @@ gráficos (o SVG é feito à mão, como hoje).
     `deveFiltrarAoClicarNoTipoCategoriaProdutoEModo`,
     `deveFiltrarPelosSelects`, `deveMostrarChipsELimpar`,
     `deveDestacarOMelhorDiaNoGrafico`, `deveMostrarTotalNoCentroDaPizza`,
-    `deveExplicarVazioCausadoPeloFiltro`.
+    `deveExplicarVazioCausadoPeloFiltro`,
+    `deveLevarParaACentralDePedidos`.
 
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 

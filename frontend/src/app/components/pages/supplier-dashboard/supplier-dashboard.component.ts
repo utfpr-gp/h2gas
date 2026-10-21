@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { SupplierService } from '../../../services/supplier.service';
 import { ProductItemService } from '../../../services/product-item.service';
@@ -45,7 +46,7 @@ type FilterKey = keyof DashboardFilter;
 @Component({
   selector: 'app-supplier-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './supplier-dashboard.component.html',
   animations: [fadeIn],
 })
