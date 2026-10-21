@@ -3,6 +3,7 @@ package com.h2gas.services;
 import com.h2gas.configuration.security.TokenService;
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.exceptions.BusinessRuleException;
+import com.h2gas.exceptions.ForbiddenResourceException;
 import com.h2gas.model.entity.LoginToken;
 import com.h2gas.model.entity.User;
 import com.h2gas.model.repository.LoginTokenRepository;
@@ -109,6 +110,33 @@ class LoginTokenServiceTest {
         assertEquals("jwt-de-teste", jwt);
         assertTrue(tokenSalvo().isUsed());
         verify(tokenService).generateToken(argThat(u -> usuario.getId().equals(u.getId())));
+    }
+
+    @Test
+    @DisplayName("HU12: código certo de conta desativada não emite JWT (403)")
+    void deveRecusarLoginPorCodigoDeContaDesativada() {
+        loginTokenService.requestToken(usuario.getEmail());
+        String codigo = tokenSalvo().getCode();
+        usuario.setEnabled(false);
+        userRepository.save(usuario);
+
+        ForbiddenResourceException erro = assertThrows(ForbiddenResourceException.class,
+                () -> loginTokenService.validateAndLogin(usuario.getEmail(), codigo));
+
+        assertEquals("Conta desativada. Fale com o suporte.", erro.getMessage());
+        verify(tokenService, never()).generateToken(any(User.class));
+    }
+
+    @Test
+    @DisplayName("HU12: conta desativada não recebe código por e-mail (e a resposta segue igual)")
+    void naoDeveEnviarCodigoParaContaDesativada() {
+        usuario.setEnabled(false);
+        userRepository.save(usuario);
+
+        assertDoesNotThrow(() -> loginTokenService.requestToken(usuario.getEmail()));
+
+        verify(mailService, never()).sendMail(anyString(), anyString(), anyString());
+        assertEquals(0, loginTokenRepository.count());
     }
 
     @Test
