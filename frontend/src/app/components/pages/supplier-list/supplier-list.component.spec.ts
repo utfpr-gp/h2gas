@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { of } from 'rxjs';
@@ -26,7 +26,7 @@ describe('SupplierListComponent', () => {
 
   beforeEach(async () => {
     localStorage.clear();
-    supplierServiceSpy = jasmine.createSpyObj('SupplierService', ['getAllSupplierOpenAndActive', 'searchSuppliers']);
+    supplierServiceSpy = jasmine.createSpyObj('SupplierService', ['getAllSupplierOpenAndActive']);
     supplierServiceSpy.getAllSupplierOpenAndActive.and.returnValue(of(emptyPage as any));
 
     productItemServiceSpy = jasmine.createSpyObj('ProductItemService', ['getProductsFromActiveSuppliers']);
@@ -68,7 +68,7 @@ describe('SupplierListComponent', () => {
 
     fixture.detectChanges();
 
-    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, 5);
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, 5, undefined);
   });
 
   it('deveReenviarCityIdAoBuscarProdutosGlobais', () => {
@@ -77,7 +77,7 @@ describe('SupplierListComponent', () => {
 
     component.toggleView();
 
-    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledWith(0, 20, 5, undefined, undefined);
+    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledWith(0, 12, 5, undefined, undefined, undefined);
   });
 
   it('deveFiltrarProdutosPelaCategoriaSelecionada', () => {
@@ -86,7 +86,7 @@ describe('SupplierListComponent', () => {
 
     component.selectCategory('Gás');
 
-    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledWith(0, 20, undefined, 'Gás', undefined);
+    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledWith(0, 12, undefined, 'Gás', undefined, undefined);
   });
 
   it('deveOrdenarPorMenorPrecoAoAtivarToggle', () => {
@@ -96,7 +96,7 @@ describe('SupplierListComponent', () => {
     component.toggleSortByPrice();
 
     expect(productItemServiceSpy.getProductsFromActiveSuppliers)
-      .toHaveBeenCalledWith(0, 20, undefined, undefined, 'priceDelivery,asc');
+      .toHaveBeenCalledWith(0, 12, undefined, undefined, 'priceDelivery,asc', undefined);
   });
 
   it('deveIniciarNaVisaoDeProdutosQuandoQueryParamViewForProducts', () => {
@@ -117,5 +117,86 @@ describe('SupplierListComponent', () => {
     expect(cartServiceSpy.addProduct).toHaveBeenCalledWith(
       jasmine.objectContaining({ id: 99, quantitySelect: 1 })
     );
+  });
+
+  // ---- F7 §5.21 ----
+  const byId = (id: string) => fixture.nativeElement.querySelector(`[data-testid="${id}"]`) as HTMLElement | null;
+  const digitar = (valor: string) => {
+    const input = byId('catalog-search') as HTMLInputElement;
+    input.value = valor;
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+  };
+
+  it('deveBuscarLojasDaCidadeAoDigitar', fakeAsync(() => {
+    locationContextService.setAddress({ cityId: 5, cityName: 'Curitiba', label: 'Rua XV · Curitiba' });
+    fixture.detectChanges();
+    supplierServiceSpy.getAllSupplierOpenAndActive.calls.reset();
+
+    digitar('gás');
+    tick(100);
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).not.toHaveBeenCalled();
+    tick(300);
+
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledOnceWith(0, 10, 5, 'gás');
+    expect(byId('filter-button')).toBeNull();
+  }));
+
+  it('deveBuscarProdutosNaVisaoProdutos', fakeAsync(() => {
+    locationContextService.setAddress({ cityId: 5, cityName: 'Curitiba', label: 'Rua XV · Curitiba' });
+    fixture.detectChanges();
+    byId('view-products')!.click();
+    fixture.detectChanges();
+    productItemServiceSpy.getProductsFromActiveSuppliers.calls.reset();
+
+    digitar('minalba');
+    tick(300);
+
+    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledOnceWith(0, 12, 5, undefined, undefined, 'minalba');
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).not.toHaveBeenCalledWith(jasmine.anything(), jasmine.anything(), jasmine.anything(), 'minalba');
+  }));
+
+  it('deveLimparABusca', fakeAsync(() => {
+    fixture.detectChanges();
+    digitar('gás');
+    tick(300);
+    fixture.detectChanges();
+    supplierServiceSpy.getAllSupplierOpenAndActive.calls.reset();
+
+    byId('clear-search')!.click();
+    fixture.detectChanges();
+
+    expect((byId('catalog-search') as HTMLInputElement).value).toBe('');
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined);
+    expect(byId('clear-search')).toBeNull();
+  }));
+
+  it('devePaginarProdutos', () => {
+    productItemServiceSpy.getProductsFromActiveSuppliers.and.returnValue(of({ ...emptyProductsPage, data: [{ id: 1 }] as any,
+      size: 12, totalElements: 30, totalPages: 3 } as any));
+    fixture.detectChanges();
+    component.toggleView();
+    fixture.detectChanges();
+
+    component.onPageChange(2);
+
+    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledWith(2, 12, undefined, undefined, undefined, undefined);
+    expect(fixture.nativeElement.textContent).toContain('30 produtos');
+  });
+
+  it('deveAlternarEntreLojasEProdutos', () => {
+    fixture.detectChanges();
+    expect(byId('view-suppliers')!.getAttribute('aria-pressed')).toBe('true');
+
+    byId('view-products')!.click();
+    fixture.detectChanges();
+    expect(component.viewMode).toBe('products');
+    expect(byId('view-products')!.getAttribute('aria-pressed')).toBe('true');
+    // controle segmentado claro: o ativo não fica com fundo escuro
+    expect(byId('view-products')!.classList).not.toContain('bg-primary');
+
+    byId('view-suppliers')!.click();
+    fixture.detectChanges();
+    expect(component.viewMode).toBe('suppliers');
   });
 });
