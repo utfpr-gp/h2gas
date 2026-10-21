@@ -501,6 +501,50 @@ depois da HU11.
 dia da semana e feriados; fechar sozinho fora do horário; alerta ou
 e-mail de estoque baixo; `distributor-management` (código morto).
 
+### 5.16 Fatia 6 — produtos do fornecedor (`/product-items`)
+
+> Escrita em 2026-10-21, segunda tela de fornecedor da Fatia 6 (§5.15).
+
+**Achados**
+- `DELETE /api/product-items/{id}` não confere o dono: qualquer
+  fornecedor apaga produto de outro.
+- Produto que já aparece em pedido não pode ser apagado (FK de
+  `order_items`), e a rota devolve 500. Todos os produtos do fornecedor
+  de teste têm vendas.
+- A tela busca só a 1ª página (10) e conta Total, Disponíveis, Estoque
+  baixo e Esgotados em cima dela: com mais de 10 produtos os números
+  erram, e não há paginação.
+- Todo card mostra o selo "Disponível", até o esgotado; o rótulo
+  "Fornecedor:" mostra a marca; sem busca nem filtro; imagem quebrada sem
+  alternativa; exclusão por checkbox escondido; azul/verde/vermelho
+  fixos, Font Awesome, `console.log`.
+
+**Contrato**
+- `GET /api/product-items/mine` (SUPPLIER, dono do token): `q`
+  (marca, categoria ou tipo, sem diferenciar maiúsculas), `stock`
+  (`all` | `available` = estoque > 0 | `low` = de 1 até o estoque
+  mínimo | `out` = 0; padrão `all`), `page`, `size`; ordenado por marca.
+- `GET /api/product-items/mine/summary` (SUPPLIER): `total`,
+  `available`, `lowStock`, `outOfStock` e `lowStockThreshold`, contados
+  no banco com o estoque mínimo da configuração (§5.15).
+- `DELETE /api/product-items/{id}`: **403** se o produto é de outro
+  fornecedor; **409** "Este produto já está em pedidos e não pode ser
+  excluído. Zere o estoque para tirá-lo do catálogo." se já foi vendido.
+- OpenAPI nas três rotas.
+- Tela: cabeçalho com "Novo produto"; os quatro contadores viram os
+  filtros (com `aria-pressed`) e o de estoque baixo diz o limite e leva à
+  configuração; busca com debounce no backend; cards com imagem (ícone
+  do tipo quando falta ou falha), marca, categoria, tipo, preços de
+  entrega e retirada, selo de entrega grátis, estoque com selo
+  Disponível / Estoque baixo / Esgotado e data da atualização; editar e
+  excluir com rótulo acessível; exclusão com modal próprio e a mensagem
+  do 409; skeleton, estado vazio por filtro e paginação; rota sob
+  demanda; sem HEX nem `console.log`.
+
+**Fora de escopo (desta tela)**: ajustar estoque direto na lista;
+exclusão lógica/arquivar produto; ordenar por coluna; mexer no
+formulário de produto (`product-item-form`).
+
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
 - Agregação de rating médio por fornecedor (gap de backend).
@@ -636,6 +680,21 @@ e-mail de estoque baixo; `distributor-management` (código morto).
     `deveSalvarTudoNumaChamadaComUmToast`,
     `deveMostrarMensagemDoBackendNoErro`, `deveMostrarPreviaDoHorario`.
 
+16. *(fatia 6, §5.16)* **Backend** — `ProductItemServiceTest`:
+    `deveListarProdutosDoFornecedorPorEstoque`,
+    `deveBuscarPorMarcaCategoriaOuTipo`,
+    `deveResumirEstoqueComOLimiteDaConfiguracao`,
+    `deveRecusarExcluirProdutoDeOutroFornecedor`,
+    `deveRecusarExcluirProdutoJaVendido`;
+    `ProductItemControllerTest`: `deveListarSoOsProdutosDoToken`,
+    `deveRetornar400ComFiltroDeEstoqueInvalido`.
+    **Frontend** — `product-item.service.spec.ts`:
+    `deveListarMeusProdutosComFiltros`, `deveBuscarResumoDoEstoque`;
+    `product-item.component.spec.ts`: `deveMostrarContadoresDoResumo`,
+    `deveFiltrarPeloContador`, `deveBuscarComDebounce`,
+    `deveMostrarSeloDeEstoquePorProduto`, `deveConfirmarAntesDeExcluir`,
+    `deveMostrarMensagemQuandoProdutoJaVendido`, `devePaginar`.
+
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
 ## 8. Definição de Pronto
@@ -748,6 +807,15 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 >
 > **Achados do teste**: no celular, o aviso "Alterações não salvas" saía pela esquerda da barra fixa — passou para cima do botão.
 > O "Configurações" do menu do admin aponta para uma rota que agora é só do fornecedor; a HU12 já tira esse item do menu.
+
+**Fatia 6 — produtos do fornecedor (§5.16):**
+- [ ] Lista, filtros e contadores calculados no backend para o
+      fornecedor do token; exclusão de produto alheio é 403 e de produto
+      vendido é 409 com orientação; OpenAPI.
+- [ ] Tela com contadores-filtro, busca, selo de estoque correto,
+      confirmação de exclusão, skeleton, estado vazio e paginação.
+- [ ] Testes da seção 7 (item 16) verdes; `mvn test`, `ng test` (sem
+      falhas novas) e `ng build`; teste manual em 390 e 1280 px.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
