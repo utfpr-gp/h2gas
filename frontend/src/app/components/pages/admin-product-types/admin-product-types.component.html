@@ -4,19 +4,19 @@
         <p class="text-sm text-gray-500">Os fornecedores escolhem um destes tipos ao criar as próprias categorias.</p>
     </header>
 
-    <form class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 mb-4 space-y-3" [formGroup]="newForm" (ngSubmit)="create()">
-        <div class="flex flex-col sm:flex-row gap-2">
+    <form class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 mb-4 flex flex-wrap gap-3" [formGroup]="newForm" (ngSubmit)="create()">
         <label class="sr-only" for="new-type-name">Nome do novo tipo</label>
         <input id="new-type-name" data-testid="new-type-name" type="text" maxlength="60"
-            class="input input-bordered rounded-xl bg-white grow" placeholder="Ex.: Gás, Água Mineral"
+            class="input input-bordered rounded-xl bg-white basis-full sm:basis-0 sm:flex-1 min-w-0" placeholder="Ex.: Gás, Água Mineral"
             formControlName="name" [class.input-error]="newForm.controls.name.touched && newForm.controls.name.invalid" />
-        <button type="submit" data-testid="save-new-type" class="btn btn-primary rounded-xl" [disabled]="creating">
+        <button type="submit" data-testid="save-new-type" class="btn btn-primary rounded-xl basis-full sm:basis-auto order-last sm:order-none" [disabled]="creating">
             <span *ngIf="creating" class="loading loading-spinner loading-sm"></span>
             <span *ngIf="!creating" class="material-icons text-base">add</span>
             Novo tipo
         </button>
+        <div class="basis-full">
+            <ng-container *ngTemplateOutlet="iconGrid; context: { $implicit: newForm.controls.icon, prefix: 'new' }"></ng-container>
         </div>
-        <ng-container *ngTemplateOutlet="iconGrid; context: { $implicit: newForm.controls.icon, prefix: 'new' }"></ng-container>
     </form>
 
     <div *ngIf="loading" class="space-y-2" aria-busy="true">
