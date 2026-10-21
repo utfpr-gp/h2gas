@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, HostListener, OnDestroy, OnInit } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user';
 import { ProductItem } from '../../models/product-item';
@@ -12,8 +12,8 @@ import { LocationContextService } from '../../services/location-context.service'
 import { UserService } from '../../services/user.service';
 import { initials } from '../../utils/initials';
 import { homeFor } from '../../utils/home-route';
-import { fadeIn } from '../../animations/checkout.animations';
-import { Subscription, skip } from 'rxjs';
+import { expandCollapse, fadeIn } from '../../animations/checkout.animations';
+import { Subscription, filter, skip } from 'rxjs';
 import { BottomTabBarComponent } from '../bottom-tab-bar/bottom-tab-bar.component';
 import { DelivererTabBarComponent } from '../deliverer-tab-bar/deliverer-tab-bar.component';
 
@@ -28,8 +28,7 @@ import { DelivererTabBarComponent } from '../deliverer-tab-bar/deliverer-tab-bar
     DelivererTabBarComponent
   ],
   templateUrl: './menu.component.html',
-  styleUrl: './menu.component.css',
-  animations: [fadeIn]
+  animations: [fadeIn, expandCollapse]
 })
 export class MenuComponent implements OnInit, OnDestroy {
 
@@ -44,6 +43,7 @@ export class MenuComponent implements OnInit, OnDestroy {
   ) {}
 
   private userSub?: Subscription;
+  private navigationSub?: Subscription;
 
   userMenuOpen = false;
   showDropdown = false;
@@ -97,10 +97,20 @@ export class MenuComponent implements OnInit, OnDestroy {
     this.userSub = this.userService.currentUser$.pipe(skip(1)).subscribe((user) => {
       if (user) this.user = user;
     });
+    this.navigationSub = this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe(() => this.closeNavMenus());
   }
 
   ngOnDestroy(): void {
     this.userSub?.unsubscribe();
+    this.navigationSub?.unsubscribe();
+  }
+
+  private closeNavMenus() {
+    this.mobileMenuOpen = false;
+    this.submenuOpen = false;
+    this.productsMenuOpen = false;
   }
 
   get homeRoute(): string {
@@ -155,6 +165,22 @@ export class MenuComponent implements OnInit, OnDestroy {
     return this.user?.userType === 'DELIVERER';
   }
 
+  get isCustomer(): boolean {
+    return this.user?.userType === 'CUSTOMER';
+  }
+
+  get isSupplier(): boolean {
+    return this.user?.userType === 'SUPPLIER';
+  }
+
+  get isAdmin(): boolean {
+    return this.user?.userType === 'ADMIN';
+  }
+
+  get hasMobileMenu(): boolean {
+    return this.isSupplier || this.isAdmin;
+  }
+
   unitPriceForMode(product: ProductItem): number | undefined {
     return this.deliveryMode === 'PICKUP' ? product.pricePickup : product.priceDelivery;
   }
@@ -183,6 +209,11 @@ export class MenuComponent implements OnInit, OnDestroy {
   @HostListener('document:keydown.escape')
   onEscape() {
     if (this.userMenuOpen) this.closeUserMenu(true);
+    if (this.mobileMenuOpen) {
+      this.closeNavMenus();
+      this.host.nativeElement.querySelector<HTMLElement>('[data-testid=mobile-menu-button]')?.focus();
+    }
+    this.productsMenuOpen = false;
   }
 
   navigate(route: string) {

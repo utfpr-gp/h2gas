@@ -322,4 +322,67 @@ describe('MenuComponent', () => {
     entrarComo(perfis.admin);
     expect(logo()).toBe('/inicio');
   });
+
+  it('naoDeveMostrarInicioDoCatalogoParaFornecedor', () => {
+    entrarComo(perfis.fornecedor);
+    (byId('mobile-menu-button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const hrefs = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('a')).map((a) => a.getAttribute('href'));
+    expect(hrefs.filter((h) => h === '/inicio')).toEqual([]);
+  });
+
+  it('deveMostrarCarrinhoSoParaCliente', () => {
+    entrarComo(perfis.cliente);
+    expect(fixture.nativeElement.querySelector('#cart-drawer')).withContext('cliente').toBeTruthy();
+
+    for (const perfil of [perfis.fornecedor, perfis.entregador, perfis.admin]) {
+      entrarComo(perfil);
+      expect(fixture.nativeElement.querySelector('#cart-drawer')).withContext(perfil.userType).toBeNull();
+    }
+  });
+
+  it('deveMostrarHamburguerSoParaFornecedorEAdmin', () => {
+    for (const perfil of [perfis.fornecedor, perfis.admin]) {
+      entrarComo(perfil);
+      expect(byId('mobile-menu-button')).withContext(perfil.userType).toBeTruthy();
+    }
+    for (const perfil of [perfis.cliente, perfis.entregador]) {
+      entrarComo(perfil);
+      expect(byId('mobile-menu-button')).withContext(perfil.userType).toBeNull();
+    }
+  });
+
+  it('deveUsarSoIconesMaterialNaNavbar', () => {
+    for (const perfil of Object.values(perfis)) {
+      entrarComo(perfil);
+      (byId('mobile-menu-button') as HTMLButtonElement | null)?.click();
+      fixture.detectChanges();
+      expect((fixture.nativeElement as HTMLElement).querySelectorAll('[class*="fa-"]').length).withContext(perfil.userType).toBe(0);
+    }
+  });
+
+  it('deveFecharMenuMobileAoNavegarEComEsc', async () => {
+    entrarComo(perfis.fornecedor);
+    const botao = () => byId('mobile-menu-button') as HTMLButtonElement;
+    const painel = () => (fixture.nativeElement as HTMLElement).querySelector('#mobile-menu');
+    expect(botao().getAttribute('aria-controls')).toBe('mobile-menu');
+    expect(botao().getAttribute('aria-expanded')).toBe('false');
+
+    botao().click();
+    fixture.detectChanges();
+    expect(painel()).toBeTruthy();
+    expect(botao().getAttribute('aria-expanded')).toBe('true');
+
+    await navegar('/dashboard-fornecedor');
+    expect(painel()).withContext('ao navegar').toBeNull();
+
+    botao().click();
+    fixture.detectChanges();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+    await fixture.whenStable();
+    expect(painel()).withContext('com Esc').toBeNull();
+    expect(botao().getAttribute('aria-expanded')).toBe('false');
+  });
 });
