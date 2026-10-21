@@ -724,12 +724,20 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
       `styles.css`).
 
 **Fatia 6 — aprovação de fornecedores (§5.13):**
-- [ ] `GET /api/suppliers` filtra por status e busca no backend, com
+- [x] `GET /api/suppliers` filtra por status e busca no backend, com
       OpenAPI.
-- [ ] Tela com filtros, busca, cards, confirmação, skeleton, estado
+- [x] Tela com filtros, busca, cards, confirmação, skeleton, estado
       vazio e paginação; erro não muda o status.
-- [ ] Testes da seção 7 (item 13) verdes; `mvn test`, `ng test` (sem
+- [x] Testes da seção 7 (item 13) verdes; `mvn test`, `ng test` (sem
       falhas novas) e `ng build`; teste manual em 390 e 1280 px.
+
+> Verificado em 2026-10-21: backend 306 testes (único erro: `BackendApplicationTests.contextLoads`, que precisa do MySQL local);
+> frontend 363 testes com 16 falhas antigas, nenhuma desta tela; `ng build` sem erro; E2E no Chromium em 1280 e 390 px com 17
+> checagens (abre em "Aguardando", filtros, busca "batel", estado vazio, aprovar e desativar de verdade com o dado devolvido ao
+> estado original, "Voltar" fecha o modal, sem rolagem lateral nem erro de JS).
+>
+> **Achados do teste**: (1) a tela entrava no bundle inicial e estourava o orçamento de 1 MB do `ng build` por 1 kB — a rota
+> passou a `loadComponent` (tela só do admin); (2) no celular o campo de busca não ocupava a largura toda.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
