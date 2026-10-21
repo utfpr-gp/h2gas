@@ -11,6 +11,7 @@ import { Supplier } from '../../models/supplier';
 export class SupplierCardComponent {
   @Input() supplier!: Supplier;
   @Output() viewProducts = new EventEmitter<string>();
+  logoBroken = false;
 
   onViewProducts() {
     this.viewProducts.emit(this.supplier.id);

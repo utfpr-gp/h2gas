@@ -1,5 +1,12 @@
 <div class="bg-white rounded-xl shadow-md overflow-hidden p-4 border border-gray-200 flex items-center gap-4">
-  <span class="material-icons text-primary text-3xl">storefront</span>
+  <!-- F7 fatia 6: logo da loja; sem logo (ou com a imagem quebrada) fica o ícone -->
+  <div class="w-12 h-12 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center shrink-0">
+    <img *ngIf="supplier.logoUrl && !logoBroken; else icone" data-testid="supplier-logo" [src]="supplier.logoUrl"
+      [alt]="'Logo de ' + supplier.name" loading="lazy" class="w-full h-full object-cover" (error)="logoBroken = true" />
+    <ng-template #icone>
+      <span data-testid="supplier-icon" class="material-icons text-primary text-3xl" aria-hidden="true">storefront</span>
+    </ng-template>
+  </div>
 
   <div class="flex-grow min-w-0">
     <h2 class="font-bold text-gray-800 truncate">{{ supplier.name }}</h2>

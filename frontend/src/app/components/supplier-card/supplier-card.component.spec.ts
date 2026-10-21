@@ -31,4 +31,29 @@ describe('SupplierCardComponent', () => {
 
     expect(component.viewProducts.emit).toHaveBeenCalledWith('7');
   });
+
+  it('deveMostrarLogoDaLojaOuIcone', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    component.supplier = { id: '7', name: 'Depósito Central', logoUrl: 'https://cdn/logo.png' } as Supplier;
+    fixture.detectChanges();
+
+    const img = el.querySelector('[data-testid="supplier-logo"]') as HTMLImageElement;
+    expect(img.src).toBe('https://cdn/logo.png');
+    expect(img.alt).toBe('Logo de Depósito Central');
+    expect(el.querySelector('[data-testid="supplier-icon"]')).toBeNull();
+
+    // imagem quebrada volta para o ícone
+    img.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="supplier-logo"]')).toBeNull();
+    expect(el.querySelector('[data-testid="supplier-icon"]')?.textContent).toContain('storefront');
+  });
+
+  it('deveMostrarIconeSemLogo', () => {
+    component.supplier = { id: '8', name: 'Sem Logo' } as Supplier;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="supplier-logo"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="supplier-icon"]')).not.toBeNull();
+  });
 });
