@@ -11,7 +11,7 @@ import { ToastrService } from 'ngx-toastr';
 import { DeliveryMode, OrderPreview, OrderRequest } from '../../../models/order.model';
 import { OrderItemRequest } from '../../../models/order-item.model';
 import { OrderService } from '../../../services/order.service';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { fadeIn, listItem, popIn, stepSlide } from '../../../animations/checkout.animations';
 import { LocationContextService } from '../../../services/location-context.service';
@@ -39,6 +39,7 @@ export class OrderResumeComponent implements OnInit {
     private fb: FormBuilder, 
     private orderService: OrderService,
     private router: Router,
+    private route: ActivatedRoute,
     private locationContext: LocationContextService,
     private supplierService: SupplierService,
   ) {
@@ -65,6 +66,8 @@ export class OrderResumeComponent implements OnInit {
   readonly steps = ['Itens', 'Entrega', 'Pagamento'];
   pickupStores: Supplier[] = [];
   pickupStoresLoading = false;
+  // F7 §5.23: compra direta usa um item avulso e deixa o carrinho intacto
+  buyNow = false;
 
   readonly paymentMethods = [
     { value: 'DINHEIRO', label: 'Dinheiro', hint: 'Pagamento na entrega', icon: 'payments' },
@@ -73,7 +76,19 @@ export class OrderResumeComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.productsCarts = this.cartService.getCart();
+    this.buyNow = this.route.snapshot.queryParamMap.get('modo') === 'compra-direta';
+    if (this.buyNow) {
+      const item = this.cartService.getBuyNow();
+      if (!item) {
+        this.toastr.warning('Escolha um produto para comprar agora.');
+        this.navigate('/inicio');
+        return;
+      }
+      this.step = 2;
+    } else {
+      this.cartService.clearBuyNow();
+    }
+    this.productsCarts = this.currentItems();
     this.userLogado = this.userService.getUserLocalStorage();
     this.deliveryMode = this.cartService.getDeliveryMode();
     this.loadAddresses();
@@ -128,6 +143,11 @@ export class OrderResumeComponent implements OnInit {
   }
 
   removeItem(product: ProductItem) {
+    if (this.buyNow) {
+      this.cartService.clearBuyNow();
+      this.navigate('/inicio');
+      return;
+    }
     this.cartService.removeProduct(product.id!);
     this.reloadCart();
   }
@@ -136,14 +156,26 @@ export class OrderResumeComponent implements OnInit {
     if (quantity < 1) {
       return;
     }
-    this.cartService.updateQuantity(product.id!, quantity);
+    if (this.buyNow) {
+      this.cartService.updateBuyNowQuantity(quantity);
+    } else {
+      this.cartService.updateQuantity(product.id!, quantity);
+    }
     this.bumpedProductId = product.id;
     setTimeout(() => this.bumpedProductId = undefined, 150);
     this.reloadCart();
   }
 
+  private currentItems(): ProductItem[] {
+    if (!this.buyNow) {
+      return this.cartService.getCart();
+    }
+    const item = this.cartService.getBuyNow();
+    return item ? [item] : [];
+  }
+
   private reloadCart() {
-    this.productsCarts = this.cartService.getCart();
+    this.productsCarts = this.currentItems();
     this.loadPreview();
   }
 
@@ -289,7 +321,11 @@ export class OrderResumeComponent implements OnInit {
   
     forkJoin(pedidosObservables).subscribe({
       next: results => {
-        this.cartService.setCart([]);
+        if (this.buyNow) {
+          this.cartService.clearBuyNow();
+        } else {
+          this.cartService.setCart([]);
+        }
         this.isLoading = false;
         this.orderPlaced = true;
         setTimeout(() => this.navigate('/meus-pedidos'), 1500);

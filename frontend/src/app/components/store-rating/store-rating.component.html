@@ -1,0 +1,27 @@
+<button *ngIf="clickable && hasRating; else estatico" type="button" data-testid="supplier-rating"
+  class="flex items-center gap-1 rounded-md -mx-1 px-1 hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-accent cursor-pointer transition-colors"
+  [ngClass]="size === 'sm' ? 'text-sm min-h-11 sm:min-h-8' : 'text-xs min-h-8'"
+  [attr.aria-label]="buttonAriaLabel" (click)="onOpen($event)">
+  <ng-container *ngTemplateOutlet="nota"></ng-container>
+  <span class="material-icons text-gray-500" [ngClass]="size === 'sm' ? 'text-base' : 'text-sm'" aria-hidden="true">chevron_right</span>
+</button>
+
+<ng-template #estatico>
+  <div data-testid="supplier-rating" class="flex items-center gap-1" [ngClass]="size === 'sm' ? 'text-sm' : 'text-xs'"
+    [attr.aria-label]="ariaLabel" [attr.role]="hasRating ? 'img' : null">
+    <ng-container *ngIf="hasRating; else semNota">
+      <ng-container *ngTemplateOutlet="nota"></ng-container>
+    </ng-container>
+  </div>
+</ng-template>
+
+<ng-template #nota>
+  <span class="material-icons text-warning" [ngClass]="size === 'sm' ? 'text-base' : 'text-sm'" aria-hidden="true">star</span>
+  <span class="font-semibold text-gray-800" aria-hidden="true">{{ ratingLabel }}</span>
+  <span class="text-gray-500" aria-hidden="true">({{ count }})</span>
+</ng-template>
+
+<ng-template #semNota>
+  <span class="material-icons text-gray-500" [ngClass]="size === 'sm' ? 'text-base' : 'text-sm'" aria-hidden="true">star_border</span>
+  <span class="text-gray-500">Sem avaliações ainda</span>
+</ng-template>

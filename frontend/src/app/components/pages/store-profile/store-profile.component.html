@@ -49,6 +49,39 @@
             </div>
         </section>
 
+        <!-- Banner (F7 §5.26) -->
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-5" aria-labelledby="banner-title">
+            <h2 id="banner-title" class="font-semibold text-gray-800 mb-3">Banner</h2>
+            <div class="relative w-full h-32 md:h-40 rounded-lg overflow-hidden border border-gray-200">
+                <img *ngIf="bannerSrc; else bannerPadrao" data-testid="banner-image" [src]="bannerSrc" alt="Banner da loja"
+                    class="w-full h-full object-cover" (error)="bannerBroken = !bannerPreview" />
+                <ng-template #bannerPadrao>
+                    <div data-testid="banner-default" class="w-full h-full bg-linear-to-br from-primary to-accent flex items-center justify-end pr-6">
+                        <span class="material-icons text-white/15 text-8xl!" aria-hidden="true">storefront</span>
+                    </div>
+                </ng-template>
+                <span *ngIf="uploadingBanner" class="absolute inset-0 bg-white/60 flex items-center justify-center">
+                    <span class="loading loading-spinner loading-md text-primary"></span>
+                </span>
+            </div>
+            <div class="mt-3 space-y-2">
+                <p class="text-sm text-gray-500">Aparece no topo da página da sua loja. JPG, PNG ou WEBP de até 2 MB; imagem larga (3:1) fica melhor. Sem banner, a página usa um fundo nas cores do H2Gás.</p>
+                <div class="flex flex-wrap gap-2">
+                    <label class="btn btn-sm btn-primary rounded-lg" [class.btn-disabled]="uploadingBanner" for="banner-input">
+                        <span class="material-icons text-base">photo_camera</span>
+                        {{ profile.bannerUrl ? 'Trocar banner' : 'Enviar banner' }}
+                    </label>
+                    <input id="banner-input" data-testid="banner-input" type="file" class="sr-only" [accept]="logoAccept"
+                        [disabled]="uploadingBanner" (change)="onBannerSelected($event)" />
+                    <button *ngIf="profile.bannerUrl" type="button" data-testid="remove-banner" class="btn btn-sm btn-ghost text-error rounded-lg"
+                        [disabled]="uploadingBanner" (click)="confirmRemoveBanner = true">
+                        <span class="material-icons text-base">delete</span> Remover
+                    </button>
+                </div>
+                <p *ngIf="bannerError" data-testid="banner-error" class="text-xs text-error" role="alert">{{ bannerError }}</p>
+            </div>
+        </section>
+
         <!-- Dados -->
         <form [formGroup]="form" (ngSubmit)="save()" novalidate
             class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-5 space-y-3" aria-labelledby="data-title">
@@ -132,6 +165,23 @@
                 <button type="button" class="btn btn-outline btn-primary rounded-xl" [disabled]="removingLogo" (click)="confirmRemoveLogo = false">Voltar</button>
                 <button type="button" data-testid="confirm-remove-logo" class="btn btn-error rounded-xl" [disabled]="removingLogo" (click)="removeLogo()">
                     <span *ngIf="removingLogo" class="loading loading-spinner loading-sm"></span>
+                    Remover
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remover banner -->
+    <div *ngIf="confirmRemoveBanner" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-gray-900/40 p-4"
+        (click)="!removingBanner && (confirmRemoveBanner = false)">
+        <div role="dialog" aria-modal="true" aria-labelledby="remove-banner-title" @fadeIn
+            class="w-full max-w-md bg-white rounded-xl shadow-xl p-5" (click)="$event.stopPropagation()">
+            <h3 id="remove-banner-title" class="text-lg font-bold text-gray-800">Remover o banner?</h3>
+            <p class="text-sm text-gray-500 mt-1">A página da loja volta a mostrar o banner padrão até você enviar outro.</p>
+            <div class="grid grid-cols-2 gap-2 mt-4">
+                <button type="button" class="btn btn-outline btn-primary rounded-xl" [disabled]="removingBanner" (click)="confirmRemoveBanner = false">Voltar</button>
+                <button type="button" data-testid="confirm-remove-banner" class="btn btn-error rounded-xl" [disabled]="removingBanner" (click)="removeBanner()">
+                    <span *ngIf="removingBanner" class="loading loading-spinner loading-sm"></span>
                     Remover
                 </button>
             </div>

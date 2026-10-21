@@ -9,13 +9,14 @@ import { AddressService } from '../../../services/address.service';
 import { CityService } from '../../../services/city.service';
 import { UserService } from '../../../services/user.service';
 import { City } from '../../../models/city';
-import { LOGO_MAX_BYTES, LOGO_TYPES, SupplierProfile, SupplierProfileRequest } from '../../../models/supplier-profile';
+import { BANNER_MAX_BYTES, LOGO_MAX_BYTES, LOGO_TYPES, SupplierProfile, SupplierProfileRequest } from '../../../models/supplier-profile';
 import { backendMessage } from '../../../utils/backend-message';
 import { initials } from '../../../utils/initials';
 import { matchCityFromCep } from '../../../utils/city-match';
 import { fadeIn } from '../../../animations/checkout.animations';
 
 const LOGO_ERROR = 'Envie uma imagem JPG, PNG ou WEBP de até 1 MB.';
+const BANNER_ERROR = 'Envie uma imagem JPG, PNG ou WEBP de até 2 MB.';
 
 // F7 fatia 6: "Minha loja", a tela única do fornecedor (conta e loja são o mesmo cadastro)
 @Component({
@@ -46,6 +47,13 @@ export class StoreProfileComponent implements OnInit, OnDestroy {
   logoError = '';
   confirmRemoveLogo = false;
   removingLogo = false;
+  // F7 §5.26: banner do topo da página da loja
+  bannerPreview?: string;
+  uploadingBanner = false;
+  bannerError = '';
+  confirmRemoveBanner = false;
+  removingBanner = false;
+  bannerBroken = false;
 
   addressOpen = false;
   savingAddress = false;
@@ -74,6 +82,7 @@ export class StoreProfileComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.clearPreview();
+    this.clearBannerPreview();
   }
 
   load() {
@@ -108,6 +117,11 @@ export class StoreProfileComponent implements OnInit, OnDestroy {
   get logoSrc(): string | null {
     if (this.logoPreview) return this.logoPreview;
     return this.logoBroken ? null : this.profile?.logoUrl ?? null;
+  }
+
+  get bannerSrc(): string | null {
+    if (this.bannerPreview) return this.bannerPreview;
+    return this.bannerBroken ? null : this.profile?.bannerUrl ?? null;
   }
 
   get formattedCnpj(): string {
@@ -210,6 +224,58 @@ export class StoreProfileComponent implements OnInit, OnDestroy {
         this.toastr.error(`Não foi possível remover a logo: ${backendMessage(err)}`);
       },
     });
+  }
+
+  // ---- banner: mesmo fluxo da logo, com limite de 2 MB ----
+  onBannerSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    if (!LOGO_TYPES.includes(file.type) || file.size > BANNER_MAX_BYTES || file.size === 0) {
+      this.bannerError = BANNER_ERROR;
+      return;
+    }
+    this.bannerError = '';
+    this.clearBannerPreview();
+    this.bannerPreview = typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : undefined;
+    this.uploadingBanner = true;
+    this.supplierService.uploadMyBanner(file).subscribe({
+      next: ({ bannerUrl }) => {
+        this.uploadingBanner = false;
+        this.clearBannerPreview();
+        this.bannerBroken = false;
+        if (this.profile) this.profile = { ...this.profile, bannerUrl };
+        this.toastr.success('Banner atualizado.');
+      },
+      error: (err) => {
+        this.uploadingBanner = false;
+        this.clearBannerPreview();
+        this.toastr.error(`Não foi possível enviar o banner: ${backendMessage(err)}`);
+      },
+    });
+  }
+
+  removeBanner() {
+    this.removingBanner = true;
+    this.supplierService.removeMyBanner().subscribe({
+      next: () => {
+        this.removingBanner = false;
+        this.confirmRemoveBanner = false;
+        if (this.profile) this.profile = { ...this.profile, bannerUrl: null };
+        this.toastr.success('Banner removido.');
+      },
+      error: (err) => {
+        this.removingBanner = false;
+        this.confirmRemoveBanner = false;
+        this.toastr.error(`Não foi possível remover o banner: ${backendMessage(err)}`);
+      },
+    });
+  }
+
+  private clearBannerPreview() {
+    if (this.bannerPreview && typeof URL.revokeObjectURL === 'function') URL.revokeObjectURL(this.bannerPreview);
+    this.bannerPreview = undefined;
   }
 
   private clearPreview() {

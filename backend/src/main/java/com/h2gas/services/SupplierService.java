@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import com.h2gas.model.dto.SupplierSummaryDTO;
 import com.h2gas.model.entity.*;
 import com.h2gas.model.mapper.*;
+import com.h2gas.model.dto.StoreReviewDTO;
+import com.h2gas.model.repository.ReviewRepository;
 import com.h2gas.model.repository.SupplierRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -26,6 +28,7 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
@@ -33,6 +36,9 @@ public class SupplierService {
 
     @Autowired
     private SupplierRepository supplierRepository;
+
+    @Autowired
+    private ReviewRepository reviewRepository;
 
     @Autowired
     private CloudinaryService cloudinaryService;
@@ -85,10 +91,52 @@ public class SupplierService {
     }
 
     public Page<SupplierDTO> findAllSuppliersOpenAndActive(Long cityId, Pageable pageable) {
-        Page<Supplier> result = (cityId != null)
-                ? supplierRepository.findByCityIdAndActiveAndOpen(cityId, true, true, pageable)
-                : supplierRepository.findByActiveAndOpen(true, true, pageable);
-        return result.map(supplierMapper::toDto);
+        return findAllSuppliersOpenAndActive(cityId, null, pageable);
+    }
+
+    public Page<SupplierDTO> findAllSuppliersOpenAndActive(Long cityId, String q, Pageable pageable) {
+        String term = q == null || q.isBlank() ? null : q.trim().toLowerCase(java.util.Locale.ROOT);
+        Page<SupplierDTO> page = supplierRepository.findOpenForCatalog(cityId, term, pageable).map(supplierMapper::toDto);
+        addRatings(page.getContent());
+        return page;
+    }
+
+    // F7 §5.27: avaliações da loja com o primeiro nome do cliente; comentário em branco vira nulo
+    public Page<StoreReviewDTO> findReviews(String supplierId, Pageable pageable) {
+        if (!supplierRepository.existsById(supplierId)) {
+            throw new ResourceNotFoundException("Não encontrado nenhum Fornecedor com esse id: " + supplierId);
+        }
+        return reviewRepository.findStoreReviews(supplierId, pageable).map(row -> new StoreReviewDTO(
+                row.getId(),
+                firstName(row.getCustomerName()),
+                row.getRating(),
+                row.getComment() == null || row.getComment().isBlank() ? null : row.getComment().trim(),
+                row.getDeliveredAt()));
+    }
+
+    private static String firstName(String fullName) {
+        if (fullName == null || fullName.isBlank()) {
+            return "Cliente";
+        }
+        return fullName.trim().split("\\s+")[0];
+    }
+
+    // F7 §5.25: nota e contagem das lojas da página, lidas em uma consulta agrupada
+    private void addRatings(List<SupplierDTO> suppliers) {
+        if (suppliers.isEmpty()) {
+            return;
+        }
+        Map<String, ReviewRepository.SupplierRatingSummary> byId = reviewRepository
+                .summarizeBySupplierIds(suppliers.stream().map(SupplierDTO::getId).toList())
+                .stream()
+                .collect(Collectors.toMap(ReviewRepository.SupplierRatingSummary::getSupplierId, Function.identity()));
+        suppliers.forEach(dto -> {
+            ReviewRepository.SupplierRatingSummary summary = byId.get(dto.getId());
+            if (summary != null) {
+                dto.setAverageRating(Math.round(summary.getAverage() * 10) / 10.0);
+                dto.setReviewCount(summary.getTotal());
+            }
+        });
     }
 
     public List<SupplierSummaryDTO> findAllSuppliersSummary() {
@@ -100,8 +148,10 @@ public class SupplierService {
 
     public SupplierDTO findById(String id) {
         Optional<Supplier> supplierOptional = supplierRepository.findById(id);
-        return supplierOptional.map(supplierMapper::toDto).orElseThrow(()
+        SupplierDTO dto = supplierOptional.map(supplierMapper::toDto).orElseThrow(()
                 -> new ResourceNotFoundException("Não encontrado nenhum Fornecedor com esse id: " + id));
+        addRatings(List.of(dto)); // F7 §5.26: cabeçalho da loja mostra a nota
+        return dto;
     }
 
     public Supplier findEntityById(String id) {
@@ -231,6 +281,8 @@ public class SupplierService {
     public static final String INVALID_LOGO_MESSAGE = "Envie uma imagem JPG, PNG ou WEBP de até 1 MB.";
     private static final long MAX_LOGO_BYTES = 1_048_576;
     private static final java.util.Set<String> LOGO_TYPES = java.util.Set.of("image/jpeg", "image/png", "image/webp");
+    public static final String INVALID_BANNER_MESSAGE = "Envie uma imagem JPG, PNG ou WEBP de até 2 MB.";
+    private static final long MAX_BANNER_BYTES = 2_097_152;
 
     // F7 fatia 6: perfil e logo da loja; o id vem sempre do token (controller)
     public SupplierProfileDTO findMyProfile(String supplierId) {
@@ -249,10 +301,30 @@ public class SupplierService {
 
     @Transactional
     public String updateMyLogo(String supplierId, MultipartFile file) {
-        if (file == null || file.isEmpty() || file.getSize() > MAX_LOGO_BYTES || !LOGO_TYPES.contains(file.getContentType())) {
-            throw new BusinessRuleException(INVALID_LOGO_MESSAGE);
-        }
         Supplier supplier = findSupplier(supplierId);
+        supplier.setLogoUrl(uploadStoreImage(file, MAX_LOGO_BYTES, INVALID_LOGO_MESSAGE));
+        return supplierRepository.save(supplier).getLogoUrl();
+    }
+
+    // F7 §5.26: banner da loja — mesma validação e envio da logo, com limite de 2 MB
+    @Transactional
+    public String updateMyBanner(String supplierId, MultipartFile file) {
+        Supplier supplier = findSupplier(supplierId);
+        supplier.setBannerUrl(uploadStoreImage(file, MAX_BANNER_BYTES, INVALID_BANNER_MESSAGE));
+        return supplierRepository.save(supplier).getBannerUrl();
+    }
+
+    @Transactional
+    public void removeMyBanner(String supplierId) {
+        Supplier supplier = findSupplier(supplierId);
+        supplier.setBannerUrl(null);
+        supplierRepository.save(supplier);
+    }
+
+    private String uploadStoreImage(MultipartFile file, long maxBytes, String invalidMessage) {
+        if (file == null || file.isEmpty() || file.getSize() > maxBytes || !LOGO_TYPES.contains(file.getContentType())) {
+            throw new BusinessRuleException(invalidMessage);
+        }
         Map<?, ?> uploaded;
         try {
             uploaded = cloudinaryService.upload(file);
@@ -261,8 +333,7 @@ public class SupplierService {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Não foi possível enviar a imagem. Tente novamente.", e);
         }
         Object secure = uploaded.get("secure_url");
-        supplier.setLogoUrl(String.valueOf(secure != null ? secure : uploaded.get("url")));
-        return supplierRepository.save(supplier).getLogoUrl();
+        return String.valueOf(secure != null ? secure : uploaded.get("url"));
     }
 
     @Transactional
@@ -275,7 +346,7 @@ public class SupplierService {
     private static SupplierProfileDTO toProfile(Supplier s) {
         Address a = s.getAddress();
         City city = a != null && a.getCity() != null ? a.getCity() : s.getCity();
-        return new SupplierProfileDTO(s.getName(), s.getEmail(), s.getPhoneNumber(), s.getDescription(), s.getCnpj(), s.getLogoUrl(),
+        return new SupplierProfileDTO(s.getName(), s.getEmail(), s.getPhoneNumber(), s.getDescription(), s.getCnpj(), s.getLogoUrl(), s.getBannerUrl(),
                 a == null ? null : a.getId(), a == null ? null : a.getStreetName(), a == null ? null : a.getNumber(),
                 a == null ? null : a.getNeighborhood(), city == null ? null : city.getName(), city == null ? null : city.getState());
     }

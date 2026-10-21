@@ -43,6 +43,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -135,24 +136,24 @@ class SupplierControllerTest {
         dto.setName("Fornecedor Curitiba");
         Page<SupplierDTO> page = new PageImpl<>(List.of(dto), PageRequest.of(0, 10), 1);
 
-        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), any())).thenReturn(page);
+        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), isNull(), any())).thenReturn(page);
 
         mockMvc.perform(get("/api/suppliers/actives/open").param("cityId", "7"))
                 .andExpect(status().isOk());
 
-        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), any());
+        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), isNull(), any());
     }
 
     @Test
     void deveFuncionarSemCityIdMantendoComportamentoAtual() throws Exception {
         Page<SupplierDTO> page = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
 
-        when(supplierService.findAllSuppliersOpenAndActive(isNull(), any())).thenReturn(page);
+        when(supplierService.findAllSuppliersOpenAndActive(isNull(), isNull(), any())).thenReturn(page);
 
         mockMvc.perform(get("/api/suppliers/actives/open"))
                 .andExpect(status().isOk());
 
-        verify(supplierService).findAllSuppliersOpenAndActive(isNull(), any());
+        verify(supplierService).findAllSuppliersOpenAndActive(isNull(), isNull(), any());
     }
 
     @Test
@@ -234,7 +235,7 @@ class SupplierControllerTest {
     void deveUsarALojaDoTokenNoPerfil() throws Exception {
         autenticarComoFornecedor("fornecedor-1");
         SupplierProfileDTO perfil = new SupplierProfileDTO("Gás Centro", "gascentro@h2gas.local", "41999999999", "Desde 1990", "12345678000101",
-                null, 3L, "Rua XV", "700", "Centro", "Curitiba", "PR");
+                null, null, 3L, "Rua XV", "700", "Centro", "Curitiba", "PR");
         when(supplierService.findMyProfile("fornecedor-1")).thenReturn(perfil);
         when(supplierService.updateMyProfile(eq("fornecedor-1"), any())).thenReturn(perfil);
 
@@ -318,5 +319,77 @@ class SupplierControllerTest {
         mockMvc.perform(get("/api/suppliers/mine/dashboard").param("typeId", "abc")).andExpect(status().isBadRequest());
 
         verify(supplierDashboardService, never()).buildDashboard(any(), any(), any());
+    }
+
+    @Test
+    void deveRepassarABuscaComACidade() throws Exception {
+        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), eq("gás azul"), any()))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
+
+        mockMvc.perform(get("/api/suppliers/actives/open").param("cityId", "7").param("q", "gás azul"))
+                .andExpect(status().isOk());
+
+        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), eq("gás azul"), any());
+    }
+
+    @Test
+    void deveExporNotaEContagemNoCatalogo() throws Exception {
+        SupplierDTO loja = new SupplierDTO();
+        loja.setName("Gás Centro");
+        loja.setAverageRating(4.3);
+        loja.setReviewCount(14L);
+        when(supplierService.findAllSuppliersOpenAndActive(isNull(), isNull(), any()))
+                .thenReturn(new PageImpl<>(List.of(loja), PageRequest.of(0, 10), 1));
+
+        mockMvc.perform(get("/api/suppliers/actives/open"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].averageRating").value(4.3))
+                .andExpect(jsonPath("$.data[0].reviewCount").value(14));
+    }
+
+    @Test
+    void deveEnviarOBannerDoFornecedorDoToken() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+        when(supplierService.updateMyBanner(eq("fornecedor-1"), any())).thenReturn("https://res.cloudinary.com/h2gas/banner.jpg");
+
+        mockMvc.perform(multipart("/api/suppliers/mine/banner")
+                        .file(new MockMultipartFile("file", "banner.jpg", "image/jpeg", new byte[]{1, 2, 3}))
+                        .with(r -> { r.setMethod("PUT"); return r; }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.bannerUrl").value("https://res.cloudinary.com/h2gas/banner.jpg"));
+        mockMvc.perform(delete("/api/suppliers/mine/banner")).andExpect(status().isNoContent());
+
+        verify(supplierService).removeMyBanner("fornecedor-1");
+    }
+
+    @Test
+    void deveBloquearBannerParaQuemNaoEFornecedor() throws Exception {
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                "cliente", null, List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER"))));
+
+        mockMvc.perform(multipart("/api/suppliers/mine/banner")
+                        .file(new MockMultipartFile("file", "banner.jpg", "image/jpeg", new byte[]{1, 2, 3}))
+                        .with(r -> { r.setMethod("PUT"); return r; }))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(delete("/api/suppliers/mine/banner")).andExpect(status().isForbidden());
+
+        verifyNoInteractions(supplierService);
+    }
+
+    @Test
+    void deveListarAvaliacoesPaginadas() throws Exception {
+        com.h2gas.model.dto.StoreReviewDTO review = new com.h2gas.model.dto.StoreReviewDTO(
+                1L, "Maria", 4, "Entrega rápida", java.time.LocalDateTime.of(2026, 10, 18, 14, 30));
+        when(supplierService.findReviews(eq("loja-1"), any()))
+                .thenReturn(new PageImpl<>(List.of(review), PageRequest.of(0, 5), 1));
+
+        mockMvc.perform(get("/api/suppliers/loja-1/reviews").param("page", "0").param("size", "5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].customerFirstName").value("Maria"))
+                .andExpect(jsonPath("$.data[0].rating").value(4))
+                .andExpect(jsonPath("$.data[0].comment").value("Entrega rápida"))
+                .andExpect(jsonPath("$.totalElements").value(1));
+
+        verify(supplierService).findReviews(eq("loja-1"), eq(PageRequest.of(0, 5)));
     }
 }

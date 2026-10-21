@@ -21,6 +21,10 @@ export class Supplier {
     email?: string;
     cnpj?: string;
     logoUrl?: string | null;
+    bannerUrl?: string | null;
+    // F7 §5.25: preenchidos só no catálogo do cliente
+    averageRating?: number | null;
+    reviewCount?: number;
 
     constructor(
         id?: string,

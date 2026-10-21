@@ -109,6 +109,37 @@ describe('SupplierService', () => {
     req.flush(null, { status: 204, statusText: 'No Content' });
   });
 
+  // F7 §5.26
+  it('deveEnviarOBannerComoMultipart', () => {
+    const arquivo = new File([new Uint8Array([1, 2, 3])], 'banner.jpg', { type: 'image/jpeg' });
+    service.uploadMyBanner(arquivo).subscribe((r) => expect(r.bannerUrl).toBe('https://cdn/banner.jpg'));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/suppliers/mine/banner`);
+    expect(req.request.method).toBe('PUT');
+    expect((req.request.body as FormData).get('file')).toBe(arquivo);
+    req.flush({ bannerUrl: 'https://cdn/banner.jpg' });
+  });
+
+  it('deveRemoverOBanner', () => {
+    service.removeMyBanner().subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/suppliers/mine/banner`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(null, { status: 204, statusText: 'No Content' });
+  });
+
+  // F7 §5.27
+  it('deveBuscarAsAvaliacoesDaLoja', () => {
+    service.getReviews('loja-1', 1, 5).subscribe((r) => expect(r.data[0].customerFirstName).toBe('Maria'));
+
+    const req = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/suppliers/loja-1/reviews`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('size')).toBe('5');
+    req.flush({ data: [{ id: 1, customerFirstName: 'Maria', rating: 4, comment: null, reviewedAt: null }], page: 1, size: 5,
+      totalElements: 6, totalPages: 2, hasNext: false, hasPrevious: true });
+  });
+
   it('deveEnviarFiltrosDoDashboard', () => {
     service.getDashboard('2026-10', { payment: 'PIX', mode: 'PICKUP', typeId: 2, categoryId: 7, productId: 4 }).subscribe();
 
@@ -125,5 +156,20 @@ describe('SupplierService', () => {
     const semFiltro = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/suppliers/mine/dashboard`);
     expect(semFiltro.request.params.keys()).toEqual(['month']);
     semFiltro.flush({ month: '2026-10' });
+  });
+
+  it('deveBuscarLojasAbertasDaCidadeComBusca', () => {
+    service.getAllSupplierOpenAndActive(1, 10, 7, ' gás ').subscribe();
+
+    const req = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/suppliers/actives/open`);
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('cityId')).toBe('7');
+    expect(req.request.params.get('q')).toBe('gás');
+    req.flush({ data: [], page: 1, size: 10, totalElements: 0, totalPages: 0, hasNext: false, hasPrevious: true });
+
+    service.getAllSupplierOpenAndActive(0, 10, 7).subscribe();
+    const semBusca = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/suppliers/actives/open`);
+    expect(semBusca.request.params.has('q')).toBeFalse();
+    semBusca.flush({ data: [], page: 0, size: 10, totalElements: 0, totalPages: 0, hasNext: false, hasPrevious: false });
   });
 });

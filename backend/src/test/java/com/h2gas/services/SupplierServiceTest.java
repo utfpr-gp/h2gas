@@ -68,6 +68,12 @@ class SupplierServiceTest {
     @Autowired
     private SupplierMapper supplierMapper;
 
+    @Autowired
+    private com.h2gas.model.repository.OrderRepository orderRepository;
+
+    @Autowired
+    private com.h2gas.model.repository.ReviewRepository reviewRepository;
+
     private String validId;
 
 
@@ -514,5 +520,192 @@ class SupplierServiceTest {
         assertEquals(org.springframework.http.HttpStatus.BAD_GATEWAY, erro.getStatusCode());
         assertEquals("Não foi possível enviar a imagem. Tente novamente.", erro.getReason());
         assertNull(supplierRepository.findById(validId).orElseThrow().getLogoUrl());
+    }
+
+    @Test
+    @DisplayName("F7 §5.21: busca de lojas abertas pelo nome, só na cidade do endereço (RN05)")
+    void deveBuscarLojasAbertasDaCidadePeloNome() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        City londrina = cityRepository.save(new City(null, "Londrina", "PR"));
+        for (Object[] loja : new Object[][]{{"Gás Azul Curitiba", curitiba, true}, {"Gás Azul Londrina", londrina, true},
+                {"Gás Azul Fechado", curitiba, false}, {"Água Verde Curitiba", curitiba, true}}) {
+            Address a = addressRepository.save(new Address(null, "Rua " + loja[0], "loja", "1", "c", "Centro", "80000-000", (City) loja[1], null));
+            supplierRepository.save(getSupplier((String) loja[0], loja[0].toString().replace(" ", "") + "@t", "41900000000", "1",
+                    "s", "11222333000144", "d", true, (Boolean) loja[2], a, (City) loja[1]));
+        }
+
+        Page<SupplierDTO> result = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), "GÁS AZUL", PageRequest.of(0, 10));
+
+        assertEquals(List.of("Gás Azul Curitiba"), result.getContent().stream().map(SupplierDTO::getName).toList());
+        assertEquals(2, supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, PageRequest.of(0, 10)).getTotalElements());
+    }
+
+    private void avaliar(Supplier loja, User cliente, int nota) {
+        avaliar(loja, cliente, nota, null, null);
+    }
+
+    private void avaliar(Supplier loja, User cliente, int nota, String comentario, java.time.LocalDateTime entregueEm) {
+        com.h2gas.model.entity.Order pedido = new com.h2gas.model.entity.Order();
+        pedido.setCustomer(cliente);
+        pedido.setSupplier(loja);
+        pedido.setStatus(com.h2gas.enums.OrderStatusEnum.DELIVERED);
+        pedido.setDeliveredAt(entregueEm);
+        pedido = orderRepository.save(pedido);
+        com.h2gas.model.entity.Review avaliacao = new com.h2gas.model.entity.Review();
+        avaliacao.setOrder(pedido);
+        avaliacao.setSupplier(loja);
+        avaliacao.setRating(nota);
+        avaliacao.setComment(comentario);
+        reviewRepository.save(avaliacao);
+    }
+
+    private Supplier lojaAberta(String nome, City cidade) {
+        Address a = addressRepository.save(new Address(null, "Rua " + nome, "loja", "1", "c", "Centro", "80000-000", cidade, null));
+        return supplierRepository.save(getSupplier(nome, nome.replace(" ", "") + "@t", "41900000000", "1",
+                "s", "11222333000144", "d", true, true, a, cidade));
+    }
+
+    @Test
+    @DisplayName("F7 §5.25: catálogo traz média (1 casa) e contagem de avaliações por loja")
+    void deveTrazerMediaEContagemDeAvaliacoesNoCatalogo() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        User cliente = userRepository.save(new User(null, "Cliente", "cli@t", "41999990000", "99988877766", "x", UserTypeEnum.CUSTOMER));
+        Supplier avaliada = lojaAberta("Loja Avaliada", curitiba);
+        lojaAberta("Loja Sem Nota", curitiba);
+        avaliar(avaliada, cliente, 5);
+        avaliar(avaliada, cliente, 4);
+        avaliar(avaliada, cliente, 4);
+
+        Page<SupplierDTO> result = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, PageRequest.of(0, 10));
+
+        SupplierDTO dto = result.getContent().stream().filter(d -> d.getName().equals("Loja Avaliada")).findFirst().orElseThrow();
+        assertEquals(4.3, dto.getAverageRating());
+        assertEquals(3L, dto.getReviewCount());
+    }
+
+    @Test
+    @DisplayName("F7 §5.25: loja sem avaliação vem com média nula e contagem zero")
+    void deveTrazerNulaESemContagemQuandoAindaNaoHaAvaliacao() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        lojaAberta("Loja Sem Nota", curitiba);
+
+        SupplierDTO dto = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, PageRequest.of(0, 10)).getContent().get(0);
+
+        assertNull(dto.getAverageRating());
+        assertEquals(0L, dto.getReviewCount());
+    }
+
+    @Test
+    @DisplayName("F7 §5.26: banner enviado ao Cloudinary e gravado na loja do fornecedor")
+    void deveSalvarOBannerEnviadoPeloFornecedor() throws Exception {
+        when(cloudinaryService.upload(any())).thenReturn(Map.of("secure_url", "https://res.cloudinary.com/h2gas/banner.jpg"));
+
+        String url = supplierService.updateMyBanner(validId, new MockMultipartFile("file", "banner.jpg", "image/jpeg", new byte[1_500_000]));
+
+        assertEquals("https://res.cloudinary.com/h2gas/banner.jpg", url);
+        assertEquals(url, supplierRepository.findById(validId).orElseThrow().getBannerUrl());
+        assertEquals(url, supplierService.findMyProfile(validId).bannerUrl());
+        assertEquals(url, supplierService.findById(validId).getBannerUrl());
+    }
+
+    @Test
+    @DisplayName("F7 §5.26: banner que não é JPG, PNG ou WEBP, vazio ou acima de 2 MB é 400")
+    void deveRecusarBannerDeOutroTipoOuAcimaDe2MB() {
+        BusinessRuleException erro = assertThrows(BusinessRuleException.class, () -> supplierService.updateMyBanner(validId,
+                new MockMultipartFile("file", "banner.gif", "image/gif", new byte[100])));
+        assertEquals("Envie uma imagem JPG, PNG ou WEBP de até 2 MB.", erro.getMessage());
+        assertThrows(BusinessRuleException.class, () -> supplierService.updateMyBanner(validId,
+                new MockMultipartFile("file", "banner.jpg", "image/jpeg", new byte[2_097_153])));
+        assertThrows(BusinessRuleException.class, () -> supplierService.updateMyBanner(validId,
+                new MockMultipartFile("file", "banner.jpg", "image/jpeg", new byte[0])));
+        verifyNoInteractions(cloudinaryService);
+    }
+
+    @Test
+    @DisplayName("F7 §5.26: remover o banner volta para o padrão")
+    void deveRemoverOBanner() {
+        Supplier loja = supplierRepository.findById(validId).orElseThrow();
+        loja.setBannerUrl("https://res.cloudinary.com/h2gas/banner.jpg");
+        supplierRepository.save(loja);
+
+        supplierService.removeMyBanner(validId);
+
+        assertNull(supplierRepository.findById(validId).orElseThrow().getBannerUrl());
+    }
+
+    @Test
+    @DisplayName("F7 §5.26: a leitura da loja traz média e contagem de avaliações")
+    void deveTrazerNotaNaLeituraDaLoja() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        User cliente = userRepository.save(new User(null, "Cliente", "cli2@t", "41999990001", "99988877700", "x", UserTypeEnum.CUSTOMER));
+        Supplier loja = lojaAberta("Loja Lida", curitiba);
+        avaliar(loja, cliente, 5);
+        avaliar(loja, cliente, 4);
+
+        SupplierDTO dto = supplierService.findById(loja.getId());
+
+        assertEquals(4.5, dto.getAverageRating());
+        assertEquals(2L, dto.getReviewCount());
+    }
+
+    @Test
+    @DisplayName("F7 §5.27: lista as avaliações da loja só com o primeiro nome do cliente, nota, comentário e data")
+    void deveListarAvaliacoesComPrimeiroNomeEComentario() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        User cliente = userRepository.save(new User(null, "Maria Aparecida Souza", "maria@t", "41999990002", "99988877711", "x", UserTypeEnum.CUSTOMER));
+        Supplier loja = lojaAberta("Loja Comentada", curitiba);
+        java.time.LocalDateTime entrega = java.time.LocalDateTime.of(2026, 10, 18, 14, 30);
+        avaliar(loja, cliente, 4, "Entrega rápida, recomendo.", entrega);
+
+        Page<com.h2gas.model.dto.StoreReviewDTO> page = supplierService.findReviews(loja.getId(), PageRequest.of(0, 10));
+
+        assertEquals(1, page.getTotalElements());
+        com.h2gas.model.dto.StoreReviewDTO review = page.getContent().get(0);
+        assertEquals("Maria", review.customerFirstName());
+        assertEquals(4, review.rating());
+        assertEquals("Entrega rápida, recomendo.", review.comment());
+        assertEquals(entrega, review.reviewedAt());
+    }
+
+    @Test
+    @DisplayName("F7 §5.27: avaliações vêm da entrega mais recente para a mais antiga, paginadas")
+    void deveOrdenarAvaliacoesPelaEntregaMaisRecente() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        User ana = userRepository.save(new User(null, "Ana", "ana@t", "41999990003", "99988877722", "x", UserTypeEnum.CUSTOMER));
+        User bruno = userRepository.save(new User(null, "Bruno Lima", "bruno@t", "41999990004", "99988877733", "x", UserTypeEnum.CUSTOMER));
+        Supplier loja = lojaAberta("Loja Ordenada", curitiba);
+        Supplier outra = lojaAberta("Outra Loja", curitiba);
+        avaliar(loja, ana, 5, null, java.time.LocalDateTime.of(2026, 10, 1, 10, 0));
+        avaliar(loja, bruno, 3, null, java.time.LocalDateTime.of(2026, 10, 20, 10, 0));
+        avaliar(loja, ana, 4, null, java.time.LocalDateTime.of(2026, 10, 10, 10, 0));
+        avaliar(outra, bruno, 1, "não deve aparecer", java.time.LocalDateTime.of(2026, 10, 21, 10, 0));
+
+        Page<com.h2gas.model.dto.StoreReviewDTO> primeira = supplierService.findReviews(loja.getId(), PageRequest.of(0, 2));
+
+        assertEquals(3, primeira.getTotalElements());
+        assertEquals(List.of("Bruno", "Ana"), primeira.getContent().stream().map(com.h2gas.model.dto.StoreReviewDTO::customerFirstName).toList());
+        assertEquals(List.of(3, 4), primeira.getContent().stream().map(com.h2gas.model.dto.StoreReviewDTO::rating).toList());
+        assertEquals(5, supplierService.findReviews(loja.getId(), PageRequest.of(1, 2)).getContent().get(0).rating());
+    }
+
+    @Test
+    @DisplayName("F7 §5.27: comentário vazio ou só com espaços vem nulo")
+    void deveTratarComentarioEmBrancoComoNulo() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        User cliente = userRepository.save(new User(null, "  Carlos  Eduardo ", "carlos@t", "41999990005", "99988877744", "x", UserTypeEnum.CUSTOMER));
+        Supplier loja = lojaAberta("Loja Sem Texto", curitiba);
+        avaliar(loja, cliente, 5, "   ", null);
+
+        com.h2gas.model.dto.StoreReviewDTO review = supplierService.findReviews(loja.getId(), PageRequest.of(0, 10)).getContent().get(0);
+
+        assertNull(review.comment());
+        assertNull(review.reviewedAt());
+        assertEquals("Carlos", review.customerFirstName());
+    }
+
+    @Test
+    @DisplayName("F7 §5.27: avaliações de loja inexistente é 404")
+    void deveResponder404AoListarAvaliacoesDeLojaInexistente() {
+        assertThrows(com.h2gas.exceptions.ResourceNotFoundException.class, () -> supplierService.findReviews("nao-existe", PageRequest.of(0, 10)));
     }
 }

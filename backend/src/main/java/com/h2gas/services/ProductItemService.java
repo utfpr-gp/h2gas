@@ -95,7 +95,12 @@ public class ProductItemService {
     }
 
     public Page<ProductItemDTO> findBySupplierActiveAndSupplierOpen(Long cityId, String category, Pageable pageable) {
-        return productItemRepository.findAvailableProducts(cityId, category, pageable)
+        return findBySupplierActiveAndSupplierOpen(cityId, category, null, pageable);
+    }
+
+    public Page<ProductItemDTO> findBySupplierActiveAndSupplierOpen(Long cityId, String category, String q, Pageable pageable) {
+        String term = q == null || q.isBlank() ? null : q.trim().toLowerCase(java.util.Locale.ROOT);
+        return productItemRepository.findAvailableProducts(cityId, category, term, pageable)
                 .map(productItemMapper::toDto);
     }
 

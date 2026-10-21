@@ -19,6 +19,12 @@ public interface SupplierRepository extends JpaRepository<Supplier, String> {
     long countByActive(boolean active);
     boolean existsByCityId(Long cityId);
 
+    // F7 §5.21: catálogo do cliente — lojas ativas e abertas, da cidade do endereço (RN05), com busca opcional pelo nome
+    @Query("SELECT s FROM Supplier s WHERE s.active = true AND s.open = true"
+            + " AND (:cityId IS NULL OR s.city.id = :cityId)"
+            + " AND (:q IS NULL OR LOCATE(:q, LOWER(s.name)) > 0) ORDER BY s.name")
+    Page<Supplier> findOpenForCatalog(@Param("cityId") Long cityId, @Param("q") String q, Pageable pageable);
+
     // F7 fatia 6: aprovação de fornecedores — status e busca opcionais, aplicados no banco para a paginação bater
     @Query("select s from Supplier s where (:active is null or s.active = :active) and (:q is null"
             + " or lower(s.name) like lower(concat('%', :q, '%'))"

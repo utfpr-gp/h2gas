@@ -1,7 +1,12 @@
+import { registerLocaleData } from '@angular/common';
+import localePt from '@angular/common/locales/pt';
+import { LOCALE_ID } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { SupplierCardComponent } from './supplier-card.component';
 import { Supplier } from '../../models/supplier';
+
+registerLocaleData(localePt);
 
 describe('SupplierCardComponent', () => {
   let component: SupplierCardComponent;
@@ -9,7 +14,8 @@ describe('SupplierCardComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SupplierCardComponent]
+      imports: [SupplierCardComponent],
+      providers: [{ provide: LOCALE_ID, useValue: 'pt-BR' }]
     }).compileComponents();
 
     fixture = TestBed.createComponent(SupplierCardComponent);
@@ -55,5 +61,42 @@ describe('SupplierCardComponent', () => {
 
     expect(fixture.nativeElement.querySelector('[data-testid="supplier-logo"]')).toBeNull();
     expect(fixture.nativeElement.querySelector('[data-testid="supplier-icon"]')).not.toBeNull();
+  });
+
+  it('deveManterTextosLegiveisEAlvoDeToque', () => {
+    component.supplier = { id: '7', name: 'Depósito Central' } as Supplier;
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    // cinza 400 não passa de 2,6:1 no branco; o aviso de avaliações usa um tom que passa de 4,5:1
+    expect(el.querySelector('.text-gray-400')).toBeNull();
+    expect(el.querySelector('[data-testid="view-products"]')!.classList).toContain('min-h-11');
+  });
+
+  // ---- F7 §5.25: a formatação da nota é testada em store-rating; aqui, só que o card a mostra ----
+  const rating = () => fixture.nativeElement.querySelector('[data-testid="supplier-rating"]') as HTMLElement;
+
+  it('deveMostrarNotaEContagemDaLoja', () => {
+    component.supplier = { id: '7', name: 'Gás Centro', averageRating: 4.3, reviewCount: 14 } as Supplier;
+    fixture.detectChanges();
+
+    expect(rating().textContent).toContain('4,3');
+    expect(rating().textContent).toContain('(14)');
+    expect(rating().textContent).not.toContain('Sem avaliações');
+    // F7 §5.27: no card, a nota é o botão que abre as avaliações
+    expect(rating().getAttribute('aria-label')).toBe('Ver as 14 avaliações da loja, nota 4,3 de 5');
+  });
+
+  // ---- F7 §5.27 ----
+  it('naoDeveAbrirProdutosAoClicarNasEstrelas', () => {
+    component.supplier = { id: '7', name: 'Gás Centro', averageRating: 4.2, reviewCount: 14 } as Supplier;
+    fixture.detectChanges();
+    spyOn(component.viewProducts, 'emit');
+    spyOn(component.viewReviews, 'emit');
+
+    (fixture.nativeElement.querySelector('button[data-testid="supplier-rating"]') as HTMLButtonElement).click();
+
+    expect(component.viewReviews.emit).toHaveBeenCalledWith(jasmine.objectContaining({ id: '7' }));
+    expect(component.viewProducts.emit).not.toHaveBeenCalled();
   });
 });

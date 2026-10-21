@@ -42,10 +42,19 @@ public interface ProductItemRepository extends JpaRepository<ProductItem, Long> 
           AND (:cityId IS NULL OR p.supplier.city.id = :cityId)
           AND (:category IS NULL OR LOWER(p.categoryProduct.productType.name) = LOWER(:category))
           AND p.stockQuantity > 0
+          AND (:q IS NULL OR LOCATE(:q, LOWER(p.brand)) > 0
+               OR LOCATE(:q, LOWER(p.categoryProduct.name)) > 0
+               OR LOCATE(:q, LOWER(p.categoryProduct.productType.name)) > 0)
         """)
     Page<ProductItem> findAvailableProducts(@Param("cityId") Long cityId,
                                              @Param("category") String category,
+                                             @Param("q") String q,
                                              Pageable pageable);
+
+    // F7 §5.21: busca opcional (q em minúsculas) por marca, categoria ou tipo; LOCATE pelo mesmo motivo da HU12
+    default Page<ProductItem> findAvailableProducts(Long cityId, String category, Pageable pageable) {
+        return findAvailableProducts(cityId, category, null, pageable);
+    }
 
     @Lock(LockModeType.OPTIMISTIC)
     @Query("SELECT p FROM ProductItem p WHERE p.id = :id")
