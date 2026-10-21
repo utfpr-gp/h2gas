@@ -1,7 +1,12 @@
+import { registerLocaleData } from '@angular/common';
+import localePt from '@angular/common/locales/pt';
+import { LOCALE_ID } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { SupplierCardComponent } from './supplier-card.component';
 import { Supplier } from '../../models/supplier';
+
+registerLocaleData(localePt);
 
 describe('SupplierCardComponent', () => {
   let component: SupplierCardComponent;
@@ -9,7 +14,8 @@ describe('SupplierCardComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SupplierCardComponent]
+      imports: [SupplierCardComponent],
+      providers: [{ provide: LOCALE_ID, useValue: 'pt-BR' }]
     }).compileComponents();
 
     fixture = TestBed.createComponent(SupplierCardComponent);
@@ -65,5 +71,34 @@ describe('SupplierCardComponent', () => {
     // cinza 400 não passa de 2,6:1 no branco; o aviso de avaliações usa um tom que passa de 4,5:1
     expect(el.querySelector('.text-gray-400')).toBeNull();
     expect(el.querySelector('[data-testid="view-products"]')!.classList).toContain('min-h-11');
+  });
+
+  // ---- F7 §5.25 ----
+  const rating = () => fixture.nativeElement.querySelector('[data-testid="supplier-rating"]') as HTMLElement;
+
+  it('deveMostrarNotaEContagemDaLoja', () => {
+    component.supplier = { id: '7', name: 'Gás Centro', averageRating: 4.3, reviewCount: 14 } as Supplier;
+    fixture.detectChanges();
+
+    expect(rating().textContent).toContain('4,3');
+    expect(rating().textContent).toContain('(14)');
+    expect(rating().textContent).not.toContain('Sem avaliações');
+    expect(rating().getAttribute('aria-label')).toBe('Nota 4,3 de 5, 14 avaliações');
+  });
+
+  it('deveMostrarSingularComUmaAvaliacao', () => {
+    component.supplier = { id: '7', name: 'Gás Centro', averageRating: 5, reviewCount: 1 } as Supplier;
+    fixture.detectChanges();
+
+    expect(rating().textContent).toContain('5,0');
+    expect(rating().getAttribute('aria-label')).toBe('Nota 5,0 de 5, 1 avaliação');
+  });
+
+  it('deveMostrarSemAvaliacoesQuandoNaoHa', () => {
+    component.supplier = { id: '7', name: 'Gás Centro', averageRating: null, reviewCount: 0 } as Supplier;
+    fixture.detectChanges();
+
+    expect(rating().textContent).toContain('Sem avaliações ainda');
+    expect(rating().getAttribute('aria-label')).toBeNull();
   });
 });

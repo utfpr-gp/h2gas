@@ -11,9 +11,17 @@
   <div class="flex-grow min-w-0">
     <h2 class="font-bold text-gray-800 truncate">{{ supplier.name }}</h2>
 
-    <div class="flex items-center text-gray-600 text-xs gap-1">
-      <span class="material-icons text-sm">star_border</span>
-      <span>Sem avaliações ainda</span>
+    <div data-testid="supplier-rating" class="flex items-center text-xs gap-1"
+      [attr.aria-label]="ratingAriaLabel" [attr.role]="hasRating ? 'img' : null">
+      <ng-container *ngIf="hasRating; else semNota">
+        <span class="material-icons text-sm text-warning" aria-hidden="true">star</span>
+        <span class="font-semibold text-gray-800" aria-hidden="true">{{ ratingLabel }}</span>
+        <span class="text-gray-500" aria-hidden="true">({{ supplier.reviewCount }})</span>
+      </ng-container>
+      <ng-template #semNota>
+        <span class="material-icons text-sm text-gray-500" aria-hidden="true">star_border</span>
+        <span class="text-gray-500">Sem avaliações ainda</span>
+      </ng-template>
     </div>
 
     <div class="flex items-center text-gray-500 text-xs gap-1 mt-1" *ngIf="supplier.openingTime && supplier.closingTime">
