@@ -8,7 +8,6 @@ import { authGuard } from './guards/auth.guard';
 import { activeDeliveryGuard } from './guards/active-delivery.guard';
 import { addressDefinedGuard } from './guards/address-defined.guard';
 import { FirstAccessAddressComponent } from './components/pages/first-access-address/first-access-address.component';
-import { SupplierApprovalComponent } from './components/pages/supplier-approval/supplier-approval.component';
 import { AdminDashboardComponent } from './components/pages/admin-dashboard/admin-dashboard.component';
 import { AdminUsersComponent } from './components/pages/admin-users/admin-users.component';
 import { AdminProductTypesComponent } from './components/pages/admin-product-types/admin-product-types.component';
@@ -112,8 +111,10 @@ export const routes: Routes = [
         data: {roles: ['ADMIN']}
     },
     {
-        path: 'supplier-approval', 
-        component: SupplierApprovalComponent,
+        path: 'supplier-approval',
+        // tela só do admin: fora do bundle inicial
+        loadComponent: () => import('./components/pages/supplier-approval/supplier-approval.component')
+            .then((m) => m.SupplierApprovalComponent),
         canActivate: [authGuard],
         data: {roles: ['ADMIN']}
     },
