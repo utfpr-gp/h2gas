@@ -125,10 +125,15 @@ sem perder o que escolhi.
   "Bairro · Cidade" })` e volta para `returnUrl` (padrão `/inicio`); não
   casa → "Ainda não atendemos {Cidade}/{UF}"; CEP inválido/inexistente/
   ViaCEP sem resposta → mensagem do Cenário 4.
-- **Guardas**: novo `catalogAccessGuard` em `/inicio` e
-  `/fornecedores/:id/produtos` — visitante passa (sem cidade vai para
-  `/onde-voce-esta?returnUrl=…`); logado segue a regra atual de papéis e
-  de endereço (`addressDefinedGuard`).
+- **Guardas**: `/inicio` e `/fornecedores/:id/produtos` marcadas com
+  `data.allowVisitor` — o `authGuard` deixa o visitante passar (e descarta
+  sessão vencida, `AuthService.dropExpiredSession`, sem tocar no carrinho
+  nem na cidade); o `addressDefinedGuard` manda o visitante sem cidade
+  para `/onde-voce-esta?returnUrl=…`; logado segue a regra atual de papéis
+  e de endereço. `/resumo-pedido` ganha o `addressDefinedGuard` (Cenário 8).
+  *(Revisão da implementação: em vez de uma guarda nova, as duas existentes
+  leem `allowVisitor` — o Angular executa todas as guardas da rota, e assim
+  elas não disputam navegação.)*
 - **`authGuard`** manda para `/login?returnUrl=<url pedida>`; com
   `returnUrl=/resumo-pedido…` o login mostra "Entre para finalizar sua
   compra". Os dois logins (código e senha) e o cadastro voltam ao
@@ -138,11 +143,20 @@ sem perder o que escolhi.
   endereço (Cenário 8).
 - **Cidade após o login**: ao entrar, a cidade de visitante é descartada e
   o `addressDefinedGuard` carrega o endereço ativo da conta (Cenário 9).
-- **Interceptor**: não anexa token vencido (usa `AuthService`) e, em 401
-  numa rota pública, limpa a sessão sem redirecionar (Cenário 12).
-- **Menu do visitante**: logo, cidade ("Bairro · Cidade", toque troca o
-  CEP), carrinho com contador e botão "Entrar"; sem "Pedidos"/"Perfil". A
-  barra inferior do celular mostra "Início", "Carrinho" e "Entrar".
+- **Carrinho**: deixa de ser limpo ao **entrar** (os dois logins limpavam) e
+  passa a ser limpo ao **sair** (`AuthService.logout`, junto com o item do
+  "Comprar agora") — o visitante leva o carrinho ao login (Cenário 7) e o
+  carrinho de quem sai não passa para o próximo usuário.
+- **Interceptor**: não anexa token vencido (Cenário 12); 401 só derruba a
+  sessão (e vai ao login com `returnUrl`) quando a requisição levou token —
+  senha errada e visitante não perdem carrinho nem retorno.
+- **Menu do visitante**: barra clara do cliente, cidade ("Bairro · Cidade",
+  toque troca o CEP), carrinho com contador e botão "Entrar" (volta para a
+  página atual); sem "Pedidos"/"Perfil". O menu relê o usuário salvo a cada
+  navegação (sessão vencida descartada vira visitante). A barra inferior do
+  celular mostra "Início", "Categorias" e "Entrar".
+- **RN02 no visitante**: `/product-items/by-supplier/{id}` esconde produto
+  zerado para cliente **e visitante** (antes só para o papel CUSTOMER).
 - Página da loja usa `SupplierService.getStorefront(id)`; modelo
   `Storefront` no frontend.
 
@@ -167,19 +181,28 @@ sem perder o que escolhi.
 4. `visitor-location.component.spec.ts`: `deveDefinirACidadePeloCep`,
    `deveAvisarCidadeNaoAtendida`, `deveAvisarCepInvalidoOuInexistente`,
    `deveAvisarFalhaDoViaCep`, `deveVoltarParaOReturnUrl`.
-5. `catalog-access.guard.spec.ts`: `devePermitirVisitanteComCidade`,
-   `deveMandarVisitanteSemCidadeParaOCep`, `deveAplicarPapelEEnderecoDoLogado`.
-6. `auth.guard.spec.ts`: `deveMandarParaOLoginComReturnUrl`.
+5. `address-defined.guard.spec.ts`: `devePermitirVisitanteComCidade`,
+   `deveMandarVisitanteSemCidadeParaOCep`, `deveLevarOReturnUrlAoPrimeiroEndereco`
+   (os testes do logado seguem valendo).
+6. `auth.guard.spec.ts`: `deveMandarParaOLoginComReturnUrl`,
+   `devePermitirVisitanteNoCatalogo`; `auth.service.spec.ts`:
+   `deveLimparOCarrinhoAoSair`, `deveDescartarSessaoVencidaSemLimparOCarrinho`;
+   `return-url.spec.ts` (caminho interno, externo, login).
 7. `login` e `login-token` specs: `deveVoltarAoReturnUrlInterno`,
    `deveIgnorarReturnUrlExterno`, `deveAvisarQueOLoginEParaFinalizarACompra`;
    `register`: `deveManterOReturnUrlAposOCadastro`.
 8. `auth.interceptor.spec.ts`: `naoDeveEnviarTokenVencido`,
-   `naoDeveRedirecionarEm401DeRotaPublica`.
+   `deveMandarParaOLoginComRetornoEm401`, `naoDeveDerrubarASessaoEm401SemToken`;
+   `login`/`login-token`: `deveManterOCarrinhoAoEntrar`.
 9. `menu.component.spec.ts`: `deveMostrarEntrarECarrinhoParaVisitante`,
-   `deveMostrarACidadeDoVisitante`; `bottom-tab-bar`: idem.
+   `deveMostrarACidadeDoVisitante`, `deveLevarOVisitanteAoLoginVoltandoParaAPaginaAtual`,
+   `deveVirarVisitanteQuandoASessaoSomeAoNavegar`; `bottom-tab-bar`:
+   `deveMostrarEntrarParaVisitante`; `initial-screen`: `deveLevarOVisitanteParaAVitrine`;
+   backend `ProductItemControllerTest`: `deveForcarOnlyAvailableParaVisitante`.
 10. `supplier.service.spec.ts`: `deveBuscarAVitrineDaLoja`;
     `product-list.component.spec.ts`: `deveUsarAVitrineNoCabecalho`.
-11. `location-context` / login: `deveDescartarACidadeDeVisitanteAoEntrar`.
+11. Cidade de visitante descartada ao entrar: já coberta pelo teste
+    existente `deveLimparEnderecoAtivoDeOutroUsuarioAoIniciarLogin` e pelo E2E.
 
 **E2E (Playwright, manual registrado no DoD)**: visitante → CEP de
 Curitiba → catálogo filtrado → loja → avaliações → adiciona 2 itens →
@@ -202,11 +225,27 @@ token vencido no `localStorage` → catálogo abre como visitante. Em 390 e
 
 ## 8. Definição de Pronto
 
-- [ ] Rotas públicas só de leitura, com `StorefrontDTO` sem dados internos
+- [x] Rotas públicas só de leitura, com `StorefrontDTO` sem dados internos
       e RN05 obrigatória para visitante; OpenAPI sem cadeado nessas rotas.
-- [ ] Tela de CEP, guardas, `returnUrl` nos logins e no cadastro,
+- [x] Tela de CEP, guardas, `returnUrl` nos logins e no cadastro,
       interceptor e menu do visitante.
-- [ ] Testes do Plano (itens 1–11) verdes; `mvn test` e `ng test` sem
+- [x] Testes do Plano (itens 1–11) verdes; `mvn test` e `ng test` sem
       falhas novas; `ng build`.
-- [ ] E2E do item acima em 390 e 1280 px, registrado aqui com data.
-- [ ] Nada do "Fora de Escopo".
+- [x] E2E do item acima em 390 e 1280 px, registrado aqui com data.
+- [x] Nada do "Fora de Escopo".
+
+> **Verificação (2026-10-21)**: `mvn test` 393 testes, só o `BackendApplicationTests.contextLoads` antigo (MySQL
+> local); `ng test` 546, só as 10 falhas antigas de providers; `ng build` ok. API real sem token: catálogo sem
+> `cityId` → 400 "Informe a cidade para ver o catálogo."; com `cityId` → 200; `/storefront` → 200 só com os 14
+> campos públicos; `GET /suppliers/{id}` → 403. E2E (front 4400, backend 8090, ViaCEP real) em 1280 e 390 px:
+> tela inicial → "Ver produtos sem entrar" → CEP 80420-000 → `/inicio` com as 3 lojas de Curitiba e "Entrar" no
+> menu (sem avatar); loja da Gás Centro com 10 avaliações; 2 itens no carrinho → "Finalizar Pedido" →
+> `/login?returnUrl=/resumo-pedido` com "Entre para finalizar sua compra"; senha errada fica na tela com o
+> retorno e os 2 itens; senha certa → `/resumo-pedido` com os 2 itens e o endereço da conta (Cenário 9); CEP de
+> Londrina → "Ainda não atendemos Londrina/PR"; `/meus-pedidos` sem login → `/login?returnUrl=/meus-pedidos`;
+> token vencido no navegador → `/inicio` como visitante, sem 401 e com "Entrar". O pedido em si não foi concluído
+> no E2E (fluxo de pedido inalterado nesta HU).
+> **Achados**: (1) os dois logins limpavam o carrinho ao entrar — passou para o logout; (2) com isso, um 401 de
+> senha errada passaria a apagar o carrinho (o interceptor tratava todo 401 como sessão caída) — agora só com
+> token; (3) `/by-supplier/{id}` só escondia produto zerado para o papel CUSTOMER — visitante veria (RN02);
+> (4) o menu lia o usuário uma vez e seguia com avatar depois da sessão vencida.
