@@ -36,8 +36,8 @@ export class AppComponent {
     '/contato',
     '/sobre'
   ];
-  // landing, Sobre e Contato não têm menu, mas o footer é o caminho entre elas
-  private institutionalRoutes = ['/', '/sobre', '/contato'];
+  // Sobre e Contato: footer liga as páginas institucionais. A porta de entrada (/ e CEP) fica sem footer.
+  private institutionalRoutes = ['/sobre', '/contato'];
   showFooter = true;
 
   constructor(private router: Router) {
@@ -51,6 +51,7 @@ export class AppComponent {
   }
 
   private isFooterVisible(url: string): boolean {
+    if (url === '/' || url === '/onde-voce-esta') return false;
     if (url === '/entregas' || url.startsWith('/entregas/')) return false;
     return this.institutionalRoutes.includes(url) || !this.hiddenMenuRoutes.includes(url);
   }

@@ -64,10 +64,10 @@ describe('AppComponent', () => {
       return !!(fixture.nativeElement as HTMLElement).querySelector('app-footer');
     };
 
-    for (const rota of ['/login', '/login/senha', '/register', '/recuperar-senha', '/entregas', '/entregas/historico', '/entregas/42']) {
+    for (const rota of ['/', '/onde-voce-esta', '/login', '/login/senha', '/register', '/recuperar-senha', '/entregas', '/entregas/historico', '/entregas/42']) {
       expect(await footerEm(rota)).withContext(rota).toBeFalse();
     }
-    for (const rota of ['/', '/sobre', '/contato', '/inicio', '/meus-pedidos?x=1', '/dashboard']) {
+    for (const rota of ['/sobre', '/contato', '/inicio', '/meus-pedidos?x=1', '/dashboard']) {
       expect(await footerEm(rota)).withContext(rota).toBeTrue();
     }
   });

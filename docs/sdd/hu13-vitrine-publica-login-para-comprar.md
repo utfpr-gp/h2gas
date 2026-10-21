@@ -20,12 +20,15 @@ sem perder o que escolhi.
 ## 3. Critérios de Aceitação (BDD)
 
 - **Cenário 1 — Entrar na vitrine sem conta**: Dado um visitante na tela
-  inicial, Quando toca em "Ver produtos sem entrar", Então o sistema pede o
-  CEP antes de mostrar o catálogo.
-- **Cenário 2 — CEP define a cidade (RN05)**: Dado o visitante na tela de
-  CEP, Quando informa um CEP de cidade atendida, Então o catálogo
-  (`/inicio`) mostra só lojas e produtos daquela cidade, e o topo mostra
-  "Bairro · Cidade" com opção de trocar.
+  inicial (`/`), Quando informa o CEP e confirma ("Ver lojas da minha
+  cidade"), Então o catálogo abre filtrado pela cidade (sem passo
+  intermediário "Ver produtos sem entrar"). A mesma tela oferece "Entrar"
+  com peso visual equivalente para quem já tem conta.
+- **Cenário 2 — CEP define a cidade (RN05)**: Dado o visitante na porta de
+  entrada ( `/` ou `/onde-voce-esta` ao trocar o CEP), Quando informa um
+  CEP de cidade atendida, Então o catálogo (`/inicio`) mostra só lojas e
+  produtos daquela cidade, e o topo mostra "Bairro · Cidade" com opção de
+  trocar.
 - **Cenário 3 — CEP fora da área**: Dado um CEP válido de cidade que o
   H2Gás não atende, Quando o visitante confirma, Então vê "Ainda não
   atendemos {Cidade}/{UF}" e pode tentar outro CEP; o catálogo não abre
@@ -118,13 +121,15 @@ sem perder o que escolhi.
 
 ### 5.2 Frontend — vitrine sem login
 
-- **Tela inicial**: botão "Ver produtos sem entrar" → `/inicio`.
-- **`/onde-voce-esta`** (nova, `visitor-location`): campo de CEP com
-  máscara; `buscaViaCep` → `GET /cities` → `matchCityFromCep`; casa →
-  `LocationContextService.setAddress({ cityId, cityName, label:
-  "Bairro · Cidade" })` e volta para `returnUrl` (padrão `/inicio`); não
-  casa → "Ainda não atendemos {Cidade}/{UF}"; CEP inválido/inexistente/
-  ViaCEP sem resposta → mensagem do Cenário 4.
+- **Porta de entrada unificada** (`/` e `/onde-voce-esta`): mesmo shell
+  visual (marca H2Gás + painel de CEP + CTA "Entrar"). O formulário de CEP
+  (`visitor-cep-panel`) usa máscara; `buscaViaCep` → `GET /cities` →
+  `matchCityFromCep`; casa → `LocationContextService.setAddress({ cityId,
+  cityName, label: "Bairro · Cidade" })` e navega para `returnUrl`
+  (padrão `/inicio`); não casa → "Ainda não atendemos {Cidade}/{UF}"; CEP
+  inválido/inexistente/ViaCEP sem resposta → mensagem do Cenário 4.
+  `/onde-voce-esta` permanece para a guarda e para "trocar CEP" no menu;
+  `/` é a landing com o mesmo painel (sem botão intermediário).
 - **Guardas**: `/inicio` e `/fornecedores/:id/produtos` marcadas com
   `data.allowVisitor` — o `authGuard` deixa o visitante passar (e descarta
   sessão vencida, `AuthService.dropExpiredSession`, sem tocar no carrinho
@@ -178,9 +183,11 @@ sem perder o que escolhi.
    `deveDevolverAVitrineDaLoja` (JSON sem `email`/`cnpj`/`phone`).
 
 **Frontend**
-4. `visitor-location.component.spec.ts`: `deveDefinirACidadePeloCep`,
-   `deveAvisarCidadeNaoAtendida`, `deveAvisarCepInvalidoOuInexistente`,
-   `deveAvisarFalhaDoViaCep`, `deveVoltarParaOReturnUrl`.
+4. `visitor-cep-panel.component.spec.ts` (e/ou `visitor-location`):
+   `deveDefinirACidadePeloCep`, `deveAvisarCidadeNaoAtendida`,
+   `deveAvisarCepInvalidoOuInexistente`, `deveAvisarFalhaDoViaCep`,
+   `deveVoltarParaOReturnUrl`. `initial-screen`: `deveExibirOPainelDeCep`,
+   `deveLevarAoLogin`.
 5. `address-defined.guard.spec.ts`: `devePermitirVisitanteComCidade`,
    `deveMandarVisitanteSemCidadeParaOCep`, `deveLevarOReturnUrlAoPrimeiroEndereco`
    (os testes do logado seguem valendo).
@@ -197,19 +204,19 @@ sem perder o que escolhi.
 9. `menu.component.spec.ts`: `deveMostrarEntrarECarrinhoParaVisitante`,
    `deveMostrarACidadeDoVisitante`, `deveLevarOVisitanteAoLoginVoltandoParaAPaginaAtual`,
    `deveVirarVisitanteQuandoASessaoSomeAoNavegar`; `bottom-tab-bar`:
-   `deveMostrarEntrarParaVisitante`; `initial-screen`: `deveLevarOVisitanteParaAVitrine`;
+   `deveMostrarEntrarParaVisitante`;
    backend `ProductItemControllerTest`: `deveForcarOnlyAvailableParaVisitante`.
 10. `supplier.service.spec.ts`: `deveBuscarAVitrineDaLoja`;
     `product-list.component.spec.ts`: `deveUsarAVitrineNoCabecalho`.
 11. Cidade de visitante descartada ao entrar: já coberta pelo teste
     existente `deveLimparEnderecoAtivoDeOutroUsuarioAoIniciarLogin` e pelo E2E.
 
-**E2E (Playwright, manual registrado no DoD)**: visitante → CEP de
-Curitiba → catálogo filtrado → loja → avaliações → adiciona 2 itens →
-checkout → login → volta ao checkout com os 2 itens → conclui pedido;
-CEP de cidade não atendida; `/meus-pedidos` sem login → login → volta;
-token vencido no `localStorage` → catálogo abre como visitante. Em 390 e
-1280 px.
+**E2E (Playwright, manual registrado no DoD)**: visitante na `/` informa
+CEP de Curitiba → catálogo filtrado → loja → avaliações → adiciona 2
+itens → checkout → login → volta ao checkout com os 2 itens → conclui
+pedido; CEP de cidade não atendida; `/meus-pedidos` sem login → login →
+volta; token vencido no `localStorage` → catálogo abre como visitante.
+Em 390 e 1280 px.
 
 ## 7. Fora de Escopo
 
@@ -233,6 +240,15 @@ token vencido no `localStorage` → catálogo abre como visitante. Em 390 e
       falhas novas; `ng build`.
 - [x] E2E do item acima em 390 e 1280 px, registrado aqui com data.
 - [x] Nada do "Fora de Escopo".
+- [x] Porta de entrada unificada: `/` e `/onde-voce-esta` com o mesmo
+      shell (marca + CEP + Entrar); Cenário 1 sem passo intermediário;
+      verificado em 390 e 1280 px.
+
+> **Verificação porta unificada (2026-10-21)**: `visitor-cep-panel` +
+> `initial-screen` + `visitor-location` specs verdes (17). `/` e
+> `/onde-voce-esta?returnUrl=/inicio` com o mesmo shell; CEP 80420-000 →
+> `/inicio` (Centro · Curitiba); Entrar → `/login`. Footer oculto na porta
+> de entrada (390 e 1280).
 
 > **Verificação (2026-10-21)**: `mvn test` 393 testes, só o `BackendApplicationTests.contextLoads` antigo (MySQL
 > local); `ng test` 546, só as 10 falhas antigas de providers; `ng build` ok. API real sem token: catálogo sem
