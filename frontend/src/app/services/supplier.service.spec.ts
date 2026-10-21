@@ -34,7 +34,7 @@ describe('SupplierService', () => {
   it('deveEnviarMesSelecionado', () => {
     service.getDashboard('2026-09').subscribe();
 
-    const req = httpMock.expectOne(`${environment.apiUrl}/suppliers/mine/dashboard?month=2026-09`);
+    const req = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/suppliers/mine/dashboard` && r.params.get('month') === '2026-09');
     expect(req.request.method).toBe('GET');
     req.flush({ month: '2026-09' });
   });
@@ -107,5 +107,23 @@ describe('SupplierService', () => {
     const req = httpMock.expectOne(`${environment.apiUrl}/suppliers/mine/logo`);
     expect(req.request.method).toBe('DELETE');
     req.flush(null, { status: 204, statusText: 'No Content' });
+  });
+
+  it('deveEnviarFiltrosDoDashboard', () => {
+    service.getDashboard('2026-10', { payment: 'PIX', mode: 'PICKUP', typeId: 2, categoryId: 7, productId: 4 }).subscribe();
+
+    const req = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/suppliers/mine/dashboard`);
+    expect(req.request.params.get('month')).toBe('2026-10');
+    expect(req.request.params.get('payment')).toBe('PIX');
+    expect(req.request.params.get('mode')).toBe('PICKUP');
+    expect(req.request.params.get('typeId')).toBe('2');
+    expect(req.request.params.get('categoryId')).toBe('7');
+    expect(req.request.params.get('productId')).toBe('4');
+    req.flush({ month: '2026-10' });
+
+    service.getDashboard('2026-10').subscribe();
+    const semFiltro = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/suppliers/mine/dashboard`);
+    expect(semFiltro.request.params.keys()).toEqual(['month']);
+    semFiltro.flush({ month: '2026-10' });
   });
 });

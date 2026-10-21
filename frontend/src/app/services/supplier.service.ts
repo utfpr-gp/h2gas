@@ -5,7 +5,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
 import { PaginatedResponse } from '../models/paginated-response';
-import { SupplierDashboard } from '../models/supplier-dashboard';
+import { DashboardFilter, SupplierDashboard } from '../models/supplier-dashboard';
 import { SupplierSettings } from '../models/supplier-settings';
 import { SupplierProfile, SupplierProfileRequest } from '../models/supplier-profile';
 
@@ -86,9 +86,14 @@ export class SupplierService extends AbstractService<Supplier> {
   }
 
   // o fornecedor vem do token; month (YYYY-MM) omitido = mês corrente
-  getDashboard(month?: string): Observable<SupplierDashboard> {
-    const query = month ? `?month=${month}` : '';
-    return this.http.get<SupplierDashboard>(`${this.baseUrl}/mine/dashboard${query}`);
+  // F7 fatia 6: filtros opcionais (pagamento e modo filtram o pedido; tipo, categoria e produto, os itens)
+  getDashboard(month?: string, filter: DashboardFilter = {}): Observable<SupplierDashboard> {
+    let params = new HttpParams();
+    if (month) params = params.set('month', month);
+    for (const key of ['payment', 'mode', 'typeId', 'categoryId', 'productId'] as const) {
+      if (filter[key] != null) params = params.set(key, String(filter[key]));
+    }
+    return this.http.get<SupplierDashboard>(`${this.baseUrl}/mine/dashboard`, { params });
   }
 
   getOpen(supplierId: string): Observable<boolean> {

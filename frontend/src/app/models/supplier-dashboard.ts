@@ -5,6 +5,7 @@ export interface RevenuePoint {
 }
 
 export interface ProductSales {
+  productId?: number;
   productName: string;
   quantity: number;
   revenue: number;
@@ -18,10 +19,36 @@ export interface PaymentShare {
 }
 
 export interface CategorySales {
+  productTypeId?: number;
   categoryName: string;
   quantity: number;
   revenue: number;
   percent: number;
+}
+
+// F7 fatia 6: categorias da loja (P13, 20L) e entrega × retirada
+export interface StoreCategorySales {
+  categoryId: number;
+  categoryName: string;
+  typeName?: string;
+  quantity: number;
+  revenue: number;
+  percent: number;
+}
+
+export interface DeliveryModeShare {
+  mode: 'DELIVERY' | 'PICKUP';
+  orders: number;
+  revenue: number;
+  percent: number;
+}
+
+export interface DashboardFilter {
+  payment?: 'PIX' | 'DINHEIRO' | 'CREDIT_CARD';
+  mode?: 'DELIVERY' | 'PICKUP';
+  typeId?: number;
+  categoryId?: number;
+  productId?: number;
 }
 
 export interface SupplierDashboard {
@@ -40,4 +67,6 @@ export interface SupplierDashboard {
   salesByProduct: ProductSales[];
   paymentBreakdown: PaymentShare[];
   salesByCategory: CategorySales[];
+  salesByStoreCategory?: StoreCategorySales[];
+  deliveryModeBreakdown?: DeliveryModeShare[];
 }
