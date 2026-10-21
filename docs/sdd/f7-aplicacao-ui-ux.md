@@ -694,6 +694,17 @@ formulário de produto (`product-item-form`).
   mensagens do 409; skeleton e estado vazio; rota sob demanda; sem HEX,
   emoji nem `console.log`.
 
+**Ajuste do popup de criar/editar** (pedido do autor, 2026-10-21):
+- tipo escolhido em cartões com o ícone do tipo (`role="radiogroup"`,
+  `aria-checked`), no lugar do select;
+- sugestões de nome do tipo escolhido em chips que preenchem o campo
+  (Gás: P2, P5, P8, P13, P20, P45; Água: 5L, 10L, 20L; outros tipos sem
+  sugestão), escondendo as que a loja já tem;
+- prévia "Gás · P13" e aviso de nome repetido no mesmo tipo antes de
+  enviar (com as categorias já carregadas; o 409 do backend continua
+  valendo); contador de caracteres (até 60);
+- botão de fechar no cabeçalho, Esc fecha, foco no nome ao abrir.
+
 **Fora de escopo (desta tela)**: mover produtos entre categorias;
 reordenar categorias; descrição da categoria; o formulário de produto
 (`product-item-form`) continua lendo `by-supplier` com 10 por página —
@@ -898,6 +909,10 @@ registrar como dívida para a tela dele.
     `deveMostrarMensagemDoBackendQuandoNomeRepetido`,
     `deveImpedirExcluirCategoriaComProdutos`,
     `deveExcluirCategoriaVazia`, `deveExibirEstadoVazio`.
+    Popup: `deveEscolherTipoPorCartaoComIcone`,
+    `deveSugerirNomesDoTipoSemOsQueJaExistem`,
+    `deveAvisarNomeRepetidoAntesDeEnviar`,
+    `deveMostrarPreviaEContador`, `deveFecharComEsc`.
 
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
@@ -1070,6 +1085,8 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
       validação no boundary; OpenAPI.
 - [x] Tela agrupada por tipo, com contagem de produtos, modal com
       validação e exclusão protegida.
+- [ ] Popup com tipo em cartões, sugestões de nome, prévia, aviso de
+      repetido antes de enviar, contador e Esc (ajuste pedido).
 - [x] Testes da seção 7 (item 17) verdes; `mvn test`, `ng test` (sem
       falhas novas) e `ng build`; teste manual em 390 e 1280 px.
 
