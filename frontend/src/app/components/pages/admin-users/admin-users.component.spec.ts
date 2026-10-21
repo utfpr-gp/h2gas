@@ -167,4 +167,17 @@ describe('AdminUsersComponent', () => {
     }));
     expect(byId('user-u-1')?.textContent).toContain('Maria S. Lima');
   });
+
+  it('deveDeixarOProprioEmailSomenteLeituraNaEdicao', async () => {
+    await setup();
+
+    click('edit-admin-1');
+    expect((byId('edit-email') as HTMLInputElement).readOnly).toBeTrue();
+    expect(fixture.nativeElement.textContent).toContain('Troque o seu e-mail em Meus Dados.');
+    click('cancel-edit');
+    expect(byId('edit-modal')).toBeNull();
+
+    click('edit-u-1');
+    expect((byId('edit-email') as HTMLInputElement).readOnly).toBeFalse();
+  });
 });
