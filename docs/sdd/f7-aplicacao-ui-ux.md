@@ -1814,11 +1814,17 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > ganhou `relative z-10`.
 
 **Cliente — Avaliações da loja (§5.27):**
-- [ ] `GET /suppliers/{id}/reviews` paginado com primeiro nome, nota,
+- [x] `GET /suppliers/{id}/reviews` paginado com primeiro nome, nota,
       comentário e data (OpenAPI); estrelas clicáveis no cabeçalho e no card
       abrindo a janela de avaliações com "Ver mais"; testes (item 27) verdes;
       `mvn test`, `ng test` (sem falhas novas), `ng build`; E2E em 390 e
       1280 px com as avaliações geradas.
+
+> **Verificação (2026-10-21)**: `mvn test` 384 testes, só o `contextLoads` antigo; `ng test` 497, só as 10 falhas
+> antigas de providers; `ng build` ok. E2E em 1280 e 390 px: estrelas do card da Gás Centro no `/inicio` abriram a
+> janela sem sair da página; 10 avaliações, "Ver mais" levou a 14 e sumiu; Esc fechou; estrelas do cabeçalho da Água
+> Pura abriram as 6 avaliações com comentário. Todas mostram "Cliente" porque as avaliações geradas são do usuário
+> de teste "Cliente Teste E2E" (dado, não defeito).
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
