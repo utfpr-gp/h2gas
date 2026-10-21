@@ -38,8 +38,8 @@
 
     <ul *ngIf="users.length" class="space-y-2" [class.opacity-60]="loading">
         <li *ngFor="let u of users" [attr.data-testid]="'user-' + u.id"
-            class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 flex flex-wrap items-center gap-3">
-            <div class="min-w-0 flex-1">
+            class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+            <div class="min-w-0 basis-full sm:basis-0 sm:flex-1">
                 <p class="font-semibold text-gray-800 truncate">
                     {{ u.name }}
                     <span *ngIf="u.id === myId" class="text-xs font-normal text-gray-400">(você)</span>
@@ -51,7 +51,7 @@
                 [ngClass]="u.enabled ? 'badge-success badge-outline' : 'badge-error'">
                 {{ u.enabled ? 'Ativo' : 'Desativado' }}
             </span>
-            <div class="flex gap-1">
+            <div class="flex gap-1 ml-auto">
                 <button type="button" [attr.data-testid]="'edit-' + u.id" class="btn btn-sm btn-ghost rounded-lg"
                     [attr.aria-label]="'Editar ' + u.name" (click)="openEdit(u)">
                     <span class="material-icons text-base">edit</span>
