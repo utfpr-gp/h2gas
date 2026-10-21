@@ -51,6 +51,14 @@ dele vira o Painel.
 - **Cenário 6 — Rotas protegidas**: Dado um usuário que não é ADMIN,
   Quando chama qualquer rota `/api/admin/**`, Então recebe 403; no
   frontend, `/admin` e `/admin/usuarios` exigem o papel ADMIN.
+- **Cenário 7 — Tipos de produto são do admin; produtos e categorias, do
+  fornecedor** (decisão do autor, 2026-10-20): Dado o ADMIN em
+  `/admin/tipos`, Quando cadastra ou renomeia um tipo (Gás, Água…),
+  Então o tipo fica disponível para todos os fornecedores escolherem ao
+  criar as próprias categorias. O fornecedor não cria mais tipo (403), e
+  o ADMIN não cria, edita nem apaga categoria ou produto (403) — essas
+  telas saem do menu dele. Os dados existentes ficam como estão (os tipos
+  atuais já são globais).
 
 ## 4. Estado atual (achados)
 
@@ -70,6 +78,12 @@ dele vira o Painel.
 - `Deliverer` sempre pertence a um `Supplier`; hoje só o fornecedor cria
   entregadores (`POST /api/deliverers`).
 - Última migração: `V8__login_tokens.sql`.
+- Hierarquia do catálogo: `ProductType` (global: Gás, Água) →
+  `CategoryProduct` (de **cada fornecedor**: coluna `supplier`) →
+  `ProductItem` (do fornecedor: marca, preço, estoque). Nenhuma tela cria
+  tipo; o `POST /api/product-types` aceita ADMIN e SUPPLIER, sem
+  validação nem nome único. As rotas de escrita de categoria e produto
+  aceitam ADMIN, e o menu "Produtos" do admin leva a essas telas.
 
 ## 5. Contrato Técnico
 
@@ -113,6 +127,24 @@ dele vira o Painel.
   `totalPrice` dos pedidos do mês **não cancelados**, por `createdAt`).
 - Edição: reaproveita `PUT /api/users/{id}` (sem mudança).
 
+### 5.2.1 Tipos de produto e permissões do catálogo (Cenário 7)
+
+| Método | Rota | Papel | Respostas |
+|---|---|---|---|
+| GET | `/api/product-types` | ADMIN, SUPPLIER, CUSTOMER (sem mudança) | 200 |
+| POST | `/api/product-types` | **só ADMIN** (antes ADMIN e SUPPLIER) | **201**, 400, 401, 403 |
+| PUT | `/api/product-types/{id}` | **só ADMIN** (nova) | 200, 400, 401, 403, 404 |
+
+- `ProductTypeDTO.name`: obrigatório (`@NotBlank`), até 60 caracteres,
+  sem espaços nas pontas; nome repetido (sem diferenciar maiúsculas) →
+  400 "Tipo já cadastrado.". Apagar tipo fica fora (tem categorias
+  apontando para ele).
+- Escrita de categoria (`POST/PUT/DELETE /api/category-products`) e de
+  produto (`POST/PUT/DELETE /api/product-items`, `GET
+  /api/product-items/{id}` da edição) passam a ser **só SUPPLIER**.
+  Leituras do catálogo (`by-supplier`, `by-supplier-open`) não mudam.
+- Sem migração: os dados existentes ficam como estão.
+
 ### 5.3 Frontend
 - `services/admin.service.ts`: `listUsers`, `createUser`, `setEnabled`,
   `dashboard`.
@@ -129,8 +161,14 @@ dele vira o Painel.
   edição (nome, telefone, e-mail) e modal "Novo usuário" com seletor de
   perfil — CNPJ e cidade para fornecedor, fornecedor para entregador.
 - **Navbar do admin**: Painel (`/admin`), Usuários (`/admin/usuarios`),
-  Fornecedores, Cidades e o menu Produtos; saem "Início" (catálogo) e
-  "Pedidos" ("Meus Pedidos"). Dropdown do usuário: Meus Dados e Painel.
+  Fornecedores, Cidades e Tipos (`/admin/tipos`); saem "Início"
+  (catálogo), "Pedidos" ("Meus Pedidos") e o menu Produtos. Dropdown do
+  usuário: Meus Dados e Painel.
+- **Tipos** (`components/pages/admin-product-types`): lista, formulário
+  "Novo tipo" e renomear na linha; erro pelo `backendMessage`. Rota
+  `/admin/tipos` com `roles: ['ADMIN']`.
+- Rotas `category-products` e `product-items*` passam a `roles:
+  ['SUPPLIER']`.
 - Tokens F2, sem HEX novo.
 
 ## 6. Plano de Testes (TDD)
@@ -150,6 +188,14 @@ dele vira o Painel.
    `deveRetornar201AoCriarUsuario`, `deveRetornar204AoDesativar`.
 6. `AdminDashboardServiceTest`: `deveResumirAPlataformaParaOAdmin`,
    `naoDeveSomarPedidosCanceladosNoFaturamento`.
+6a. `ProductTypeServiceTest`: `deveCriarTipoSemEspacosNasPontas`,
+    `deveRecusarTipoRepetidoSemDiferenciarMaiusculas`,
+    `deveRenomearTipo`, `deveRetornar404AoRenomearTipoInexistente`.
+6b. `ProductTypeControllerTest`: `deveCriarTipoComoAdmin` (201),
+    `deveRetornar403AoFornecedorCriarTipo`, `deveRetornar400ComNomeVazio`.
+6c. `CatalogoPermissoesTest` (categoria e produto):
+    `deveRetornar403AoAdminEscreverCategoria`,
+    `deveRetornar403AoAdminEscreverProduto`.
 
 **Frontend**
 7. `admin.service.spec.ts`: rotas e parâmetros de cada método.
@@ -162,7 +208,10 @@ dele vira o Painel.
     `deveExigirFornecedorParaEntregador`, `deveCriarAdmin`,
     `deveEditarUsuario`.
 11. `menu.component.spec.ts`: `deveMostrarPainelEUsuariosParaAdmin`
-    (sem Início do catálogo e sem Meus Pedidos).
+    (sem Início do catálogo, sem Meus Pedidos e sem Produtos; com Tipos).
+12. `admin-product-types.component.spec.ts`: `deveListarOsTipos`,
+    `deveCriarTipo`, `deveRenomearTipo`, `deveMostrarErroDeTipoRepetido`.
+13. `product-type.service.spec.ts`: criar e renomear.
 
 ## 7. Fora de Escopo
 - Apagar usuários; log de auditoria; gráficos no painel; redefinir a
@@ -171,6 +220,8 @@ dele vira o Painel.
   ações.
 - Trocar a aprovação de fornecedor (`suppliers.active`) — segue na tela
   `supplier-approval`.
+- Categorias globais curadas pelo admin (a categoria continua de cada
+  fornecedor); apagar tipo de produto; unificar dados existentes.
 
 ## 8. Definição de Pronto
 - [ ] Conta desativada não entra por senha nem por código e perde a
@@ -180,5 +231,8 @@ dele vira o Painel.
 - [ ] Painel como tela inicial do admin; tela de usuários com filtro,
       busca, criação, edição e desativação.
 - [ ] Navbar do admin sem itens de cliente.
+- [ ] Admin cadastra e renomeia tipos de produto; fornecedor não cria
+      tipo; admin não escreve categoria nem produto (403) e não vê essas
+      telas.
 - [ ] Testes da seção 6 verdes; `mvn test`, `ng test` (sem falha nova
       além das 18 antigas) e `ng build`; E2E e prints em 390 e 1280 px.
