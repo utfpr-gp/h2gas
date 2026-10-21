@@ -13,6 +13,28 @@ import org.springframework.data.repository.query.Param;
 public interface ProductItemRepository extends JpaRepository<ProductItem, Long> {
     Page<ProductItem> findBySupplierId(String id, Pageable pageable);
 
+    // F7 fatia 6: lista do fornecedor; minStock/maxStock nulos = sem limite
+    @Query("""
+        SELECT p FROM ProductItem p
+        WHERE p.supplier.id = :supplierId
+          AND (:q IS NULL OR LOWER(p.brand) LIKE LOWER(CONCAT('%', :q, '%'))
+               OR LOWER(p.categoryProduct.name) LIKE LOWER(CONCAT('%', :q, '%'))
+               OR LOWER(p.categoryProduct.productType.name) LIKE LOWER(CONCAT('%', :q, '%')))
+          AND (:minStock IS NULL OR p.stockQuantity >= :minStock)
+          AND (:maxStock IS NULL OR p.stockQuantity <= :maxStock)
+        ORDER BY LOWER(p.brand), p.id
+        """)
+    Page<ProductItem> findMine(@Param("supplierId") String supplierId,
+                               @Param("q") String q,
+                               @Param("minStock") Integer minStock,
+                               @Param("maxStock") Integer maxStock,
+                               Pageable pageable);
+
+    long countBySupplierId(String supplierId);
+    long countBySupplierIdAndStockQuantityGreaterThan(String supplierId, int stock);
+    long countBySupplierIdAndStockQuantity(String supplierId, int stock);
+    long countBySupplierIdAndStockQuantityBetween(String supplierId, int min, int max);
+
     @Query("""
         SELECT p FROM ProductItem p
         WHERE p.supplier.active = true AND p.supplier.open = true

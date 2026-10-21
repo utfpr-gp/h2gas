@@ -6,6 +6,11 @@ import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.dto.CategoryProductDTO;
 import com.h2gas.model.dto.CityDTO;
 import com.h2gas.model.dto.ProductItemDTO;
+import com.h2gas.model.dto.ProductStockSummaryDTO;
+import com.h2gas.enums.OrderStatusEnum;
+import com.h2gas.enums.StockFilterEnum;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import com.h2gas.model.dto.ProductTypeDTO;
 import com.h2gas.model.entity.*;
 import com.h2gas.model.repository.*;
@@ -146,7 +151,7 @@ class ProductItemServiceTest {
     @DisplayName("Deve deletar o item")
     void deleteProductItem() {
         assertTrue(productItemRepository.findById(validIdItemProduct).isPresent());
-        productItemService.deleteProductItem(validIdItemProduct);
+        productItemService.deleteProductItem(validIdItemProduct, productItemRepository.findById(validIdItemProduct).orElseThrow().getSupplier());
         assertFalse(productItemRepository.findById(validIdItemProduct).isPresent());
     }
 
@@ -156,7 +161,7 @@ class ProductItemServiceTest {
         Long invalidId = 999L;
 
         Exception exception = assertThrows(RuntimeException.class, () -> {
-            productItemService.deleteProductItem(invalidId);
+            productItemService.deleteProductItem(invalidId, supplierRepository.findById(validIdSupplier).orElseThrow());
         });
 
         assertEquals("Produto com " + invalidId + " não encontrado", exception.getMessage());
@@ -514,5 +519,99 @@ class ProductItemServiceTest {
         } else {
             return supplierSecond;
         }
+    }
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    private ProductItem salvarProduto(Supplier supplier, CategoryProduct categoria, String marca, int estoque) {
+        ProductItem p = new ProductItem();
+        p.setBrand(marca);
+        p.setPriceDelivery(new BigDecimal("10.00"));
+        p.setPricePickup(new BigDecimal("10.00"));
+        p.setImageUrl("x");
+        p.setStockQuantity(estoque);
+        p.setCategoryProduct(categoria);
+        p.setSupplier(supplier);
+        return productItemRepository.save(p);
+    }
+
+    private Supplier donoDoProdutoValido() {
+        return productItemRepository.findById(validIdItemProduct).orElseThrow().getSupplier();
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: lista só os produtos do fornecedor, filtrando por estoque")
+    void deveListarProdutosDoFornecedorPorEstoque() {
+        Supplier dono = donoDoProdutoValido();
+        CategoryProduct categoria = productItemRepository.findById(validIdItemProduct).orElseThrow().getCategoryProduct();
+        salvarProduto(dono, categoria, "Bento Esgotado", 0);
+        salvarProduto(dono, categoria, "Cheio Total", 50);
+
+        List<String> todos = productItemService.findMine(dono.getId(), null, StockFilterEnum.ALL, PageRequest.of(0, 10))
+                .map(ProductItemDTO::getBrand).getContent();
+        assertEquals(List.of("Agua azul", "Bento Esgotado", "Cheio Total"), todos);
+        assertEquals(List.of("Agua azul", "Cheio Total"), marcas(dono, StockFilterEnum.AVAILABLE));
+        assertEquals(List.of("Agua azul"), marcas(dono, StockFilterEnum.LOW));
+        assertEquals(List.of("Bento Esgotado"), marcas(dono, StockFilterEnum.OUT));
+    }
+
+    private List<String> marcas(Supplier dono, StockFilterEnum filtro) {
+        return productItemService.findMine(dono.getId(), null, filtro, PageRequest.of(0, 10)).map(ProductItemDTO::getBrand).getContent();
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: busca por marca, categoria ou tipo")
+    void deveBuscarPorMarcaCategoriaOuTipo() {
+        String dono = donoDoProdutoValido().getId();
+
+        assertEquals(1, productItemService.findMine(dono, "AZUL", StockFilterEnum.ALL, PageRequest.of(0, 10)).getTotalElements());
+        assertEquals(1, productItemService.findMine(dono, "20l", StockFilterEnum.ALL, PageRequest.of(0, 10)).getTotalElements());
+        assertEquals(1, productItemService.findMine(dono, "água mineral", StockFilterEnum.ALL, PageRequest.of(0, 10)).getTotalElements());
+        assertEquals(0, productItemService.findMine(dono, "vermelho", StockFilterEnum.ALL, PageRequest.of(0, 10)).getTotalElements());
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: resumo do estoque usa o estoque mínimo da configuração")
+    void deveResumirEstoqueComOLimiteDaConfiguracao() {
+        Supplier dono = donoDoProdutoValido();
+        CategoryProduct categoria = productItemRepository.findById(validIdItemProduct).orElseThrow().getCategoryProduct();
+        salvarProduto(dono, categoria, "Zerado", 0);
+        salvarProduto(dono, categoria, "Dez", 10);
+
+        ProductStockSummaryDTO padrao = productItemService.summarizeMine(dono.getId());
+        assertEquals(new ProductStockSummaryDTO(3, 2, 1, 1, 8), padrao);
+
+        dono.setLowStockThreshold(10);
+        supplierRepository.save(dono);
+        assertEquals(new ProductStockSummaryDTO(3, 2, 2, 1, 10), productItemService.summarizeMine(dono.getId()));
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: fornecedor não exclui produto de outro")
+    void deveRecusarExcluirProdutoDeOutroFornecedor() {
+        Supplier intruso = createSupplierForTest(2);
+
+        assertThrows(ForbiddenResourceException.class, () -> productItemService.deleteProductItem(validIdItemProduct, intruso));
+        assertTrue(productItemRepository.findById(validIdItemProduct).isPresent());
+    }
+
+    @Test
+    @DisplayName("F7 fatia 6: produto já vendido não é excluído (409)")
+    void deveRecusarExcluirProdutoJaVendido() {
+        ProductItem produto = productItemRepository.findById(validIdItemProduct).orElseThrow();
+        Order pedido = new Order();
+        pedido.setCustomer(produto.getSupplier());
+        pedido.setSupplier(produto.getSupplier());
+        pedido.setStatus(OrderStatusEnum.DELIVERED);
+        pedido.setTotalPrice(new BigDecimal("10.00"));
+        pedido.setItems(new java.util.ArrayList<>(List.of(new OrderItem(null, 1, new BigDecimal("10.00"), new BigDecimal("10.00"), produto, pedido))));
+        orderRepository.save(pedido);
+
+        ResponseStatusException erro = assertThrows(ResponseStatusException.class,
+                () -> productItemService.deleteProductItem(validIdItemProduct, produto.getSupplier()));
+
+        assertEquals(HttpStatus.CONFLICT, erro.getStatusCode());
+        assertEquals("Este produto já está em pedidos e não pode ser excluído. Zere o estoque para tirá-lo do catálogo.", erro.getReason());
     }
 }
