@@ -313,4 +313,26 @@ describe('SupplierDashboardComponent', () => {
     expect(byId('kpi-route-link')!.getAttribute('href')).toBe('/dashboard-fornecedor');
     expect(byId('kpi-pending-link')!.textContent).toContain('3');
   });
+
+  it('deveMostrarCadaDiaDoMesNoEixo', async () => {
+    await setup();
+
+    const dias = all('day-label');
+    expect(dias.map((d) => d.textContent!.trim())).toEqual(['1', '2', '3']);
+    // no celular só os ímpares aparecem; os pares ficam para telas maiores
+    // invisible (e não hidden) mantém o espaço do rótulo, então cada número fica embaixo da sua coluna
+    expect(dias[1].classList).toContain('invisible');
+    expect(dias[1].classList).toContain('sm:visible');
+    expect(dias[0].classList).not.toContain('invisible');
+  });
+
+  it('deveMostrarOMelhorDiaMesmoQuandoForPar', async () => {
+    await setup(of(dashboard({ revenueByDay: [
+      { day: '2026-10-01', revenue: 100 }, { day: '2026-10-02', revenue: 900 }, { day: '2026-10-03', revenue: 300 },
+    ] })));
+
+    const dias = all('day-label');
+    expect(dias[1].classList).not.toContain('invisible');
+    expect(dias[1].classList).toContain('font-bold');
+  });
 });

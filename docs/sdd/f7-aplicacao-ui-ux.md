@@ -1130,7 +1130,9 @@ gráficos (o SVG é feito à mão, como hoje).
     `deveFiltrarPelosSelects`, `deveMostrarChipsELimpar`,
     `deveDestacarOMelhorDiaNoGrafico`, `deveMostrarTotalNoCentroDaPizza`,
     `deveExplicarVazioCausadoPeloFiltro`,
-    `deveLevarParaACentralDePedidos`.
+    `deveLevarParaACentralDePedidos`, `deveMostrarCadaDiaDoMesNoEixo`
+    (pedido do autor: cada dia do mês abaixo da sua coluna; no celular,
+    só os ímpares, para não sobrepor).
 
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
