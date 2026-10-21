@@ -44,4 +44,15 @@ class GlobalExceptionHandlerTest {
         assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
         assertEquals("Envie uma imagem JPG, PNG ou WEBP de até 1 MB.", resposta.getBody().getMessage());
     }
+
+    @Test
+    @DisplayName("F7 §5.26: banner acima do limite de upload vira 400 com a regra do banner (2 MB)")
+    void deveResponder400ComARegraDoBannerQuandoPassaDoLimite() {
+        ResponseEntity<ErrorResponse> resposta = handler.handleMaxUploadSize(
+                new org.springframework.web.multipart.MaxUploadSizeExceededException(2_097_152),
+                new MockHttpServletRequest("PUT", "/h2gas/api/suppliers/mine/banner"));
+
+        assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
+        assertEquals("Envie uma imagem JPG, PNG ou WEBP de até 2 MB.", resposta.getBody().getMessage());
+    }
 }

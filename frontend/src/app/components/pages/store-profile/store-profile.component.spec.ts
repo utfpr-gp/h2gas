@@ -33,8 +33,8 @@ describe('StoreProfileComponent', () => {
     el.dispatchEvent(new Event('input'));
     fixture.detectChanges();
   };
-  const escolherArquivo = (arquivo: File) => {
-    const input = byId('logo-input') as HTMLInputElement;
+  const escolherArquivo = (arquivo: File, inputId = 'logo-input') => {
+    const input = byId(inputId) as HTMLInputElement;
     Object.defineProperty(input, 'files', { value: [arquivo], configurable: true });
     input.dispatchEvent(new Event('change'));
     fixture.detectChanges();
@@ -42,11 +42,13 @@ describe('StoreProfileComponent', () => {
   const salvar = () => byId('save-profile') as HTMLButtonElement;
 
   const setup = async (p: SupplierProfile = perfil) => {
-    supplierSpy = jasmine.createSpyObj('SupplierService', ['getMyProfile', 'updateMyProfile', 'uploadMyLogo', 'removeMyLogo']);
+    supplierSpy = jasmine.createSpyObj('SupplierService', ['getMyProfile', 'updateMyProfile', 'uploadMyLogo', 'removeMyLogo', 'uploadMyBanner', 'removeMyBanner']);
     supplierSpy.getMyProfile.and.returnValue(of({ ...p }));
     supplierSpy.updateMyProfile.and.callFake((r) => of({ ...p, ...r }));
     supplierSpy.uploadMyLogo.and.returnValue(of({ logoUrl: 'https://cdn/logo.png' }));
     supplierSpy.removeMyLogo.and.returnValue(of(void 0));
+    supplierSpy.uploadMyBanner.and.returnValue(of({ bannerUrl: 'https://cdn/banner.jpg' }));
+    supplierSpy.removeMyBanner.and.returnValue(of(void 0));
     addressSpy = jasmine.createSpyObj('AddressService', ['findByUserId', 'buscaViaCep', 'update']);
     addressSpy.findByUserId.and.returnValue(of({ id: 3, zipCode: '80020000', complement: 'Loja 2' }));
     const citySpy = jasmine.createSpyObj('CityService', ['findAll']);
@@ -184,5 +186,40 @@ describe('StoreProfileComponent', () => {
     fixture.detectChanges();
 
     expect(userSpy.setCurrentUser).toHaveBeenCalledWith(jasmine.objectContaining({ id: 'forn-1', name: 'Gás Centro', phoneNumber: '41991110000' }));
+  });
+
+  // ---- F7 §5.26: banner ----
+  it('deveEnviarBannerEscolhido', async () => {
+    await setup();
+    expect(byId('banner-image')).toBeNull();
+    expect(byId('banner-default')).not.toBeNull();
+
+    escolherArquivo(new File([new Uint8Array(1_500_000)], 'banner.jpg', { type: 'image/jpeg' }), 'banner-input');
+
+    expect(supplierSpy.uploadMyBanner).toHaveBeenCalled();
+    expect(toastrSpy.success).toHaveBeenCalledWith('Banner atualizado.');
+    expect((byId('banner-image') as HTMLImageElement).src).toBe('https://cdn/banner.jpg');
+  });
+
+  it('deveRecusarBannerInvalidoSemEnviar', async () => {
+    await setup();
+
+    escolherArquivo(new File([new Uint8Array(2_097_153)], 'banner.jpg', { type: 'image/jpeg' }), 'banner-input');
+    escolherArquivo(new File(['oi'], 'banner.gif', { type: 'image/gif' }), 'banner-input');
+
+    expect(supplierSpy.uploadMyBanner).not.toHaveBeenCalled();
+    expect(byId('banner-error')?.textContent).toContain('Envie uma imagem JPG, PNG ou WEBP de até 2 MB.');
+  });
+
+  it('deveRemoverBannerComConfirmacao', async () => {
+    await setup({ ...perfil, bannerUrl: 'https://cdn/antigo.jpg' });
+
+    click('remove-banner');
+    expect(supplierSpy.removeMyBanner).not.toHaveBeenCalled();
+    click('confirm-remove-banner');
+
+    expect(supplierSpy.removeMyBanner).toHaveBeenCalled();
+    expect(byId('banner-image')).toBeNull();
+    expect(byId('banner-default')).not.toBeNull();
   });
 });

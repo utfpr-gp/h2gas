@@ -114,7 +114,9 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now().toString(),
                 HttpStatus.BAD_REQUEST.value(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                com.h2gas.services.SupplierService.INVALID_LOGO_MESSAGE,
+                request.getRequestURI().endsWith("/mine/banner")
+                        ? com.h2gas.services.SupplierService.INVALID_BANNER_MESSAGE
+                        : com.h2gas.services.SupplierService.INVALID_LOGO_MESSAGE,
                 request.getRequestURI()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);

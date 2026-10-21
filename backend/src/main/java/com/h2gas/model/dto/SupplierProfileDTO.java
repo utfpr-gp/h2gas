@@ -10,6 +10,7 @@ public record SupplierProfileDTO(
         @Schema(example = "Entrega rápida no centro") String description,
         @Schema(description = "Só leitura", example = "12345678000101") String cnpj,
         @Schema(description = "Logo no Cloudinary; nula sem logo") String logoUrl,
+        @Schema(description = "Banner no Cloudinary; nulo sem banner") String bannerUrl,
         @Schema(example = "3") Long addressId,
         @Schema(example = "Rua XV de Novembro") String addressStreetName,
         @Schema(example = "700") String addressNumber,

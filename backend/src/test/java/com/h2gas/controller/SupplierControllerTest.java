@@ -43,6 +43,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -234,7 +235,7 @@ class SupplierControllerTest {
     void deveUsarALojaDoTokenNoPerfil() throws Exception {
         autenticarComoFornecedor("fornecedor-1");
         SupplierProfileDTO perfil = new SupplierProfileDTO("Gás Centro", "gascentro@h2gas.local", "41999999999", "Desde 1990", "12345678000101",
-                null, 3L, "Rua XV", "700", "Centro", "Curitiba", "PR");
+                null, null, 3L, "Rua XV", "700", "Centro", "Curitiba", "PR");
         when(supplierService.findMyProfile("fornecedor-1")).thenReturn(perfil);
         when(supplierService.updateMyProfile(eq("fornecedor-1"), any())).thenReturn(perfil);
 
@@ -347,6 +348,35 @@ class SupplierControllerTest {
     }
 
     @Test
+    void deveEnviarOBannerDoFornecedorDoToken() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+        when(supplierService.updateMyBanner(eq("fornecedor-1"), any())).thenReturn("https://res.cloudinary.com/h2gas/banner.jpg");
+
+        mockMvc.perform(multipart("/api/suppliers/mine/banner")
+                        .file(new MockMultipartFile("file", "banner.jpg", "image/jpeg", new byte[]{1, 2, 3}))
+                        .with(r -> { r.setMethod("PUT"); return r; }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.bannerUrl").value("https://res.cloudinary.com/h2gas/banner.jpg"));
+        mockMvc.perform(delete("/api/suppliers/mine/banner")).andExpect(status().isNoContent());
+
+        verify(supplierService).removeMyBanner("fornecedor-1");
+    }
+
+    @Test
+    void deveBloquearBannerParaQuemNaoEFornecedor() throws Exception {
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                "cliente", null, List.of(new SimpleGrantedAuthority("ROLE_CUSTOMER"))));
+
+        mockMvc.perform(multipart("/api/suppliers/mine/banner")
+                        .file(new MockMultipartFile("file", "banner.jpg", "image/jpeg", new byte[]{1, 2, 3}))
+                        .with(r -> { r.setMethod("PUT"); return r; }))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(delete("/api/suppliers/mine/banner")).andExpect(status().isForbidden());
+
+        verifyNoInteractions(supplierService);
+    }
+
+    @Test
     void deveListarAvaliacoesPaginadas() throws Exception {
         com.h2gas.model.dto.StoreReviewDTO review = new com.h2gas.model.dto.StoreReviewDTO(
                 1L, "Maria", 4, "Entrega rápida", java.time.LocalDateTime.of(2026, 10, 18, 14, 30));
@@ -362,5 +392,4 @@ class SupplierControllerTest {
 
         verify(supplierService).findReviews(eq("loja-1"), eq(PageRequest.of(0, 5)));
     }
-
 }

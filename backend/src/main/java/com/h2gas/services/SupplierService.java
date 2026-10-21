@@ -281,6 +281,8 @@ public class SupplierService {
     public static final String INVALID_LOGO_MESSAGE = "Envie uma imagem JPG, PNG ou WEBP de até 1 MB.";
     private static final long MAX_LOGO_BYTES = 1_048_576;
     private static final java.util.Set<String> LOGO_TYPES = java.util.Set.of("image/jpeg", "image/png", "image/webp");
+    public static final String INVALID_BANNER_MESSAGE = "Envie uma imagem JPG, PNG ou WEBP de até 2 MB.";
+    private static final long MAX_BANNER_BYTES = 2_097_152;
 
     // F7 fatia 6: perfil e logo da loja; o id vem sempre do token (controller)
     public SupplierProfileDTO findMyProfile(String supplierId) {
@@ -299,10 +301,30 @@ public class SupplierService {
 
     @Transactional
     public String updateMyLogo(String supplierId, MultipartFile file) {
-        if (file == null || file.isEmpty() || file.getSize() > MAX_LOGO_BYTES || !LOGO_TYPES.contains(file.getContentType())) {
-            throw new BusinessRuleException(INVALID_LOGO_MESSAGE);
-        }
         Supplier supplier = findSupplier(supplierId);
+        supplier.setLogoUrl(uploadStoreImage(file, MAX_LOGO_BYTES, INVALID_LOGO_MESSAGE));
+        return supplierRepository.save(supplier).getLogoUrl();
+    }
+
+    // F7 §5.26: banner da loja — mesma validação e envio da logo, com limite de 2 MB
+    @Transactional
+    public String updateMyBanner(String supplierId, MultipartFile file) {
+        Supplier supplier = findSupplier(supplierId);
+        supplier.setBannerUrl(uploadStoreImage(file, MAX_BANNER_BYTES, INVALID_BANNER_MESSAGE));
+        return supplierRepository.save(supplier).getBannerUrl();
+    }
+
+    @Transactional
+    public void removeMyBanner(String supplierId) {
+        Supplier supplier = findSupplier(supplierId);
+        supplier.setBannerUrl(null);
+        supplierRepository.save(supplier);
+    }
+
+    private String uploadStoreImage(MultipartFile file, long maxBytes, String invalidMessage) {
+        if (file == null || file.isEmpty() || file.getSize() > maxBytes || !LOGO_TYPES.contains(file.getContentType())) {
+            throw new BusinessRuleException(invalidMessage);
+        }
         Map<?, ?> uploaded;
         try {
             uploaded = cloudinaryService.upload(file);
@@ -311,8 +333,7 @@ public class SupplierService {
             throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Não foi possível enviar a imagem. Tente novamente.", e);
         }
         Object secure = uploaded.get("secure_url");
-        supplier.setLogoUrl(String.valueOf(secure != null ? secure : uploaded.get("url")));
-        return supplierRepository.save(supplier).getLogoUrl();
+        return String.valueOf(secure != null ? secure : uploaded.get("url"));
     }
 
     @Transactional
@@ -325,7 +346,7 @@ public class SupplierService {
     private static SupplierProfileDTO toProfile(Supplier s) {
         Address a = s.getAddress();
         City city = a != null && a.getCity() != null ? a.getCity() : s.getCity();
-        return new SupplierProfileDTO(s.getName(), s.getEmail(), s.getPhoneNumber(), s.getDescription(), s.getCnpj(), s.getLogoUrl(),
+        return new SupplierProfileDTO(s.getName(), s.getEmail(), s.getPhoneNumber(), s.getDescription(), s.getCnpj(), s.getLogoUrl(), s.getBannerUrl(),
                 a == null ? null : a.getId(), a == null ? null : a.getStreetName(), a == null ? null : a.getNumber(),
                 a == null ? null : a.getNeighborhood(), city == null ? null : city.getName(), city == null ? null : city.getState());
     }
