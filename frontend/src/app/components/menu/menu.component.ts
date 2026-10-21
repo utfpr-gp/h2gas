@@ -132,6 +132,11 @@ export class MenuComponent implements OnInit, OnDestroy {
     }
   }
 
+  // o getter acima devolve objetos novos a cada ciclo; sem trackBy o ngFor recria os botões e o foco se perde
+  trackByItemId(_: number, item: { id: string }) {
+    return item.id;
+  }
+
   openUserMenuItem(route: string) {
     this.closeUserMenu();
     this.navigate(route);

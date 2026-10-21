@@ -209,6 +209,21 @@ describe('MenuComponent', () => {
     expect(document.activeElement).toBe(byId('menu-item-meus-dados'));
   }));
 
+  it('deveManterOFocoNoItemDepoisDeNovosCiclosDeDeteccao', fakeAsync(() => {
+    entrarComo({ id: 'u1', name: 'Maria Souza', email: 'maria@h2gas.local', userType: 'CUSTOMER' });
+    abrirMenu();
+    tick();
+    const primeiro = byId('menu-item-meus-dados');
+    expect(document.activeElement).toBe(primeiro);
+
+    fixture.detectChanges();
+    fixture.detectChanges();
+
+    // os itens não podem ser recriados a cada ciclo: o elemento focado precisa ser o mesmo
+    expect(byId('menu-item-meus-dados')).toBe(primeiro);
+    expect(document.activeElement).toBe(primeiro);
+  }));
+
   it('deveFecharMenuComEsc', () => {
     entrarComo({ id: 'u1', name: 'Maria Souza', email: 'maria@h2gas.local', userType: 'CUSTOMER' });
     abrirMenu();

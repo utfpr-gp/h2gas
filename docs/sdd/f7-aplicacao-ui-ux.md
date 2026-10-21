@@ -496,16 +496,30 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > central, login certo e "Meus Pedidos" sem toast.
 
 **Fatia 4 — Meus Dados e menu do usuário (§5.11):**
-- [ ] `PUT /api/users/{id}` só edita o próprio usuário (403 nos demais;
+- [x] `PUT /api/users/{id}` só edita o próprio usuário (403 nos demais;
       ADMIN pode) e não troca e-mail por usuário comum; documentado no
       Swagger.
-- [ ] Avatar com iniciais (atualiza ao salvar) e dropdown do usuário no
+- [x] Avatar com iniciais (atualiza ao salvar) e dropdown do usuário no
       padrão, com itens por perfil, Esc, clique fora e foco.
-- [ ] `/meus-dados` para cliente, fornecedor e entregador, com avatar,
+- [x] `/meus-dados` para cliente, fornecedor e entregador, com avatar,
       skeleton, e-mail somente leitura e estados de salvando; antiga
       `/painel-cliente` redireciona.
-- [ ] Testes da seção 7 (itens 8-9) verdes; `mvn test` e `ng test`
+- [x] Testes da seção 7 (itens 8-9) verdes; `mvn test` e `ng test`
       (≤ 19 falhas antigas); sem HEX novo; teste manual e E2E.
+
+> Verificado em 2026-10-20: backend 256 testes (único erro: `BackendApplicationTests.contextLoads`, que precisa do MySQL local);
+> frontend 309 testes com 18 falhas antigas (uma a menos); E2E por API (11 checagens, incluindo o ataque ao `PUT /users/{id}` com
+> contas de fornecedor, cliente e entregador: 403 e banco intacto) e por interface (19 checagens: avatar, dropdown por perfil, Esc,
+> clique fora, foco, `/meus-dados`, redirecionamento da rota antiga, avatar atualizando sem recarregar, e carrinho sem sobrepor o
+> avatar em 390 e 360 px).
+>
+> **Defeitos encontrados no teste e corrigidos**: (1) o `PUT /api/users/{id}` aceitava editar qualquer usuário (tomada de conta com o
+> login por código); (2) o menu reaproveitava o usuário do início do app e mostraria a sessão anterior após novo login; (3) os itens
+> do dropdown eram recriados a cada ciclo de detecção, e o foco voltava ao `body`; (4) o carrinho encolhia para 6 px no celular e
+> ficava embaixo do avatar.
+>
+> **Dívidas registradas (fora desta fatia)**: `GET /api/users?id=` ainda lê o usuário de qualquer id (só leitura, sem checagem de
+> dono); `DELETE /api/users` e rotas de cadastro de ADMIN não foram revisadas; a troca de e-mail com confirmação no endereço novo.
 
 **Pendente (próximas fatias):**
 - [ ] Grupos A–E migrados pros tokens (grep: zero hex novo fora de
