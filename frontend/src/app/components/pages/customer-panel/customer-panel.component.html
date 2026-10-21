@@ -30,7 +30,7 @@
         <label class="block">
           <span class="text-sm font-medium text-gray-700">Nome</span>
           <span class="relative mt-1 block">
-            <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base">person</span>
+            <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-gray-400 text-base">person</span>
             <input formControlName="name" type="text" placeholder="Seu nome" autocomplete="name"
               class="input w-full rounded-xl border bg-white pl-10"
               [ngClass]="profileForm.get('name')!.invalid && profileForm.get('name')!.touched ? 'border-red-400' : 'border-gray-300'" />
@@ -43,7 +43,7 @@
         <label class="block">
           <span class="text-sm font-medium text-gray-700">E-mail</span>
           <span class="relative mt-1 block">
-            <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base">mail</span>
+            <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-gray-400 text-base">mail</span>
             <input data-testid="email-field" type="email" [value]="user.email" readonly aria-readonly="true"
               class="input w-full rounded-xl border border-gray-200 bg-gray-100 text-gray-500 pl-10 cursor-not-allowed" />
           </span>
@@ -53,7 +53,7 @@
         <label class="block">
           <span class="text-sm font-medium text-gray-700">Telefone de contato</span>
           <span class="relative mt-1 block">
-            <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base">call</span>
+            <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-gray-400 text-base">call</span>
             <input formControlName="phoneNumber" type="text" mask="(00) 00000-0000" placeholder="(00) 00000-0000" autocomplete="tel"
               class="input w-full rounded-xl border bg-white pl-10"
               [ngClass]="profileForm.get('phoneNumber')!.invalid && profileForm.get('phoneNumber')!.touched ? 'border-red-400' : 'border-gray-300'" />
