@@ -1458,12 +1458,21 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > celular, rótulos longos ("Cartão de crédito") colavam nos valores — as linhas passaram a quebrar.
 
 **Cliente — Início e Produtos (§5.21):**
-- [ ] Busca de lojas e de produtos no backend com a cidade do endereço
+- [x] Busca de lojas e de produtos no backend com a cidade do endereço
       ativo (RN05); OpenAPI.
-- [ ] Hierarquia visual: só "Adicionar" cheio (accent); demais ações
+- [x] Hierarquia visual: só "Adicionar" cheio (accent); demais ações
       claras; banners suaves; busca sem botão; paginação dos produtos.
-- [ ] Testes da seção 7 (item 21) verdes; `mvn test`, `ng test` (sem
+- [x] Testes da seção 7 (item 21) verdes; `mvn test`, `ng test` (sem
       falhas novas) e `ng build`; teste manual em 390 e 1280 px.
+
+> Verificado em 2026-10-21: backend 369 testes (único erro: `contextLoads`); frontend 456 testes com as 10 falhas antigas; `ng
+> build` sem erro; E2E em 1280 e 390 px com 17 checagens como `cliente.teste` em Curitiba (nenhum botão marinho cheio no
+> conteúdo, "Adicionar" em `rgb(42,120,214)`, lojas da cidade, busca "centro" sem botão só na cidade, limpar, 14 produtos pelo
+> total do backend, paginação 12 + 2, busca "minalba" na visão Produtos, sem rolagem lateral nem erro de JS).
+>
+> **Achados**: (1) a busca antiga de lojas (`/suppliers/search`) ignorava a cidade (RN05) — o frontend passou a usar
+> `/actives/open?q=` e o `searchSuppliers` saiu; (2) a visão Produtos não buscava nem paginava — agora busca pelo backend e pagina
+> de 12 em 12. A rota `/suppliers/search` continua no backend, mas sem uso no frontend (candidata a sair).
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
