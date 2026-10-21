@@ -1666,10 +1666,16 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > seguia `#2a78d6` (4,42:1, abaixo do AA); corrigido em commit à parte, e o texto da §5.21 foi acertado.
 
 **Cliente — Avaliações da loja no catálogo (§5.25):**
-- [ ] `averageRating`/`reviewCount` no catálogo por consulta agrupada,
+- [x] `averageRating`/`reviewCount` no catálogo por consulta agrupada,
       documentados no OpenAPI; card com nota e contagem; testes (item 25)
       verdes; `mvn test` e `ng test` (sem falhas novas); conferido no
       navegador com as avaliações geradas.
+
+> **Verificação (2026-10-21)**: `mvn test` 372 testes, só o `contextLoads` antigo (precisa de MySQL local);
+> `ng test` 475, só as 10 falhas antigas de providers; `ng build` ok. No navegador (`/inicio`, 1280 e 390 px), com as
+> avaliações geradas no banco local: Gás Centro "4,2 (14)", Água Pura "4,3 (6)", Fornecedor Teste HU02 "Sem avaliações
+> ainda". As 6 avaliações da Água Pura estão em pedidos `DELIVERED` de teste (observação `seed-avaliacoes`), só no
+> banco local.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
