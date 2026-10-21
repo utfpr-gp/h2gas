@@ -53,10 +53,11 @@ export const routes: Routes = [
         data: {roles: ['ADMIN', 'SUPPLIER']}
     },
     {
-        path: 'distributor/edit/:id', 
-        component: DistribuitorFormComponent,
+        path: 'distributor/edit/:id',
+        // F7 fatia 6: dados da loja do fornecedor logado (o :id fica só por compatibilidade dos links)
+        loadComponent: () => import('./components/pages/store-profile/store-profile.component').then((m) => m.StoreProfileComponent),
         canActivate: [authGuard],
-        data: {roles: ['ADMIN', 'SUPPLIER']}
+        data: {roles: ['SUPPLIER']}
     },
     {
         path: 'category-products',
