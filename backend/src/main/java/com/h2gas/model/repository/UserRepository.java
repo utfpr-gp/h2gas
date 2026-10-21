@@ -22,4 +22,6 @@ public interface UserRepository extends JpaRepository<User, String> {
     @Query("SELECT u FROM User u WHERE (:type IS NULL OR u.userType = :type) "
             + "AND (:pattern IS NULL OR LOWER(u.name) LIKE :pattern OR LOWER(u.email) LIKE :pattern)")
     Page<User> searchForAdmin(@Param("type") UserTypeEnum type, @Param("pattern") String pattern, Pageable pageable);
+
+    long countByUserType(UserTypeEnum userType);
 }

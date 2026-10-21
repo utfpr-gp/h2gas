@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,6 +25,16 @@ public interface OrderRepository extends JpaRepository<Order, String> {
                                  @Param("end") LocalDateTime end);
 
     long countBySupplierIdAndStatus(String supplierId, OrderStatusEnum status);
+
+    // HU12: painel do admin (plataforma inteira)
+    long countByStatus(OrderStatusEnum status);
+    long countByCreatedAtGreaterThanEqualAndCreatedAtLessThan(LocalDateTime start, LocalDateTime end);
+
+    @Query("SELECT COALESCE(SUM(o.totalPrice), 0) FROM Order o "
+            + "WHERE o.createdAt >= :start AND o.createdAt < :end AND o.status <> :excluded")
+    BigDecimal sumTotalPriceCreatedBetweenExcludingStatus(@Param("start") LocalDateTime start,
+                                                          @Param("end") LocalDateTime end,
+                                                          @Param("excluded") OrderStatusEnum excluded);
 
     boolean existsByDelivererIdAndStatus(Long delivererId, OrderStatusEnum status);
     List<Order> findByDelivererIdAndStatusOrderByDispatchedAtAsc(Long delivererId, OrderStatusEnum status);
