@@ -38,4 +38,22 @@ describe('SupplierService', () => {
     expect(req.request.method).toBe('GET');
     req.flush({ month: '2026-09' });
   });
+
+  it('deveBuscarConfiguracoesDoFornecedorLogado', () => {
+    service.getMySettings().subscribe((c) => expect(c.lowStockThreshold).toBe(8));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/suppliers/mine/settings`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ openingTime: '08:00', closingTime: '18:00', averageDeliveryTime: 30, lowStockThreshold: 8 });
+  });
+
+  it('deveSalvarConfiguracoes', () => {
+    const settings = { openingTime: '09:00', closingTime: '02:00', averageDeliveryTime: 40, lowStockThreshold: 5 };
+    service.updateMySettings(settings).subscribe((c) => expect(c).toEqual(settings));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/suppliers/mine/settings`);
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual(settings);
+    req.flush(settings);
+  });
 });

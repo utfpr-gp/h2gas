@@ -10,7 +10,7 @@ import { ToastrService } from 'ngx-toastr';
 import { firstValueFrom } from 'rxjs';
 import { User } from '../../../models/user';
 import { UserService } from '../../../services/user.service';
-import { ConfigurationService } from '../../../services/configuration.service';
+import { SupplierService } from '../../../services/supplier.service';
 import { backendMessage } from '../../../utils/backend-message';
 
 @Component({
@@ -45,17 +45,21 @@ export class ProductItemComponent implements OnInit {
     private productItemService: ProductItemService,
     private toastr: ToastrService,
     private userService: UserService,
-    private configurationService: ConfigurationService
+    private supplierService: SupplierService
   ) {}
   userLogado?: User;
 
 
   async ngOnInit() {
     this.userLogado = this.userService.getUserLocalStorage()
-    const settings = this.configurationService.getSettings();
-    if (settings?.estoqueMin) {
-      this.estoqueMinimoConfig = settings.estoqueMin;
-    }
+    // estoque mínimo salvo na configuração da loja; sem resposta, segue o padrão de 8
+    this.supplierService.getMySettings().subscribe({
+      next: (settings) => {
+        this.estoqueMinimoConfig = settings.lowStockThreshold;
+        this.countingDisponivel();
+      },
+      error: (err) => this.toastr.error(`Erro ao carregar o estoque mínimo: ${backendMessage(err)}`),
+    });
     await this.findProdutos();
   }
 
@@ -135,13 +139,6 @@ export class ProductItemComponent implements OnInit {
       if (qtd === 0) this.esgotadoProducts++;
       if (qtd > 0 && qtd <= this.estoqueMinimoConfig) this.lowProducts++;
     }
-
-    console.log({
-      disponiveis: this.availableProduct,
-      baixoEstoque: this.lowProducts,
-      esgotado: this.esgotadoProducts,
-      limiteConfig: this.estoqueMinimoConfig
-    });
   }
 
   
