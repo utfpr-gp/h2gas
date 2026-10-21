@@ -515,4 +515,42 @@ class SupplierServiceTest {
         assertEquals("Não foi possível enviar a imagem. Tente novamente.", erro.getReason());
         assertNull(supplierRepository.findById(validId).orElseThrow().getLogoUrl());
     }
+
+    @Test
+    @DisplayName("F7 §5.26: banner enviado ao Cloudinary e gravado na loja do fornecedor")
+    void deveSalvarOBannerEnviadoPeloFornecedor() throws Exception {
+        when(cloudinaryService.upload(any())).thenReturn(Map.of("secure_url", "https://res.cloudinary.com/h2gas/banner.jpg"));
+
+        String url = supplierService.updateMyBanner(validId, new MockMultipartFile("file", "banner.jpg", "image/jpeg", new byte[1_500_000]));
+
+        assertEquals("https://res.cloudinary.com/h2gas/banner.jpg", url);
+        assertEquals(url, supplierRepository.findById(validId).orElseThrow().getBannerUrl());
+        assertEquals(url, supplierService.findMyProfile(validId).bannerUrl());
+    }
+
+    @Test
+    @DisplayName("F7 §5.26: banner que não é JPG, PNG ou WEBP, vazio ou acima de 2 MB é 400")
+    void deveRecusarBannerDeOutroTipoOuAcimaDe2MB() {
+        BusinessRuleException erro = assertThrows(BusinessRuleException.class, () -> supplierService.updateMyBanner(validId,
+                new MockMultipartFile("file", "banner.gif", "image/gif", new byte[100])));
+        assertEquals("Envie uma imagem JPG, PNG ou WEBP de até 2 MB.", erro.getMessage());
+        assertThrows(BusinessRuleException.class, () -> supplierService.updateMyBanner(validId,
+                new MockMultipartFile("file", "banner.jpg", "image/jpeg", new byte[2_097_153])));
+        assertThrows(BusinessRuleException.class, () -> supplierService.updateMyBanner(validId,
+                new MockMultipartFile("file", "banner.jpg", "image/jpeg", new byte[0])));
+        verifyNoInteractions(cloudinaryService);
+    }
+
+    @Test
+    @DisplayName("F7 §5.26: remover o banner volta para o padrão")
+    void deveRemoverOBanner() {
+        Supplier loja = supplierRepository.findById(validId).orElseThrow();
+        loja.setBannerUrl("https://res.cloudinary.com/h2gas/banner.jpg");
+        supplierRepository.save(loja);
+
+        supplierService.removeMyBanner(validId);
+
+        assertNull(supplierRepository.findById(validId).orElseThrow().getBannerUrl());
+    }
+
 }

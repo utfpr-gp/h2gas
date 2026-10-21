@@ -292,6 +292,34 @@ public class SupplierController {
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Envia o banner da loja do fornecedor logado",
+            description = "Multipart com o campo file: JPG, PNG ou WEBP de até 2 MB. O banner aparece no topo da página de produtos da loja")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Banner salvo; devolve bannerUrl"),
+            @ApiResponse(responseCode = "400", description = "Arquivo vazio, de outro tipo ou maior que 2 MB"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido ou papel diferente de SUPPLIER"),
+            @ApiResponse(responseCode = "502", description = "Falha ao enviar a imagem ao Cloudinary")
+    })
+    @PutMapping(value = "/mine/banner", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    @ResponseBody
+    @RolesAllowed("SUPPLIER")
+    public ResponseEntity<Map<String, String>> updateMyBanner(
+            @Parameter(description = "Imagem do banner") @RequestPart("file") org.springframework.web.multipart.MultipartFile file) {
+        return ResponseEntity.ok(Map.of("bannerUrl", supplierService.updateMyBanner(currentUser().getId(), file)));
+    }
+
+    @Operation(summary = "Remove o banner da loja do fornecedor logado", description = "A página da loja volta a mostrar o banner padrão")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Banner removido"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido ou papel diferente de SUPPLIER")
+    })
+    @DeleteMapping("/mine/banner")
+    @RolesAllowed("SUPPLIER")
+    public ResponseEntity<Void> removeMyBanner() {
+        supplierService.removeMyBanner(currentUser().getId());
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "Edita um fornecedor",
             description = "O fornecedor só edita a própria loja; o admin edita qualquer uma. A tela da loja usa /mine/profile")
     @ApiResponses({
