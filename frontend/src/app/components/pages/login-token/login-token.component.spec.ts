@@ -10,6 +10,7 @@ import { CartService } from '../../../services/cart.service';
 import { LocationContextService } from '../../../services/location-context.service';
 
 describe('LoginTokenComponent', () => {
+  let cartServiceSpy: jasmine.SpyObj<CartService>;
   let component: LoginTokenComponent;
   let fixture: ComponentFixture<LoginTokenComponent>;
   let authServiceSpy: jasmine.SpyObj<AuthService>;
@@ -46,7 +47,7 @@ describe('LoginTokenComponent', () => {
         { provide: AuthService, useValue: authServiceSpy },
         { provide: UserService, useValue: userServiceSpy },
         { provide: ToastrService, useValue: toastrSpy },
-        { provide: CartService, useValue: jasmine.createSpyObj('CartService', ['setCart']) },
+        { provide: CartService, useValue: cartServiceSpy = jasmine.createSpyObj('CartService', ['setCart']) },
         provideRouter([]),
       ],
     }).compileComponents();
@@ -164,5 +165,16 @@ describe('LoginTokenComponent', () => {
 
     (byId('go-register') as HTMLButtonElement).click();
     expect(navigateSpy).toHaveBeenCalledWith(['/register']);
+  });
+
+  // HU13: entrar não apaga o carrinho montado como visitante
+  it('deveManterOCarrinhoAoEntrar', () => {
+    enviarEmail();
+    digitarCodigo('123456');
+
+    (byId('validate-code') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(cartServiceSpy.setCart).not.toHaveBeenCalled();
   });
 });

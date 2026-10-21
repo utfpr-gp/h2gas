@@ -10,6 +10,7 @@ import { CartService } from '../../../services/cart.service';
 import { LocationContextService } from '../../../services/location-context.service';
 
 describe('LoginComponent', () => {
+  let cartServiceSpy: jasmine.SpyObj<CartService>;
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
   let authServiceSpy: jasmine.SpyObj<AuthService>;
@@ -26,7 +27,7 @@ describe('LoginComponent', () => {
         { provide: UserService, useValue: jasmine.createSpyObj('UserService', ['getMe']) },
         { provide: AuthService, useValue: authServiceSpy },
         { provide: ToastrService, useValue: toastrSpy = jasmine.createSpyObj('ToastrService', ['success', 'error']) },
-        { provide: CartService, useValue: jasmine.createSpyObj('CartService', ['setCart']) },
+        { provide: CartService, useValue: cartServiceSpy = jasmine.createSpyObj('CartService', ['setCart']) },
         { provide: Router, useValue: jasmine.createSpyObj('Router', ['navigate']) },
       ],
     })
@@ -117,5 +118,16 @@ describe('LoginComponent', () => {
 
     expect(html).not.toContain('<body');
     expect(html).not.toMatch(/#0E2068|#3B82F6/i);
+  });
+
+  // HU13: entrar não apaga o carrinho montado como visitante
+  it('deveManterOCarrinhoAoEntrar', () => {
+    authServiceSpy.loginUser.and.returnValue(of({ token: 't' }) as any);
+    (TestBed.inject(UserService) as jasmine.SpyObj<UserService>).getMe.and.returnValue(of({ id: 'u1', userType: 'CUSTOMER' }) as any);
+    component.loginform.setValue({ email: 'cliente@h2gas.local', password: 'Teste@123' } as any);
+
+    component.login();
+
+    expect(cartServiceSpy.setCart).not.toHaveBeenCalled();
   });
 });

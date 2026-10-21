@@ -5,7 +5,6 @@ import { UserService } from '../../../services/user.service';
 import { ToastrService } from 'ngx-toastr';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../services/auth.service';
-import { CartService } from '../../../services/cart.service';
 import { LocationContextService } from '../../../services/location-context.service';
 import { backendMessage } from '../../../utils/backend-message';
 import { homeFor } from '../../../utils/home-route';
@@ -28,7 +27,6 @@ export class LoginComponent {
     private userService: UserService,
     private toastr: ToastrService,
     private authService: AuthService,
-    private cartService: CartService,
     private locationContext: LocationContextService,
   ) {
     this.loginform = this.fb.group({
@@ -46,7 +44,6 @@ export class LoginComponent {
     localStorage.removeItem('user');
     this.locationContext.clear();
     this.loading = true;
-    this.cartService.setCart([]);
     this.authService.loginUser(this.loginform.value).subscribe({
       next: (response: any) => {
         this.loading = false;

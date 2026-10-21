@@ -5,7 +5,6 @@ import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../../services/auth.service';
 import { UserService } from '../../../services/user.service';
-import { CartService } from '../../../services/cart.service';
 import { LocationContextService } from '../../../services/location-context.service';
 import { backendMessage } from '../../../utils/backend-message';
 import { homeFor } from '../../../utils/home-route';
@@ -30,7 +29,6 @@ export class LoginTokenComponent {
     private authService: AuthService,
     private userService: UserService,
     private toastr: ToastrService,
-    private cartService: CartService,
     private locationContext: LocationContextService,
   ) {
     this.emailForm = this.fb.group({
@@ -108,7 +106,6 @@ export class LoginTokenComponent {
     localStorage.removeItem('access_token');
     localStorage.removeItem('user');
     this.locationContext.clear();
-    this.cartService.setCart([]);
   }
 
   private loadMe() {

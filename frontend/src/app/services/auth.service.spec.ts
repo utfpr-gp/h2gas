@@ -56,4 +56,15 @@ describe('AuthService', () => {
     expect(req.request.body).toEqual({ email: 'cliente@h2gas.local', code: '123456' });
     req.flush({ token: 'jwt-do-codigo' });
   });
+
+  // HU13: o carrinho é limpo ao sair (e não mais ao entrar), para o visitante levar o carrinho ao login
+  it('deveLimparOCarrinhoAoSair', () => {
+    localStorage.setItem('cart-product', JSON.stringify([{ id: 1, quantitySelect: 2 }]));
+    sessionStorage.setItem('buy-now-item', JSON.stringify({ id: 9, quantitySelect: 1 }));
+
+    service.logout();
+
+    expect(JSON.parse(localStorage.getItem('cart-product') ?? '[]')).toEqual([]);
+    expect(sessionStorage.getItem('buy-now-item')).toBeNull();
+  });
 });
