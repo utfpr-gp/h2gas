@@ -1,5 +1,7 @@
 package com.h2gas.controller;
 
+import com.h2gas.util.CatalogAccess;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import com.h2gas.model.dto.ProductStockSummaryDTO;
 import com.h2gas.enums.StockFilterEnum;
 
@@ -160,46 +162,49 @@ public class ProductItemController {
         return ResponseEntity.ok(productItemService.summarizeMine(supplier.getId()));
     }
 
-    @Operation(summary = "Lista produtos de um fornecedor",
-            description = "Retorna os produtos de um fornecedor específico, opcionalmente filtrados por categoria e/ou busca por marca (os dois filtros podem ser combinados)")
+    @Operation(summary = "Lista produtos de um fornecedor (vitrine pública)",
+            description = "Aberta a visitantes. Retorna os produtos de um fornecedor específico, opcionalmente filtrados por categoria e/ou busca "
+                    + "por marca (os dois filtros podem ser combinados); cliente e visitante não veem produto zerado (RN02)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista paginada de produtos do fornecedor")
     })
+    @SecurityRequirements
     @GetMapping("/by-supplier/{supplierId}")
     @ResponseBody
-    @RolesAllowed({"ADMIN", "SUPPLIER", "CUSTOMER"})
     public ResponseEntity<PageResponse<ProductItemDTO>> getProductBySupplier(
             @Parameter(description = "ID do fornecedor") @PathVariable String supplierId,
             @Parameter(description = "Página") @RequestParam(value = "page", required = false) Integer page,
             @Parameter(description = "Tamanho da página") @RequestParam(value = "size", required = false) Integer size,
             @Parameter(description = "Filtra pela marca do produto") @RequestParam(value = "search", required = false) String search,
             @Parameter(description = "Filtra pelo nome da categoria (ex.: Gás, Água)") @RequestParam(value = "category", required = false) String category,
-            @Parameter(description = "Oculta produtos com estoque zero (RN02). Para CUSTOMER é sempre aplicado, mesmo que o parâmetro seja false; "
+            @Parameter(description = "Oculta produtos com estoque zero (RN02). Para cliente e visitante é sempre aplicado, mesmo que o parâmetro seja false; "
                     + "fornecedor e admin veem os zerados por padrão, para repor") @RequestParam(value = "onlyAvailable", defaultValue = "false") boolean onlyAvailable
     ) {
         Pageable pageable = PaginationUtil.getPageableRequest(page, size);
-        Page<ProductItemDTO> result = productItemService.findProductsFiltered(supplierId, search, category, onlyAvailable || isCustomer(), pageable);
+        Page<ProductItemDTO> result = productItemService.findProductsFiltered(supplierId, search, category, onlyAvailable || hidesOutOfStock(), pageable);
         PageResponse<ProductItemDTO> response = new PageResponse<>(result);
         return ResponseEntity.ok(response);
     }
 
-    // RN02 decidida no backend: o cliente nunca vê produto zerado, qualquer que seja o parâmetro enviado
-    private boolean isCustomer() {
+    // RN02 decidida no backend: cliente e visitante (HU13) nunca veem produto zerado, qualquer que seja o parâmetro;
+    // só fornecedor e admin veem os zerados, para repor
+    private boolean hidesOutOfStock() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication != null && authentication.getAuthorities().stream()
-                .anyMatch(authority -> "ROLE_CUSTOMER".equals(authority.getAuthority()));
+        return authentication == null || authentication.getAuthorities().stream()
+                .noneMatch(authority -> "ROLE_SUPPLIER".equals(authority.getAuthority()) || "ROLE_ADMIN".equals(authority.getAuthority()));
     }
 
-    @Operation(summary = "Lista produtos disponíveis na plataforma",
-            description = "Retorna produtos de fornecedores ativos e abertos com estoque disponível (RN02: item zerado não aparece), "
-                    + "opcionalmente filtrados por cidade do endereço ativo do cliente (RN05), por categoria, pela busca q (marca, categoria ou tipo) "
-                    + "e ordenados por preço de entrega")
+    @Operation(summary = "Lista produtos disponíveis na plataforma (vitrine pública)",
+            description = "Aberta a visitantes. Retorna produtos de fornecedores ativos e abertos com estoque disponível (RN02: item zerado não aparece), "
+                    + "filtrados pela cidade (RN05), por categoria, pela busca q (marca, categoria ou tipo) e ordenados por preço de entrega. "
+                    + "Sem login, cityId é obrigatório; o admin logado pode omitir")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Lista paginada de produtos disponíveis")
+            @ApiResponse(responseCode = "200", description = "Lista paginada de produtos disponíveis"),
+            @ApiResponse(responseCode = "400", description = "Visitante sem cityId")
     })
+    @SecurityRequirements
     @GetMapping("/by-supplier-open")
     @ResponseBody
-    @RolesAllowed({"ADMIN", "SUPPLIER", "CUSTOMER"})
     public ResponseEntity<PageResponse<ProductItemDTO>> getAllProductsBySupplierOpen(
             @Parameter(description = "Página") @RequestParam(value = "page", required = false) Integer page,
             @Parameter(description = "Tamanho da página") @RequestParam(value = "size", required = false) Integer size,
@@ -208,6 +213,7 @@ public class ProductItemController {
             @Parameter(description = "Ordenação, ex.: priceDelivery,asc") @RequestParam(value = "sort", required = false) String sort,
             @Parameter(description = "Trecho da marca, da categoria ou do tipo", example = "minalba") @RequestParam(value = "q", required = false) String q
     ) {
+        CatalogAccess.requireCityForVisitor(cityId);
         Pageable pageable = PaginationUtil.getPageableRequest(page, size, sort);
         Page<ProductItemDTO> result = productItemService.findBySupplierActiveAndSupplierOpen(cityId, category, q, pageable);
         PageResponse<ProductItemDTO> response = new PageResponse<>(result);

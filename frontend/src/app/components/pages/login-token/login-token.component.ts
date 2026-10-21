@@ -1,14 +1,13 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { AuthService } from '../../../services/auth.service';
 import { UserService } from '../../../services/user.service';
-import { CartService } from '../../../services/cart.service';
 import { LocationContextService } from '../../../services/location-context.service';
 import { backendMessage } from '../../../utils/backend-message';
-import { homeFor } from '../../../utils/home-route';
+import { isCheckoutReturn, navigateAfterLogin, navigateKeepingReturnUrl } from '../../../utils/return-url';
 
 // HU11 (Figura 10a): entrada por código de 6 dígitos enviado por e-mail
 @Component({
@@ -24,13 +23,22 @@ export class LoginTokenComponent {
   sending = false;
   validating = false;
 
+  // HU13: para onde voltar depois de entrar (ex.: o checkout do visitante)
+  get returnUrl(): string | null {
+    return this.route.snapshot.queryParamMap.get('returnUrl');
+  }
+
+  get checkoutLogin(): boolean {
+    return isCheckoutReturn(this.returnUrl);
+  }
+
   constructor(
     private fb: FormBuilder,
     private router: Router,
+    private route: ActivatedRoute,
     private authService: AuthService,
     private userService: UserService,
     private toastr: ToastrService,
-    private cartService: CartService,
     private locationContext: LocationContextService,
   ) {
     this.emailForm = this.fb.group({
@@ -91,11 +99,11 @@ export class LoginTokenComponent {
   }
 
   goToPasswordLogin() {
-    this.router.navigate(['/login/senha']);
+    navigateKeepingReturnUrl(this.router, '/login/senha', this.returnUrl);
   }
 
   goToRegister() {
-    this.router.navigate(['/register']);
+    navigateKeepingReturnUrl(this.router, '/register', this.returnUrl);
   }
 
   private goToCodeStep() {
@@ -108,7 +116,6 @@ export class LoginTokenComponent {
     localStorage.removeItem('access_token');
     localStorage.removeItem('user');
     this.locationContext.clear();
-    this.cartService.setCart([]);
   }
 
   private loadMe() {
@@ -117,7 +124,7 @@ export class LoginTokenComponent {
         localStorage.setItem('user', JSON.stringify(response));
         const firstName = (response?.name || '').trim().split(/\s+/)[0];
         this.toastr.success(firstName ? `Bem-vindo(a), ${firstName}!` : 'Bem-vindo(a)!');
-        this.router.navigate([homeFor(response.userType)]);
+        navigateAfterLogin(this.router, this.returnUrl, response.userType);
       },
       error: (err) => {
         this.toastr.error(`Erro ao carregar seus dados: ${backendMessage(err)}`);

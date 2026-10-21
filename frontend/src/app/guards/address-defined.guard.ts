@@ -5,6 +5,7 @@ import { catchError, map, of } from 'rxjs';
 import { AddressService } from '../services/address.service';
 import { UserService } from '../services/user.service';
 import { LocationContextService } from '../services/location-context.service';
+import { navigateKeepingReturnUrl } from '../utils/return-url';
 
 export const addressDefinedGuard: CanActivateFn = (route, state) => {
   const locationContext = inject(LocationContextService);
@@ -18,6 +19,15 @@ export const addressDefinedGuard: CanActivateFn = (route, state) => {
   }
 
   const user = userService.getUserLocalStorage();
+  // HU13: o visitante escolhe a cidade pelo CEP antes de ver o catálogo (RN05)
+  if (!user && route?.data?.['allowVisitor']) {
+    navigateKeepingReturnUrl(router, '/onde-voce-esta', state?.url);
+    return false;
+  }
+  // sem usuário numa rota que exige login, quem decide é o authGuard (que roda junto)
+  if (!user) {
+    return true;
+  }
   // o admin não compra: vê o catálogo sem filtro de cidade e não cadastra endereço
   if (user?.userType === 'ADMIN') {
     return true;
@@ -34,7 +44,7 @@ export const addressDefinedGuard: CanActivateFn = (route, state) => {
     }),
     catchError((err) => {
       if (err?.status === 404) {
-        router.navigate(['/primeiro-acesso-endereco']);
+        navigateKeepingReturnUrl(router, '/primeiro-acesso-endereco', state?.url); // HU13: do checkout, volta para ele
       } else {
         toastr.error('Não foi possível verificar seu endereço. Tente novamente em instantes.');
       }

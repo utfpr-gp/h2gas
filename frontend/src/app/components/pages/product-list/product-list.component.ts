@@ -14,7 +14,7 @@ import { CategoryChipBarComponent } from '../../category-chip-bar/category-chip-
 import { ProductCardComponent } from '../../product-card/product-card.component';
 import { fadeIn, staggerList } from '../../../animations/checkout.animations';
 import { SupplierService } from '../../../services/supplier.service';
-import { Supplier } from '../../../models/supplier';
+import { Storefront } from '../../../models/storefront';
 import { StoreRatingComponent } from '../../store-rating/store-rating.component';
 import { StoreReviewsDialogComponent } from '../../store-reviews-dialog/store-reviews-dialog.component';
 import { backendMessage } from '../../../utils/backend-message';
@@ -48,7 +48,7 @@ export class ProductListComponent implements OnInit {
   idSupplier?: string = '';
   products?: ProductItem[];
   // F7 §5.26: cabeçalho da loja (banner, logo, nome, nota, horário, bairro, descrição)
-  store?: Supplier;
+  store?: Storefront;
   storeLoading = true;
   bannerBroken = false;
   logoBroken = false;
@@ -80,7 +80,7 @@ export class ProductListComponent implements OnInit {
   selectedCategory: string | null = null;
 
   loadStore(id: string) {
-    this.supplierService.findById(id).subscribe({
+    this.supplierService.getStorefront(id).subscribe({
       next: (store) => {
         this.store = store;
         this.storeLoading = false;

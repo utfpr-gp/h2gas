@@ -124,7 +124,12 @@ export const routes: Routes = [
         path: 'inicio',
         component: SupplierListComponent,
         canActivate: [authGuard, addressDefinedGuard],
-        data: {roles: ['ADMIN', 'SUPPLIER', 'CUSTOMER']}
+        // HU13: vitrine aberta a visitantes (a cidade vem do CEP)
+        data: {roles: ['ADMIN', 'SUPPLIER', 'CUSTOMER'], allowVisitor: true}
+    },
+    {
+        path: 'onde-voce-esta',
+        loadComponent: () => import('./components/pages/visitor-location/visitor-location.component').then((m) => m.VisitorLocationComponent),
     },
     {
         path: 'primeiro-acesso-endereco',
@@ -135,12 +140,13 @@ export const routes: Routes = [
         path: 'fornecedores/:id/produtos', 
         component: ProductListComponent,
         canActivate: [authGuard],
-        data: {roles: ['ADMIN', 'SUPPLIER', 'CUSTOMER']}
+        data: {roles: ['ADMIN', 'SUPPLIER', 'CUSTOMER'], allowVisitor: true}
     },
     {
         path: 'resumo-pedido', 
         component: OrderResumeComponent,
-        canActivate: [authGuard],
+        // HU13: cliente sem endereço passa pelo primeiro endereço e volta ao checkout
+        canActivate: [authGuard, addressDefinedGuard],
         data: {roles: ['ADMIN', 'CUSTOMER']}
     },
     {

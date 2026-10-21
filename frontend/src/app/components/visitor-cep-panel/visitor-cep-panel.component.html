@@ -1,0 +1,19 @@
+<div class="w-full">
+  <h2 class="text-xl sm:text-2xl font-bold text-center text-base-content">Onde você está?</h2>
+  <p class="text-neutral text-center mt-1 mb-4 text-sm leading-snug">
+    Informe seu CEP para ver as lojas da sua cidade. Não precisa criar conta.
+  </p>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="space-y-2.5">
+    <label for="visitor-cep" class="block text-sm font-medium text-base-content">CEP</label>
+    <input id="visitor-cep" data-testid="visitor-cep" type="text" inputmode="numeric" autocomplete="postal-code"
+      mask="00000-000" placeholder="00000-000" formControlName="cep"
+      [attr.aria-invalid]="message ? 'true' : null" aria-describedby="cep-message"
+      class="input input-bordered w-full rounded-xl text-lg tracking-wide" />
+    <p id="cep-message" data-testid="cep-message" class="text-sm min-h-5" [class.text-error]="message" role="status">{{ message }}</p>
+    <button type="submit" data-testid="submit-cep" class="btn btn-accent w-full rounded-xl min-h-11" [disabled]="loading">
+      <span *ngIf="loading" class="loading loading-spinner loading-sm"></span>
+      Ver lojas da minha cidade
+    </button>
+  </form>
+</div>

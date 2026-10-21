@@ -1,5 +1,6 @@
 package com.h2gas.controller;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import com.h2gas.model.dto.ProductTypeDTO;
 import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
@@ -34,9 +35,9 @@ public class ProductTypeController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista de tipos de produto")
     })
+    @SecurityRequirements
     @GetMapping
     @ResponseBody
-    @RolesAllowed({"ADMIN", "SUPPLIER", "CUSTOMER"})
     public ResponseEntity<List<ProductTypeDTO>> getAllTypesProducts() {
         List<ProductTypeDTO> productTypeDTO = productTypeService.findAllProductTypes();
         return ResponseEntity.ok(productTypeDTO);

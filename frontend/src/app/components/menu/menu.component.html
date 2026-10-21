@@ -29,7 +29,7 @@
 
       <!-- ENDEREÇO ATIVO -->
       <button
-        *ngIf="isCustomer && locationContext.current()"
+        *ngIf="isShopper && locationContext.current()"
         (click)="editAddress()"
         class="flex items-center gap-1 min-w-0 px-2 sm:px-3 py-2 text-sm {{ t.text }} {{ t.hover }} rounded-md transition-colors"
       >
@@ -42,7 +42,7 @@
       <div class="flex items-center gap-2 relative z-40 shrink-0">
         <!-- MENU DESKTOP -->
         <nav *ngIf="!isDeliverer" aria-label="Navegação principal" class="hidden lg:flex items-center gap-1">
-          <a *ngIf="isCustomer" routerLink="/inicio" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
+          <a *ngIf="isShopper" routerLink="/inicio" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
             <span class="material-icons" aria-hidden="true">home</span><span>Início</span>
           </a>
 
@@ -101,7 +101,7 @@
         </nav>
 
         <!-- Drawer do carrinho (desktop e mobile): só o cliente compra -->
-        <div *ngIf="isCustomer" class="drawer drawer-end">
+        <div *ngIf="isShopper" class="drawer drawer-end">
           <input id="cart-drawer" type="checkbox" class="drawer-toggle" />
   
           <!-- Botões que abrem o carrinho -->
@@ -240,8 +240,15 @@
           </div>
         </div>
   
+        <!-- HU13: visitante entra e volta para a página em que estava -->
+        <button *ngIf="isVisitor" type="button" data-testid="visitor-login" (click)="visitorLogin()"
+          class="btn btn-sm btn-primary rounded-lg min-h-11 sm:min-h-8">
+          <span class="material-icons text-base!" aria-hidden="true">login</span>
+          Entrar
+        </button>
+
         <!-- Dropdown Usuário (F7): avatar com iniciais, cabeçalho com nome e e-mail, itens por perfil -->
-        <div class="relative" data-user-menu>
+        <div *ngIf="!isVisitor" class="relative" data-user-menu>
           <button type="button" data-testid="user-menu-button" (click)="toggleUserMenu()"
             aria-haspopup="menu" [attr.aria-expanded]="userMenuOpen" aria-label="Menu do usuário"
             class="rounded-full p-0.5 {{ t.hover }} focus:outline-none focus-visible:ring-2 {{ t.ring }}">
@@ -328,5 +335,5 @@
     </nav>
   </div>
 
-  <app-bottom-tab-bar *ngIf="isCustomer"></app-bottom-tab-bar>
+  <app-bottom-tab-bar *ngIf="isShopper" [visitor]="isVisitor"></app-bottom-tab-bar>
   <app-deliverer-tab-bar *ngIf="isDeliverer"></app-deliverer-tab-bar>

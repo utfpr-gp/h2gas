@@ -4,6 +4,7 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import {jwtDecode} from 'jwt-decode';
 import { LocationContextService } from './location-context.service';
+import { CartService } from './cart.service';
 
 interface JwtPayload {
   exp: number;
@@ -20,6 +21,7 @@ export class AuthService {
   constructor(
     private http: HttpClient,
     private locationContext: LocationContextService,
+    private cartService: CartService,
   ) { }
 
   isLogged(): boolean {
@@ -62,6 +64,17 @@ export class AuthService {
     localStorage.removeItem('access_token');
     localStorage.removeItem('user');
     this.locationContext.clear();
+    // HU13: o carrinho sai junto com a sessão (e não ao entrar), para o visitante levar o carrinho ao login
+    this.cartService.setCart([]);
+    this.cartService.clearBuyNow();
+  }
+
+  // HU13: sessão vencida vira visitante — sai o token e o usuário, ficam o carrinho e a cidade
+  dropExpiredSession() {
+    if (localStorage.getItem('access_token') && this.isTokenExpired()) {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
+    }
   }
 
   requestPasswordReset(data: any) {

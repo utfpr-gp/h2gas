@@ -9,6 +9,7 @@ import { DashboardFilter, SupplierDashboard } from '../models/supplier-dashboard
 import { SupplierSettings } from '../models/supplier-settings';
 import { SupplierProfile, SupplierProfileRequest } from '../models/supplier-profile';
 import { StoreReview } from '../models/store-review';
+import { Storefront } from '../models/storefront';
 
 @Injectable({
   providedIn: 'root'
@@ -37,6 +38,11 @@ export class SupplierService extends AbstractService<Supplier> {
 
   removeMyLogo(): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/mine/logo`);
+  }
+
+  // HU13: vitrine pública da loja (aberta a visitantes)
+  getStorefront(supplierId: string): Observable<Storefront> {
+    return this.http.get<Storefront>(`${this.baseUrl}/${supplierId}/storefront`);
   }
 
   // F7 §5.27: avaliações da loja, da entrega mais recente para a mais antiga

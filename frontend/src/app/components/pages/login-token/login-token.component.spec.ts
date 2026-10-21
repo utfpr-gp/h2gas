@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
@@ -10,12 +10,14 @@ import { CartService } from '../../../services/cart.service';
 import { LocationContextService } from '../../../services/location-context.service';
 
 describe('LoginTokenComponent', () => {
+  let cartServiceSpy: jasmine.SpyObj<CartService>;
   let component: LoginTokenComponent;
   let fixture: ComponentFixture<LoginTokenComponent>;
   let authServiceSpy: jasmine.SpyObj<AuthService>;
   let userServiceSpy: jasmine.SpyObj<UserService>;
   let toastrSpy: jasmine.SpyObj<ToastrService>;
   let navigateSpy: jasmine.Spy;
+  let queryParams: Record<string, string> = {};
 
   const el = () => fixture.nativeElement as HTMLElement;
   const byId = (id: string) => el().querySelector(`[data-testid=${id}]`) as HTMLElement | null;
@@ -33,6 +35,7 @@ describe('LoginTokenComponent', () => {
 
   beforeEach(async () => {
     localStorage.clear();
+    queryParams = {};
     authServiceSpy = jasmine.createSpyObj('AuthService', ['requestLoginToken', 'validateLoginToken']);
     authServiceSpy.requestLoginToken.and.returnValue(of(undefined as void));
     authServiceSpy.validateLoginToken.and.returnValue(of({ token: 'jwt-do-codigo' }));
@@ -46,8 +49,9 @@ describe('LoginTokenComponent', () => {
         { provide: AuthService, useValue: authServiceSpy },
         { provide: UserService, useValue: userServiceSpy },
         { provide: ToastrService, useValue: toastrSpy },
-        { provide: CartService, useValue: jasmine.createSpyObj('CartService', ['setCart']) },
+        { provide: CartService, useValue: cartServiceSpy = jasmine.createSpyObj('CartService', ['setCart']) },
         provideRouter([]),
+        { provide: ActivatedRoute, useValue: { snapshot: { get queryParamMap() { return convertToParamMap(queryParams); } } } },
       ],
     }).compileComponents();
 
@@ -164,5 +168,54 @@ describe('LoginTokenComponent', () => {
 
     (byId('go-register') as HTMLButtonElement).click();
     expect(navigateSpy).toHaveBeenCalledWith(['/register']);
+  });
+
+  // HU13: entrar não apaga o carrinho montado como visitante
+  it('deveManterOCarrinhoAoEntrar', () => {
+    enviarEmail();
+    digitarCodigo('123456');
+
+    (byId('validate-code') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(cartServiceSpy.setCart).not.toHaveBeenCalled();
+  });
+
+  // ---- HU13: voltar para onde estava ----
+  it('deveVoltarAoReturnUrlInterno', () => {
+    const byUrl = spyOn(TestBed.inject(Router), 'navigateByUrl').and.resolveTo(true);
+    queryParams = { returnUrl: '/resumo-pedido?modo=compra-direta' };
+    enviarEmail();
+    digitarCodigo('123456');
+
+    (byId('validate-code') as HTMLButtonElement).click();
+
+    expect(byUrl).toHaveBeenCalledWith('/resumo-pedido?modo=compra-direta');
+    expect(navigateSpy).not.toHaveBeenCalledWith(['/inicio']);
+  });
+
+  it('deveIgnorarReturnUrlExterno', () => {
+    queryParams = { returnUrl: 'https://evil.com' };
+    enviarEmail();
+    digitarCodigo('123456');
+
+    (byId('validate-code') as HTMLButtonElement).click();
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/inicio']);
+  });
+
+  it('deveAvisarQueOLoginEParaFinalizarACompra', () => {
+    queryParams = { returnUrl: '/resumo-pedido' };
+    fixture.detectChanges();
+
+    expect(byId('checkout-login-hint')!.textContent).toContain('Entre para finalizar sua compra');
+  });
+
+  it('deveLevarOReturnUrlAoCadastro', () => {
+    queryParams = { returnUrl: '/resumo-pedido' };
+
+    (byId('go-register') as HTMLButtonElement).click();
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/register'], { queryParams: { returnUrl: '/resumo-pedido' } });
   });
 });

@@ -91,4 +91,34 @@ describe('addressDefinedGuard', () => {
       done();
     });
   });
+
+  // HU13: cliente sem endereço que veio do checkout volta para ele depois de cadastrar
+  it('deveLevarOReturnUrlAoPrimeiroEndereco', (done) => {
+    addressServiceSpy.findByUserId.and.returnValue(throwError(() => ({ status: 404 })));
+
+    const result = executeGuard({} as any, { url: '/resumo-pedido' } as any);
+
+    (result as any).subscribe(() => {
+      expect(routerSpy.navigate).toHaveBeenCalledWith(['/primeiro-acesso-endereco'], { queryParams: { returnUrl: '/resumo-pedido' } });
+      done();
+    });
+  });
+
+  // ---- HU13: visitante ----
+  it('deveMandarVisitanteSemCidadeParaOCep', () => {
+    userServiceSpy.getUserLocalStorage.and.returnValue(null);
+
+    const result = executeGuard({ data: { allowVisitor: true } } as any, { url: '/inicio' } as any);
+
+    expect(result).toBeFalse();
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/onde-voce-esta'], { queryParams: { returnUrl: '/inicio' } });
+    expect(addressServiceSpy.findByUserId).not.toHaveBeenCalled();
+  });
+
+  it('devePermitirVisitanteComCidade', () => {
+    userServiceSpy.getUserLocalStorage.and.returnValue(null);
+    locationContextService.setAddress({ cityId: 3, cityName: 'Curitiba', label: 'Batel · Curitiba' });
+
+    expect(executeGuard({ data: { allowVisitor: true } } as any, { url: '/inicio' } as any)).toBeTrue();
+  });
 });
