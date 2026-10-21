@@ -236,6 +236,7 @@ Regra herdada: specs antigos falhando no frontend não aumentam (19).
 > (2) o envio do e-mail segurava a transação, e como o SMTP leva ~2 s para falhar o código só era gravado depois — o reenvio parecia não
 > funcionar na tela. Agora o código é gravado antes do envio.
 >
-> **Pendência de ambiente (não de código)**: o `application.properties` aponta para o Gmail lendo `USER_NAME`/`PASSWORD_EMAIL` do `.env`, e
-> a credencial atual é recusada (`535 Username and Password not accepted`). Falta uma conta com senha de app para o e-mail sair de verdade;
-> fora de produção o código aparece no log do backend, e foi assim que o fluxo foi testado.
+> **Envio real conferido**: com a conta de e-mail configurada no `.env` (`USER_NAME`/`PASSWORD_EMAIL`, lidos pelo `application.properties`),
+> o pedido de código enviou a mensagem "Seu código de acesso H2Gás" para uma caixa real, respondeu 200 (~4 s, tempo do SMTP) e o código
+> recebido validou, devolvendo o JWT e autenticando em `/users/me`. Sem a conta configurada o envio falha sem derrubar o pedido, e fora de
+> produção o código continua aparecendo no log do backend para teste local.
