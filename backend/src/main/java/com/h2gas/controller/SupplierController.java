@@ -120,7 +120,8 @@ public class SupplierController {
     }
 
     @Operation(summary = "Lista fornecedores ativos e abertos",
-            description = "Retorna fornecedores ativos e abertos, opcionalmente filtrados por cidade do endereço ativo do cliente (RN05)")
+            description = "Retorna fornecedores ativos e abertos, ordenados por nome, opcionalmente filtrados por cidade do endereço ativo "
+                    + "do cliente (RN05) e pela busca q no nome da loja")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista paginada de fornecedores ativos e abertos")
     })
@@ -129,10 +130,11 @@ public class SupplierController {
     public ResponseEntity<PageResponse<SupplierDTO>> getAllSuppliersOpenAndActive(
             @Parameter(description = "Número da página (0-based)") @RequestParam(value = "page", required = false) Integer page,
             @Parameter(description = "Tamanho da página") @RequestParam(value = "size", required = false) Integer size,
-            @Parameter(description = "Filtra por cidade do endereço ativo do cliente (RN05)") @RequestParam(value = "cityId", required = false) Long cityId
+            @Parameter(description = "Filtra por cidade do endereço ativo do cliente (RN05)") @RequestParam(value = "cityId", required = false) Long cityId,
+            @Parameter(description = "Trecho do nome da loja", example = "gás") @RequestParam(value = "q", required = false) String q
     ) {
         Pageable pageable = PaginationUtil.getPageableRequest(page, size);
-        Page<SupplierDTO> result = supplierService.findAllSuppliersOpenAndActive(cityId, pageable);
+        Page<SupplierDTO> result = supplierService.findAllSuppliersOpenAndActive(cityId, q, pageable);
         PageResponse<SupplierDTO> response = new PageResponse<>(result);
 
         return ResponseEntity.ok(response);

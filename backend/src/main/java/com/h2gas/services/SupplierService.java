@@ -85,10 +85,12 @@ public class SupplierService {
     }
 
     public Page<SupplierDTO> findAllSuppliersOpenAndActive(Long cityId, Pageable pageable) {
-        Page<Supplier> result = (cityId != null)
-                ? supplierRepository.findByCityIdAndActiveAndOpen(cityId, true, true, pageable)
-                : supplierRepository.findByActiveAndOpen(true, true, pageable);
-        return result.map(supplierMapper::toDto);
+        return findAllSuppliersOpenAndActive(cityId, null, pageable);
+    }
+
+    public Page<SupplierDTO> findAllSuppliersOpenAndActive(Long cityId, String q, Pageable pageable) {
+        String term = q == null || q.isBlank() ? null : q.trim().toLowerCase(java.util.Locale.ROOT);
+        return supplierRepository.findOpenForCatalog(cityId, term, pageable).map(supplierMapper::toDto);
     }
 
     public List<SupplierSummaryDTO> findAllSuppliersSummary() {

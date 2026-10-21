@@ -515,4 +515,22 @@ class SupplierServiceTest {
         assertEquals("Não foi possível enviar a imagem. Tente novamente.", erro.getReason());
         assertNull(supplierRepository.findById(validId).orElseThrow().getLogoUrl());
     }
+
+    @Test
+    @DisplayName("F7 §5.21: busca de lojas abertas pelo nome, só na cidade do endereço (RN05)")
+    void deveBuscarLojasAbertasDaCidadePeloNome() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        City londrina = cityRepository.save(new City(null, "Londrina", "PR"));
+        for (Object[] loja : new Object[][]{{"Gás Azul Curitiba", curitiba, true}, {"Gás Azul Londrina", londrina, true},
+                {"Gás Azul Fechado", curitiba, false}, {"Água Verde Curitiba", curitiba, true}}) {
+            Address a = addressRepository.save(new Address(null, "Rua " + loja[0], "loja", "1", "c", "Centro", "80000-000", (City) loja[1], null));
+            supplierRepository.save(getSupplier((String) loja[0], loja[0].toString().replace(" ", "") + "@t", "41900000000", "1",
+                    "s", "11222333000144", "d", true, (Boolean) loja[2], a, (City) loja[1]));
+        }
+
+        Page<SupplierDTO> result = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), "GÁS AZUL", PageRequest.of(0, 10));
+
+        assertEquals(List.of("Gás Azul Curitiba"), result.getContent().stream().map(SupplierDTO::getName).toList());
+        assertEquals(2, supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, PageRequest.of(0, 10)).getTotalElements());
+    }
 }

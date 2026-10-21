@@ -135,24 +135,24 @@ class SupplierControllerTest {
         dto.setName("Fornecedor Curitiba");
         Page<SupplierDTO> page = new PageImpl<>(List.of(dto), PageRequest.of(0, 10), 1);
 
-        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), any())).thenReturn(page);
+        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), isNull(), any())).thenReturn(page);
 
         mockMvc.perform(get("/api/suppliers/actives/open").param("cityId", "7"))
                 .andExpect(status().isOk());
 
-        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), any());
+        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), isNull(), any());
     }
 
     @Test
     void deveFuncionarSemCityIdMantendoComportamentoAtual() throws Exception {
         Page<SupplierDTO> page = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
 
-        when(supplierService.findAllSuppliersOpenAndActive(isNull(), any())).thenReturn(page);
+        when(supplierService.findAllSuppliersOpenAndActive(isNull(), isNull(), any())).thenReturn(page);
 
         mockMvc.perform(get("/api/suppliers/actives/open"))
                 .andExpect(status().isOk());
 
-        verify(supplierService).findAllSuppliersOpenAndActive(isNull(), any());
+        verify(supplierService).findAllSuppliersOpenAndActive(isNull(), isNull(), any());
     }
 
     @Test
@@ -318,5 +318,16 @@ class SupplierControllerTest {
         mockMvc.perform(get("/api/suppliers/mine/dashboard").param("typeId", "abc")).andExpect(status().isBadRequest());
 
         verify(supplierDashboardService, never()).buildDashboard(any(), any(), any());
+    }
+
+    @Test
+    void deveRepassarABuscaComACidade() throws Exception {
+        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), eq("gás azul"), any()))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
+
+        mockMvc.perform(get("/api/suppliers/actives/open").param("cityId", "7").param("q", "gás azul"))
+                .andExpect(status().isOk());
+
+        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), eq("gás azul"), any());
     }
 }

@@ -614,4 +614,44 @@ class ProductItemServiceTest {
         assertEquals(HttpStatus.CONFLICT, erro.getStatusCode());
         assertEquals("Este produto já está em pedidos e não pode ser excluído. Zere o estoque para tirá-lo do catálogo.", erro.getReason());
     }
+
+    @Test
+    @DisplayName("F7 §5.21: busca de produtos disponíveis por marca, categoria ou tipo, só na cidade (RN05)")
+    void deveBuscarProdutosDisponiveisDaCidade() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        City londrina = cityRepository.save(new City(null, "Londrina", "PR"));
+        Supplier lojaCuritiba = lojaAberta("cwb", curitiba);
+        Supplier lojaLondrina = lojaAberta("ldn", londrina);
+        CategoryProduct vinteCwb = createCategoryForTest("20L", lojaCuritiba);
+        CategoryProduct vinteLdn = createCategoryForTest("20L", lojaLondrina);
+        salvarProduto(lojaCuritiba, vinteCwb, "Minalba", 10);
+        salvarProduto(lojaCuritiba, vinteCwb, "Ouro Fino", 10);
+        salvarProduto(lojaCuritiba, vinteCwb, "Minalba Zerada", 0);
+        salvarProduto(lojaLondrina, vinteLdn, "Minalba", 10);
+
+        java.util.function.Function<String, List<String>> busca = q -> productItemService
+                .findBySupplierActiveAndSupplierOpen(curitiba.getId(), null, q, PageRequest.of(0, 10))
+                .map(ProductItemDTO::getBrand).getContent();
+
+        assertEquals(List.of("Minalba"), busca.apply("MINALBA"));
+        assertEquals(2, busca.apply("20l").size());
+        assertEquals(2, busca.apply("água mineral").size());
+        assertEquals(2, busca.apply(null).size());
+    }
+
+    private Supplier lojaAberta(String sufixo, City city) {
+        Supplier s = new Supplier();
+        s.setName("Loja " + sufixo);
+        s.setEmail("loja." + sufixo + "@h2gas.test");
+        s.setPassword("senha");
+        s.setUserType(UserTypeEnum.SUPPLIER);
+        s.setCnpj("12345678000199");
+        s.setOpeningTime(LocalTime.of(8, 0));
+        s.setClosingTime(LocalTime.of(18, 0));
+        s.setAverageDeliveryTime(Duration.ofMinutes(30));
+        s.setActive(true);
+        s.setOpen(true);
+        s.setCity(city);
+        return supplierRepository.save(s);
+    }
 }
