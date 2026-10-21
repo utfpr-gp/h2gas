@@ -4,7 +4,8 @@ import {FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, V
 import { ToastrService, ToastrModule } from 'ngx-toastr';
 // import { User } from '../../../models/user';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { navigateKeepingReturnUrl } from '../../utils/return-url';
 import { User } from '../../models/user';
 import { UserService } from '../../services/user.service';
 import { NgxMaskDirective } from 'ngx-mask';
@@ -61,6 +62,7 @@ export class RegisterUserComponent implements OnInit {
     private userService: UserService,
     private toastr: ToastrService,
     private router: Router,
+    private route: ActivatedRoute,
   ) {
     this.registerForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -101,7 +103,8 @@ export class RegisterUserComponent implements OnInit {
           this.isLoadingRegister = false;
           console.log('Conta criada.', response);
           this.toastr.success('Conta criada.');
-          this.navigateRoute('/login')
+          // HU13: quem veio do checkout segue para o login levando o retorno
+          navigateKeepingReturnUrl(this.router, '/login', this.route.snapshot.queryParamMap.get('returnUrl'));
         },
         error: (error) => {
           this.isLoadingRegister = false;

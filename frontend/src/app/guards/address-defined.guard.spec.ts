@@ -91,4 +91,16 @@ describe('addressDefinedGuard', () => {
       done();
     });
   });
+
+  // HU13: cliente sem endereço que veio do checkout volta para ele depois de cadastrar
+  it('deveLevarOReturnUrlAoPrimeiroEndereco', (done) => {
+    addressServiceSpy.findByUserId.and.returnValue(throwError(() => ({ status: 404 })));
+
+    const result = executeGuard({} as any, { url: '/resumo-pedido' } as any);
+
+    (result as any).subscribe(() => {
+      expect(routerSpy.navigate).toHaveBeenCalledWith(['/primeiro-acesso-endereco'], { queryParams: { returnUrl: '/resumo-pedido' } });
+      done();
+    });
+  });
 });

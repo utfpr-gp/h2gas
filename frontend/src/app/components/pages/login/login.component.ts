@@ -1,13 +1,13 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { UserService } from '../../../services/user.service';
 import { ToastrService } from 'ngx-toastr';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../services/auth.service';
 import { LocationContextService } from '../../../services/location-context.service';
 import { backendMessage } from '../../../utils/backend-message';
-import { homeFor } from '../../../utils/home-route';
+import { isCheckoutReturn, navigateAfterLogin, navigateKeepingReturnUrl } from '../../../utils/return-url';
 
 @Component({
   selector: 'app-login',
@@ -21,8 +21,18 @@ import { homeFor } from '../../../utils/home-route';
 })
 export class LoginComponent {
   
+  // HU13: para onde voltar depois de entrar (ex.: o checkout do visitante)
+  get returnUrl(): string | null {
+    return this.route.snapshot.queryParamMap.get('returnUrl');
+  }
+
+  get checkoutLogin(): boolean {
+    return isCheckoutReturn(this.returnUrl);
+  }
+
   constructor(
     private router: Router,
+    private route: ActivatedRoute,
     private fb: FormBuilder, 
     private userService: UserService,
     private toastr: ToastrService,
@@ -65,7 +75,7 @@ export class LoginComponent {
         localStorage.setItem('user', JSON.stringify(response))
         const firstName = (response?.name || '').trim().split(/\s+/)[0];
         this.toastr.success(firstName ? `Bem-vindo(a), ${firstName}!` : 'Bem-vindo(a)!');
-        this.navigate(homeFor(response.userType))
+        navigateAfterLogin(this.router, this.returnUrl, response.userType);
       }, 
       error: (err) => {
         console.error('Erro ao buscar o usuario logado:', err);

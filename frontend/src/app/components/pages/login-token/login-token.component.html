@@ -13,6 +13,11 @@
           <span class="material-icons">lock</span>
         </span>
         <h1 class="text-xl font-bold text-gray-800 mt-3">Falta pouco para continuar!</h1>
+        <p *ngIf="checkoutLogin" data-testid="checkout-login-hint" role="status"
+          class="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-accent/10 text-accent text-sm font-semibold px-3 py-1.5">
+          <span class="material-icons text-base!" aria-hidden="true">shopping_cart</span>
+          Entre para finalizar sua compra
+        </p>
         <p class="text-sm text-gray-500">
           {{ step === 'email' ? 'Escolha como deseja receber seu código de acesso' : 'Digite o código que enviamos para você' }}
         </p>

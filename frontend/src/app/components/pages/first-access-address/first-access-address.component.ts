@@ -1,8 +1,9 @@
 import { Component } from '@angular/core';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { LocationContextService } from '../../../services/location-context.service';
 import { AddressFormComponent } from '../../address-form/address-form.component';
 import { Address } from '../../../models/address';
+import { safeReturnUrl } from '../../../utils/return-url';
 
 @Component({
   selector: 'app-first-access-address',
@@ -13,11 +14,18 @@ import { Address } from '../../../models/address';
 export class FirstAccessAddressComponent {
   constructor(
     private locationContext: LocationContextService,
-    private router: Router
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
   onSaved(address: Address) {
     this.locationContext.selectAddress(address);
-    this.router.navigate(['/inicio']);
+    // HU13: veio do checkout → volta para ele
+    const returnUrl = safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
+    if (returnUrl) {
+      this.router.navigateByUrl(returnUrl);
+    } else {
+      this.router.navigate(['/inicio']);
+    }
   }
 }

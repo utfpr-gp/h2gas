@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { provideNgxMask } from 'ngx-mask';
@@ -8,6 +8,7 @@ import { RegisterUserComponent } from './register-user.component';
 import { UserService } from '../../services/user.service';
 
 describe('RegisterUserComponent', () => {
+  let queryParams: Record<string, string> = {};
   let component: RegisterUserComponent;
   let fixture: ComponentFixture<RegisterUserComponent>;
   let userServiceSpy: jasmine.SpyObj<UserService>;
@@ -26,6 +27,7 @@ describe('RegisterUserComponent', () => {
         { provide: UserService, useValue: userServiceSpy },
         { provide: ToastrService, useValue: jasmine.createSpyObj('ToastrService', ['success', 'error', 'warning']) },
         provideRouter([]),
+        { provide: ActivatedRoute, useValue: { snapshot: { get queryParamMap() { return convertToParamMap(queryParams); } } } },
         provideNgxMask(),
       ],
     }).compileComponents();
@@ -91,5 +93,17 @@ describe('RegisterUserComponent', () => {
     const titulo = el().querySelector('h1')!.textContent!;
     expect(titulo).toContain('fornecedor');
     expect(titulo).not.toContain('nosso cliente');
+  });
+
+  // HU13: quem veio do checkout se cadastra e segue para o login levando o retorno
+  it('deveManterOReturnUrlAposOCadastro', () => {
+    queryParams = { returnUrl: '/resumo-pedido' };
+    component.registerForm.patchValue({ name: 'Maria', email: 'maria@h2gas.local', phoneNumber: '41999999999', password: 'Teste@123' });
+    component.confirmPassword = 'Teste@123';
+
+    component.register();
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/login'], { queryParams: { returnUrl: '/resumo-pedido' } });
+    queryParams = {};
   });
 });

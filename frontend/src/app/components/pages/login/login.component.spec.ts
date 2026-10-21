@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
@@ -11,6 +11,7 @@ import { LocationContextService } from '../../../services/location-context.servi
 
 describe('LoginComponent', () => {
   let cartServiceSpy: jasmine.SpyObj<CartService>;
+  let queryParams: Record<string, string> = {};
   let component: LoginComponent;
   let fixture: ComponentFixture<LoginComponent>;
   let authServiceSpy: jasmine.SpyObj<AuthService>;
@@ -28,7 +29,8 @@ describe('LoginComponent', () => {
         { provide: AuthService, useValue: authServiceSpy },
         { provide: ToastrService, useValue: toastrSpy = jasmine.createSpyObj('ToastrService', ['success', 'error']) },
         { provide: CartService, useValue: cartServiceSpy = jasmine.createSpyObj('CartService', ['setCart']) },
-        { provide: Router, useValue: jasmine.createSpyObj('Router', ['navigate']) },
+        { provide: Router, useValue: jasmine.createSpyObj('Router', ['navigate', 'navigateByUrl']) },
+        { provide: ActivatedRoute, useValue: { snapshot: { get queryParamMap() { return convertToParamMap(queryParams); } } } },
       ],
     })
     .compileComponents();
@@ -129,5 +131,26 @@ describe('LoginComponent', () => {
     component.login();
 
     expect(cartServiceSpy.setCart).not.toHaveBeenCalled();
+  });
+
+  // ---- HU13 ----
+  it('deveVoltarAoReturnUrlInterno', () => {
+    queryParams = { returnUrl: '/resumo-pedido' };
+    authServiceSpy.loginUser.and.returnValue(of({ token: 't' }) as any);
+    (TestBed.inject(UserService) as jasmine.SpyObj<UserService>).getMe.and.returnValue(of({ id: 'u1', userType: 'CUSTOMER' }) as any);
+    component.loginform.setValue({ email: 'cliente@h2gas.local', password: 'Teste@123' } as any);
+
+    component.login();
+
+    expect((TestBed.inject(Router) as jasmine.SpyObj<Router>).navigateByUrl).toHaveBeenCalledWith('/resumo-pedido');
+    queryParams = {};
+  });
+
+  it('deveAvisarQueOLoginEParaFinalizarACompra', () => {
+    queryParams = { returnUrl: '/resumo-pedido' };
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="checkout-login-hint"]').textContent).toContain('Entre para finalizar sua compra');
+    queryParams = {};
   });
 });

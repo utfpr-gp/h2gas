@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { provideNgxMask } from 'ngx-mask';
@@ -14,13 +14,15 @@ describe('FirstAccessAddressComponent', () => {
   let fixture: ComponentFixture<FirstAccessAddressComponent>;
   let routerSpy: jasmine.SpyObj<Router>;
   let locationContextService: LocationContextService;
+  let queryParams: Record<string, string> = {};
 
   beforeEach(async () => {
     localStorage.clear();
     const addressServiceSpy = jasmine.createSpyObj('AddressService', ['buscaViaCep', 'create']);
     const cityServiceSpy = jasmine.createSpyObj('CityService', ['findAll']);
     cityServiceSpy.findAll.and.returnValue(of([]));
-    routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+    queryParams = {};
+    routerSpy = jasmine.createSpyObj('Router', ['navigate', 'navigateByUrl']);
 
     await TestBed.configureTestingModule({
       imports: [FirstAccessAddressComponent],
@@ -28,6 +30,7 @@ describe('FirstAccessAddressComponent', () => {
         { provide: AddressService, useValue: addressServiceSpy },
         { provide: CityService, useValue: cityServiceSpy },
         { provide: Router, useValue: routerSpy },
+        { provide: ActivatedRoute, useValue: { snapshot: { get queryParamMap() { return convertToParamMap(queryParams); } } } },
         { provide: ToastrService, useValue: jasmine.createSpyObj('ToastrService', ['success', 'warning', 'error']) },
         provideNgxMask(),
       ],
@@ -59,5 +62,14 @@ describe('FirstAccessAddressComponent', () => {
       label: 'Rua XV, 100 · Pato Branco',
     });
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/inicio']);
+  });
+
+  // HU13
+  it('deveVoltarAoReturnUrlAposSalvar', () => {
+    queryParams = { returnUrl: '/resumo-pedido' };
+
+    component.onSaved({ id: 10, streetName: 'Rua XV', number: '100', cityId: 1, cityName: 'Curitiba' } as any);
+
+    expect(routerSpy.navigateByUrl).toHaveBeenCalledWith('/resumo-pedido');
   });
 });

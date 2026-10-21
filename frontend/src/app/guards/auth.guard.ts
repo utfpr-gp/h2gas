@@ -4,6 +4,7 @@ import { AuthService } from '../services/auth.service';
 import { UserService } from '../services/user.service';
 import { catchError, map, of, tap } from 'rxjs';
 import { SupplierService } from '../services/supplier.service';
+import { navigateKeepingReturnUrl } from '../utils/return-url';
 
 export const authGuard: CanActivateFn = (route, state) => {
   
@@ -16,7 +17,7 @@ export const authGuard: CanActivateFn = (route, state) => {
   const user = userService.getUserLocalStorage();
 
   if (!authService.isLogged()) {
-    router.navigate(['/login']);
+    navigateKeepingReturnUrl(router, '/login', state.url); // HU13: volta para a página pedida depois de entrar
     return false;
   }
 
