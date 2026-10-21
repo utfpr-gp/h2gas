@@ -66,6 +66,25 @@ class SecurityFilterTest {
     }
 
     @Test
+    @DisplayName("HU12: token válido de usuário desativado não autentica")
+    void deveIgnorarTokenDeUsuarioDesativado() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/orders");
+        request.setRequestURI("/h2gas/api/orders");
+        request.addHeader("Authorization", "Bearer jwt-antigo");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        User user = new User("Cliente", "cliente@h2gas.test", "41999999999", "1", "senha", UserTypeEnum.CUSTOMER);
+        user.setEnabled(false);
+        when(tokenService.validateToken("jwt-antigo")).thenReturn("cliente@h2gas.test");
+        when(authorizationService.loadUserByUsername("cliente@h2gas.test")).thenReturn(user);
+
+        securityFilter.doFilter(request, response, filterChain);
+
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
     @DisplayName("Deve rejeitar query param token para rota que não é SSE")
     void deveRejeitarQueryParamParaRotaQueNaoESse() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/orders");

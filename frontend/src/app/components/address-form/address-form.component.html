@@ -33,6 +33,13 @@
 
   <div class="form-control" *ngIf="cidadeEncontrada">
     <label class="label">
+      <span class="label-text">Cidade</span>
+    </label>
+    <input type="text" data-testid="matched-city" class="input input-bordered w-full rounded-xl" [value]="cityLabel" readonly />
+  </div>
+
+  <div class="form-control" *ngIf="cidadeEncontrada">
+    <label class="label">
       <span class="label-text">Rua</span>
     </label>
     <input type="text" class="input input-bordered w-full rounded-xl" formControlName="streetName" readonly />

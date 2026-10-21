@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Supplier } from '../models/supplier';
 import { AbstractService } from './abstract.service';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Observable } from 'rxjs';
 import { PaginatedResponse } from '../models/paginated-response';
@@ -15,6 +15,16 @@ export class SupplierService extends AbstractService<Supplier> {
 
   constructor(protected override http: HttpClient) {
     super(http);
+  }
+
+  // F7 fatia 6: active=false traz quem aguarda aprovação; filtro e busca no backend
+  listForApproval(filter: { active?: boolean; q?: string; page?: number; size?: number }): Observable<PaginatedResponse<Supplier>> {
+    let params = new HttpParams();
+    if (filter.active != null) params = params.set('active', filter.active);
+    if (filter.q?.trim()) params = params.set('q', filter.q.trim());
+    if (filter.page != null) params = params.set('page', filter.page);
+    if (filter.size != null) params = params.set('size', filter.size);
+    return this.http.get<PaginatedResponse<Supplier>>(this.baseUrl, { params });
   }
 
   activeSuppliers(data: any, id: string) {

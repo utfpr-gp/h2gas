@@ -2,7 +2,6 @@ package com.h2gas.services;
 
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
-import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.exceptions.ForbiddenResourceException;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.CreateProductItemDTO;
@@ -123,10 +122,9 @@ public class ProductItemService {
         ProductItem productItemUpdate = productItemRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Produto com " + id + " não encontrado"));
 
-        // HU10: só o dono (ou ADMIN) edita; a categoria nova também precisa ser do dono do produto
-        boolean isAdmin = actor.getUserType() == UserTypeEnum.ADMIN;
+        // HU10/HU12: só o dono edita (o admin não mexe em produto); a categoria nova também precisa ser do dono
         String ownerId = productItemUpdate.getSupplier().getId();
-        if (!isAdmin && !ownerId.equals(actor.getId())) {
+        if (!ownerId.equals(actor.getId())) {
             throw new ForbiddenResourceException("Produto não pertence ao fornecedor logado.");
         }
 

@@ -451,6 +451,116 @@ depois da HU11.
   `check-email`: 1 HEX cada), `supplier-list.component.css` e
   `menu.component.css`.
 
+### 5.13 Fatia 6 — back-office tela a tela: aprovação de fornecedores
+
+> Escrita em 2026-10-21. Pedido do autor: melhorar a UI/UX das telas de
+> back-office uma a uma, com boas práticas ("eu passo e você faz"). Isso
+> revoga, **só para a tela citada em cada subseção**, o item "Redesenho
+> mobile-first dos Grupos C e D" do Fora de Escopo. Feita na branch da
+> HU12, a pedido do autor. Primeira tela: `/supplier-approval`.
+
+**Achados**
+- O campo "Buscar fornecedores..." não está ligado a nada.
+- Tabela de 10 colunas (nome, telefone, ativo, cidade, bairro, rua,
+  número, CNPJ, e-mail): no celular só cabe rolando de lado, e o status
+  fica no meio da linha.
+- O interruptor muda na hora, sem confirmação, e **não volta** se o
+  backend falhar (a tela mostra um status que não foi salvo); o toast
+  de erro diz "Erro ao buscar" numa ação de atualizar.
+- Sem filtro de status: o admin não acha quem está aguardando
+  aprovação, embora o card "Aguardando aprovação" do painel (HU12)
+  traga o admin para cá. Sem skeleton, estado vazio nem paginação
+  (carrega só a 1ª página de 10).
+- `GET /api/suppliers` não tem OpenAPI e não filtra.
+
+**Contrato**
+- Backend: `GET /api/suppliers` ganha `active` (opcional; `false` =
+  aguardando aprovação, `true` = ativos, ausente = todos) e `q`
+  (opcional; nome, e-mail ou CNPJ, sem diferenciar maiúsculas), além de
+  `page`/`size`; ordenado por nome. Filtro no backend (paginação
+  correta). Rota passa a ter `@Operation`, `@ApiResponses` (200, 403) e
+  `@Parameter`. Papéis inalterados.
+- Frontend (`supplier-approval`):
+  - chips "Aguardando aprovação" (padrão, `active=false`), "Ativos",
+    "Todos", com `aria-pressed`; busca com debounce de 300 ms no
+    backend; contador do filtro;
+  - lista de cards (padrão da tela de Usuários da HU12): nome, CNPJ,
+    e-mail e telefone, cidade · bairro · rua e número, badge de status
+    ("Aguardando aprovação" / "Ativo");
+  - ação "Aprovar" (aguardando) ou "Desativar" (ativo) com modal de
+    confirmação; desativar avisa que o fornecedor sai do catálogo dos
+    clientes. Sucesso: toast com o nome e a lista recarrega a página
+    atual (o card sai do filtro). Erro: toast com a causa
+    (`backendMessage`) e o status **não muda**;
+  - skeleton, estado vazio por filtro, paginação Anterior/Próxima;
+  - sem `console.log`, sem `DynamicTableComponent` nesta tela (segue em
+    `city-register`), sem HEX.
+
+**Fora de escopo (desta tela)**: editar dados do fornecedor (é a tela de
+Usuários da HU12), motivo da recusa, aviso por e-mail ao aprovar, ações
+em lote, mexer no `PATCH /{id}/update-active`.
+
+### 5.14 Fatia 6 — cidades atendidas com a base do IBGE
+
+> Escrita em 2026-10-21, segunda tela da Fatia 6 (§5.13). Pedido do
+> autor: cadastrar cidade por dropdowns com a lista oficial de cidades
+> do Brasil, sem digitar à mão, e garantir que a cidade cadastrada case
+> com a do CEP quando um usuário novo informa o endereço.
+
+**Achados**
+- Nome e estado digitados livres: nada impede "curitiba", "Curitba"
+  ou estado "Paraná" no lugar de "PR".
+- O CEP (ViaCEP) é casado com a cidade **só pelo nome**, sem
+  diferenciar acento nem UF: "Sao Jose" não casa com "São José", e
+  "Bom Jesus" existe em vários estados (`address-form`,
+  `distribuitor-form`). O `distribuitor-form` nem preenche a cidade a
+  partir do CEP.
+- `POST /api/cities` devolve o corpo recebido (sem `id`), duplicidade
+  é 404 e só olha o nome; apagar cidade usada por fornecedor ou
+  endereço estoura a FK (500). As rotas não têm OpenAPI.
+- Tela: tabela genérica, botões com cor fixa, `console.log`, modal de
+  exclusão por checkbox, Font Awesome.
+
+**Decisão**: a fonte é a API pública de localidades do IBGE
+(`servicodados.ibge.gov.br/api/v1/localidades`, sem chave). O ViaCEP
+devolve no campo `ibge` o mesmo código de município, então a cidade
+guarda esse código e o casamento CEP ↔ cidade passa a ser exato.
+
+**Contrato**
+- Flyway `V12__city_ibge_code.sql`: `cities.ibge_code INT NULL UNIQUE`;
+  preenche Curitiba/PR (4106902). Cidades antigas sem código seguem
+  funcionando pelo casamento por nome + UF (abaixo).
+- `IbgeClient` (Spring `RestClient`, sem dependência nova):
+  `findMunicipality(code)` → nome e UF oficiais.
+- `POST /api/cities` (ADMIN) recebe só `{ "ibgeCode": 4106902 }`
+  (`@NotNull`). Nome e UF vêm do IBGE, nunca do corpo. **201** com
+  `id`, `name`, `state`, `ibgeCode`; **409** se a cidade já é atendida;
+  **400** se o código não existe no IBGE; **502** se o IBGE não
+  responder.
+- `DELETE /api/cities/{id}` (ADMIN): **409** com mensagem se houver
+  fornecedor ou endereço na cidade; **404** se não existir.
+- `GET /api/cities` passa a trazer `ibgeCode` e vem ordenado por UF e
+  nome. As três rotas ganham OpenAPI.
+- Frontend:
+  - `services/ibge.service.ts`: UFs e municípios por UF direto do IBGE
+    (como o ViaCEP), ordenados por nome e guardados em cache na sessão;
+  - `utils/city-match.ts`: `matchCityFromCep(cities, viaCep)` casa pelo
+    código IBGE e, sem código, por nome sem acento/maiúscula **e** UF.
+    Usado em `address-form` e `distribuitor-form` (que passa a
+    preencher a cidade pelo CEP). O `address-form` mostra a cidade
+    casada ("Curitiba - PR"), só leitura, junto com rua e bairro;
+  - `city-register`: lista das cidades atendidas com busca local
+    (lista curta, só do admin), contador, estado vazio, skeleton;
+    "Nova cidade" em modal com dropdown de UF e de município (cidades
+    já atendidas aparecem desabilitadas), botão salvar só com município
+    escolhido; excluir com modal de confirmação próprio e a mensagem do
+    409; rota sob demanda (`loadComponent`).
+
+**Fora de escopo (desta tela)**: backend conferir se o CEP do endereço
+pertence ao `cityId` enviado; preencher o código IBGE das cidades
+antigas de outros ambientes (o casamento por nome + UF cobre); bairros
+ou faixas de CEP atendidas; editar cidade.
+
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
 - Agregação de rating médio por fornecedor (gap de backend).
@@ -568,6 +678,40 @@ depois da HU11.
     `footer.component.spec.ts`: `deveMostrarOAnoAtual`,
     `deveUsarRouterLinkNosLinks`, `naoDeveTerHexLiteral`.
 
+13. *(fatia 6, §5.13)* **Backend** — `SupplierServiceTest`:
+    `deveFiltrarFornecedoresAguardandoAprovacao`,
+    `deveBuscarFornecedoresPorNomeEmailOuCnpj`;
+    `SupplierControllerTest`: `deveRepassarFiltrosDeStatusEBusca`.
+    **Frontend** — `supplier-approval.component.spec.ts`:
+    `deveAbrirNoFiltroAguardandoAprovacao`, `deveFiltrarPorStatus`,
+    `deveBuscarNoBackendComDebounce`, `deveExibirEstadoVazio`,
+    `deveConfirmarAntesDeAprovar`, `deveRecarregarAoAprovarComSucesso`,
+    `deveManterStatusQuandoAprovacaoFalhar`, `devePaginar`;
+    `supplier.service.spec.ts`: `deveEnviarFiltrosNaListagem`.
+
+14. *(fatia 6, §5.14)* **Backend** — `CityServiceTest`:
+    `deveCadastrarCidadeComNomeEUfDoIbge`,
+    `deveRecusarCidadeJaAtendida` (409),
+    `deveRecusarCodigoInexistenteNoIbge` (400),
+    `deveRecusarExcluirCidadeComFornecedorOuEndereco` (409);
+    `IbgeClientTest`: `deveLerNomeEUfDoMunicipio`,
+    `deveDevolverVazioParaCodigoInexistente`,
+    `deveAvisarQuandoOIbgeNaoResponde` (502);
+    `CityControllerTest`: `deveRetornar201AoCadastrarCidade`,
+    `deveRetornar400SemCodigoIbge`.
+    **Frontend** — `city-match.spec.ts`:
+    `deveCasarPeloCodigoIbge`, `deveCasarPorNomeSemAcentoEUf`,
+    `naoDeveCasarMesmoNomeEmOutraUf`;
+    `ibge.service.spec.ts`: `deveListarUfsPorNome`,
+    `deveListarMunicipiosDaUfComCache`;
+    `city-register.component.spec.ts`:
+    `deveListarCidadesAtendidas`, `deveCarregarMunicipiosAoEscolherUf`,
+    `deveDesabilitarMunicipioJaAtendido`,
+    `deveCadastrarPeloCodigoIbge`, `deveConfirmarAntesDeExcluir`,
+    `deveMostrarMensagemQuandoCidadeEmUso`;
+    `address-form.component.spec.ts`:
+    `devePreencherCidadePeloCodigoIbgeDoCep`.
+
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
 ## 8. Definição de Pronto
@@ -662,6 +806,41 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
 - [x] Grupos A–E migrados pros tokens (grep: zero hex novo fora de
       `styles.css`).
+
+**Fatia 6 — aprovação de fornecedores (§5.13):**
+- [x] `GET /api/suppliers` filtra por status e busca no backend, com
+      OpenAPI.
+- [x] Tela com filtros, busca, cards, confirmação, skeleton, estado
+      vazio e paginação; erro não muda o status.
+- [x] Testes da seção 7 (item 13) verdes; `mvn test`, `ng test` (sem
+      falhas novas) e `ng build`; teste manual em 390 e 1280 px.
+
+> Verificado em 2026-10-21: backend 306 testes (único erro: `BackendApplicationTests.contextLoads`, que precisa do MySQL local);
+> frontend 363 testes com 16 falhas antigas, nenhuma desta tela; `ng build` sem erro; E2E no Chromium em 1280 e 390 px com 17
+> checagens (abre em "Aguardando", filtros, busca "batel", estado vazio, aprovar e desativar de verdade com o dado devolvido ao
+> estado original, "Voltar" fecha o modal, sem rolagem lateral nem erro de JS).
+>
+> **Achados do teste**: (1) a tela entrava no bundle inicial e estourava o orçamento de 1 MB do `ng build` por 1 kB — a rota
+> passou a `loadComponent` (tela só do admin); (2) no celular o campo de busca não ocupava a largura toda.
+
+**Fatia 6 — cidades com a base do IBGE (§5.14):**
+- [x] Cidade cadastrada só por código IBGE, com nome e UF oficiais;
+      409/400/502 com mensagem; exclusão de cidade em uso é 409.
+- [x] CEP de usuário novo casa com a cidade pelo código IBGE (e por
+      nome + UF nas antigas) no `address-form` e no `distribuitor-form`.
+- [x] Tela com dropdowns de UF e município, busca, confirmação de
+      exclusão; rotas com OpenAPI.
+- [x] Testes da seção 7 (item 14) verdes; `mvn test`, `ng test` (sem
+      falhas novas) e `ng build`; teste manual em 390 e 1280 px.
+
+> Verificado em 2026-10-21: backend 316 testes (único erro: `contextLoads`, que precisa do MySQL local); Flyway V12 aplicada no
+> MySQL local (Curitiba com 4106902); frontend 377 testes com 15 falhas antigas (uma a menos: o spec antigo de `city-register`);
+> `ng build` sem erro; E2E com o IBGE real em 14 checagens (27 UFs, 399 municípios do PR, Curitiba desabilitada, cadastro de São
+> José dos Pinhais pela tela, 409 duplicada, 400 para código inexistente e para nome digitado, 409 ao excluir Curitiba em uso,
+> CEP 83005-000 de cliente preenchendo "São José dos Pinhais - PR", CEP de Florianópolis avisando "Florianópolis - SC", exclusão
+> de cidade sem uso, celular sem rolagem lateral). A cidade de teste foi removida no fim.
+>
+> **Achados do teste**: o `address-form` não mostrava qual cidade o CEP casou — ganhou o campo "Cidade" só leitura.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).

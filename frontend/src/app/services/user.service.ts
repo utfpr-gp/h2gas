@@ -45,6 +45,15 @@ export class UserService extends AbstractService<User> {
     return this.http.put(`${environment.apiUrl}/users/${id}`, data);
   }
 
+  // HU12: o admin troca o próprio e-mail com o código enviado ao endereço novo
+  requestEmailChange(newEmail: string): Observable<void> {
+    return this.http.post<void>(`${environment.apiUrl}/users/me/email-change`, { newEmail });
+  }
+
+  confirmEmailChange(code: string): Observable<{ token: string }> {
+    return this.http.post<{ token: string }>(`${environment.apiUrl}/users/me/email-change/confirm`, { code });
+  }
+
   createUser(user: any): Observable<User> {
     return this.http.post<User>(`${this.baseUrl}`, user);
   }

@@ -27,6 +27,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -135,6 +136,19 @@ class AuthenticationControllerTest {
                         .content(objectMapper.writeValueAsString(new AuthenticationDTO("teste@exemplo.com", "errada"))))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("E-mail ou senha inválidos."));
+    }
+
+    @Test
+    @DisplayName("HU12: conta desativada pelo admin não entra por senha (403)")
+    void deveRecusarLoginPorSenhaDeContaDesativada() throws Exception {
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new DisabledException("User is disabled"));
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new AuthenticationDTO("teste@exemplo.com", "123456"))))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("Conta desativada. Fale com o suporte."));
     }
 
     @Test

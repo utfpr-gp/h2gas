@@ -47,8 +47,12 @@
             <input data-testid="email-field" type="email" [value]="user.email" readonly aria-readonly="true"
               class="input w-full rounded-xl border border-gray-200 bg-gray-100 text-gray-500 pl-10 cursor-not-allowed" />
           </span>
-          <span class="text-xs text-gray-500">Para trocar o e-mail, fale com o suporte.</span>
+          <span *ngIf="userType !== 'ADMIN'" class="text-xs text-gray-500">Para trocar o e-mail, fale com o suporte.</span>
         </label>
+        <button *ngIf="userType === 'ADMIN' && emailStep === 'idle'" type="button" data-testid="change-email"
+          class="btn btn-sm btn-ghost text-primary rounded-lg -mt-2 px-2" (click)="startEmailChange()">
+          <span class="material-icons text-base">edit</span> Trocar e-mail
+        </button>
 
         <label class="block">
           <span class="text-sm font-medium text-gray-700">Telefone de contato</span>
@@ -65,11 +69,45 @@
           {{ saving ? 'Salvando...' : 'Salvar alterações' }}
         </button>
       </form>
+
+      <!-- HU12: troca do e-mail do admin com código; fora do form do perfil para não submetê-lo -->
+      <div *ngIf="userType === 'ADMIN' && emailStep !== 'idle'" data-testid="email-change-panel"
+        class="mt-4 rounded-xl border border-gray-200 bg-base-200 p-4 space-y-3">
+        <ng-container *ngIf="emailStep === 'email'">
+          <label class="block">
+            <span class="text-sm font-medium text-gray-700">E-mail novo</span>
+            <input data-testid="new-email" type="email" [formControl]="newEmail" placeholder="novo@exemplo.com" autocomplete="email"
+              class="input w-full rounded-xl border bg-white mt-1"
+              [ngClass]="newEmail.invalid && newEmail.touched ? 'border-red-400' : 'border-gray-300'" (keydown.enter)="$event.preventDefault(); sendEmailCode()" />
+            <span class="text-xs text-gray-500">Vamos mandar um código para ele. O e-mail atual só muda depois da confirmação.</span>
+          </label>
+          <div class="flex justify-end gap-2">
+            <button type="button" class="btn btn-ghost rounded-xl" (click)="cancelEmailChange()">Cancelar</button>
+            <button type="button" data-testid="send-email-code" class="btn btn-primary rounded-xl" [disabled]="emailBusy" (click)="sendEmailCode()">
+              <span *ngIf="emailBusy" class="loading loading-spinner loading-sm"></span> Enviar código
+            </button>
+          </div>
+        </ng-container>
+        <ng-container *ngIf="emailStep === 'code'">
+          <p class="text-sm text-gray-700">Digite o código de 6 dígitos que enviamos para <strong>{{ pendingEmail }}</strong>.</p>
+          <input data-testid="email-code" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" [formControl]="emailCode"
+            aria-label="Código de confirmação" placeholder="000000"
+            class="input w-full rounded-xl border bg-white tracking-[0.4em] text-center text-lg"
+            [ngClass]="emailCode.invalid && emailCode.touched ? 'border-red-400' : 'border-gray-300'" (keydown.enter)="$event.preventDefault(); confirmEmailCode()" />
+          <div class="flex flex-wrap justify-end gap-2">
+            <button type="button" class="btn btn-ghost rounded-xl" (click)="cancelEmailChange()">Cancelar</button>
+            <button type="button" class="btn btn-ghost rounded-xl" [disabled]="emailBusy" (click)="emailStep = 'email'">Trocar o e-mail digitado</button>
+            <button type="button" data-testid="confirm-email-code" class="btn btn-primary rounded-xl" [disabled]="emailBusy" (click)="confirmEmailCode()">
+              <span *ngIf="emailBusy" class="loading loading-spinner loading-sm"></span> Confirmar
+            </button>
+          </div>
+        </ng-container>
+      </div>
     </section>
 
     <!-- Atalhos por perfil -->
     <div class="space-y-3">
-      <ng-container *ngIf="userType === 'CUSTOMER' || userType === 'ADMIN'">
+      <ng-container *ngIf="userType === 'CUSTOMER'">
         <button type="button" data-testid="atalho-meus-enderecos" (click)="go('/meus-enderecos')"
           class="w-full bg-white rounded-xl shadow-md border border-gray-200 p-4 flex items-center gap-3 text-left hover:border-primary transition">
           <span class="material-icons text-primary">location_on</span>

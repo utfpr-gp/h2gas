@@ -61,7 +61,7 @@ public class ProductItemController {
     })
     @PostMapping
     @ResponseBody
-    @RolesAllowed({"ADMIN", "SUPPLIER"})
+    @RolesAllowed("SUPPLIER")
     public ResponseEntity<ProductItemDTO> createCategoryProduct(
             @RequestPart("product") @Valid CreateProductItemDTO productItemDTO,
             @RequestPart("file") MultipartFile file
@@ -72,25 +72,37 @@ public class ProductItemController {
         return ResponseEntity.ok(productItemCreate);
     }
 
+    @Operation(summary = "Busca um produto para edição", description = "Usado pelo formulário de edição do fornecedor")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Produto encontrado"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido ou papel diferente de fornecedor (admin incluso)"),
+            @ApiResponse(responseCode = "404", description = "Produto inexistente")
+    })
     @GetMapping("/{id}")
     @ResponseBody
-    @RolesAllowed({"ADMIN", "SUPPLIER"})
-    public ResponseEntity<ProductItemDTO> getProductById(@PathVariable Long id) {
+    @RolesAllowed("SUPPLIER")
+    public ResponseEntity<ProductItemDTO> getProductById(@Parameter(description = "ID do produto") @PathVariable Long id) {
         ProductItemDTO productItem = productItemService.findById(id);
         return ResponseEntity.ok(productItem);
     }
 
+    @Operation(summary = "Remove um produto", description = "Só o fornecedor remove produtos")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Produto removido; devolve o id"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido ou papel diferente de fornecedor (admin incluso)"),
+            @ApiResponse(responseCode = "404", description = "Produto inexistente")
+    })
     @DeleteMapping("/{id}")
     @ResponseBody
-    @RolesAllowed({"ADMIN", "SUPPLIER"})
-    public ResponseEntity<Long> deleteProduct(@PathVariable("id") Long id) {
+    @RolesAllowed("SUPPLIER")
+    public ResponseEntity<Long> deleteProduct(@Parameter(description = "ID do produto") @PathVariable("id") Long id) {
         productItemService.deleteProductItem(id);
         return ResponseEntity.ok(id);
     }
 
     @Operation(summary = "Edita um produto do fornecedor logado",
-            description = "Atualiza marca, price e shippingFee (retirada = price; entrega = price + shippingFee), estoque e descrição. Só o dono do produto "
-                    + "(ou ADMIN) edita, e a categoria nova precisa ser do mesmo fornecedor")
+            description = "Atualiza marca, price e shippingFee (retirada = price; entrega = price + shippingFee), estoque e descrição. Só o fornecedor dono "
+                    + "do produto edita, e a categoria nova precisa ser do mesmo fornecedor")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Produto atualizado"),
             @ApiResponse(responseCode = "400", description = "Preço ausente ou negativo, marca/categoria ausentes ou estoque negativo"),
@@ -99,7 +111,7 @@ public class ProductItemController {
     })
     @PutMapping("/{id}")
     @ResponseBody
-    @RolesAllowed({"ADMIN", "SUPPLIER"})
+    @RolesAllowed("SUPPLIER")
     public ResponseEntity<ProductItemDTO> update(@Parameter(description = "ID do produto") @PathVariable Long id,
                                                  @Valid @RequestBody CreateProductItemDTO dto) {
         User actor = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();

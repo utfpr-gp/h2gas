@@ -68,15 +68,27 @@ public class SupplierController {
         return ResponseEntity.ok(supplierDashboardService.buildDashboard(supplier.getId(), yearMonth));
     }
 
+    @Operation(summary = "Lista fornecedores com filtro de status e busca",
+            description = "Lista paginada e ordenada por nome. Usada pelo admin na aprovação de fornecedores: "
+                    + "active=false traz quem aguarda aprovação, active=true os aprovados e sem o parâmetro vêm todos. "
+                    + "A busca procura no nome, e-mail ou CNPJ, sem diferenciar maiúsculas")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Página de fornecedores"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido ou papel não permitido")
+    })
     @GetMapping
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER", "CUSTOMER"})
     public ResponseEntity<PageResponse<SupplierDTO>> getAllSuppliers(
-            @RequestParam(value = "page", required = false) Integer page,
-            @RequestParam(value = "size", required = false) Integer size
+            @Parameter(description = "false = aguardando aprovação, true = ativos; omitido = todos")
+            @RequestParam(value = "active", required = false) Boolean active,
+            @Parameter(description = "Trecho do nome, e-mail ou CNPJ", example = "gás centro")
+            @RequestParam(value = "q", required = false) String q,
+            @Parameter(description = "Número da página (0-based)") @RequestParam(value = "page", required = false) Integer page,
+            @Parameter(description = "Tamanho da página (máx. 50)") @RequestParam(value = "size", required = false) Integer size
     ) {
         Pageable pageable = PaginationUtil.getPageableRequest(page, size);
-        Page<SupplierDTO> result = supplierService.findAllSuppliers(pageable);
+        Page<SupplierDTO> result = supplierService.findAllSuppliers(active, q, pageable);
         PageResponse<SupplierDTO> response = new PageResponse<>(result);
 
         return ResponseEntity.ok(response);

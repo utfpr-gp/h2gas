@@ -24,4 +24,14 @@ public class City {
     private String name;
 
     private String state;
+
+    // código de município do IBGE; nulo só nas cidades cadastradas antes da F7 fatia 6
+    @Column(name = "ibge_code", unique = true)
+    private Integer ibgeCode;
+
+    public City(Long id, String name, String state) {
+        this.id = id;
+        this.name = name;
+        this.state = state;
+    }
 }

@@ -62,4 +62,20 @@ describe('UserService', () => {
     req.flush({ id: 'u1', name: 'Maria' });
     httpMock.verify();
   });
+
+  it('devePedirEConfirmarATrocaDoProprioEmail', () => {
+    criar();
+    service.requestEmailChange('novo@h2gas.local').subscribe();
+    const pedido = httpMock.expectOne(`${environment.apiUrl}/users/me/email-change`);
+    expect(pedido.request.method).toBe('POST');
+    expect(pedido.request.body).toEqual({ newEmail: 'novo@h2gas.local' });
+    pedido.flush(null, { status: 202, statusText: 'Accepted' });
+
+    service.confirmEmailChange('123456').subscribe((r) => expect(r.token).toBe('jwt-novo'));
+    const confirma = httpMock.expectOne(`${environment.apiUrl}/users/me/email-change/confirm`);
+    expect(confirma.request.method).toBe('POST');
+    expect(confirma.request.body).toEqual({ code: '123456' });
+    confirma.flush({ token: 'jwt-novo' });
+    httpMock.verify();
+  });
 });

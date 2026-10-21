@@ -1,5 +1,13 @@
 package com.h2gas.services;
 
+import com.h2gas.exceptions.BusinessRuleException;
+import com.h2gas.model.repository.AddressRepository;
+import com.h2gas.model.repository.SupplierRepository;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.CityDTO;
 import com.h2gas.model.dto.UserDto;
@@ -25,8 +33,17 @@ public class CityService {
     @Autowired
     private CityMapper cityMapper;
 
+    @Autowired
+    private IbgeClient ibgeClient;
+
+    @Autowired
+    private SupplierRepository supplierRepository;
+
+    @Autowired
+    private AddressRepository addressRepository;
+
     public List<CityDTO> findAllCities() {
-        return cityRepository.findAll()
+        return cityRepository.findAll(Sort.by("state", "name"))
                 .stream()
                 .map(cityMapper::toDto)
                 .collect(Collectors.toList());
@@ -49,18 +66,29 @@ public class CityService {
     }
 
 
-    public CityDTO createCity(CityDTO cityDTO) {
-        City city = cityMapper.toEntity(cityDTO);
-        if (cityRepository.findByName(cityDTO.getName()).isPresent()) {
-            throw new ResourceNotFoundException("Já existe uma cidade com esse nome.");
+    // F7 fatia 6: nome e UF oficiais do IBGE; a cidade antiga sem código conta como duplicada pelo nome + UF
+    @Transactional
+    public CityDTO createCity(Integer ibgeCode) {
+        IbgeClient.Municipality municipality = ibgeClient.findMunicipality(ibgeCode)
+                .orElseThrow(() -> new BusinessRuleException("Município não encontrado no IBGE."));
+        if (cityRepository.existsByIbgeCode(municipality.code())
+                || cityRepository.existsByNameIgnoreCaseAndStateIgnoreCase(municipality.name(), municipality.state())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    municipality.name() + " - " + municipality.state() + " já é atendida.");
         }
-        cityRepository.save(city);
-        return cityMapper.toDto(city);
+        City city = new City(null, municipality.name(), municipality.state());
+        city.setIbgeCode(municipality.code());
+        return cityMapper.toDto(cityRepository.save(city));
     }
 
+    @Transactional
     public void deleteCity(Long id) {
         City city = cityRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cidade com id " + id + " não encontrada"));
+        if (supplierRepository.existsByCityId(id) || addressRepository.existsByCityId(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    city.getName() + " - " + city.getState() + " tem fornecedores ou endereços cadastrados e não pode ser excluída.");
+        }
 
         cityRepository.delete(city);
     }
