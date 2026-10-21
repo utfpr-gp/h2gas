@@ -1,5 +1,7 @@
 package com.h2gas.controller;
 
+import com.h2gas.model.dto.OrderHistorySummaryDTO;
+import com.h2gas.model.dto.OrderHistoryFilter;
 import com.h2gas.enums.OrderStatusEnum;
 import com.h2gas.model.dto.AssignDelivererRequestDTO;
 import com.h2gas.model.dto.CancelDeliveryRequestDTO;
@@ -153,6 +155,67 @@ public class OrderController {
     }
 
 
+    @Operation(summary = "Histórico de pedidos finalizados do fornecedor logado",
+            description = "Entregues e cancelados da loja do token, mais recentes primeiro. Filtros opcionais: status (delivered|canceled), "
+                    + "from/to (AAAA-MM-DD, pela criação do pedido), payment (PIX|DINHEIRO|CREDIT_CARD), mode (DELIVERY|PICKUP) e "
+                    + "q (nome do cliente ou início do código do pedido)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Página do histórico"),
+            @ApiResponse(responseCode = "400", description = "Filtro inválido ou data inicial depois da final"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido ou papel diferente de SUPPLIER")
+    })
+    @GetMapping("/mine/history")
+    @ResponseBody
+    @RolesAllowed("SUPPLIER")
+    public ResponseEntity<PageResponse<OrderResponseDTO>> getMyHistory(
+            @Parameter(description = "delivered ou canceled; omitido = os dois") @RequestParam(value = "status", required = false) String status,
+            @Parameter(description = "Data inicial (AAAA-MM-DD)", example = "2026-10-01") @RequestParam(value = "from", required = false) String from,
+            @Parameter(description = "Data final, inclusiva (AAAA-MM-DD)", example = "2026-10-31") @RequestParam(value = "to", required = false) String to,
+            @Parameter(description = "PIX, DINHEIRO ou CREDIT_CARD") @RequestParam(value = "payment", required = false) String payment,
+            @Parameter(description = "DELIVERY ou PICKUP") @RequestParam(value = "mode", required = false) String mode,
+            @Parameter(description = "Nome do cliente ou início do código do pedido") @RequestParam(value = "q", required = false) String q,
+            @Parameter(description = "Página (0-based)") @RequestParam(value = "page", required = false) Integer page,
+            @Parameter(description = "Tamanho da página (máx. 50)") @RequestParam(value = "size", required = false) Integer size) {
+        OrderHistoryFilter filter = OrderHistoryFilter.parse(status, from, to, payment, mode, q);
+        Page<OrderResponseDTO> result = orderService.findMyHistory(loggedUser().getId(), filter, PaginationUtil.getPageableRequest(page, size));
+        return ResponseEntity.ok(new PageResponse<>(result));
+    }
+
+    @Operation(summary = "Resumo do histórico do fornecedor logado",
+            description = "Entregues, cancelados, receita (soma dos entregues) e ticket médio, calculados no banco com os mesmos filtros da lista")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Resumo"),
+            @ApiResponse(responseCode = "400", description = "Filtro inválido ou data inicial depois da final"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido ou papel diferente de SUPPLIER")
+    })
+    @GetMapping("/mine/history/summary")
+    @ResponseBody
+    @RolesAllowed("SUPPLIER")
+    public ResponseEntity<OrderHistorySummaryDTO> getMyHistorySummary(
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "from", required = false) String from,
+            @RequestParam(value = "to", required = false) String to,
+            @RequestParam(value = "payment", required = false) String payment,
+            @RequestParam(value = "mode", required = false) String mode,
+            @RequestParam(value = "q", required = false) String q) {
+        OrderHistoryFilter filter = OrderHistoryFilter.parse(status, from, to, payment, mode, q);
+        return ResponseEntity.ok(orderService.summarizeMyHistory(loggedUser().getId(), filter));
+    }
+
+    // F7 fatia 6: o fornecedor só lista os pedidos da própria loja; o admin vê qualquer uma
+    private void requireOwnStore(String supplierId) {
+        User actor = loggedUser();
+        if (actor.getUserType() == com.h2gas.enums.UserTypeEnum.SUPPLIER && !actor.getId().equals(supplierId)) {
+            throw new com.h2gas.exceptions.ForbiddenResourceException("Você só pode ver os pedidos da sua própria loja.");
+        }
+    }
+
+    @Operation(summary = "Lista pedidos de um fornecedor sem os status informados",
+            description = "Usada por Pedidos recebidos. O fornecedor só vê a própria loja")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Página de pedidos"),
+            @ApiResponse(responseCode = "403", description = "Fornecedor consultando outra loja")
+    })
     @GetMapping("/{supplierId}/exclude-status")
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER"})
@@ -162,12 +225,18 @@ public class OrderController {
             @RequestParam(value = "size", required = false) Integer size,
             @RequestParam(value = "excludeStatuses", required = false) List<OrderStatusEnum> excludeStatuses
     ) {
+        requireOwnStore(supplierId);
         Pageable pageable = PaginationUtil.getPageableRequest(page, size);
         Page<OrderResponseDTO> result = orderService.findBySupplierIdAndStatusNotDeliveryAndCanceled(supplierId, pageable, excludeStatuses);
         PageResponse<OrderResponseDTO> response = new PageResponse<>(result);
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Lista pedidos de um fornecedor", description = "Filtro opcional por status. O fornecedor só vê a própria loja")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Página de pedidos"),
+            @ApiResponse(responseCode = "403", description = "Fornecedor consultando outra loja")
+    })
     @GetMapping("/by-supplier/{supplierId}")
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER"})
@@ -177,6 +246,7 @@ public class OrderController {
             @RequestParam(value = "size", required = false) Integer size,
             @RequestParam(required = false) OrderStatusEnum status
     ) {
+        requireOwnStore(supplierId);
         Pageable pageable = PaginationUtil.getPageableRequest(page, size);
 
         Page<OrderResponseDTO> result = null;

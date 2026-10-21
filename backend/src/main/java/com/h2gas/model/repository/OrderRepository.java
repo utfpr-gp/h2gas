@@ -1,5 +1,6 @@
 package com.h2gas.model.repository;
 
+import com.h2gas.enums.DeliveryModeEnum;
 import com.h2gas.enums.OrderStatusEnum;
 import com.h2gas.model.entity.Order;
 import org.springframework.data.domain.Page;
@@ -50,4 +51,27 @@ public interface OrderRepository extends JpaRepository<Order, String> {
                                                               Pageable pageable);
 
 
+
+    // F7 fatia 6: histórico do fornecedor. LOCATE em vez de LIKE: o Spring Data reescreve o parâmetro do LIKE
+    // e a contagem da paginação perde a reescrita (mesmo motivo da busca de usuários da HU12)
+    String HISTORY_WHERE = """
+        o.supplier.id = :supplierId AND o.status IN :statuses
+          AND (:from IS NULL OR o.createdAt >= :from)
+          AND (:to IS NULL OR o.createdAt < :to)
+          AND (:payment IS NULL OR o.paymentMethod = :payment)
+          AND (:mode IS NULL OR o.deliveryMode = :mode)
+          AND (:q IS NULL OR LOCATE(:q, LOWER(o.customer.name)) > 0 OR LOCATE(:q, LOWER(o.id)) = 1)
+        """;
+
+    @Query("SELECT o FROM Order o WHERE " + HISTORY_WHERE + " ORDER BY o.createdAt DESC")
+    Page<Order> findHistory(@Param("supplierId") String supplierId, @Param("statuses") List<OrderStatusEnum> statuses,
+                            @Param("from") LocalDateTime from, @Param("to") LocalDateTime to,
+                            @Param("payment") String payment, @Param("mode") DeliveryModeEnum mode,
+                            @Param("q") String q, Pageable pageable);
+
+    @Query("SELECT COUNT(o), COALESCE(SUM(o.totalPrice), 0) FROM Order o WHERE " + HISTORY_WHERE)
+    List<Object[]> summarizeHistory(@Param("supplierId") String supplierId, @Param("statuses") List<OrderStatusEnum> statuses,
+                                    @Param("from") LocalDateTime from, @Param("to") LocalDateTime to,
+                                    @Param("payment") String payment, @Param("mode") DeliveryModeEnum mode,
+                                    @Param("q") String q);
 }
