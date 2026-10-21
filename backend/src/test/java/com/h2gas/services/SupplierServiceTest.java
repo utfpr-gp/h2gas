@@ -463,6 +463,12 @@ class SupplierServiceTest {
     }
 
     @Test
+    @DisplayName("F7 fatia 6: o perfil da loja traz o e-mail da conta (só leitura)")
+    void deveTrazerOEmailNoPerfil() {
+        assertEquals("fornecedor@gmail", supplierService.findMyProfile(validId).email());
+    }
+
+    @Test
     @DisplayName("F7 fatia 6: logo enviada ao Cloudinary, gravada e removida")
     void deveSalvarERemoverALogo() throws Exception {
         when(cloudinaryService.upload(any())).thenReturn(Map.of("secure_url", "https://res.cloudinary.com/h2gas/logo.png", "url", "http://x/logo.png"));

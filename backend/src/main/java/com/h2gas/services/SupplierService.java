@@ -275,7 +275,7 @@ public class SupplierService {
     private static SupplierProfileDTO toProfile(Supplier s) {
         Address a = s.getAddress();
         City city = a != null && a.getCity() != null ? a.getCity() : s.getCity();
-        return new SupplierProfileDTO(s.getName(), s.getPhoneNumber(), s.getDescription(), s.getCnpj(), s.getLogoUrl(),
+        return new SupplierProfileDTO(s.getName(), s.getEmail(), s.getPhoneNumber(), s.getDescription(), s.getCnpj(), s.getLogoUrl(),
                 a == null ? null : a.getId(), a == null ? null : a.getStreetName(), a == null ? null : a.getNumber(),
                 a == null ? null : a.getNeighborhood(), city == null ? null : city.getName(), city == null ? null : city.getState());
     }

@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "Dados da loja do fornecedor logado")
 public record SupplierProfileDTO(
         @Schema(example = "Gás Centro Curitiba") String name,
+        @Schema(description = "E-mail da conta; só leitura (troca pelo suporte)", example = "gascentro@h2gas.local") String email,
         @Schema(example = "41991110000") String phone,
         @Schema(example = "Entrega rápida no centro") String description,
         @Schema(description = "Só leitura", example = "12345678000101") String cnpj,

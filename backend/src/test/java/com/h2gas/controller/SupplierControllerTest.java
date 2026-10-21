@@ -231,7 +231,7 @@ class SupplierControllerTest {
     @Test
     void deveUsarALojaDoTokenNoPerfil() throws Exception {
         autenticarComoFornecedor("fornecedor-1");
-        SupplierProfileDTO perfil = new SupplierProfileDTO("Gás Centro", "41999999999", "Desde 1990", "12345678000101",
+        SupplierProfileDTO perfil = new SupplierProfileDTO("Gás Centro", "gascentro@h2gas.local", "41999999999", "Desde 1990", "12345678000101",
                 null, 3L, "Rua XV", "700", "Centro", "Curitiba", "PR");
         when(supplierService.findMyProfile("fornecedor-1")).thenReturn(perfil);
         when(supplierService.updateMyProfile(eq("fornecedor-1"), any())).thenReturn(perfil);
