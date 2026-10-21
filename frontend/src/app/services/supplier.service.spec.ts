@@ -140,6 +140,15 @@ describe('SupplierService', () => {
       totalElements: 6, totalPages: 2, hasNext: false, hasPrevious: true });
   });
 
+  // HU13
+  it('deveBuscarAVitrineDaLoja', () => {
+    service.getStorefront('loja-1').subscribe((v) => expect(v.name).toBe('Gás Centro'));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/suppliers/loja-1/storefront`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ id: 'loja-1', name: 'Gás Centro', open: true, cityId: 3, cityName: 'Curitiba', reviewCount: 0 });
+  });
+
   it('deveEnviarFiltrosDoDashboard', () => {
     service.getDashboard('2026-10', { payment: 'PIX', mode: 'PICKUP', typeId: 2, categoryId: 7, productId: 4 }).subscribe();
 

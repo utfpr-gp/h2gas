@@ -11,7 +11,7 @@ import { ProductTypeService } from '../../../services/product-type.service';
 import { CartService } from '../../../services/cart.service';
 import { ProductItem } from '../../../models/product-item';
 import { SupplierService } from '../../../services/supplier.service';
-import { Supplier } from '../../../models/supplier';
+import { Storefront } from '../../../models/storefront';
 import { registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
 import { LOCALE_ID } from '@angular/core';
@@ -27,9 +27,9 @@ describe('ProductListComponent', () => {
   let toastrSpy: jasmine.SpyObj<ToastrService>;
   let supplierServiceSpy: jasmine.SpyObj<SupplierService>;
 
-  const loja: Supplier = {
+  const loja: Storefront = {
     id: 'fixture-supplier-hu02', name: 'Gás Centro Curitiba', open: true, openingTime: '07:00', closingTime: '20:00',
-    averageDeliveryTime: '60', addressNeighborhood: 'Batel', cityName: 'Curitiba', averageRating: 4.2, reviewCount: 14,
+    averageDeliveryTime: 60, addressNeighborhood: 'Batel', cityId: 3, cityName: 'Curitiba', averageRating: 4.2, reviewCount: 14,
     bannerUrl: 'https://cdn/banner.jpg', logoUrl: 'https://cdn/logo.png', description: 'Entrega rápida no centro',
   };
 
@@ -43,9 +43,9 @@ describe('ProductListComponent', () => {
     productTypeServiceSpy.findAll.and.returnValue(of([{ id: 1, name: 'Gás' }, { id: 2, name: 'Água' }] as any));
 
     cartServiceSpy = jasmine.createSpyObj('CartService', ['addProduct', 'startBuyNow']);
-    supplierServiceSpy = jasmine.createSpyObj('SupplierService', ['findById', 'getReviews']);
+    supplierServiceSpy = jasmine.createSpyObj('SupplierService', ['getStorefront', 'getReviews']);
     supplierServiceSpy.getReviews.and.returnValue(of({ ...emptyPage, data: [{ id: 1, customerFirstName: 'Maria', rating: 5, comment: 'Ótimo', reviewedAt: null }] } as any));
-    supplierServiceSpy.findById.and.returnValue(of(loja));
+    supplierServiceSpy.getStorefront.and.returnValue(of(loja));
 
     await TestBed.configureTestingModule({
       imports: [ProductListComponent],
@@ -140,15 +140,15 @@ describe('ProductListComponent', () => {
 
   // ---- F7 §5.26: cabeçalho da loja ----
   const byId = (id: string) => fixture.nativeElement.querySelector(`[data-testid="${id}"]`) as HTMLElement | null;
-  const recriarCom = (store: Supplier) => {
-    supplierServiceSpy.findById.and.returnValue(of(store));
+  const recriarCom = (store: Storefront) => {
+    supplierServiceSpy.getStorefront.and.returnValue(of(store));
     fixture = TestBed.createComponent(ProductListComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   };
 
   it('deveMostrarOCabecalhoDaLoja', () => {
-    expect(supplierServiceSpy.findById).toHaveBeenCalledWith('fixture-supplier-hu02');
+    expect(supplierServiceSpy.getStorefront).toHaveBeenCalledWith('fixture-supplier-hu02');
     const cabecalho = byId('store-header')!;
     expect(cabecalho.querySelector('h1')!.textContent).toContain('Gás Centro Curitiba');
     expect(cabecalho.textContent).toContain('4,2');
@@ -191,7 +191,7 @@ describe('ProductListComponent', () => {
   });
 
   it('deveSeguirComOsProdutosSeALojaFalhar', () => {
-    supplierServiceSpy.findById.and.returnValue(throwError(() => ({ error: { message: 'Loja não encontrada' } })));
+    supplierServiceSpy.getStorefront.and.returnValue(throwError(() => ({ error: { message: 'Loja não encontrada' } })));
     productItemServiceSpy.getProductsBySupplierId.calls.reset();
     fixture = TestBed.createComponent(ProductListComponent);
     fixture.detectChanges();
@@ -210,5 +210,11 @@ describe('ProductListComponent', () => {
     const janela = fixture.nativeElement.querySelector('app-store-reviews-dialog [role="dialog"]') as HTMLElement;
     expect(janela.textContent).toContain('Gás Centro Curitiba');
     expect(janela.textContent).toContain('Maria');
+  });
+
+  // ---- HU13: página da loja usa a vitrine pública ----
+  it('deveUsarAVitrineNoCabecalho', () => {
+    expect(supplierServiceSpy.getStorefront).toHaveBeenCalledWith('fixture-supplier-hu02');
+    expect(byId('store-header')!.querySelector('h1')!.textContent).toContain('Gás Centro Curitiba');
   });
 });
