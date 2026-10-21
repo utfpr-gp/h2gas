@@ -59,6 +59,11 @@ dele vira o Painel.
   o ADMIN não cria, edita nem apaga categoria ou produto (403) — essas
   telas saem do menu dele. Os dados existentes ficam como estão (os tipos
   atuais já são globais).
+- **Cenário 8 — Ícone do tipo** (decisão do autor, 2026-10-20): Dado o
+  ADMIN cadastrando ou editando um tipo, Quando escolhe um ícone numa
+  grade de ícones prontos, Então o catálogo do cliente mostra esse ícone
+  no chip do tipo. Gás e Água já saem da migração com chama e gota; tipo
+  sem ícone escolhido usa o genérico.
 
 ## 4. Estado atual (achados)
 
@@ -84,6 +89,9 @@ dele vira o Painel.
   tipo; o `POST /api/product-types` aceita ADMIN e SUPPLIER, sem
   validação nem nome único. As rotas de escrita de categoria e produto
   aceitam ADMIN, e o menu "Produtos" do admin leva a essas telas.
+- O ícone do tipo não é gravado: o `CategoryChipBarComponent` deduz pelo
+  nome ("gás" → chama, "água" → gota, resto → genérico), então um tipo
+  novo sempre aparece com o ícone genérico.
 
 ## 5. Contrato Técnico
 
@@ -145,6 +153,21 @@ dele vira o Painel.
   Leituras do catálogo (`by-supplier`, `by-supplier-open`) não mudam.
 - Sem migração: os dados existentes ficam como estão.
 
+### 5.2.2 Ícone do tipo (Cenário 8)
+- `V10__product_type_icon.sql`: `ALTER TABLE product_types ADD COLUMN
+  icon VARCHAR(40) NOT NULL DEFAULT 'category'`; grava
+  `local_fire_department` nos tipos cujo nome contém "gás"/"gas" e
+  `water_drop` nos que contêm "água"/"agua".
+- `ProductTypeDTO.icon`: nome de um Material Icon **da lista fechada**
+  abaixo; fora dela → 400 "Ícone inválido.". No `POST`, ausente → 
+  `category`; no `PUT`, ausente mantém o ícone atual. O `GET` devolve o
+  `icon`.
+- Lista (ícone → rótulo na tela): `local_fire_department` Chama,
+  `propane_tank` Botijão, `water_drop` Gota, `local_drink` Copo,
+  `liquor` Garrafa, `ac_unit` Gelo, `outdoor_grill` Carvão,
+  `cleaning_services` Limpeza, `shopping_basket` Cesta, `inventory_2`
+  Caixa, `category` Genérico.
+
 ### 5.3 Frontend
 - `services/admin.service.ts`: `listUsers`, `createUser`, `setEnabled`,
   `dashboard`.
@@ -164,9 +187,13 @@ dele vira o Painel.
   Fornecedores, Cidades e Tipos (`/admin/tipos`); saem "Início"
   (catálogo), "Pedidos" ("Meus Pedidos") e o menu Produtos. Dropdown do
   usuário: Meus Dados e Painel.
-- **Tipos** (`components/pages/admin-product-types`): lista, formulário
-  "Novo tipo" e renomear na linha; erro pelo `backendMessage`. Rota
-  `/admin/tipos` com `roles: ['ADMIN']`.
+- **Tipos** (`components/pages/admin-product-types`): lista com o ícone
+  de cada tipo, formulário "Novo tipo" e editar na linha (nome e ícone),
+  os dois com a grade de ícones da §5.2.2 (botões com rótulo acessível e
+  `aria-pressed`); erro pelo `backendMessage`. Rota `/admin/tipos` com
+  `roles: ['ADMIN']`.
+- **Chips do catálogo** (`CategoryChipBarComponent`): usam o `icon` do
+  tipo; sem `icon`, o genérico. Sai a dedução pelo nome.
 - Rotas `category-products` e `product-items*` passam a `roles:
   ['SUPPLIER']`.
 - Tokens F2, sem HEX novo.
@@ -196,6 +223,9 @@ dele vira o Painel.
 6c. `CatalogoPermissoesTest` (categoria e produto):
     `deveRetornar403AoAdminEscreverCategoria`,
     `deveRetornar403AoAdminEscreverProduto`.
+6d. `ProductTypeServiceTest`: `deveGravarIconeEscolhido`,
+    `deveUsarIconeGenericoQuandoAusente`, `deveRecusarIconeForaDaLista`,
+    `deveManterIconeAoRenomearSemIcone`.
 
 **Frontend**
 7. `admin.service.spec.ts`: rotas e parâmetros de cada método.
@@ -212,6 +242,10 @@ dele vira o Painel.
 12. `admin-product-types.component.spec.ts`: `deveListarOsTipos`,
     `deveCriarTipo`, `deveRenomearTipo`, `deveMostrarErroDeTipoRepetido`.
 13. `product-type.service.spec.ts`: criar e renomear.
+14. `admin-product-types.component.spec.ts`: `deveCriarTipoComIcone`,
+    `deveTrocarIconeAoEditar`.
+15. `category-chip-bar.component.spec.ts`: `deveMostrarOIconeDoTipo`
+    (e o genérico quando não há).
 
 ## 7. Fora de Escopo
 - Apagar usuários; log de auditoria; gráficos no painel; redefinir a
@@ -222,6 +256,8 @@ dele vira o Painel.
   `supplier-approval`.
 - Categorias globais curadas pelo admin (a categoria continua de cada
   fornecedor); apagar tipo de produto; unificar dados existentes.
+- Upload de imagem ou ícone livre para o tipo; ícone na categoria ou no
+  produto.
 
 ## 8. Definição de Pronto
 - [x] Conta desativada não entra por senha nem por código e perde a
@@ -234,7 +270,9 @@ dele vira o Painel.
 - [x] Admin cadastra e renomeia tipos de produto; fornecedor não cria
       tipo; admin não escreve categoria nem produto (403) e não vê essas
       telas.
-- [x] Testes da seção 6 verdes; `mvn test`, `ng test` (sem falha nova
+- [ ] Admin escolhe o ícone do tipo numa grade fechada; o catálogo do
+      cliente mostra o ícone gravado; migração `V10` aplicada.
+- [ ] Testes da seção 6 verdes; `mvn test`, `ng test` (sem falha nova
       além das 18 antigas) e `ng build`; E2E e prints em 390 e 1280 px.
 
 **Verificação (20/10/2026):** `mvn test` 288 testes, só o
