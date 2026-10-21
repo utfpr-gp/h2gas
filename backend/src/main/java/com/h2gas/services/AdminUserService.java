@@ -45,9 +45,9 @@ public class AdminUserService {
 
     @Transactional(readOnly = true)
     public Page<AdminUserDto> listUsers(UserTypeEnum type, String query, Pageable pageable) {
-        String pattern = StringUtils.hasText(query) ? "%" + query.trim().toLowerCase(Locale.ROOT) + "%" : null;
+        String term = StringUtils.hasText(query) ? query.trim().toLowerCase(Locale.ROOT) : null;
         Pageable byName = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by("name"));
-        return userRepository.searchForAdmin(type, pattern, byName).map(adminUserMapper::toDto);
+        return userRepository.searchForAdmin(type, term, byName).map(adminUserMapper::toDto);
     }
 
     @Transactional

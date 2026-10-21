@@ -18,10 +18,11 @@ public interface UserRepository extends JpaRepository<User, String> {
     Optional<User> findByName(String name);
     boolean existsByEmail(String email);
 
-    // HU12: pattern já vem em minúsculas e com os curingas (%termo%), ou null para não filtrar
+    // HU12: term já vem em minúsculas, ou null para não filtrar. LOCATE em vez de LIKE: o Spring Data
+    // reescreve o parâmetro do LIKE e a consulta de contagem da paginação perde essa reescrita
     @Query("SELECT u FROM User u WHERE (:type IS NULL OR u.userType = :type) "
-            + "AND (:pattern IS NULL OR LOWER(u.name) LIKE :pattern OR LOWER(u.email) LIKE :pattern)")
-    Page<User> searchForAdmin(@Param("type") UserTypeEnum type, @Param("pattern") String pattern, Pageable pageable);
+            + "AND (:term IS NULL OR LOCATE(:term, LOWER(u.name)) > 0 OR LOCATE(:term, LOWER(u.email)) > 0)")
+    Page<User> searchForAdmin(@Param("type") UserTypeEnum type, @Param("term") String term, Pageable pageable);
 
     long countByUserType(UserTypeEnum userType);
 }

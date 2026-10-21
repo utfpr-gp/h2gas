@@ -83,6 +83,21 @@ class AdminUserServiceTest {
     }
 
     @Test
+    @DisplayName("HU12: com mais de uma página, conta o total com e sem busca")
+    void deveContarOTotalQuandoHaMaisDeUmaPagina() {
+        for (int i = 1; i <= 3; i++) {
+            userRepository.save(new User("Pagina " + i, "pagina" + i + "@teste.com", "4190000000" + i, null, "senha", UserTypeEnum.CUSTOMER));
+        }
+
+        Page<AdminUserDto> semBusca = adminUserService.listUsers(null, null, PageRequest.of(0, 2));
+        Page<AdminUserDto> comBusca = adminUserService.listUsers(null, "pagina", PageRequest.of(0, 2));
+
+        assertEquals(2, semBusca.getContent().size());
+        assertTrue(semBusca.getTotalElements() >= 4);
+        assertEquals(3, comBusca.getTotalElements());
+    }
+
+    @Test
     @DisplayName("HU12: o admin cria outro admin (o cadastro público continua sem permitir)")
     void deveCriarOutroAdmin() {
         AdminUserDto criado = adminUserService.createUser(novo(UserTypeEnum.ADMIN, "Ana Admin", "ana.admin@teste.com"));
