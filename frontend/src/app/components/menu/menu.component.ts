@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user';
@@ -9,6 +9,10 @@ import { CartService } from '../../services/cart.service';
 import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { LocationContextService } from '../../services/location-context.service';
+import { UserService } from '../../services/user.service';
+import { initials } from '../../utils/initials';
+import { fadeIn } from '../../animations/checkout.animations';
+import { Subscription, skip } from 'rxjs';
 import { BottomTabBarComponent } from '../bottom-tab-bar/bottom-tab-bar.component';
 import { DelivererTabBarComponent } from '../deliverer-tab-bar/deliverer-tab-bar.component';
 
@@ -21,9 +25,10 @@ import { DelivererTabBarComponent } from '../deliverer-tab-bar/deliverer-tab-bar
     DelivererTabBarComponent
   ],
   templateUrl: './menu.component.html',
-  styleUrl: './menu.component.css'
+  styleUrl: './menu.component.css',
+  animations: [fadeIn]
 })
-export class MenuComponent implements OnInit {
+export class MenuComponent implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
@@ -31,7 +36,11 @@ export class MenuComponent implements OnInit {
     private cartService: CartService,
     private toastr: ToastrService,
     public locationContext: LocationContextService,
+    private userService: UserService,
+    private host: ElementRef<HTMLElement>,
   ) {}
+
+  private userSub?: Subscription;
 
   userMenuOpen = false;
   showDropdown = false;
@@ -80,6 +89,52 @@ export class MenuComponent implements OnInit {
     if (userJson) {
       this.user = JSON.parse(userJson);
     }
+    // o avatar acompanha os dados salvos em "Meus Dados". skip(1): o valor inicial do fluxo é o do início
+    // do app e pode ser de outra sessão; ao abrir o menu vale o que está no navegador (lido acima)
+    this.userSub = this.userService.currentUser$.pipe(skip(1)).subscribe((user) => {
+      if (user) this.user = user;
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.userSub?.unsubscribe();
+  }
+
+  get userInitials(): string {
+    return initials(this.user?.name);
+  }
+
+  // itens do dropdown por perfil; "Sair" fica separado no fim
+  get userMenuItems(): { id: string; label: string; icon: string; route: string }[] {
+    const meusDados = { id: 'meus-dados', label: 'Meus Dados', icon: 'person', route: '/meus-dados' };
+    switch (this.user?.userType) {
+      case 'CUSTOMER':
+        return [
+          meusDados,
+          { id: 'meus-pedidos', label: 'Meus Pedidos', icon: 'receipt_long', route: '/meus-pedidos' },
+          { id: 'meus-enderecos', label: 'Meus Endereços', icon: 'location_on', route: '/meus-enderecos' },
+        ];
+      case 'SUPPLIER':
+        return [
+          meusDados,
+          { id: 'dashboard', label: 'Dashboard', icon: 'insights', route: '/dashboard' },
+          { id: 'pedidos-recebidos', label: 'Pedidos recebidos', icon: 'inbox', route: '/dashboard-fornecedor' },
+          { id: 'configuracao', label: 'Configurações', icon: 'settings', route: '/configuracao' },
+        ];
+      case 'ADMIN':
+        return [
+          meusDados,
+          { id: 'pedidos-recebidos', label: 'Pedidos recebidos', icon: 'inbox', route: '/dashboard-fornecedor' },
+          { id: 'configuracao', label: 'Configurações', icon: 'settings', route: '/configuracao' },
+        ];
+      default:
+        return [meusDados];
+    }
+  }
+
+  openUserMenuItem(route: string) {
+    this.closeUserMenu();
+    this.navigate(route);
   }
 
 
@@ -100,10 +155,22 @@ export class MenuComponent implements OnInit {
 
   toggleUserMenu() {
     this.userMenuOpen = !this.userMenuOpen;
+    if (this.userMenuOpen) {
+      // teclado/leitor de tela: o foco vai para o primeiro item assim que o dropdown aparece
+      setTimeout(() => this.host.nativeElement.querySelector<HTMLElement>('[data-testid=user-menu] [role=menuitem]')?.focus());
+    }
   }
 
-  closeUserMenu() {
+  closeUserMenu(returnFocus = false) {
     this.userMenuOpen = false;
+    if (returnFocus) {
+      this.host.nativeElement.querySelector<HTMLElement>('[data-testid=user-menu-button]')?.focus();
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape() {
+    if (this.userMenuOpen) this.closeUserMenu(true);
   }
 
   navigate(route: string) {
@@ -117,7 +184,7 @@ export class MenuComponent implements OnInit {
   @HostListener('document:click', ['$event'])
   clickOutside(event: MouseEvent) {
     const target = event.target as HTMLElement;
-    if (!target.closest('.relative')) {
+    if (!target.closest('[data-user-menu]')) {
       this.userMenuOpen = false;
     }
   }

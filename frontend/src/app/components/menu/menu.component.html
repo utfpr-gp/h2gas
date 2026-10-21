@@ -273,51 +273,35 @@
           </div>
         </div>
   
-        <!-- Dropdown Usuário -->
-        <div class="relative" (clickOutside)="closeUserMenu()">
-          <button
-            (click)="toggleUserMenu()"
-            class="text-white hover:bg-white/10 p-2 rounded-md flex items-center focus:outline-none"
-          >
-            <i class="fas fa-user text-lg"></i>
+        <!-- Dropdown Usuário (F7): avatar com iniciais, cabeçalho com nome e e-mail, itens por perfil -->
+        <div class="relative" data-user-menu>
+          <button type="button" data-testid="user-menu-button" (click)="toggleUserMenu()"
+            aria-haspopup="menu" [attr.aria-expanded]="userMenuOpen" aria-label="Menu do usuário"
+            class="rounded-full p-0.5 hover:bg-white/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-white">
+            <span data-testid="user-avatar"
+              class="w-9 h-9 rounded-full bg-secondary text-secondary-content flex items-center justify-center text-sm font-bold">{{ userInitials }}</span>
           </button>
-          <div
-            *ngIf="userMenuOpen"
-            class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-50"
-          >
-            <button
-              *ngIf="user?.userType === 'ADMIN' || user?.userType === 'SUPPLIER'"
-              (click)="navigate('/dashboard-fornecedor')"
-              class="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
-            >
-              Pedidos recebidos
-            </button>
-            <button
-              *ngIf="user?.userType === 'ADMIN' || user?.userType === 'CUSTOMER'"
-              (click)="navigate('/painel-cliente')"
-              class="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
-            >
-              Meus Dados
+
+          <div *ngIf="userMenuOpen" data-testid="user-menu" role="menu" aria-label="Opções do usuário" @fadeIn
+            class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 text-gray-800">
+            <div data-testid="user-menu-header" class="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
+              <span class="w-10 h-10 shrink-0 rounded-full bg-secondary text-secondary-content flex items-center justify-center font-bold">{{ userInitials }}</span>
+              <span class="min-w-0">
+                <span class="block font-semibold truncate">{{ user?.name }}</span>
+                <span class="block text-xs text-gray-500 truncate">{{ user?.email }}</span>
+              </span>
+            </div>
+
+            <button *ngFor="let item of userMenuItems" type="button" role="menuitem" [attr.data-testid]="'menu-item-' + item.id"
+              (click)="openUserMenuItem(item.route)"
+              class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none">
+              <span class="material-icons text-base text-gray-500" aria-hidden="true">{{ item.icon }}</span><span data-menu-label>{{ item.label }}</span>
             </button>
 
-            <button
-                *ngIf="user?.userType === 'ADMIN' || user?.userType === 'SUPPLIER'"
-              (click)="navigate('/configuracao')"
-              class="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
-            >
-              Configurações
-            </button>
-
-            <!-- <button *ngIf="user?.userType === 'ADMIN' || user?.userType === 'SUPPLIER'" (click)="navigate('/meus-pedidos')"
-                class="block cursor-pointer px-4 py-2 min-w-full text-sm text-gray-700 hover:bg-gray-100">
-                Meus Pedidos
-            </button> -->
-            <div class="border-t my-1"></div>
-            <button
-              (click)="logout()"
-              class="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
-            >
-              Sair
+            <div class="border-t border-gray-100 my-1"></div>
+            <button type="button" role="menuitem" data-testid="menu-item-sair" (click)="logout()"
+              class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left text-red-600 hover:bg-red-50 focus:bg-red-50 focus:outline-none">
+              <span class="material-icons text-base" aria-hidden="true">logout</span><span data-menu-label>Sair</span>
             </button>
           </div>
         </div>
