@@ -64,6 +64,13 @@ dele vira o Painel.
   grade de ícones prontos, Então o catálogo do cliente mostra esse ícone
   no chip do tipo. Gás e Água já saem da migração com chama e gota; tipo
   sem ícone escolhido usa o genérico.
+- **Cenário 9 — Meus Dados do admin** (decisão do autor, 2026-10-20):
+  Dado o ADMIN em `/meus-dados`, Então não vê "fale com o suporte" nem os
+  atalhos de cliente (Meus endereços, Meus pedidos); Quando pede para
+  trocar o e-mail, Então recebe um código de 6 dígitos **no e-mail
+  novo**, e só depois de digitar o código certo o e-mail muda — ele
+  continua logado (recebe um token novo). Os outros perfis seguem com o
+  e-mail somente leitura.
 
 ## 4. Estado atual (achados)
 
@@ -82,7 +89,7 @@ dele vira o Painel.
   conflito.)
 - `Deliverer` sempre pertence a um `Supplier`; hoje só o fornecedor cria
   entregadores (`POST /api/deliverers`).
-- Última migração: `V8__login_tokens.sql`.
+- Última migração: `V8__login_tokens.sql` (depois, `V9` e `V10` desta HU).
 - Hierarquia do catálogo: `ProductType` (global: Gás, Água) →
   `CategoryProduct` (de **cada fornecedor**: coluna `supplier`) →
   `ProductItem` (do fornecedor: marca, preço, estoque). Nenhuma tela cria
@@ -168,6 +175,32 @@ dele vira o Painel.
   `cleaning_services` Limpeza, `shopping_basket` Cesta, `inventory_2`
   Caixa, `category` Genérico.
 
+### 5.2.3 Troca do próprio e-mail do admin com código (Cenário 9)
+
+| Método | Rota | Corpo | Respostas |
+|---|---|---|---|
+| POST | `/api/users/me/email-change` | `{ "newEmail": string }` | 202, 400, 401, 403 |
+| POST | `/api/users/me/email-change/confirm` | `{ "code": string }` | 200 `{ "token": string }`, 400, 401, 403 |
+
+- Só ADMIN (`@RolesAllowed("ADMIN")`), sempre sobre o usuário logado.
+- `V11__email_change_tokens.sql`: `email_change_tokens` (`id`,
+  `user_id` único com FK, `new_email`, `code` de 6 dígitos,
+  `expiry_date`, `used`, `attempts`), no molde do `login_tokens` (HU11).
+- Pedido: e-mail novo com formato válido e diferente do atual; já usado
+  por outra conta → 400 "E-mail já cadastrado.". Gera o código (15 min,
+  até 5 tentativas), substitui um pedido anterior e envia o código para
+  o **e-mail novo** pelo `MailService`; falha de SMTP não derruba o
+  pedido (como na HU11). Fora de `prod`, o código vai para o log.
+- Confirmação: código errado → 400 "Código inválido." e conta a
+  tentativa; expirado, usado ou esgotado → 400 "Código expirado ou
+  esgotado. Solicite um novo."; sem pedido → 400 "Código inválido.". O
+  e-mail é conferido de novo (ocupado no meio-tempo → 400 "E-mail já
+  cadastrado."). Certo → troca o e-mail, marca o código como usado e
+  devolve um JWT novo (o `subject` do token é o e-mail).
+- `PUT /api/users/{id}`: o ADMIN não troca o **próprio** e-mail por ali
+  → 400 "Para trocar o seu e-mail, confirme pelo código em Meus
+  Dados.". O e-mail de outros usuários continua editável pelo admin.
+
 ### 5.3 Frontend
 - `services/admin.service.ts`: `listUsers`, `createUser`, `setEnabled`,
   `dashboard`.
@@ -194,6 +227,13 @@ dele vira o Painel.
   `roles: ['ADMIN']`.
 - **Chips do catálogo** (`CategoryChipBarComponent`): usam o `icon` do
   tipo; sem `icon`, o genérico. Sai a dedução pelo nome.
+- **Meus Dados do admin** (`customer-panel`): sem os atalhos de cliente;
+  no lugar do aviso do suporte, o botão "Trocar e-mail" abre o passo do
+  e-mail novo ("Enviar código") e depois o do código ("Confirmar",
+  "Cancelar"); ao confirmar, guarda o token novo e atualiza o usuário
+  atual (menu e avatar). `UserService.requestEmailChange` e
+  `confirmEmailChange`. Na tela de Usuários, o e-mail da própria linha
+  fica só leitura com a dica "Troque o seu e-mail em Meus Dados.".
 - Rotas `category-products` e `product-items*` passam a `roles:
   ['SUPPLIER']`.
 - Tokens F2, sem HEX novo.
@@ -226,6 +266,15 @@ dele vira o Painel.
 6d. `ProductTypeServiceTest`: `deveGravarIconeEscolhido`,
     `deveUsarIconeGenericoQuandoAusente`, `deveRecusarIconeForaDaLista`,
     `deveManterIconeAoRenomearSemIcone`.
+6e. `EmailChangeServiceTest`: `deveEnviarCodigoParaONovoEmail`,
+    `deveRecusarEmailJaCadastradoOuIgualAoAtual`,
+    `deveTrocarEmailEDevolverTokenComCodigoCerto`,
+    `deveContarTentativaComCodigoErrado`,
+    `deveRecusarCodigoExpiradoOuEsgotado`,
+    `deveRecusarSeOEmailFoiOcupadoAntesDeConfirmar`.
+6f. `UserServiceTest`: `naoDeveTrocarOProprioEmailDoAdminPeloPut`.
+6g. `EmailChangeControllerTest`: `deveRetornar202AoPedirCodigo`,
+    `deveRetornar200ComTokenAoConfirmar`, `deveRetornar403ParaNaoAdmin`.
 
 **Frontend**
 7. `admin.service.spec.ts`: rotas e parâmetros de cada método.
@@ -246,6 +295,12 @@ dele vira o Painel.
     `deveTrocarIconeAoEditar`.
 15. `category-chip-bar.component.spec.ts`: `deveMostrarOIconeDoTipo`
     (e o genérico quando não há).
+16. `user.service.spec.ts`: `requestEmailChange` e `confirmEmailChange`.
+17. `customer-panel.component.spec.ts`: `deveTrocarEmailDoAdminComCodigo`,
+    `naoDeveMostrarAtalhosDeClienteParaAdmin` (o
+    `deveManterEmailSomenteLeitura` segue para os outros perfis).
+18. `admin-users.component.spec.ts`:
+    `deveDeixarOProprioEmailSomenteLeituraNaEdicao`.
 
 ## 7. Fora de Escopo
 - Apagar usuários; log de auditoria; gráficos no painel; redefinir a
@@ -258,6 +313,9 @@ dele vira o Painel.
   fornecedor); apagar tipo de produto; unificar dados existentes.
 - Upload de imagem ou ícone livre para o tipo; ícone na categoria ou no
   produto.
+- Troca de e-mail com código para cliente, fornecedor e entregador
+  (continua pelo suporte, que é o admin); link de confirmação no lugar
+  do código; aviso no e-mail antigo.
 
 ## 8. Definição de Pronto
 - [x] Conta desativada não entra por senha nem por código e perde a
@@ -272,7 +330,10 @@ dele vira o Painel.
       telas.
 - [x] Admin escolhe o ícone do tipo numa grade fechada; o catálogo do
       cliente mostra o ícone gravado; migração `V10` aplicada.
-- [x] Testes da seção 6 verdes; `mvn test`, `ng test` (sem falha nova
+- [ ] Admin troca o próprio e-mail só com o código enviado ao e-mail
+      novo e continua logado; sem atalhos de cliente em Meus Dados;
+      migração `V11` aplicada.
+- [ ] Testes da seção 6 verdes; `mvn test`, `ng test` (sem falha nova
       além das 18 antigas) e `ng build`; E2E e prints em 390 e 1280 px.
 
 **Verificação (20/10/2026):** `mvn test` 288 testes, só o
