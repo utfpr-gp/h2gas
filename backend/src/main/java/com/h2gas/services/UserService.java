@@ -131,18 +131,8 @@ public class UserService {
         }
 
         if (data.getUserType() == UserTypeEnum.SUPPLIER) {
-            Supplier supplier = new Supplier();
-            supplier.setName(data.getName());
-            supplier.setEmail(data.getEmail());
-            supplier.setCpf(data.getCpf());
-            supplier.setPassword(encryptedPassword);
-            supplier.setUserType(data.getUserType());
-            supplier.setCnpj(data.getCnpj());
-            supplier.setPhoneNumber(data.getPhoneNumber());
-            supplier.setDescription("Fornecedor pré-criado");
-            supplier.setOpeningTime(LocalTime.parse("08:00"));
-            supplier.setClosingTime(LocalTime.parse("18:00"));
-            supplier.setAverageDeliveryTime(Duration.ofMinutes(60));
+            Supplier supplier = newSupplier(data.getName(), data.getEmail(), data.getPhoneNumber(),
+                    data.getCpf(), data.getCnpj(), encryptedPassword);
 
             if (data.getAddress() != null) {
                 City city = cityRepository.findById(data.getAddress().getCityId())
@@ -178,6 +168,24 @@ public class UserService {
 
             return userMapper.toDto(user);
         }
+    }
+
+    // padrões do fornecedor recém-cadastrado; ele ajusta horário e prazo depois de aprovado
+    static Supplier newSupplier(String name, String email, String phoneNumber, String cpf,
+                                String cnpj, String encryptedPassword) {
+        Supplier supplier = new Supplier();
+        supplier.setName(name);
+        supplier.setEmail(email);
+        supplier.setCpf(cpf);
+        supplier.setPassword(encryptedPassword);
+        supplier.setUserType(UserTypeEnum.SUPPLIER);
+        supplier.setCnpj(cnpj);
+        supplier.setPhoneNumber(phoneNumber);
+        supplier.setDescription("Fornecedor pré-criado");
+        supplier.setOpeningTime(LocalTime.parse("08:00"));
+        supplier.setClosingTime(LocalTime.parse("18:00"));
+        supplier.setAverageDeliveryTime(Duration.ofMinutes(60));
+        return supplier;
     }
 
     private static SupplierCreateDTO getSupplierCreateDTO(RegisterDTO data, User user, Address address) {
