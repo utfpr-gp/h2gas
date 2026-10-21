@@ -1029,6 +1029,56 @@ catálogo (`/inicio`) mostra sempre "Sem avaliações ainda".
 na API); lista de comentários; média do entregador; ordenar ou filtrar
 lojas por nota; mostrar a nota em outras telas.
 
+### 5.26 Cliente — Cabeçalho da loja com banner, nota e dados (`/fornecedores/:id/produtos`)
+
+> Escrita em 2026-10-21. Pedido do autor, com referência de app de delivery
+> (banner no topo, logo redonda, nome e nota da loja): exibir assim o nome da
+> loja e a avaliação na página de vendas do fornecedor, com banner.
+> Decisões do autor: banner **enviado pelo fornecedor, com padrão** quando não
+> houver; cabeçalho com **horário e tempo de entrega**, **aberta/fechada**,
+> **descrição com "Ver mais"** e **bairro/cidade**.
+
+**Estado atual**: `product-list` não carrega a loja; o topo é um título
+genérico ("Nossos Produtos"). A logo já tem envio (`PUT/DELETE
+/suppliers/mine/logo`, Cloudinary, até 1 MB). Não existe banner. A nota só
+vem no catálogo (§5.25). `GET /suppliers/{id}` não tem OpenAPI.
+
+**Contrato — backend**
+- Flyway `V15__supplier_banner.sql`: `suppliers.banner_url VARCHAR(500) NULL`;
+  `Supplier.bannerUrl`; `SupplierDTO.bannerUrl` e `SupplierProfileDTO.bannerUrl`
+  (`@Schema`).
+- `PUT /suppliers/mine/banner` (multipart `file`; JPG, PNG ou WEBP de até
+  2 MB) → `200 {"bannerUrl"}`; `400` arquivo inválido; `403` sem papel
+  SUPPLIER; `502` Cloudinary recusou. `DELETE /suppliers/mine/banner` →
+  `204`. A loja vem do token. A validação e o envio ao Cloudinary são os
+  mesmos da logo (extraídos num método comum, mudando só o limite e a
+  mensagem).
+- `GET /suppliers/{id}` passa a trazer `averageRating`/`reviewCount` (mesma
+  consulta agrupada da §5.25) e ganha `@Operation`/`@ApiResponses` (`200`,
+  `404`).
+
+**Contrato — frontend**
+- `product-list` carrega a loja por `SupplierService.findById` e mostra um
+  cabeçalho no lugar do título genérico:
+  - banner (`bannerUrl`, `object-cover`, ~160 px no celular e ~220 px no
+    desktop); sem banner ou com imagem quebrada, faixa padrão em gradiente
+    dos tokens do tema (`primary` → `accent`), sem HEX;
+  - logo redonda sobreposta ao banner (ou ícone de loja), nome em `h1`, nota
+    "★ 4,2 (14)" (ou "Sem avaliações ainda"), selo **Aberta**/**Fechada**
+    (`open`), "07:00 – 20:00 · 60 min", "Batel · Curitiba";
+  - descrição com 2 linhas e "Ver mais"/"Ver menos" quando passa disso
+    (mais de 120 caracteres);
+  - enquanto carrega, esqueleto do cabeçalho; erro ao carregar a loja →
+    toast com a causa e a lista de produtos segue funcionando.
+- A nota e o rótulo acessível reaproveitam a formatação do `supplier-card`
+  (extraída para um componente `app-store-rating` usado pelos dois).
+- "Minha loja" (`store-profile`) ganha a seção **Banner** (prévia larga,
+  Enviar/Trocar, Remover com confirmação), igual à da logo.
+
+**Fora de escopo**: recorte/redimensionamento da imagem; pedido mínimo,
+taxa de entrega e modo Entrega/Retirada no cabeçalho; lista de comentários;
+apagar o banner antigo no Cloudinary (mesma dívida da logo).
+
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
 - Agregação de rating médio por fornecedor (entregue na §5.25; criar avaliação segue fora).
@@ -1338,6 +1388,20 @@ lojas por nota; mostrar a nota em outras telas.
     `supplier-card.component.spec.ts`: `deveMostrarNotaEContagemDaLoja`,
     `deveMostrarSingularComUmaAvaliacao`,
     `deveMostrarSemAvaliacoesQuandoNaoHa`.
+
+26. *(cliente, §5.26)* **Backend** — `SupplierServiceTest`:
+    `deveSalvarOBannerEnviadoPeloFornecedor`,
+    `deveRecusarBannerDeOutroTipoOuAcimaDe2MB`, `deveRemoverOBanner`,
+    `deveTrazerNotaNaLeituraDaLoja`; `SupplierControllerTest`:
+    `deveEnviarOBannerDoFornecedorDoToken`, `deveBloquearBannerParaQuemNaoEFornecedor`.
+    **Frontend** — `supplier.service.spec.ts`: `deveEnviarOBannerComoMultipart`,
+    `deveRemoverOBanner`; `store-rating.component.spec.ts` (os 3 casos da §5.25,
+    movidos do card); `product-list.component.spec.ts`:
+    `deveMostrarOCabecalhoDaLoja`, `deveUsarOBannerPadraoSemBanner`,
+    `deveMostrarFechadaQuandoALojaNaoEstaAberta`,
+    `deveAlternarVerMaisNaDescricaoLonga`, `deveSeguirComOsProdutosSeALojaFalhar`;
+    `store-profile.component.spec.ts`: `deveEnviarBannerEscolhido`,
+    `deveRemoverBannerComConfirmacao`, `deveRecusarBannerInvalidoSemEnviar`.
 
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
@@ -1676,6 +1740,14 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > avaliações geradas no banco local: Gás Centro "4,2 (14)", Água Pura "4,3 (6)", Fornecedor Teste HU02 "Sem avaliações
 > ainda". As 6 avaliações da Água Pura estão em pedidos `DELIVERED` de teste (observação `seed-avaliacoes`), só no
 > banco local.
+
+**Cliente — Cabeçalho da loja (§5.26):**
+- [ ] V15 + envio/remoção do banner (OpenAPI) e nota no `GET /suppliers/{id}`;
+      cabeçalho com banner (ou padrão), logo, nome, nota, aberta/fechada,
+      horário, bairro e descrição com "Ver mais"; seção Banner em "Minha loja";
+      testes (item 26) verdes; `mvn test`, `ng test` (sem falhas novas) e
+      `ng build`; E2E em 390 e 1280 px, com e sem banner, envio real ao
+      Cloudinary.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
