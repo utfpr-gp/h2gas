@@ -1065,13 +1065,23 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > **Observação**: com a HU12 mergeada, a rota da tela é só do fornecedor, como as rotas `/mine`.
 
 **Fatia 6 — categorias do fornecedor (§5.17):**
-- [ ] Categoria criada, editada e excluída só pelo dono do token;
+- [x] Categoria criada, editada e excluída só pelo dono do token;
       nome repetido e categoria com produtos dão 409 com mensagem;
       validação no boundary; OpenAPI.
-- [ ] Tela agrupada por tipo, com contagem de produtos, modal com
+- [x] Tela agrupada por tipo, com contagem de produtos, modal com
       validação e exclusão protegida.
-- [ ] Testes da seção 7 (item 17) verdes; `mvn test`, `ng test` (sem
+- [x] Testes da seção 7 (item 17) verdes; `mvn test`, `ng test` (sem
       falhas novas) e `ng build`; teste manual em 390 e 1280 px.
+
+> Verificado em 2026-10-21: backend 338 testes (único erro: `contextLoads`, que precisa do MySQL local); frontend 400 testes com 12
+> falhas antigas de providers (duas a menos: os specs antigos do service e da tela); `ng build` sem erro; E2E em 1280 e 390 px com
+> 16 checagens (contagem por categoria, 403 ao editar categoria alheia, 409 ao excluir com produtos, `supplierId` do corpo
+> ignorado, criação pela tela, 409 de nome repetido com o modal aberto, modal de exclusão bloqueada, exclusão da vazia, sem
+> rolagem lateral nem erro de JS); as categorias criadas no teste foram removidas.
+>
+> **Achado do teste (dado, não código)**: no banco local, os produtos de gás do Gás Centro estão em categorias de outro
+> fornecedor (`fixture-supplier-hu02`) ou sem dono, criadas antes da regra da HU10. A tela mostra só as categorias da loja (as de
+> Água); esses produtos não aparecem em nenhum grupo dele.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
