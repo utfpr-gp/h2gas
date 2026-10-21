@@ -22,7 +22,6 @@ import { CustomerPanelComponent } from './components/pages/customer-panel/custom
 import { ManageAddressesComponent } from './components/pages/manage-addresses/manage-addresses.component';
 import { ReceivedOrdersComponent } from './components/pages/received-orders/received-orders.component';
 import { AwaitingApprovalComponent } from './components/pages/awaiting-approval/awaiting-approval.component';
-import { OrderHistoryComponent } from './components/pages/order-history/order-history.component';
 import { ManageDeliverersComponent } from './components/pages/manage-deliverers/manage-deliverers.component';
 import { DelivererRoutesComponent } from './components/pages/deliverer-routes/deliverer-routes.component';
 import { DelivererRouteDetailComponent } from './components/pages/deliverer-route-detail/deliverer-route-detail.component';
@@ -207,10 +206,11 @@ export const routes: Routes = [
         data: {roles: ['SUPPLIER']}
     },
     {
-        path: 'historico-pedidos', 
-        component: OrderHistoryComponent,
+        path: 'historico-pedidos',
+        // tela só do fornecedor (o histórico vem do token): fora do bundle inicial
+        loadComponent: () => import('./components/pages/order-history/order-history.component').then((m) => m.OrderHistoryComponent),
         canActivate: [authGuard],
-        data: {roles: ['ADMIN', 'SUPPLIER']}
+        data: {roles: ['SUPPLIER']}
     },
     {
         path: 'recuperar-senha', 

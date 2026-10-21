@@ -60,7 +60,7 @@
                     <option value="IN_PREPARATION">Em preparo</option>
                     <option value="OUT_FOR_DELIVERY">Em rota</option>
                 </select>
-                <a href="/historico-pedidos" class="text-xs text-primary font-semibold hover:underline">Histórico</a>
+                <a routerLink="/historico-pedidos" class="text-xs text-primary font-semibold hover:underline">Histórico</a>
             </div>
 
             <p *ngIf="orders && !orders.length" class="text-center text-sm text-gray-500 py-10 px-4">

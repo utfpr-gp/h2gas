@@ -3,7 +3,7 @@ import { Subscription, interval } from 'rxjs';
 import { OrderService } from '../../../services/order.service';
 import { UserService } from '../../../services/user.service';
 import { ToastrService } from 'ngx-toastr';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { User } from '../../../models/user';
 import { OrderResponse } from '../../../models/order.model';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -22,7 +22,8 @@ import { backendMessage } from '../../../utils/backend-message';
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
-    OrderStatusTimelineComponent
+    OrderStatusTimelineComponent,
+    RouterLink,
   ],
   templateUrl: './received-orders.component.html',
   animations: [fadeIn, staggerList],
