@@ -820,6 +820,51 @@ a imagem antiga no Cloudinary; checar o dono no `PUT /addresses/{id}`
 **Fora de escopo (desta tela)**: dashboard (próxima tela); exportar CSV ou
 PDF; reabrir pedido; avaliações; histórico do admin.
 
+### 5.20 Fatia 6 — dashboard do fornecedor com filtros (`/dashboard`)
+
+> Escrita em 2026-10-21. Pedido do autor: "relatório muito simples; os
+> dados precisam ser dinâmicos, clicar em PIX filtra, filtrar por produto,
+> tipo, categoria, dinheiro; dados mais bonitos". Histórico e dashboard
+> seguem em telas separadas (decisão do autor).
+
+**Achados**
+- Os números só mudam com o mês; pagamento, produtos e tipos são listas
+  estáticas, sem clique nem filtro.
+- Não há quebra por entrega/retirada nem pelas categorias da loja (P13,
+  20L); o top 5 de produtos não mostra a receita.
+- Gráfico diário sem eixo, sem valores e sem destaque do melhor dia;
+  pizza sem total no centro.
+
+**Contrato**
+- `GET /api/suppliers/mine/dashboard` ganha filtros opcionais
+  `payment` (`PIX` | `DINHEIRO` | `CREDIT_CARD`), `mode` (`DELIVERY` |
+  `PICKUP`), `typeId`, `categoryId` e `productId`; valor inválido → **400**.
+  Os filtros valem também para o mês anterior da variação. "Pendentes
+  agora" e "Em rota agora" continuam sem filtro.
+- Regra dos filtros de item (tipo, categoria, produto): entram os pedidos
+  com pelo menos um item que bate, e receita, ticket, série diária,
+  pagamentos e quebras somam **só os itens que batem**. Pagamento e modo
+  filtram o pedido inteiro.
+- Resposta: `salesByProduct` com `productId` e receita; `salesByCategory`
+  (tipo) com `productTypeId`; novos `salesByStoreCategory` (categorias da
+  loja, com `categoryId` e o tipo) e `deliveryModeBreakdown` (entrega ×
+  retirada, pedidos, receita e %). OpenAPI atualizado.
+- Pagamento e modo são validados por uma regra só, compartilhada com o
+  histórico (§5.19).
+- Tela: barra de filtros (mês, pagamento, entrega/retirada, tipo,
+  categoria e produto, com as listas da loja) e chips dos filtros ativos
+  com "Limpar"; **clicar** numa forma de pagamento, num tipo da pizza,
+  numa categoria, num produto ou em entrega/retirada aplica o filtro (de
+  novo, tira), com destaque do item ativo e `aria-pressed`; cartões de
+  indicadores com ícone e variação; gráfico diário em SVG com eixo de
+  valores, área, linha, destaque do melhor dia e valor por dia no
+  `title`; pizza com o total no centro; barras com quantidade e receita;
+  estado vazio que diz se é por causa do filtro; sem HEX.
+
+**Fora de escopo (desta tela)**: período livre (segue por mês); exportar
+relatório; comparar lojas; abrir o histórico já filtrado; biblioteca de
+gráficos (o SVG é feito à mão, como hoje).
+
 ## 6. Fora de Escopo
 - CRUD/admin de banners promocionais.
 - Agregação de rating médio por fornecedor (gap de backend).
@@ -1064,6 +1109,22 @@ PDF; reabrir pedido; avaliações; histórico do admin.
     `deveLimparFiltros`, `deveExpandirDetalhesDoPedido`,
     `deveMostrarMotivoDoCancelamento`, `devePaginar`,
     `deveExibirEstadoVazio`.
+
+20. *(fatia 6, §5.20)* **Backend** — `SupplierDashboardServiceTest`:
+    `deveFiltrarPorPagamentoEModo`,
+    `deveSomarSoOsItensQueBatemComTipoCategoriaOuProduto`,
+    `deveAplicarOFiltroNaVariacaoDoMesAnterior`,
+    `deveQuebrarPorCategoriaDaLojaEPorModo`,
+    `deveTrazerIdsNasQuebrasParaOFiltro`; `SupplierControllerTest`:
+    `deveRepassarOsFiltrosDoDashboard`,
+    `deveRetornar400ComFiltroInvalidoNoDashboard`.
+    **Frontend** — `supplier.service.spec.ts`:
+    `deveEnviarFiltrosDoDashboard`; `supplier-dashboard.component.spec.ts`:
+    `deveFiltrarAoClicarNoPagamento`, `deveTirarOFiltroAoClicarDeNovo`,
+    `deveFiltrarAoClicarNoTipoCategoriaProdutoEModo`,
+    `deveFiltrarPelosSelects`, `deveMostrarChipsELimpar`,
+    `deveDestacarOMelhorDiaNoGrafico`, `deveMostrarTotalNoCentroDaPizza`,
+    `deveExplicarVazioCausadoPeloFiltro`.
 
 CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 
@@ -1312,6 +1373,15 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > **Achados**: (1) o `PATCH /api/suppliers/{id}/status` (abrir/fechar loja) também não conferia o dono — agora é 403 para outra
 > loja; (2) o link "Histórico" de Pedidos recebidos usava `href` e recarregava o app — virou `routerLink`; (3) no celular, a
 > data do card dividia a linha com o nome do cliente e era cortada — foi para a linha de pagamento.
+
+**Fatia 6 — dashboard com filtros (§5.20):**
+- [ ] Filtros de pagamento, modo, tipo, categoria e produto no backend
+      (itens que batem), com ids nas quebras, quebra por categoria da
+      loja e por modo; 400 em filtro inválido; OpenAPI.
+- [ ] Tela com filtros, gráficos clicáveis que filtram, chips, gráfico
+      diário com eixo e destaque, pizza com total; estado vazio do filtro.
+- [ ] Testes da seção 7 (item 20) verdes; `mvn test`, `ng test` (sem
+      falhas novas) e `ng build`; teste manual em 390 e 1280 px.
 
 **Pendente:**
 - [ ] Revisado e aprovado (escopo completo do F7).
