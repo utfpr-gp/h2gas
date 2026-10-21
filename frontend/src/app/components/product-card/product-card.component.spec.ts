@@ -68,4 +68,21 @@ describe('ProductCardComponent', () => {
     expect(botao.classList).toContain('btn-accent');
     expect(botao.classList).not.toContain('bg-primary');
   });
+
+  it('deveCarregarAImagemSobDemandaComTamanhoReservado', () => {
+    component.product = { id: 1, brand: 'Ultragaz', imageUrl: 'x.jpg', priceDelivery: 120, pricePickup: 100 } as any;
+    fixture.detectChanges();
+
+    const img = fixture.nativeElement.querySelector('img') as HTMLImageElement;
+    expect(img.getAttribute('loading')).toBe('lazy');
+    expect(img.getAttribute('width')).toBeTruthy();
+    expect(img.getAttribute('height')).toBeTruthy();
+  });
+
+  it('deveTerAlvoDeToque44pxNoCelular', () => {
+    component.product = { id: 1, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as any;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="add-to-cart"]').classList).toContain('min-h-11');
+  });
 });

@@ -31,4 +31,14 @@ describe('PaginationComponent', () => {
     expect(atual.classList).not.toContain('bg-primary');
     expect(atual.classList).toContain('border-primary');
   });
+
+  it('deveTerAlvosDeToqueDe44pxNoCelular', () => {
+    component.currentPage = 0;
+    component.totalPages = 3;
+    fixture.detectChanges();
+
+    const botoes = Array.from(fixture.nativeElement.querySelectorAll('nav button')) as HTMLElement[];
+    expect(botoes.length).toBeGreaterThan(4);
+    expect(botoes.every((b) => b.classList.contains('min-h-11') && b.classList.contains('min-w-11'))).toBeTrue();
+  });
 });

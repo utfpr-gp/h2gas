@@ -4,6 +4,7 @@
       *ngIf="product.imageUrl"
       [src]="product.imageUrl"
       [alt]="product.brand"
+      loading="lazy" width="160" height="96"
       class="object-contain h-full w-auto" />
     <span *ngIf="!product.imageUrl" class="material-icons text-gray-300 text-5xl">inventory_2</span>
   </div>
@@ -33,7 +34,7 @@
       type="button"
       data-testid="add-to-cart"
       (click)="onAdd()"
-      class="mt-auto btn btn-accent btn-sm w-full rounded-lg">
+      class="mt-auto btn btn-accent btn-sm w-full rounded-lg min-h-11 sm:min-h-8">
       <span class="material-icons text-base" aria-hidden="true">add_shopping_cart</span>
       Adicionar
     </button>

@@ -10,7 +10,7 @@
 
     <!-- Busca única (filtra sozinha) e alternância Lojas/Produtos -->
     <div class="flex flex-col md:flex-row gap-3 mb-5">
-        <label class="input input-bordered rounded-full flex items-center gap-2 w-full md:flex-1 bg-white">
+        <label class="input input-bordered rounded-full flex items-center gap-2 w-full md:flex-1 bg-white min-h-11">
             <span class="material-icons text-gray-400" aria-hidden="true">search</span>
             <input id="catalog-search" data-testid="catalog-search" type="search" class="grow"
                 [placeholder]="viewMode === 'suppliers' ? 'Buscar loja pelo nome' : 'Buscar botijão, água, marca…'"
@@ -22,13 +22,13 @@
             </button>
         </label>
         <div class="join self-center md:self-auto" role="group" aria-label="Ver lojas ou produtos">
-            <button type="button" data-testid="view-suppliers" class="btn join-item rounded-l-full"
+            <button type="button" data-testid="view-suppliers" class="btn join-item rounded-l-full min-h-11"
                 [attr.aria-pressed]="viewMode === 'suppliers'"
                 [ngClass]="viewMode === 'suppliers' ? 'border-primary bg-primary/10 text-primary' : 'btn-ghost border-gray-200 bg-white text-gray-600'"
                 (click)="setView('suppliers')">
                 <span class="material-icons text-base" aria-hidden="true">storefront</span>Lojas
             </button>
-            <button type="button" data-testid="view-products" class="btn join-item rounded-r-full"
+            <button type="button" data-testid="view-products" class="btn join-item rounded-r-full min-h-11"
                 [attr.aria-pressed]="viewMode === 'products'"
                 [ngClass]="viewMode === 'products' ? 'border-primary bg-primary/10 text-primary' : 'btn-ghost border-gray-200 bg-white text-gray-600'"
                 (click)="setView('products')">
@@ -69,11 +69,12 @@
 
     <!-- ================== PRODUTOS ================== -->
     <ng-container *ngIf="viewMode === 'products'">
+        <h2 class="sr-only">Produtos disponíveis</h2>
         <app-category-chip-bar [categories]="categories" [selected]="selectedCategory" (categorySelected)="selectCategory($event)"></app-category-chip-bar>
 
         <div class="flex flex-wrap items-center justify-between gap-2 my-4">
             <button type="button" data-testid="sort-price" (click)="toggleSortByPrice()" [attr.aria-pressed]="sortByPrice"
-                class="btn btn-sm rounded-full"
+                class="btn btn-sm rounded-full min-h-11 sm:min-h-8"
                 [ngClass]="sortByPrice ? 'border-primary bg-primary/10 text-primary' : 'btn-ghost border-gray-200 bg-white text-gray-600'">
                 <span class="material-icons text-sm" aria-hidden="true">sort</span>
                 Menor preço

@@ -199,4 +199,30 @@ describe('SupplierListComponent', () => {
     fixture.detectChanges();
     expect(component.viewMode).toBe('suppliers');
   });
+
+  it('deveManterAHierarquiaDeTitulosNaVisaoProdutos', () => {
+    fixture.detectChanges();
+    byId('view-products')!.click();
+    fixture.detectChanges();
+
+    // h1 → h2 → h3 dos cards: sem pular nível
+    expect(fixture.nativeElement.querySelectorAll('h1').length).toBe(1);
+    expect(fixture.nativeElement.querySelector('h2')!.textContent).toContain('Produtos disponíveis');
+  });
+
+  it('deveUsarTextoVerdadeiroNosBanners', () => {
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('15% OFF');
+  });
+
+  it('deveTerAlvosDeToqueDe44pxNaBuscaEAlternancia', () => {
+    fixture.detectChanges();
+
+    expect(byId('view-suppliers')!.classList).toContain('min-h-11');
+    expect(byId('view-products')!.classList).toContain('min-h-11');
+    byId('view-products')!.click();
+    fixture.detectChanges();
+    expect(byId('sort-price')!.classList).toContain('min-h-11');
+  });
 });

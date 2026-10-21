@@ -1470,6 +1470,15 @@ CSS puro (Grupos A–E) sem teste automatizado — grep + visual manual.
 > conteúdo, "Adicionar" em `rgb(42,120,214)`, lojas da cidade, busca "centro" sem botão só na cidade, limpar, 14 produtos pelo
 > total do backend, paginação 12 + 2, busca "minalba" na visão Produtos, sem rolagem lateral nem erro de JS).
 >
+> **Auditoria com a skill Impeccable (2026-10-21, 13/20)** e correções: (1) o `accent` `#2a78d6` dava 4,42:1 com texto branco
+> (a conta anterior de ≈4,6:1 estava errada) — virou `#2772ca`, 4,83:1; (2) "Sem avaliações ainda" em `gray-400` (2,6:1) passou
+> para `gray-600`; (3) o banner prometia "Até 15% OFF" sem promoção real — o texto virou "Botijões de vários tamanhos, com
+> entrega ou retirada"; (4) alvos de toque de 44 px no celular (alternância, busca, "Menor preço", "Adicionar", "Ver produtos" e
+> paginação), mantendo 32 px no desktop; (5) imagem do produto com `loading="lazy"` e tamanho reservado; (6) `h2` "Produtos
+> disponíveis" (oculto) para não pular de `h1` para `h3`. Os 2 avisos de imagem quebrada do detector estático são falsos
+> positivos (`src` ligado por Angular). Navegação por teclado não foi verificada. Spec: `deveManterAHierarquiaDeTitulosNaVisaoProdutos`,
+> `deveUsarTextoVerdadeiroNosBanners`, `deveTerAlvosDeToqueDe44px…`, `deveCarregarAImagemSobDemandaComTamanhoReservado`.
+>
 > **Achados**: (1) a busca antiga de lojas (`/suppliers/search`) ignorava a cidade (RN05) — o frontend passou a usar
 > `/actives/open?q=` e o `searchSuppliers` saiu; (2) a visão Produtos não buscava nem paginava — agora busca pelo backend e pagina
 > de 12 em 12. A rota `/suppliers/search` continua no backend, mas sem uso no frontend (candidata a sair).
