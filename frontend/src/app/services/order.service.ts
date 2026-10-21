@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { AbstractService } from './abstract.service';
 import { environment } from '../../environments/environment';
 import { CancelOrderResponse, OrderPreview, OrderPreviewRequest, OrderRequest, OrderResponse, ReorderPreview } from '../models/order.model';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { OrderHistoryFilter, OrderHistorySummary } from '../models/order-history';
 import { Observable } from 'rxjs';
 import { PaginatedResponse } from '../models/paginated-response';
 import { DeliveryHistory } from '../models/delivery-history';
@@ -15,6 +16,27 @@ export class OrderService extends AbstractService<OrderResponse> {
 
   constructor(protected override http: HttpClient) {
     super(http);
+  }
+
+  // F7 fatia 6: histórico do fornecedor do token, filtrado e contado no backend
+  listMyHistory(filter: OrderHistoryFilter & { page?: number; size?: number }): Observable<PaginatedResponse<OrderResponse>> {
+    let params = this.historyParams(filter);
+    if (filter.page != null) params = params.set('page', filter.page);
+    if (filter.size != null) params = params.set('size', filter.size);
+    return this.http.get<PaginatedResponse<OrderResponse>>(`${this.baseUrl}/mine/history`, { params });
+  }
+
+  getMyHistorySummary(filter: OrderHistoryFilter): Observable<OrderHistorySummary> {
+    return this.http.get<OrderHistorySummary>(`${this.baseUrl}/mine/history/summary`, { params: this.historyParams(filter) });
+  }
+
+  private historyParams(filter: OrderHistoryFilter): HttpParams {
+    let params = new HttpParams();
+    for (const key of ['status', 'from', 'to', 'payment', 'mode'] as const) {
+      if (filter[key]) params = params.set(key, filter[key]!);
+    }
+    if (filter.q?.trim()) params = params.set('q', filter.q.trim());
+    return params;
   }
 
   createOrder(data: OrderRequest): Observable<OrderResponse> {
