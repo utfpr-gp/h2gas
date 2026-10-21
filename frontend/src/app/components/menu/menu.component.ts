@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, ElementRef, HostListener, OnDestroy, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user';
 import { ProductItem } from '../../models/product-item';
@@ -11,6 +11,7 @@ import { ToastrService } from 'ngx-toastr';
 import { LocationContextService } from '../../services/location-context.service';
 import { UserService } from '../../services/user.service';
 import { initials } from '../../utils/initials';
+import { homeFor } from '../../utils/home-route';
 import { fadeIn } from '../../animations/checkout.animations';
 import { Subscription, skip } from 'rxjs';
 import { BottomTabBarComponent } from '../bottom-tab-bar/bottom-tab-bar.component';
@@ -21,6 +22,8 @@ import { DelivererTabBarComponent } from '../deliverer-tab-bar/deliverer-tab-bar
   imports: [
     CommonModule,
     FormsModule,
+    RouterLink,
+    RouterLinkActive,
     BottomTabBarComponent,
     DelivererTabBarComponent
   ],
@@ -98,6 +101,10 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.userSub?.unsubscribe();
+  }
+
+  get homeRoute(): string {
+    return homeFor(this.user?.userType);
   }
 
   get userInitials(): string {

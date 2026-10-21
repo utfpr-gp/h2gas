@@ -13,7 +13,7 @@
   
         <!-- Logo -->
         <div class="flex items-center">
-            <a [href]="isDeliverer ? '/entregas' : '/inicio'" aria-label="Ir para a tela inicial" class="hover:bg-white/10 px-3 py-2 rounded-md">
+            <a [routerLink]="homeRoute" aria-label="Ir para a tela inicial" class="hover:bg-white/10 px-3 py-2 rounded-md">
                 <div class="h-9 w-9 rounded-full flex items-center justify-center mr-2">
                     <img src="../assets/logo-sem-titulo.png" alt="logo" />
                   </div>
@@ -42,7 +42,7 @@
         <!-- MENU DESKTOP -->
         <nav *ngIf="!isDeliverer" class="hidden lg:flex items-center gap-2">
           <a
-            href="/inicio"
+            routerLink="/inicio" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }"
             class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
           >
             <i class="fas fa-home"></i><span class="ml-2">Início</span>
@@ -71,14 +71,14 @@
             >
               <li>
                 <a
-                  href="/product-items"
+                  routerLink="/product-items" routerLinkActive="bg-gray-100 font-semibold" ariaCurrentWhenActive="page" (click)="productsMenuOpen = false"
                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >Item produtos</a
                 >
               </li>
               <li>
                 <a
-                  href="/category-products"
+                  routerLink="/category-products" routerLinkActive="bg-gray-100 font-semibold" ariaCurrentWhenActive="page" (click)="productsMenuOpen = false"
                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                   >Categoria de produtos</a
                 >
@@ -88,7 +88,7 @@
   
           <a
             *ngIf="user?.userType === 'SUPPLIER'"
-            href="/dashboard"
+            routerLink="/dashboard" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page"
             class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
           >
             <i class="fa-solid fa-chart-line"></i><span class="ml-2">Dashboard</span>
@@ -96,7 +96,7 @@
 
           <a
             *ngIf="user?.userType === 'SUPPLIER'"
-            href="/dashboard-fornecedor"
+            routerLink="/dashboard-fornecedor" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page"
             class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
           >
             <i class="fa-solid fa-receipt"></i><span class="ml-2">Pedidos</span>
@@ -104,7 +104,7 @@
 
           <a
             *ngIf="user?.userType === 'SUPPLIER'"
-            href="/entregadores"
+            routerLink="/entregadores" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page"
             class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
           >
             <i class="fa-solid fa-motorcycle"></i><span class="ml-2">Entregadores</span>
@@ -112,7 +112,7 @@
 
           <a
             *ngIf="user?.userType === 'ADMIN' || user?.userType === 'CUSTOMER'"
-            href="/meus-pedidos"
+            routerLink="/meus-pedidos" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page"
             class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
           >
             <i class="fas fa-clipboard-list"></i><span class="ml-2">Pedidos</span>
@@ -120,7 +120,7 @@
   
           <a
             *ngIf="user?.userType === 'ADMIN'"
-            href="/register-city"
+            routerLink="/register-city" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page"
             class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
           >
             <i class="fas fa-map-marked-alt"></i><span class="ml-2">Cidades</span>
@@ -128,7 +128,7 @@
   
           <a
             *ngIf="user?.userType === 'ADMIN'"
-            href="/supplier-approval"
+            routerLink="/supplier-approval" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page"
             class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
           >
             <i class="fas fa-store"></i><span class="ml-2">Fornecedores</span>
@@ -313,10 +313,10 @@
       *ngIf="mobileMenuOpen"
       class="absolute top-16 left-0 w-full bg-primary text-white flex flex-col p-4 space-y-3 shadow-lg lg:hidden z-40"
     >
-      <a href="/inicio" class="hover:bg-white/10 px-3 py-2 rounded-md">Início</a>
-      <a *ngIf="user?.userType === 'SUPPLIER'" href="/dashboard" class="hover:bg-white/10 px-3 py-2 rounded-md">Dashboard</a>
-      <a *ngIf="user?.userType === 'SUPPLIER'" href="/dashboard-fornecedor" class="hover:bg-white/10 px-3 py-2 rounded-md">Pedidos</a>
-      <a *ngIf="user?.userType === 'SUPPLIER'" href="/entregadores" class="hover:bg-white/10 px-3 py-2 rounded-md">Entregadores</a>
+      <a routerLink="/inicio" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }" class="hover:bg-white/10 px-3 py-2 rounded-md">Início</a>
+      <a *ngIf="user?.userType === 'SUPPLIER'" routerLink="/dashboard" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="hover:bg-white/10 px-3 py-2 rounded-md">Dashboard</a>
+      <a *ngIf="user?.userType === 'SUPPLIER'" routerLink="/dashboard-fornecedor" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="hover:bg-white/10 px-3 py-2 rounded-md">Pedidos</a>
+      <a *ngIf="user?.userType === 'SUPPLIER'" routerLink="/entregadores" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="hover:bg-white/10 px-3 py-2 rounded-md">Entregadores</a>
   
       <ng-container *ngIf="user?.userType === 'ADMIN' || user?.userType === 'SUPPLIER'">
         <button
@@ -331,14 +331,14 @@
         </button>
   
         <div *ngIf="submenuOpen" class="flex flex-col pl-4 space-y-2">
-          <a href="/product-items" class="hover:bg-white/10 px-3 py-1 rounded-md">Item produtos</a>
-          <a href="/category-products" class="hover:bg-white/10 px-3 py-1 rounded-md">Categoria de produtos</a>
+          <a routerLink="/product-items" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="hover:bg-white/10 px-3 py-1 rounded-md">Item produtos</a>
+          <a routerLink="/category-products" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="hover:bg-white/10 px-3 py-1 rounded-md">Categoria de produtos</a>
         </div>
       </ng-container>
   
-      <a *ngIf="user?.userType === 'ADMIN' || user?.userType === 'CUSTOMER'" href="/meus-pedidos" class="hover:bg-white/10 px-3 py-2 rounded-md">Pedidos</a>
-      <a *ngIf="user?.userType === 'ADMIN'" href="/register-city" class="hover:bg-white/10 px-3 py-2 rounded-md">Cidades</a>
-      <a *ngIf="user?.userType === 'ADMIN'" href="/supplier-approval" class="hover:bg-white/10 px-3 py-2 rounded-md">Fornecedores</a>
+      <a *ngIf="user?.userType === 'ADMIN' || user?.userType === 'CUSTOMER'" routerLink="/meus-pedidos" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="hover:bg-white/10 px-3 py-2 rounded-md">Pedidos</a>
+      <a *ngIf="user?.userType === 'ADMIN'" routerLink="/register-city" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="hover:bg-white/10 px-3 py-2 rounded-md">Cidades</a>
+      <a *ngIf="user?.userType === 'ADMIN'" routerLink="/supplier-approval" routerLinkActive="bg-white/15" ariaCurrentWhenActive="page" class="hover:bg-white/10 px-3 py-2 rounded-md">Fornecedores</a>
     </div>
   </div>
 

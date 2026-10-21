@@ -1,8 +1,10 @@
+import { Component } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { By } from '@angular/platform-browser';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { Router } from '@angular/router';
+import { Router, RouterLink, provideRouter } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 
 import { MenuComponent } from './menu.component';
@@ -10,6 +12,9 @@ import { AuthService } from '../../services/auth.service';
 import { LocationContextService } from '../../services/location-context.service';
 import { CartService } from '../../services/cart.service';
 import { UserService } from '../../services/user.service';
+
+@Component({ template: '' })
+class TelaVazia {}
 
 describe('MenuComponent', () => {
   let component: MenuComponent;
@@ -23,7 +28,7 @@ describe('MenuComponent', () => {
     await TestBed.configureTestingModule({
       imports: [MenuComponent],
       providers: [
-        { provide: Router, useValue: jasmine.createSpyObj('Router', ['navigate']) },
+        provideRouter([{ path: '**', component: TelaVazia }]),
         { provide: AuthService, useValue: jasmine.createSpyObj('AuthService', ['logout', 'isLogged']) },
         { provide: ToastrService, useValue: jasmine.createSpyObj('ToastrService', ['success', 'error', 'warning']) },
         provideHttpClient(),
@@ -54,7 +59,8 @@ describe('MenuComponent', () => {
   it('deveIrParaMeusEnderecosAoClicarNoEnderecoAtivo', () => {
     locationContextService.setAddress({ cityId: 1, cityName: 'Pato Branco', label: 'Rua XV, 100 · Pato Branco' });
     fixture.detectChanges();
-    const router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate');
 
     const botaoEndereco = Array.from(fixture.nativeElement.querySelectorAll('button') as HTMLButtonElement[])
       .find((b) => b.textContent?.includes('Rua XV, 100 · Pato Branco'));
@@ -190,7 +196,8 @@ describe('MenuComponent', () => {
 
   it('deveLevarParaMeusDadosEFecharOMenu', () => {
     entrarComo({ id: 'u1', name: 'Maria Souza', email: 'maria@h2gas.local', userType: 'CUSTOMER' });
-    const router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+    const router = TestBed.inject(Router);
+    spyOn(router, 'navigate');
     abrirMenu();
 
     (byId('menu-item-meus-dados') as HTMLButtonElement).click();
@@ -253,5 +260,66 @@ describe('MenuComponent', () => {
     fixture.detectChanges();
 
     expect(byId('user-menu')).toBeTruthy();
+  });
+
+  // ---- F7 fatia 5: navegação da navbar ----
+  const perfis = {
+    cliente: { id: 'u1', name: 'Maria Souza', email: 'maria@h2gas.local', userType: 'CUSTOMER' },
+    fornecedor: { id: 'f1', name: 'Gás Centro', email: 'gas@h2gas.local', userType: 'SUPPLIER' },
+    entregador: { id: 'd1', name: 'Carlos Silva', email: 'carlos@h2gas.local', userType: 'DELIVERER' },
+    admin: { id: 'a1', name: 'Admin H2Gás', email: 'admin@h2gas.local', userType: 'ADMIN' },
+  };
+  const linkPara = (href: string) =>
+    (fixture.nativeElement as HTMLElement).querySelector(`nav a[href="${href}"]`) as HTMLAnchorElement | null;
+  const navegar = async (url: string) => {
+    await TestBed.inject(Router).navigateByUrl(url);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+  };
+
+  it('deveNavegarSemRecarregarOApp', async () => {
+    for (const perfil of Object.values(perfis)) {
+      entrarComo(perfil);
+      (byId('mobile-menu-button') as HTMLButtonElement | null)?.click();
+      fixture.detectChanges();
+
+      const links = fixture.debugElement.queryAll(By.css('a'));
+      expect(links.length).withContext(perfil.userType).toBeGreaterThan(0);
+      links.forEach((link) =>
+        expect(link.injector.get(RouterLink, null)).withContext(`${perfil.userType} ${link.nativeElement.getAttribute('href')}`).not.toBeNull());
+    }
+
+    entrarComo(perfis.admin);
+    const clique = new MouseEvent('click', { bubbles: true, cancelable: true });
+    linkPara('/register-city')!.dispatchEvent(clique);
+    await fixture.whenStable();
+
+    expect(clique.defaultPrevented).toBeTrue();
+    expect(TestBed.inject(Router).url).toBe('/register-city');
+  });
+
+  it('deveDestacarOLinkAtivo', async () => {
+    entrarComo(perfis.admin);
+
+    await navegar('/register-city');
+
+    expect(linkPara('/register-city')!.classList).toContain('bg-white/15');
+    expect(linkPara('/register-city')!.getAttribute('aria-current')).toBe('page');
+    expect(linkPara('/inicio')!.classList).not.toContain('bg-white/15');
+    expect(linkPara('/inicio')!.getAttribute('aria-current')).toBeNull();
+  });
+
+  it('deveLevarALogoParaOInicioDoPerfil', () => {
+    const logo = () => (fixture.nativeElement as HTMLElement).querySelector('a[aria-label="Ir para a tela inicial"]')!.getAttribute('href');
+
+    entrarComo(perfis.cliente);
+    expect(logo()).toBe('/inicio');
+    entrarComo(perfis.fornecedor);
+    expect(logo()).toBe('/dashboard');
+    entrarComo(perfis.entregador);
+    expect(logo()).toBe('/entregas');
+    entrarComo(perfis.admin);
+    expect(logo()).toBe('/inicio');
   });
 });
