@@ -1,183 +1,170 @@
-import { Component, OnInit } from '@angular/core';
-import { MenuComponent } from '../../menu/menu.component';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ProductTypeService } from '../../../services/product-type.service';
-import { ProductType } from '../../../models/product-type';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
+import { ProductTypeService } from '../../../services/product-type.service';
 import { CategoryProductService } from '../../../services/category-product.service';
-import { CategoryProduct } from '../../../models/category-product';
-import { DeleteConfirmationModalComponent } from '../../delete-confirmation-modal/delete-confirmation-modal.component';
-import { User } from '../../../models/user';
-import { UserService } from '../../../services/user.service';
+import { DEFAULT_PRODUCT_TYPE_ICON, ProductType } from '../../../models/product-type';
+import { CategoryRequest, SupplierCategory } from '../../../models/supplier-category';
 import { backendMessage } from '../../../utils/backend-message';
+import { fadeIn } from '../../../animations/checkout.animations';
 
+interface CategoryGroup { productTypeId: number; type: string; icon: string; categories: SupplierCategory[]; }
+
+// F7 fatia 6: categorias da loja do fornecedor, agrupadas pelo tipo de produto (mantido pelo admin)
 @Component({
   selector: 'app-category-products',
-  imports: [
-    ReactiveFormsModule,
-    CommonModule,
-    FormsModule,
-    DeleteConfirmationModalComponent
-  ],
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './category-products.component.html',
   host: { class: 'flex-1 flex flex-col' },
+  animations: [fadeIn],
 })
 export class CategoryProductsComponent implements OnInit {
+  categories: SupplierCategory[] = [];
+  productTypes: ProductType[] = [];
+  loading = true;
 
+  editing?: SupplierCategory;
+  formOpen = false;
+  saving = false;
+  private readonly fb = inject(FormBuilder);
+  readonly form = this.fb.nonNullable.group({
+    productTypeId: ['', Validators.required],
+    name: ['', [Validators.required, Validators.maxLength(60), Validators.pattern(/\S/)]],
+  });
 
-  mostrarFormulario = false;
-  modalAberta = false;
-  formCategory!: FormGroup;
-
-  productTypes?: ProductType[];
-
-  category?: CategoryProduct; 
-
-  categories?: CategoryProduct[];
-
-  deleteNameCategory?: string;
-  idCategoryRow?: number;
-  userLogado?: User;
-
-  isEdit: boolean = false;
+  deleteTarget?: SupplierCategory;
+  deleting = false;
 
   constructor(
+    private categoryService: CategoryProductService,
     private productTypeService: ProductTypeService,
     private toastr: ToastrService,
-    private fb: FormBuilder, 
-    private categoryService: CategoryProductService,
-    private userService: UserService
-  ) {
-    this.formCategory = this.fb.group({
-      name: ['', [Validators.required]],
-      type: [''],
-      productTypeId: [null, [Validators.required]],
-      supplierId: ['']
-    })
-  }
-
+  ) {}
 
   ngOnInit(): void {
-    this.userLogado = this.userService.getUserLocalStorage()
-    this.getProuctTypes();
-    this.getAllCategories()
-  }
-
-
-  toggleFormulario() {
-    this.formCategory.reset();
-    this.modalAberta = !this.modalAberta;
-    this.isEdit = false;
-  }
-
-  openModalEdit(editFormValue: CategoryProduct, isEditForm: boolean) {
-    this.isEdit = isEditForm;
-    this.modalAberta = !this.modalAberta;
-    this.category = editFormValue;
-    this.idCategoryRow = editFormValue.id
-    this.formCategory.patchValue(editFormValue);
-  }
-
-  getProuctTypes() {
     this.productTypeService.findAll().subscribe({
-      next: (response) => {
-        this.productTypes = response;
-        // this.toastr.success("Encontrado tipos com sucesso")        
+      next: (types) => (this.productTypes = types),
+      error: (err) => this.toastr.error(`Erro ao carregar os tipos de produto: ${backendMessage(err)}`),
+    });
+    this.load();
+  }
+
+  load() {
+    this.loading = true;
+    this.categoryService.listMine().subscribe({
+      next: (categories) => {
+        this.categories = categories;
+        this.loading = false;
       },
       error: (err) => {
-        this.toastr.error(`Erro ao carregar os tipos de produto: ${backendMessage(err)}`)        
+        this.loading = false;
+        this.toastr.error(`Erro ao carregar as categorias: ${backendMessage(err)}`);
       },
-    })
-  }
-
-  openModalDelete(category: CategoryProduct) {
-    
-    this.deleteNameCategory = `${category.type} de ${category.name}`
-    this.idCategoryRow = category.id
-    
-    setTimeout(() => {
-      const checkbox: any = document.getElementById('delete-modal');
-      if (checkbox) checkbox.checked = true;
     });
   }
 
-  getAllCategories() {
-    this.categoryService.findBySupplierId(this.userLogado?.supplierId!).subscribe({
-      next: (response) => {
-        this.categories = response.data;
-      },
-      error: (err) => {
-        this.toastr.error(`Erro ao carregar as categorias: ${backendMessage(err)}`)        
-      },
-    })
+  // o backend já ordena por tipo e nome
+  get groups(): CategoryGroup[] {
+    const groups: CategoryGroup[] = [];
+    for (const c of this.categories) {
+      let group = groups.find((g) => g.productTypeId === c.productTypeId);
+      if (!group) {
+        group = { productTypeId: c.productTypeId, type: c.type, icon: c.typeIcon || DEFAULT_PRODUCT_TYPE_ICON, categories: [] };
+        groups.push(group);
+      }
+      group.categories.push(c);
+    }
+    return groups;
   }
 
-  salvarCategoria() {
-    if (this.formCategory.invalid) {
-      this.formCategory.markAllAsTouched();
+  countLabel(c: SupplierCategory): string {
+    if (!c.productCount) return 'Sem produtos';
+    return `${c.productCount} ${c.productCount === 1 ? 'produto' : 'produtos'}`;
+  }
+
+  // ---- criar / editar ----
+  openCreate() {
+    this.editing = undefined;
+    this.form.reset({ productTypeId: '', name: '' });
+    this.formOpen = true;
+  }
+
+  openEdit(c: SupplierCategory) {
+    this.editing = c;
+    this.form.reset({ productTypeId: String(c.productTypeId), name: c.name });
+    this.formOpen = true;
+  }
+
+  closeForm() {
+    if (!this.saving) this.formOpen = false;
+  }
+
+  invalid(control: 'productTypeId' | 'name'): boolean {
+    const c = this.form.controls[control];
+    return c.invalid && (c.touched || c.dirty);
+  }
+
+  private request(): CategoryRequest {
+    const v = this.form.getRawValue();
+    return { name: v.name.trim(), productTypeId: Number(v.productTypeId) };
+  }
+
+  get canSave(): boolean {
+    if (this.form.invalid || this.saving) return false;
+    const r = this.request();
+    return !this.editing || r.name !== this.editing.name || r.productTypeId !== this.editing.productTypeId;
+  }
+
+  save() {
+    if (!this.canSave) {
+      this.form.markAllAsTouched();
       return;
     }
-    this.formCategory.get('supplierId')?.setValue(this.userLogado?.supplierId)
-
-    this.category = this.formCategory.value; 
-
-    console.log(this.category);
-    
-
-    this.categoryService.create(this.category!!).subscribe({
-      next: (value) => {
-        this.toastr.success('Categoria salva.')        
-        this.getAllCategories();
-        this.toggleFormulario();
+    const request = this.request();
+    const editing = this.editing;
+    this.saving = true;
+    const call = editing ? this.categoryService.updateCategory(editing.id, request) : this.categoryService.createCategory(request);
+    call.subscribe({
+      next: () => {
+        this.saving = false;
+        this.formOpen = false;
+        this.toastr.success(editing ? `Categoria ${request.name} salva.` : `Categoria ${request.name} criada.`);
+        this.load();
       },
       error: (err) => {
-        
-        this.toastr.error(`Erro ao salvar categoria: ${backendMessage(err)}`)        
-      }
-    })
+        this.saving = false;
+        this.toastr.error(`Não foi possível salvar a categoria: ${backendMessage(err)}`);
+      },
+    });
   }
 
-  deleteConfirmed() {
-    
-    this.categoryService.delete(this.idCategoryRow!!).subscribe({
-      next: (value) => {
-        
-        this.toastr.success('Categoria excluída.')        
-        this.getAllCategories();
+  // ---- excluir ----
+  askDelete(c: SupplierCategory) {
+    this.deleteTarget = c;
+  }
+
+  closeDelete() {
+    if (!this.deleting) this.deleteTarget = undefined;
+  }
+
+  confirmDelete() {
+    const c = this.deleteTarget;
+    if (!c || c.productCount > 0) return;
+    this.deleting = true;
+    this.categoryService.delete(c.id).subscribe({
+      next: () => {
+        this.deleting = false;
+        this.deleteTarget = undefined;
+        this.toastr.success(`Categoria ${c.name} excluída.`);
+        this.load();
       },
       error: (err) => {
-        
-        this.toastr.error(`Erro ao excluir a categoria: ${backendMessage(err)}`)        
-      }
-    })
-  }
-
-  update() {
-    
-    if (this.formCategory.invalid) {
-      this.formCategory.markAllAsTouched();
-      return;
-    } else if (this.category == this.formCategory.value) {
-      this.toastr.warning('Nenhuma alteração para salvar.')        
-      return;
-    }
-
-    this.category = this.formCategory.value; 
-
-    this.categoryService.update(this.idCategoryRow!!, this.category!!).subscribe({
-      next: (value) => {
-        
-        this.toastr.success('Categoria atualizada.')        
-        this.getAllCategories();
-        this.toggleFormulario();
+        this.deleting = false;
+        this.deleteTarget = undefined;
+        this.toastr.error(`Não foi possível excluir: ${backendMessage(err)}`);
       },
-      error: (err) => {
-        
-        this.toastr.error(`Erro ao atualizar categoria: ${backendMessage(err)}`)        
-      }
-    })
+    });
   }
-  
-
 }

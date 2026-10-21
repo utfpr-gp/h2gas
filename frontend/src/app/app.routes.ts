@@ -11,7 +11,6 @@ import { AdminDashboardComponent } from './components/pages/admin-dashboard/admi
 import { AdminUsersComponent } from './components/pages/admin-users/admin-users.component';
 import { AdminProductTypesComponent } from './components/pages/admin-product-types/admin-product-types.component';
 import { DistribuitorFormComponent } from './components/pages/distribuitor-form/distribuitor-form.component';
-import { CategoryProductsComponent } from './components/pages/category-products/category-products.component';
 import { ProductItemFormComponent } from './components/pages/product-item-form/product-item-form.component';
 import { UnauthorizedComponent } from './components/pages/unauthorized/unauthorized.component';
 import { SupplierListComponent } from './components/pages/supplier-list/supplier-list.component';
@@ -60,8 +59,9 @@ export const routes: Routes = [
         data: {roles: ['ADMIN', 'SUPPLIER']}
     },
     {
-        path: 'category-products', 
-        component: CategoryProductsComponent,
+        path: 'category-products',
+        // tela só do fornecedor: fora do bundle inicial
+        loadComponent: () => import('./components/pages/category-products/category-products.component').then((m) => m.CategoryProductsComponent),
         canActivate: [authGuard],
         data: {roles: ['SUPPLIER']}
     },
