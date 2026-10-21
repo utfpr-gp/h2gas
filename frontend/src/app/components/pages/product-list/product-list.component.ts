@@ -103,4 +103,10 @@ export class ProductListComponent implements OnInit {
     this.cartService.addProduct({ ...product, quantitySelect: 1 });
     this.toastr.success('Produto adicionado ao carrinho.');
   }
+
+  // F7 §5.23: compra direta — item avulso, sem passar pelo carrinho
+  buyNow(product: ProductItem) {
+    this.cartService.startBuyNow({ ...product, quantitySelect: 1 });
+    this.router.navigate(['/resumo-pedido'], { queryParams: { modo: 'compra-direta' } });
+  }
 }

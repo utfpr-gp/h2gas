@@ -85,4 +85,16 @@ describe('ProductCardComponent', () => {
 
     expect(fixture.nativeElement.querySelector('[data-testid="add-to-cart"]').classList).toContain('min-h-11');
   });
+
+  it('deveEmitirCompraDiretaComQuantidadeUm', () => {
+    component.product = { id: 10, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as ProductItem;
+    fixture.detectChanges();
+    spyOn(component.buyNow, 'emit');
+    spyOn(component.addToCart, 'emit');
+
+    (fixture.nativeElement.querySelector('[data-testid="buy-now"]') as HTMLButtonElement).click();
+
+    expect(component.buyNow.emit).toHaveBeenCalledWith(jasmine.objectContaining({ id: 10, quantitySelect: 1 }));
+    expect(component.addToCart.emit).not.toHaveBeenCalled();
+  });
 });

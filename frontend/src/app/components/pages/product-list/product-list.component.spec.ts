@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { of, throwError } from 'rxjs';
 
@@ -26,7 +27,7 @@ describe('ProductListComponent', () => {
     productTypeServiceSpy = jasmine.createSpyObj('ProductTypeService', ['findAll']);
     productTypeServiceSpy.findAll.and.returnValue(of([{ id: 1, name: 'Gás' }, { id: 2, name: 'Água' }] as any));
 
-    cartServiceSpy = jasmine.createSpyObj('CartService', ['addProduct']);
+    cartServiceSpy = jasmine.createSpyObj('CartService', ['addProduct', 'startBuyNow']);
 
     await TestBed.configureTestingModule({
       imports: [ProductListComponent],
@@ -80,5 +81,15 @@ describe('ProductListComponent', () => {
     expect(cartServiceSpy.addProduct).toHaveBeenCalledWith(
       jasmine.objectContaining({ id: 5, quantitySelect: 1 })
     );
+  });
+
+  it('deveIrParaOCheckoutNaCompraDireta', () => {
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+
+    component.buyNow({ id: 5 } as ProductItem);
+
+    expect(cartServiceSpy.startBuyNow).toHaveBeenCalledWith(jasmine.objectContaining({ id: 5, quantitySelect: 1 }));
+    expect(cartServiceSpy.addProduct).not.toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith(['/resumo-pedido'], { queryParams: { modo: 'compra-direta' } });
   });
 });

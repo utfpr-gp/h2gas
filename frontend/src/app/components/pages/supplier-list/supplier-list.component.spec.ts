@@ -35,7 +35,7 @@ describe('SupplierListComponent', () => {
     productTypeServiceSpy = jasmine.createSpyObj('ProductTypeService', ['findAll']);
     productTypeServiceSpy.findAll.and.returnValue(of([{ id: 1, name: 'Gás' }, { id: 2, name: 'Água' }] as any));
 
-    cartServiceSpy = jasmine.createSpyObj('CartService', ['addProduct']);
+    cartServiceSpy = jasmine.createSpyObj('CartService', ['addProduct', 'startBuyNow']);
 
     activatedRouteStub = { snapshot: { queryParamMap: { get: () => null } } };
 
@@ -224,5 +224,15 @@ describe('SupplierListComponent', () => {
     byId('view-products')!.click();
     fixture.detectChanges();
     expect(byId('sort-price')!.classList).toContain('min-h-11');
+  });
+
+  it('deveIrParaOCheckoutNaCompraDireta', () => {
+    const router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+
+    component.buyNow({ id: 99, brand: 'Ultragaz' } as ProductItem);
+
+    expect(cartServiceSpy.startBuyNow).toHaveBeenCalledWith(jasmine.objectContaining({ id: 99, quantitySelect: 1 }));
+    expect(cartServiceSpy.addProduct).not.toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/resumo-pedido'], { queryParams: { modo: 'compra-direta' } });
   });
 });
