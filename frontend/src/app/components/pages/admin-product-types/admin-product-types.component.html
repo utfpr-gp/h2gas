@@ -1,0 +1,57 @@
+<div class="max-w-3xl w-full mx-auto px-4 md:px-8 pt-6 pb-24 md:pb-10">
+    <header class="mb-4">
+        <h1 class="text-2xl font-bold text-gray-800">Tipos de produto</h1>
+        <p class="text-sm text-gray-500">Os fornecedores escolhem um destes tipos ao criar as próprias categorias.</p>
+    </header>
+
+    <form class="flex flex-col sm:flex-row gap-2 mb-4" [formGroup]="newForm" (ngSubmit)="create()">
+        <label class="sr-only" for="new-type-name">Nome do novo tipo</label>
+        <input id="new-type-name" data-testid="new-type-name" type="text" maxlength="60"
+            class="input input-bordered rounded-xl bg-white grow" placeholder="Ex.: Gás, Água Mineral"
+            formControlName="name" [class.input-error]="newForm.controls.name.touched && newForm.controls.name.invalid" />
+        <button type="submit" data-testid="save-new-type" class="btn btn-primary rounded-xl" [disabled]="creating">
+            <span *ngIf="creating" class="loading loading-spinner loading-sm"></span>
+            <span *ngIf="!creating" class="material-icons text-base">add</span>
+            Novo tipo
+        </button>
+    </form>
+
+    <div *ngIf="loading" class="space-y-2" aria-busy="true">
+        <div *ngFor="let n of [1,2,3]" class="skeleton h-14 rounded-xl"></div>
+    </div>
+
+    <div *ngIf="!loading && !types.length" class="text-center bg-white rounded-xl border border-gray-200 py-12 px-4">
+        <span class="material-icons text-gray-300" style="font-size: 56px">category</span>
+        <p class="text-gray-700 font-semibold mt-2">Nenhum tipo cadastrado</p>
+        <p class="text-sm text-gray-500">Cadastre o primeiro tipo para os fornecedores usarem.</p>
+    </div>
+
+    <ul *ngIf="types.length" class="space-y-2">
+        <li *ngFor="let t of types" [attr.data-testid]="'type-' + t.id"
+            class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 flex items-center gap-2">
+            <ng-container *ngIf="renamingId !== t.id; else editando">
+                <span class="material-icons text-gray-400">category</span>
+                <span class="font-semibold text-gray-800 truncate grow">{{ t.name }}</span>
+                <button type="button" [attr.data-testid]="'rename-' + t.id" class="btn btn-sm btn-ghost rounded-lg"
+                    [attr.aria-label]="'Renomear ' + t.name" (click)="startRename(t)">
+                    <span class="material-icons text-base">edit</span>
+                    <span class="hidden sm:inline">Renomear</span>
+                </button>
+            </ng-container>
+            <ng-template #editando>
+                <form class="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full" [formGroup]="renameForm" (ngSubmit)="saveRename(t)">
+                    <label class="sr-only" [for]="'rename-input-' + t.id">Novo nome de {{ t.name }}</label>
+                    <input [id]="'rename-input-' + t.id" [attr.data-testid]="'rename-input-' + t.id" type="text" maxlength="60"
+                        class="input input-bordered input-sm rounded-lg grow min-w-0 basis-full sm:basis-auto"
+                        formControlName="name" [class.input-error]="renameForm.controls.name.touched && renameForm.controls.name.invalid" />
+                    <div class="flex gap-1 ml-auto">
+                        <button type="button" class="btn btn-sm btn-ghost rounded-lg" (click)="cancelRename()">Cancelar</button>
+                        <button type="submit" [attr.data-testid]="'save-rename-' + t.id" class="btn btn-sm btn-primary rounded-lg" [disabled]="renaming">
+                            Salvar
+                        </button>
+                    </div>
+                </form>
+            </ng-template>
+        </li>
+    </ul>
+</div>

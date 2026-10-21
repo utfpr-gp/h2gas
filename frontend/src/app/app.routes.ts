@@ -11,6 +11,7 @@ import { FirstAccessAddressComponent } from './components/pages/first-access-add
 import { SupplierApprovalComponent } from './components/pages/supplier-approval/supplier-approval.component';
 import { AdminDashboardComponent } from './components/pages/admin-dashboard/admin-dashboard.component';
 import { AdminUsersComponent } from './components/pages/admin-users/admin-users.component';
+import { AdminProductTypesComponent } from './components/pages/admin-product-types/admin-product-types.component';
 import { DistribuitorFormComponent } from './components/pages/distribuitor-form/distribuitor-form.component';
 import { CategoryProductsComponent } from './components/pages/category-products/category-products.component';
 import { ProductItemComponent } from './components/pages/product-item/product-item.component';
@@ -66,25 +67,25 @@ export const routes: Routes = [
         path: 'category-products', 
         component: CategoryProductsComponent,
         canActivate: [authGuard],
-        data: {roles: ['ADMIN', 'SUPPLIER']}
+        data: {roles: ['SUPPLIER']}
     },
     {
         path: 'product-items', 
         component: ProductItemComponent,
         canActivate: [authGuard],
-        data: {roles: ['ADMIN', 'SUPPLIER']}
+        data: {roles: ['SUPPLIER']}
     },
     {
         path: 'product-items/new', 
         component: ProductItemFormComponent,
         canActivate: [authGuard],
-        data: {roles: ['ADMIN', 'SUPPLIER']}
+        data: {roles: ['SUPPLIER']}
     },
     {
         path: 'product-items/edit/:id', 
         component: ProductItemFormComponent,
         canActivate: [authGuard],
-        data: {roles: ['ADMIN', 'SUPPLIER']}
+        data: {roles: ['SUPPLIER']}
     },
     {
         path: 'admin',
@@ -95,6 +96,12 @@ export const routes: Routes = [
     {
         path: 'admin/usuarios',
         component: AdminUsersComponent,
+        canActivate: [authGuard],
+        data: {roles: ['ADMIN']}
+    },
+    {
+        path: 'admin/tipos',
+        component: AdminProductTypesComponent,
         canActivate: [authGuard],
         data: {roles: ['ADMIN']}
     },
