@@ -1,31 +1,44 @@
-<div class="bg-white rounded-xl shadow-md overflow-hidden p-4 border border-gray-200 flex items-center gap-4">
+<!-- HU15: card compacto — logo quadrada à esquerda, nome e metadados à direita; o card inteiro abre a loja -->
+<div
+  data-testid="view-products"
+  role="button"
+  tabindex="0"
+  [attr.aria-label]="'Ver produtos de ' + supplier.name"
+  (click)="onViewProducts()"
+  (keydown.enter)="onViewProducts()"
+  (keydown.space)="onViewProducts(); $event.preventDefault()"
+  class="flex items-center gap-3 p-2 rounded-xl min-h-11 cursor-pointer transition-colors
+         hover:bg-base-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+
   <!-- F7 fatia 6: logo da loja; sem logo (ou com a imagem quebrada) fica o ícone -->
-  <div class="w-12 h-12 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center shrink-0">
+  <div class="w-20 h-20 rounded-xl overflow-hidden bg-base-200 border border-base-300 shrink-0
+              flex items-center justify-center">
     <img *ngIf="supplier.logoUrl && !logoBroken; else icone" data-testid="supplier-logo" [src]="supplier.logoUrl"
-      [alt]="'Logo de ' + supplier.name" loading="lazy" class="w-full h-full object-cover" (error)="logoBroken = true" />
+      [alt]="'Logo de ' + supplier.name" loading="lazy" width="80" height="80" class="w-full h-full object-cover"
+      (error)="logoBroken = true" />
     <ng-template #icone>
       <span data-testid="supplier-icon" class="material-icons text-primary text-3xl" aria-hidden="true">storefront</span>
     </ng-template>
   </div>
 
-  <div class="flex-grow min-w-0">
-    <h2 class="font-bold text-gray-800 truncate">{{ supplier.name }}</h2>
+  <div class="min-w-0 flex-grow">
+    <h2 class="font-semibold text-base-content truncate">{{ supplier.name }}</h2>
 
-    <app-store-rating [average]="supplier.averageRating" [count]="supplier.reviewCount" [clickable]="true"
-      (openReviews)="viewReviews.emit(supplier)"></app-store-rating>
+    <!-- nota e, ao lado, o que a loja vende (HU15) -->
+    <div class="flex items-center flex-wrap gap-x-2 gap-y-1">
+      <app-store-rating [average]="supplier.averageRating" [count]="supplier.reviewCount" [clickable]="true"
+        (openReviews)="viewReviews.emit(supplier)"></app-store-rating>
 
-    <div class="flex items-center text-gray-500 text-xs gap-1 mt-1" *ngIf="supplier.openingTime && supplier.closingTime">
-      <span class="material-icons text-sm">schedule</span>
+      <span *ngFor="let tipo of supplier.productTypes" data-testid="supplier-type"
+        class="inline-flex items-center gap-1 text-xs text-neutral">
+        <span class="material-icons text-xs" aria-hidden="true">{{ tipo.icon }}</span>{{ tipo.name }}
+      </span>
+    </div>
+
+    <!-- HU17 acrescenta aqui a distância e a taxa de entrega -->
+    <div class="flex items-center text-neutral text-xs gap-1" *ngIf="supplier.openingTime && supplier.closingTime">
       <span>{{ supplier.openingTime }} - {{ supplier.closingTime }}</span>
       <span *ngIf="supplier.averageDeliveryTime"> · {{ supplier.averageDeliveryTime }} min</span>
     </div>
   </div>
-
-  <button
-    type="button"
-    data-testid="view-products"
-    (click)="onViewProducts()"
-    class="btn btn-sm btn-outline btn-primary rounded-lg shrink-0 min-h-11 sm:min-h-8">
-    Ver produtos
-  </button>
 </div>

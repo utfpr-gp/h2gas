@@ -20,7 +20,8 @@ describe('CategoryChipBarComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('deveEmitirNomeDaCategoriaAoClicarNoChip', () => {
+  // ---- HU15: o chip emite o tipo inteiro — lojas filtram por id, produtos por nome ----
+  it('deveEmitirOTipoInteiro', () => {
     component.categories = [{ id: 1, name: 'Gás' }, { id: 2, name: 'Água' }];
     fixture.detectChanges();
     spyOn(component.categorySelected, 'emit');
@@ -29,7 +30,7 @@ describe('CategoryChipBarComponent', () => {
       .find((b) => b.textContent?.includes('Água'));
     chipAgua?.click();
 
-    expect(component.categorySelected.emit).toHaveBeenCalledWith('Água');
+    expect(component.categorySelected.emit).toHaveBeenCalledWith(jasmine.objectContaining({ id: 2, name: 'Água' }));
   });
 
   it('deveEmitirNullAoClicarEmTodas', () => {

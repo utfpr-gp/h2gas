@@ -181,4 +181,19 @@ describe('SupplierService', () => {
     expect(semBusca.request.params.has('q')).toBeFalse();
     semBusca.flush({ data: [], page: 0, size: 10, totalElements: 0, totalPages: 0, hasNext: false, hasPrevious: false });
   });
+
+  // ---- HU15 ----
+
+  it('deveEnviarOProductTypeIdNaQuery', () => {
+    service.getAllSupplierOpenAndActive(0, 10, 7, undefined, 3).subscribe();
+
+    const req = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/suppliers/actives/open`);
+    expect(req.request.params.get('productTypeId')).toBe('3');
+    req.flush({ data: [], page: 0, size: 10, totalElements: 0, totalPages: 0, hasNext: false, hasPrevious: false });
+
+    service.getAllSupplierOpenAndActive(0, 10, 7).subscribe();
+    const semTipo = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/suppliers/actives/open`);
+    expect(semTipo.request.params.has('productTypeId')).toBeFalse();
+    semTipo.flush({ data: [], page: 0, size: 10, totalElements: 0, totalPages: 0, hasNext: false, hasPrevious: false });
+  });
 });

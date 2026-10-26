@@ -74,7 +74,7 @@ describe('SupplierListComponent', () => {
 
     fixture.detectChanges();
 
-    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, 5, undefined);
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, 5, undefined, undefined);
   });
 
   it('deveReenviarCityIdAoBuscarProdutosGlobais', () => {
@@ -90,7 +90,7 @@ describe('SupplierListComponent', () => {
     fixture.detectChanges();
     component.toggleView();
 
-    component.selectCategory('Gás');
+    component.selectCategory({ id: 2, name: 'Gás' });
 
     expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledWith(0, 12, undefined, 'Gás', undefined, undefined);
   });
@@ -186,7 +186,7 @@ describe('SupplierListComponent', () => {
     expect(supplierServiceSpy.getAllSupplierOpenAndActive).not.toHaveBeenCalled();
     tick(300);
 
-    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledOnceWith(0, 10, 5, 'gás');
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledOnceWith(0, 10, 5, 'gás', undefined);
     expect(byId('filter-button')).toBeNull();
   }));
 
@@ -215,7 +215,7 @@ describe('SupplierListComponent', () => {
     fixture.detectChanges();
 
     expect((byId('catalog-search') as HTMLInputElement).value).toBe('');
-    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined);
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, undefined);
     expect(byId('clear-search')).toBeNull();
   }));
 
@@ -297,5 +297,67 @@ describe('SupplierListComponent', () => {
     (fixture.nativeElement.querySelector('[data-testid="close-reviews"]') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-store-reviews-dialog')).toBeNull();
+  });
+
+  // ---- HU15 ----
+
+  it('deveExibirAsLojasEmGrade', () => {
+    supplierServiceSpy.getAllSupplierOpenAndActive.and.returnValue(of({
+      data: [{ id: '1', name: 'Gás Centro' }, { id: '2', name: 'Água Boa' }],
+      page: 0, size: 10, totalElements: 2, totalPages: 1, hasNext: false, hasPrevious: false
+    }));
+    fixture.detectChanges();
+
+    const grade = fixture.nativeElement.querySelector('[data-testid="supplier-grid"]') as HTMLElement;
+    expect(grade).not.toBeNull();
+    expect(grade.classList).toContain('grid');
+    expect(grade.querySelectorAll('app-supplier-card').length).toBe(2);
+  });
+
+  it('deveMostrarOsChipsNaVisaoDeLojas', () => {
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-category-chip-bar')).not.toBeNull();
+    expect(productTypeServiceSpy.findAll).toHaveBeenCalled();
+  });
+
+  it('deveEnviarOProductTypeIdAoFiltrarLojas', () => {
+    fixture.detectChanges();
+
+    component.selectCategory({ id: 3, name: 'Gás' });
+
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, 3);
+  });
+
+  it('deveVoltarParaAPrimeiraPaginaAoTrocarDeTipo', () => {
+    fixture.detectChanges();
+    component.onPageChange(2);
+    supplierServiceSpy.getAllSupplierOpenAndActive.calls.reset();
+
+    component.selectCategory({ id: 3, name: 'Gás' });
+
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, 3);
+  });
+
+  it('deveLimparOFiltroDeTipoEmTodas', () => {
+    fixture.detectChanges();
+    component.selectCategory({ id: 3, name: 'Gás' });
+    supplierServiceSpy.getAllSupplierOpenAndActive.calls.reset();
+
+    component.selectCategory(null);
+
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, undefined);
+  });
+
+  it('deveMostrarEstadoVazioQuandoNaoHaLojaDoTipo', () => {
+    supplierServiceSpy.getAllSupplierOpenAndActive.and.returnValue(of({
+      data: [], page: 0, size: 10, totalElements: 0, totalPages: 0, hasNext: false, hasPrevious: false
+    }));
+    fixture.detectChanges();
+
+    component.selectCategory({ id: 3, name: 'Gás' });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="empty-state"]')).not.toBeNull();
   });
 });

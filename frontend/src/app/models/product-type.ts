@@ -14,6 +14,13 @@ export class ProductType {
     }
 }
 
+// HU15: tipo que a loja vende, como vem na vitrine para o selo do card
+export interface ProductTypeChip {
+    id: number;
+    name: string;
+    icon: string;
+}
+
 export const DEFAULT_PRODUCT_TYPE_ICON = 'category';
 
 // HU12 §5.2.2: mesma lista fechada que o backend aceita

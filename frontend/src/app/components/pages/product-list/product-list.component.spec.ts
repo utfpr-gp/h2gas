@@ -91,7 +91,7 @@ describe('ProductListComponent', () => {
   });
 
   it('deveFiltrarAoSelecionarCategoriaPeloChip', () => {
-    component.onCategorySelected('Água');
+    component.onCategorySelected({ id: 2, name: 'Água' });
 
     expect(productItemServiceSpy.getProductsBySupplierId)
       .toHaveBeenCalledWith('fixture-supplier-hu02', 0, 10, undefined, 'Água');
@@ -168,7 +168,7 @@ describe('ProductListComponent', () => {
     const resposta = new Subject<any>();
     productItemServiceSpy.getProductsBySupplierId.and.returnValue(resposta);
 
-    component.onCategorySelected('Gás');
+    component.onCategorySelected({ id: 1, name: 'Gás' });
     fixture.detectChanges();
     const grid = fixture.nativeElement.querySelector('[data-testid="product-grid"]') as HTMLElement;
     expect(grid.classList).toContain('opacity-60');

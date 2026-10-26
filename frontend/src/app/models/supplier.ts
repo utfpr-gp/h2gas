@@ -1,3 +1,4 @@
+import { ProductTypeChip } from "./product-type";
 import { User } from "./user";
 
 export class Supplier {
@@ -25,6 +26,8 @@ export class Supplier {
     // F7 §5.25: preenchidos só no catálogo do cliente
     averageRating?: number | null;
     reviewCount?: number;
+    // HU15: tipos que a loja vende (selos do card); só o catálogo do cliente preenche
+    productTypes?: ProductTypeChip[];
 
     constructor(
         id?: string,
