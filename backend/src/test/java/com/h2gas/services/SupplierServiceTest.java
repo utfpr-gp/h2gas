@@ -534,10 +534,10 @@ class SupplierServiceTest {
                     "s", "11222333000144", "d", true, (Boolean) loja[2], a, (City) loja[1]));
         }
 
-        Page<com.h2gas.model.dto.StorefrontDTO> result = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), "GÁS AZUL", PageRequest.of(0, 10));
+        Page<com.h2gas.model.dto.StorefrontDTO> result = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), "GÁS AZUL", null, PageRequest.of(0, 10));
 
         assertEquals(List.of("Gás Azul Curitiba"), result.getContent().stream().map(com.h2gas.model.dto.StorefrontDTO::name).toList());
-        assertEquals(2, supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, PageRequest.of(0, 10)).getTotalElements());
+        assertEquals(2, supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, null, PageRequest.of(0, 10)).getTotalElements());
     }
 
     private void avaliar(Supplier loja, User cliente, int nota) {
@@ -576,7 +576,7 @@ class SupplierServiceTest {
         avaliar(avaliada, cliente, 4);
         avaliar(avaliada, cliente, 4);
 
-        Page<com.h2gas.model.dto.StorefrontDTO> result = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, PageRequest.of(0, 10));
+        Page<com.h2gas.model.dto.StorefrontDTO> result = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, null, PageRequest.of(0, 10));
 
         com.h2gas.model.dto.StorefrontDTO dto = result.getContent().stream().filter(d -> d.name().equals("Loja Avaliada")).findFirst().orElseThrow();
         assertEquals(4.3, dto.averageRating());
@@ -589,7 +589,7 @@ class SupplierServiceTest {
         City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
         lojaAberta("Loja Sem Nota", curitiba);
 
-        com.h2gas.model.dto.StorefrontDTO dto = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, PageRequest.of(0, 10)).getContent().get(0);
+        com.h2gas.model.dto.StorefrontDTO dto = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, null, PageRequest.of(0, 10)).getContent().get(0);
 
         assertNull(dto.averageRating());
         assertEquals(0L, dto.reviewCount());
@@ -736,5 +736,145 @@ class SupplierServiceTest {
     @DisplayName("HU13: vitrine de loja inexistente é 404")
     void deveResponder404NaVitrineDeLojaInexistente() {
         assertThrows(com.h2gas.exceptions.ResourceNotFoundException.class, () -> supplierService.findStorefront("nao-existe"));
+    }
+
+    // ---- HU15: tipos de produto na vitrine ----
+
+    @Autowired
+    private com.h2gas.model.repository.ProductTypeRepository productTypeRepository;
+
+    @Autowired
+    private com.h2gas.model.repository.CategoryProductRepository categoryProductRepository;
+
+    @jakarta.persistence.PersistenceContext
+    private jakarta.persistence.EntityManager entityManager;
+
+    private com.h2gas.model.entity.ProductType tipo(String nome, String icone) {
+        com.h2gas.model.entity.ProductType tipo = new com.h2gas.model.entity.ProductType();
+        tipo.setName(nome);
+        tipo.setIcon(icone);
+        return productTypeRepository.save(tipo);
+    }
+
+    private void categoria(Supplier loja, com.h2gas.model.entity.ProductType tipo, String nome) {
+        com.h2gas.model.entity.CategoryProduct categoria = new com.h2gas.model.entity.CategoryProduct();
+        categoria.setName(nome);
+        categoria.setProductType(tipo);
+        categoria.setSupplier(loja);
+        categoryProductRepository.save(categoria);
+    }
+
+    private List<com.h2gas.model.dto.StorefrontDTO> vitrine(Long cityId, String q, Long productTypeId) {
+        return supplierService.findAllSuppliersOpenAndActive(cityId, q, productTypeId, PageRequest.of(0, 10)).getContent();
+    }
+
+    @Test
+    @DisplayName("HU15: a vitrine traz os tipos que a loja vende, com o ícone do tipo")
+    void deveTrazerOsTiposDeProdutoDaLoja() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        Supplier loja = lojaAberta("Loja Completa", curitiba);
+        categoria(loja, tipo("Gás", "local_fire_department"), "P13");
+        categoria(loja, tipo("Água", "water_drop"), "Galão 20L");
+
+        com.h2gas.model.dto.StorefrontDTO dto = vitrine(curitiba.getId(), null, null).get(0);
+
+        assertEquals(List.of("Água", "Gás"), dto.productTypes().stream().map(com.h2gas.model.dto.ProductTypeChipDTO::name).toList());
+        assertEquals(List.of("water_drop", "local_fire_department"),
+                dto.productTypes().stream().map(com.h2gas.model.dto.ProductTypeChipDTO::icon).toList());
+    }
+
+    @Test
+    @DisplayName("HU15: tipo não se repete quando a loja tem várias categorias dele")
+    void naoDeveRepetirTipoQuandoALojaTemVariasCategorias() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        Supplier loja = lojaAberta("Loja Só de Gás", curitiba);
+        com.h2gas.model.entity.ProductType gas = tipo("Gás", "local_fire_department");
+        categoria(loja, gas, "P13");
+        categoria(loja, gas, "P45");
+
+        com.h2gas.model.dto.StorefrontDTO dto = vitrine(curitiba.getId(), null, null).get(0);
+
+        assertEquals(List.of("Gás"), dto.productTypes().stream().map(com.h2gas.model.dto.ProductTypeChipDTO::name).toList());
+    }
+
+    @Test
+    @DisplayName("HU15: loja sem categoria vem com lista de tipos vazia, nunca nula")
+    void deveDevolverListaVaziaDeTiposParaLojaSemCategoria() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        lojaAberta("Loja Sem Catálogo", curitiba);
+
+        com.h2gas.model.dto.StorefrontDTO dto = vitrine(curitiba.getId(), null, null).get(0);
+
+        assertNotNull(dto.productTypes());
+        assertTrue(dto.productTypes().isEmpty());
+    }
+
+    @Test
+    @DisplayName("HU15: o chip de tipo filtra as lojas que vendem aquele tipo")
+    void deveFiltrarLojasPeloTipoDeProduto() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        com.h2gas.model.entity.ProductType gas = tipo("Gás", "local_fire_department");
+        com.h2gas.model.entity.ProductType agua = tipo("Água", "water_drop");
+        categoria(lojaAberta("Só Gás", curitiba), gas, "P13");
+        categoria(lojaAberta("Só Água", curitiba), agua, "Galão 20L");
+        lojaAberta("Sem Catálogo", curitiba);
+
+        assertEquals(List.of("Só Gás"), vitrine(curitiba.getId(), null, gas.getId()).stream()
+                .map(com.h2gas.model.dto.StorefrontDTO::name).toList());
+        assertEquals(List.of("Só Água"), vitrine(curitiba.getId(), null, agua.getId()).stream()
+                .map(com.h2gas.model.dto.StorefrontDTO::name).toList());
+        assertEquals(3, vitrine(curitiba.getId(), null, null).size());
+    }
+
+    @Test
+    @DisplayName("HU15: tipo inexistente devolve página vazia, não erro")
+    void deveDevolverPaginaVaziaParaTipoInexistente() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        categoria(lojaAberta("Só Gás", curitiba), tipo("Gás", "local_fire_department"), "P13");
+
+        assertTrue(vitrine(curitiba.getId(), null, 999_999L).isEmpty());
+    }
+
+    @Test
+    @DisplayName("HU15: tipo, cidade (RN05) e busca valem juntos")
+    void deveCombinarTipoCidadeEBusca() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        City londrina = cityRepository.save(new City(null, "Londrina", "PR"));
+        com.h2gas.model.entity.ProductType gas = tipo("Gás", "local_fire_department");
+        categoria(lojaAberta("Gás Azul Curitiba", curitiba), gas, "P13");
+        categoria(lojaAberta("Gás Azul Londrina", londrina), gas, "P13");
+        categoria(lojaAberta("Gás Verde Curitiba", curitiba), gas, "P13");
+        categoria(lojaAberta("Água Azul Curitiba", curitiba), tipo("Água", "water_drop"), "Galão 20L");
+
+        assertEquals(List.of("Gás Azul Curitiba"), vitrine(curitiba.getId(), "azul", gas.getId()).stream()
+                .map(com.h2gas.model.dto.StorefrontDTO::name).toList());
+    }
+
+    @Test
+    @DisplayName("HU15: os tipos da página saem em uma consulta só (não cresce com o número de lojas)")
+    void deveBuscarOsTiposEmUmaConsultaSoParaAPagina() {
+        City umaLoja = cityRepository.save(new City(null, "Cidade de Uma Loja", "PR"));
+        City muitasLojas = cityRepository.save(new City(null, "Cidade de Muitas Lojas", "PR"));
+        com.h2gas.model.entity.ProductType gas = tipo("Gás", "local_fire_department");
+        categoria(lojaAberta("Única", umaLoja), gas, "P13");
+        for (String nome : List.of("Primeira", "Segunda", "Terceira")) {
+            categoria(lojaAberta(nome, muitasLojas), gas, "P13");
+        }
+
+        org.hibernate.stat.Statistics estatisticas = entityManager.getEntityManagerFactory()
+                .unwrap(org.hibernate.SessionFactory.class).getStatistics();
+        estatisticas.setStatisticsEnabled(true);
+        entityManager.flush();
+
+        estatisticas.clear();
+        vitrine(umaLoja.getId(), null, null);
+        long consultasComUmaLoja = estatisticas.getPrepareStatementCount();
+
+        estatisticas.clear();
+        List<com.h2gas.model.dto.StorefrontDTO> tres = vitrine(muitasLojas.getId(), null, null);
+        long consultasComTresLojas = estatisticas.getPrepareStatementCount();
+
+        assertEquals(3, tres.size());
+        assertEquals(consultasComUmaLoja, consultasComTresLojas);
     }
 }
