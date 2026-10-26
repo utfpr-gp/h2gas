@@ -104,3 +104,10 @@ esvaziar o carrinho e adicionar o novo produto.
 > para o crescimento seguir visível. **Dívida técnica registrada**: reduzir o
 > bundle inicial (carregamento sob demanda das telas do catálogo) merece
 > script próprio — não é escopo da HU14.
+
+> **Verificação dos testes (2026-10-26)**: `ng test` na branch — 559 testes,
+> 549 verdes e 10 falhas; na `develop`, 549 testes e as **mesmas** 10 falhas.
+> A HU14 soma 10 specs, todos verdes, e não quebra nada. As 10 falhas são
+> specs `should create` auto-gerados do CLI, sem provider de `HttpClient`,
+> `ActivatedRoute` ou `ToastConfig` — dívida anterior, registrada desde a
+> HU12. `ng build` ok após o ajuste de budget.
