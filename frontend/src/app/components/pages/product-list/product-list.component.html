@@ -104,3 +104,6 @@
 
 <app-store-reviews-dialog *ngIf="reviewsOpen && store" [supplierId]="store.id" [storeName]="store.name"
     [average]="store.averageRating" [count]="store.reviewCount" (closed)="reviewsOpen = false"></app-store-reviews-dialog>
+
+<app-cart-other-store-dialog *ngIf="pendingOtherStoreProduct"
+    (clearAndAdd)="confirmClearAndAdd()" (keepCart)="cancelOtherStoreDialog()"></app-cart-other-store-dialog>

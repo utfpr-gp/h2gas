@@ -84,4 +84,40 @@ describe('CartService', () => {
     sessionStorage.setItem('buy-now-item', '{quebrado');
     expect(service.getBuyNow()).toBeNull();
   });
+
+  // ---- HU14: uma loja por vez ----
+  it('deveAdicionarQuandoCarrinhoVazio', () => {
+    const result = service.addProduct({ id: 1, supplierId: 'loja-a', quantitySelect: 1 });
+
+    expect(result).toBe('added');
+    expect(service.getCart()).toEqual([jasmine.objectContaining({ id: 1, supplierId: 'loja-a' })]);
+    expect(service.getCartSupplierId()).toBe('loja-a');
+  });
+
+  it('deveSomarQuandoMesmaLoja', () => {
+    service.setCart([{ id: 1, supplierId: 'loja-a', quantitySelect: 1 }]);
+
+    expect(service.addProduct({ id: 1, supplierId: 'loja-a', quantitySelect: 1 })).toBe('added');
+    expect(service.addProduct({ id: 2, supplierId: 'loja-a', quantitySelect: 1 })).toBe('added');
+    expect(service.getCart().map((p) => ({ id: p.id, q: p.quantitySelect }))).toEqual([
+      { id: 1, q: 2 },
+      { id: 2, q: 1 },
+    ]);
+  });
+
+  it('deveBloquearQuandoOutraLoja', () => {
+    service.setCart([{ id: 1, supplierId: 'loja-a', quantitySelect: 2 }]);
+
+    expect(service.addProduct({ id: 9, supplierId: 'loja-b', quantitySelect: 1 })).toBe('other_supplier');
+    expect(service.getCart()).toEqual([jasmine.objectContaining({ id: 1, supplierId: 'loja-a', quantitySelect: 2 })]);
+  });
+
+  it('deveEsvaziarEAdicionar', () => {
+    service.setCart([{ id: 1, supplierId: 'loja-a', quantitySelect: 2 }]);
+
+    service.clearAndAdd({ id: 9, supplierId: 'loja-b', quantitySelect: 1 });
+
+    expect(service.getCart()).toEqual([jasmine.objectContaining({ id: 9, supplierId: 'loja-b', quantitySelect: 1 })]);
+    expect(service.getCartSupplierId()).toBe('loja-b');
+  });
 });

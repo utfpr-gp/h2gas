@@ -42,7 +42,8 @@ describe('ProductListComponent', () => {
     productTypeServiceSpy = jasmine.createSpyObj('ProductTypeService', ['findAll']);
     productTypeServiceSpy.findAll.and.returnValue(of([{ id: 1, name: 'Gás' }, { id: 2, name: 'Água' }] as any));
 
-    cartServiceSpy = jasmine.createSpyObj('CartService', ['addProduct', 'startBuyNow']);
+    cartServiceSpy = jasmine.createSpyObj('CartService', ['addProduct', 'startBuyNow', 'clearAndAdd']);
+    cartServiceSpy.addProduct.and.returnValue('added');
     supplierServiceSpy = jasmine.createSpyObj('SupplierService', ['getStorefront', 'getReviews']);
     supplierServiceSpy.getReviews.and.returnValue(of({ ...emptyPage, data: [{ id: 1, customerFirstName: 'Maria', rating: 5, comment: 'Ótimo', reviewedAt: null }] } as any));
     supplierServiceSpy.getStorefront.and.returnValue(of(loja));
@@ -102,6 +103,45 @@ describe('ProductListComponent', () => {
     expect(cartServiceSpy.addProduct).toHaveBeenCalledWith(
       jasmine.objectContaining({ id: 5, quantitySelect: 1 })
     );
+    expect(toastrSpy.success).toHaveBeenCalledWith('Produto adicionado ao carrinho.');
+  });
+
+  // HU14
+  it('deveAbrirDialogoAoAdicionarDeOutraLoja', () => {
+    cartServiceSpy.addProduct.and.returnValue('other_supplier');
+
+    component.addToCart({ id: 9, supplierId: 'outra' } as ProductItem);
+    fixture.detectChanges();
+
+    expect(component.pendingOtherStoreProduct).toEqual(jasmine.objectContaining({ id: 9, supplierId: 'outra' }));
+    expect(fixture.nativeElement.querySelector('[data-testid="cart-other-store-dialog"]')).toBeTruthy();
+    expect(toastrSpy.success).not.toHaveBeenCalled();
+  });
+
+  it('deveEsvaziarEAdicionarPeloDialogo', () => {
+    cartServiceSpy.addProduct.and.returnValue('other_supplier');
+    component.addToCart({ id: 9, supplierId: 'outra' } as ProductItem);
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('[data-testid="clear-and-add"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(cartServiceSpy.clearAndAdd).toHaveBeenCalledWith(jasmine.objectContaining({ id: 9, supplierId: 'outra' }));
+    expect(component.pendingOtherStoreProduct).toBeUndefined();
+    expect(toastrSpy.success).toHaveBeenCalledWith('Produto adicionado ao carrinho.');
+  });
+
+  it('deveManterCarrinhoAoCancelar', () => {
+    cartServiceSpy.addProduct.and.returnValue('other_supplier');
+    component.addToCart({ id: 9, supplierId: 'outra' } as ProductItem);
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('[data-testid="keep-cart"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(cartServiceSpy.clearAndAdd).not.toHaveBeenCalled();
+    expect(component.pendingOtherStoreProduct).toBeUndefined();
+    expect(fixture.nativeElement.querySelector('[data-testid="cart-other-store-dialog"]')).toBeNull();
   });
 
   it('deveIrParaOCheckoutNaCompraDireta', () => {

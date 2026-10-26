@@ -19,6 +19,7 @@ describe('SupplierListComponent', () => {
   let productItemServiceSpy: jasmine.SpyObj<ProductItemService>;
   let productTypeServiceSpy: jasmine.SpyObj<ProductTypeService>;
   let cartServiceSpy: jasmine.SpyObj<CartService>;
+  let toastrSpy: jasmine.SpyObj<ToastrService>;
   let locationContextService: LocationContextService;
   let activatedRouteStub: { snapshot: { queryParamMap: { get: (key: string) => string | null } } };
 
@@ -37,7 +38,9 @@ describe('SupplierListComponent', () => {
     productTypeServiceSpy = jasmine.createSpyObj('ProductTypeService', ['findAll']);
     productTypeServiceSpy.findAll.and.returnValue(of([{ id: 1, name: 'Gás' }, { id: 2, name: 'Água' }] as any));
 
-    cartServiceSpy = jasmine.createSpyObj('CartService', ['addProduct', 'startBuyNow']);
+    cartServiceSpy = jasmine.createSpyObj('CartService', ['addProduct', 'startBuyNow', 'clearAndAdd']);
+    cartServiceSpy.addProduct.and.returnValue('added');
+    toastrSpy = jasmine.createSpyObj('ToastrService', ['success', 'error', 'warning']);
 
     activatedRouteStub = { snapshot: { queryParamMap: { get: () => null } } };
 
@@ -51,7 +54,7 @@ describe('SupplierListComponent', () => {
         { provide: CartService, useValue: cartServiceSpy },
         { provide: ActivatedRoute, useValue: activatedRouteStub },
         { provide: Router, useValue: jasmine.createSpyObj('Router', ['navigate']) },
-        { provide: ToastrService, useValue: jasmine.createSpyObj('ToastrService', ['success', 'error', 'warning']) },
+        { provide: ToastrService, useValue: toastrSpy },
       ]
     })
     .compileComponents();
@@ -120,6 +123,48 @@ describe('SupplierListComponent', () => {
     expect(cartServiceSpy.addProduct).toHaveBeenCalledWith(
       jasmine.objectContaining({ id: 99, quantitySelect: 1 })
     );
+    expect(toastrSpy.success).toHaveBeenCalledWith('Produto adicionado ao carrinho.');
+  });
+
+  // HU14
+  it('deveAbrirDialogoAoAdicionarDeOutraLoja', () => {
+    fixture.detectChanges();
+    cartServiceSpy.addProduct.and.returnValue('other_supplier');
+
+    component.addToCart({ id: 9, supplierId: 'outra' } as ProductItem);
+    fixture.detectChanges();
+
+    expect(component.pendingOtherStoreProduct).toEqual(jasmine.objectContaining({ id: 9, supplierId: 'outra' }));
+    expect(fixture.nativeElement.querySelector('[data-testid="cart-other-store-dialog"]')).toBeTruthy();
+    expect(toastrSpy.success).not.toHaveBeenCalled();
+  });
+
+  it('deveEsvaziarEAdicionarPeloDialogo', () => {
+    fixture.detectChanges();
+    cartServiceSpy.addProduct.and.returnValue('other_supplier');
+    component.addToCart({ id: 9, supplierId: 'outra' } as ProductItem);
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('[data-testid="clear-and-add"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(cartServiceSpy.clearAndAdd).toHaveBeenCalledWith(jasmine.objectContaining({ id: 9, supplierId: 'outra' }));
+    expect(component.pendingOtherStoreProduct).toBeUndefined();
+    expect(toastrSpy.success).toHaveBeenCalledWith('Produto adicionado ao carrinho.');
+  });
+
+  it('deveManterCarrinhoAoCancelar', () => {
+    fixture.detectChanges();
+    cartServiceSpy.addProduct.and.returnValue('other_supplier');
+    component.addToCart({ id: 9, supplierId: 'outra' } as ProductItem);
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('[data-testid="keep-cart"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(cartServiceSpy.clearAndAdd).not.toHaveBeenCalled();
+    expect(component.pendingOtherStoreProduct).toBeUndefined();
+    expect(fixture.nativeElement.querySelector('[data-testid="cart-other-store-dialog"]')).toBeNull();
   });
 
   // ---- F7 §5.21 ----
