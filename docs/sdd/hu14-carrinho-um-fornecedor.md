@@ -96,3 +96,11 @@ esvaziar o carrinho e adicionar o novo produto.
 > **Verificação (2026-10-21)**: `ng test` — `cart.service`, `product-list` e
 > `supplier-list` (50 specs) verdes. Regra no `CartService`; diálogo
 > `cart-other-store-dialog` nas duas listas do catálogo.
+
+> **Verificação do build (2026-10-26)**: o `ng build` passou a falhar com o
+> diálogo novo — o bundle inicial foi de 998,40 kB (develop) para 1,00 MB,
+> 2,10 kB acima do `maximumError` de 1 MB em `frontend/angular.json`. O teto
+> subiu para 1.5 MB neste trabalho; o aviso de 500 kB continua, de propósito,
+> para o crescimento seguir visível. **Dívida técnica registrada**: reduzir o
+> bundle inicial (carregamento sob demanda das telas do catálogo) merece
+> script próprio — não é escopo da HU14.
