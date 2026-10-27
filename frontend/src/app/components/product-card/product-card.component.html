@@ -29,7 +29,14 @@
       <button *ngIf="showStore && product.supllierName" type="button" data-testid="product-store"
         [attr.aria-label]="'Ver a loja ' + product.supllierName" (click)="onViewStore()"
         class="inline-flex items-center gap-1 -ml-1 px-1 rounded-md text-sm text-primary hover:bg-base-200 min-h-11 sm:min-h-8 max-w-full">
-        <span class="material-symbols-rounded text-base" aria-hidden="true">storefront</span>
+        <!-- HU15 §5.5: avatar redondo com a logo da loja; sem logo (ou quebrada), a inicial do nome -->
+        <span data-testid="product-store-avatar" aria-hidden="true"
+          class="w-6 h-6 shrink-0 rounded-full overflow-hidden border border-base-300 bg-primary/10 text-primary
+                 text-[11px] font-bold flex items-center justify-center">
+          <img *ngIf="product.supplierLogoUrl && !storeLogoBroken; else inicial" [src]="product.supplierLogoUrl" alt=""
+            loading="lazy" width="24" height="24" class="w-full h-full object-cover" (error)="storeLogoBroken = true" />
+          <ng-template #inicial>{{ storeInitial }}</ng-template>
+        </span>
         <span class="truncate">{{ product.supllierName }}</span>
       </button>
     </div>
@@ -42,7 +49,7 @@
         <span class="text-xs text-neutral">com entrega</span>
       </div>
       <div data-testid="price-pickup" class="flex items-center gap-1 text-sm text-neutral">
-        <span class="material-symbols-rounded text-base" aria-hidden="true">storefront</span>
+        <span class="material-symbols-rounded text-base" aria-hidden="true">shopping_bag</span>
         Retirada na loja ·
         <span class="font-semibold text-primary tabular-nums">{{ product.pricePickup | currency:'BRL':'symbol':'1.2-2' }}</span>
       </div>

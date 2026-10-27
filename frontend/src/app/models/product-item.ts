@@ -18,6 +18,8 @@ export class ProductItem {
     updatedAt?: Date;
     quantitySelect?: number;
     supllierName?: string;
+    // HU15 §5.5: logo da loja que vende, para o avatar redondo do card
+    supplierLogoUrl?: string | null;
     imageUrl?: string;
     description?: string;
 }

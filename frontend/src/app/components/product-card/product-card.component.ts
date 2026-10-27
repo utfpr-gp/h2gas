@@ -15,6 +15,12 @@ export class ProductCardComponent {
   // HU15 (revisão): na vitrine de produtos, que mistura lojas, o card diz quem vende e leva até a loja
   @Input() showStore = false;
   @Output() viewStore = new EventEmitter<string>();
+  // HU15 §5.5: logo da loja quebrada volta para a inicial do nome
+  storeLogoBroken = false;
+
+  get storeInitial(): string {
+    return (this.product.supllierName ?? '').trim().charAt(0).toUpperCase();
+  }
   @Output() addToCart = new EventEmitter<ProductItem>();
 
   @Output() buyNow = new EventEmitter<ProductItem>();

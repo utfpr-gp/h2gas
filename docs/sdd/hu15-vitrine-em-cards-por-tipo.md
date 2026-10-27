@@ -256,10 +256,21 @@ lado a lado; ícones novos só no card por enquanto.
   segue com Material Icons.
 - **Moldura**: `rounded-2xl`, borda clara, sombra só no hover de quem tem
   ponteiro.
+- **Loja com avatar redondo** (pedido seguinte do autor): a linha da loja mostra a
+  logo num círculo de 24 px; sem logo, ou se a imagem quebrar, a inicial do nome.
+  Para isso o `ProductItemDTO` ganhou `supplierLogoUrl` (`@Schema`, opcional, nulo
+  sem logo), preenchido pelo `ProductItemMapper` a partir de `Supplier.logoUrl` —
+  campo novo e opcional, nenhum consumidor quebra.
+- **Retirada** com o ícone de sacola (`shopping_bag`), no lugar do `storefront` que
+  repetia o da loja; o subconjunto de ícones carregado passa a
+  `add_shopping_cart, inventory_2, local_shipping, shopping_bag`.
 - Testes em `product-card.component.spec.ts`: `deveDestacarComprarAgoraEmVerde`,
   `deveDeixarAsDuasAcoesLadoALado`, `deveExibirAFotoSemCaixaBranca`,
   `deveMostrarOIconeQuandoNaoHaFoto`, `deveUsarOsIconesArredondados`,
-  `deveDarDestaqueAoPrecoDeEntrega`.
+  `deveDarDestaqueAoPrecoDeEntrega`, `deveMostrarALogoRedondaDaLoja`,
+  `deveMostrarAInicialDaLojaSemLogo`, `deveVoltarParaAInicialSeALogoQuebrar`,
+  `deveUsarASacolaNaRetirada`; no backend, `ProductItemMapperTest`
+  (`deveLevarALogoDaLojaQueVende`, `deveDeixarALogoNulaSemLogo`).
 
 ## 6. Plano de Testes (TDD)
 

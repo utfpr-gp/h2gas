@@ -221,4 +221,47 @@ describe('ProductCardComponent', () => {
     expect(component.addToCart.emit).not.toHaveBeenCalled();
     expect(component.buyNow.emit).not.toHaveBeenCalled();
   });
+
+  // ---- HU15 §5.5: logo redonda da loja e sacola na retirada ----
+  const avatar = () => fixture.nativeElement.querySelector('[data-testid="product-store-avatar"]') as HTMLElement | null;
+
+  it('deveMostrarALogoRedondaDaLoja', () => {
+    component.product = { ...deLoja, supplierLogoUrl: 'https://cdn/logo.png' } as ProductItem;
+    component.showStore = true;
+    fixture.detectChanges();
+
+    const img = avatar()!.querySelector('img') as HTMLImageElement;
+    expect(avatar()!.classList).toContain('rounded-full');
+    expect(img.src).toBe('https://cdn/logo.png');
+    expect(img.getAttribute('alt')).toBe('');
+  });
+
+  it('deveMostrarAInicialDaLojaSemLogo', () => {
+    component.product = deLoja;
+    component.showStore = true;
+    fixture.detectChanges();
+
+    expect(avatar()!.querySelector('img')).toBeNull();
+    expect(avatar()!.textContent?.trim()).toBe('G');
+  });
+
+  it('deveVoltarParaAInicialSeALogoQuebrar', () => {
+    component.product = { ...deLoja, supplierLogoUrl: 'https://cdn/quebrada.png' } as ProductItem;
+    component.showStore = true;
+    fixture.detectChanges();
+
+    avatar()!.querySelector('img')!.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+
+    expect(avatar()!.querySelector('img')).toBeNull();
+    expect(avatar()!.textContent?.trim()).toBe('G');
+  });
+
+  it('deveUsarASacolaNaRetirada', () => {
+    component.product = { id: 1, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as any;
+    fixture.detectChanges();
+
+    const retirada = fixture.nativeElement.querySelector('[data-testid="price-pickup"]') as HTMLElement;
+    expect(retirada.querySelector('.material-symbols-rounded')?.textContent?.trim()).toBe('shopping_bag');
+  });
 });
