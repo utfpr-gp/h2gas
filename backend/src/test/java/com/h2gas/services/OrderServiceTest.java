@@ -1307,7 +1307,9 @@ class OrderServiceTest {
         supplier.setAddress(address);
         supplier.setCity(city);
         supplier.setProductItems(null);
-        supplier.setOpen(open);
+        // HU18: aberta/fechada pelo horário (o relógio dos testes marca 10:00)
+        supplier.setOpeningTime(java.time.LocalTime.of(open ? 8 : 19, 0));
+        supplier.setClosingTime(java.time.LocalTime.of(open ? 18 : 23, 0));
 
         return supplier;
     }

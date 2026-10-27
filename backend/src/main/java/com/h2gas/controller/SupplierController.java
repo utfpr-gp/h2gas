@@ -399,25 +399,6 @@ public class SupplierController {
         return ResponseEntity.ok(updated);
     }
 
-    @Operation(summary = "Abre ou fecha a loja", description = "Corpo {\"status\": true|false}. O fornecedor só altera a própria loja")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Status atualizado"),
-            @ApiResponse(responseCode = "403", description = "Fornecedor alterando outra loja")
-    })
-    @PatchMapping("/{id}/status")
-    @ResponseBody
-    @RolesAllowed({"ADMIN", "SUPPLIER"})
-    public ResponseEntity<Map<String, String>> changeStatusOpenClosed(@PathVariable String id,
-                                                              @RequestBody Map<String, Boolean> status) {
-        User actor = currentUser();
-        if (actor.getUserType() == UserTypeEnum.SUPPLIER && !actor.getId().equals(id)) {
-            throw new ForbiddenResourceException("Você só pode abrir ou fechar a sua própria loja.");
-        }
-        boolean novoStatus = status.get("status");
-        supplierService.updateStatusOpenClosed(id, novoStatus);
-        return ResponseEntity.ok(Map.of("message", "Status atualizado."));
-    }
-
     @GetMapping("/{id}/active")
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER"})
@@ -426,11 +407,18 @@ public class SupplierController {
         return ResponseEntity.ok(active);
     }
 
+    // HU18: o estado é calculado pelo horário de funcionamento — a loja não abre nem fecha por botão
+    @Operation(summary = "Diz se a loja está aberta agora",
+            description = "Calculado pelo horário de funcionamento da loja, na hora de Brasília. Loja sem horário cadastrado "
+                    + "está fechada; fechamento antes da abertura significa que a loja fecha depois da meia-noite")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "true se a loja está aberta agora"),
+            @ApiResponse(responseCode = "404", description = "Loja inexistente")
+    })
     @GetMapping("/{id}/open")
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER"})
     public ResponseEntity<Boolean> getSupplierOpen(@PathVariable String id) {
-        boolean active = supplierService.findById(id).isOpen();
-        return ResponseEntity.ok(active);
+        return ResponseEntity.ok(supplierService.isOpenNow(id));
     }
 }

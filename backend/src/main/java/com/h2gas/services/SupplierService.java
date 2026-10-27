@@ -27,6 +27,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import com.h2gas.model.OpeningHours;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.List;
@@ -46,6 +48,10 @@ public class SupplierService {
 
     @Autowired
     private CategoryProductRepository categoryProductRepository;
+
+    // HU18: hora de Brasília para "aberta agora"
+    @Autowired
+    private Clock clock;
 
     @Autowired
     private CloudinaryService cloudinaryService;
@@ -92,13 +98,24 @@ public class SupplierService {
                 .map(supplierMapper::toDto);
     }
 
-    public Page<SupplierDTO> findAllSuppliersOpenAndActive(Pageable pageable) {
-        return supplierRepository.findByActiveAndOpen(true, true, pageable)
-                .map(supplierMapper::toDto);
+    public Page<SupplierDTO> findAllSuppliersOpenAndActive(Long cityId, Pageable pageable) {
+        return supplierRepository.findOpenForCatalog(cityId, null, null, now(), pageable).map(this::toDtoWithOpen);
     }
 
-    public Page<SupplierDTO> findAllSuppliersOpenAndActive(Long cityId, Pageable pageable) {
-        return supplierRepository.findOpenForCatalog(cityId, null, null, pageable).map(supplierMapper::toDto);
+    // HU18: aberta agora pelo horário de funcionamento (Brasília); não existe mais interruptor manual
+    public boolean isOpenNow(String id) {
+        Supplier supplier = findEntityById(id);
+        return OpeningHours.isOpenAt(supplier.getOpeningTime(), supplier.getClosingTime(), now());
+    }
+
+    private LocalTime now() {
+        return LocalTime.now(clock);
+    }
+
+    private SupplierDTO toDtoWithOpen(Supplier supplier) {
+        SupplierDTO dto = supplierMapper.toDto(supplier);
+        dto.setOpen(OpeningHours.isOpenAt(supplier.getOpeningTime(), supplier.getClosingTime(), now()));
+        return dto;
     }
 
     // HU13: o catálogo devolve a vitrine pública das lojas (sem dados internos), com a nota
@@ -108,8 +125,8 @@ public class SupplierService {
                                                              StorefrontSortEnum sort, Pageable pageable) {
         String term = q == null || q.isBlank() ? null : q.trim().toLowerCase(java.util.Locale.ROOT);
         Page<SupplierDTO> page = supplierRepository
-                .findForCatalog(cityId, term, productTypeId, sort.includesClosed(), sort.param(), pageable)
-                .map(supplierMapper::toDto);
+                .findForCatalog(cityId, term, productTypeId, sort.includesClosed(), sort.param(), now(), pageable)
+                .map(this::toDtoWithOpen);
         addRatings(page.getContent());
         Map<String, List<ProductTypeChipDTO>> typesBySupplier = productTypesBySupplier(
                 page.getContent().stream().map(SupplierDTO::getId).toList());
@@ -192,7 +209,7 @@ public class SupplierService {
 
     public SupplierDTO findById(String id) {
         Optional<Supplier> supplierOptional = supplierRepository.findById(id);
-        SupplierDTO dto = supplierOptional.map(supplierMapper::toDto).orElseThrow(()
+        SupplierDTO dto = supplierOptional.map(this::toDtoWithOpen).orElseThrow(()
                 -> new ResourceNotFoundException("Não encontrado nenhum Fornecedor com esse id: " + id));
         addRatings(List.of(dto)); // F7 §5.26: cabeçalho da loja mostra a nota
         return dto;
@@ -426,14 +443,6 @@ public class SupplierService {
                 supplier.getClosingTime() == null ? null : supplier.getClosingTime().toString(),
                 supplier.getAverageDeliveryTime() == null ? null : (int) supplier.getAverageDeliveryTime().toMinutes(),
                 supplier.getLowStockThreshold());
-    }
-
-    public void updateStatusOpenClosed(String id, boolean openClose) {
-        Supplier supplier = supplierRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Fornecedor com " + id + " não encontrado"));
-
-        supplier.setOpen(openClose);
-        supplierRepository.save(supplier);
     }
 
 //    public SupplierDTO findByUserIdSupplier(String userId) {

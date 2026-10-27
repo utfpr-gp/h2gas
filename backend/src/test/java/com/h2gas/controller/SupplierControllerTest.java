@@ -39,6 +39,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.time.YearMonth;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
@@ -53,6 +54,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SupplierController.class)
@@ -290,14 +292,30 @@ class SupplierControllerTest {
         verify(supplierService).removeMyLogo("fornecedor-1");
     }
 
+    // ---- HU18: a loja abre e fecha pelo horário; o interruptor saiu ----
+    @Autowired
+    private org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping handlerMapping;
+
     @Test
-    void deveRetornar403AoAbrirOuFecharLojaDeOutro() throws Exception {
+    void naoDeveExistirRotaDeStatus() {
+        // URL sem mapeamento hoje cai no handler genérico (500); por isso o teste olha os mapeamentos, não o status
+        boolean existe = handlerMapping.getHandlerMethods().keySet().stream()
+                .filter(info -> info.getMethodsCondition().getMethods()
+                        .contains(org.springframework.web.bind.annotation.RequestMethod.PATCH))
+                .flatMap(info -> info.getPatternValues().stream())
+                .anyMatch(path -> path.endsWith("/{id}/status"));
+
+        assertFalse(existe);
+    }
+
+    @Test
+    void deveCalcularOOpenDaLoja() throws Exception {
         autenticarComoFornecedor("fornecedor-1");
+        when(supplierService.isOpenNow("fornecedor-1")).thenReturn(true);
 
-        mockMvc.perform(patch("/api/suppliers/fornecedor-2/status").contentType(MediaType.APPLICATION_JSON).content("{\"status\":true}"))
-                .andExpect(status().isForbidden());
-
-        verify(supplierService, never()).updateStatusOpenClosed(any(), anyBoolean());
+        mockMvc.perform(get("/api/suppliers/fornecedor-1/open"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("true"));
     }
 
     @Test

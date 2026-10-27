@@ -24,6 +24,9 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("test")
 class ProductItemRepositoryTest {
 
+    // HU18: a consulta recebe a hora atual; os fornecedores de teste abrem das 08:00 às 18:00
+    private static final java.time.LocalTime DEZ_HORAS = java.time.LocalTime.of(10, 0);
+
     @Autowired
     private ProductItemRepository productItemRepository;
 
@@ -50,7 +53,9 @@ class ProductItemRepositoryTest {
         supplier.setClosingTime(LocalTime.of(18, 0));
         supplier.setAverageDeliveryTime(Duration.ofMinutes(30));
         supplier.setActive(true);
-        supplier.setOpen(true);
+        // HU18: aberta pelo horário (o relógio dos testes marca 10:00)
+        supplier.setOpeningTime(java.time.LocalTime.of(8, 0));
+        supplier.setClosingTime(java.time.LocalTime.of(18, 0));
         supplier.setCity(city);
         return supplierRepository.saveAndFlush(supplier);
     }
@@ -100,8 +105,7 @@ class ProductItemRepositoryTest {
         criarProduto(fornecedorCuritiba, categoriaAguaCuritiba, "Galão Curitiba", new BigDecimal("20.00"));
         criarProduto(fornecedorGuarapuava, categoriaGasGuarapuava, "Botijão Guarapuava", new BigDecimal("90.00"));
 
-        Page<ProductItem> result = productItemRepository.findAvailableProducts(
-                curitiba.getId(), "Gás", PageRequest.of(0, 10));
+        Page<ProductItem> result = productItemRepository.findAvailableProducts(curitiba.getId(), "Gás", DEZ_HORAS, PageRequest.of(0, 10));
 
         assertEquals(1, result.getTotalElements());
         assertEquals("Botijão Curitiba", result.getContent().get(0).getBrand());
@@ -123,8 +127,7 @@ class ProductItemRepositoryTest {
         criarProduto(supplier, categoria, "Botijão 1", new BigDecimal("100.00"));
         criarProduto(supplier, categoria, "Botijão 2", new BigDecimal("110.00"));
 
-        Page<ProductItem> result = productItemRepository.findAvailableProducts(
-                null, null, PageRequest.of(0, 10));
+        Page<ProductItem> result = productItemRepository.findAvailableProducts(null, null, DEZ_HORAS, PageRequest.of(0, 10));
 
         assertEquals(2, result.getTotalElements());
     }
@@ -226,7 +229,7 @@ class ProductItemRepositoryTest {
         criarProdutoComEstoque(supplier, categoria, "Com estoque", 2);
         criarProdutoComEstoque(supplier, categoria, "Zerado", 0);
 
-        Page<ProductItem> result = productItemRepository.findAvailableProducts(city.getId(), null, PageRequest.of(0, 10));
+        Page<ProductItem> result = productItemRepository.findAvailableProducts(city.getId(), null, DEZ_HORAS, PageRequest.of(0, 10));
 
         assertEquals(1, result.getTotalElements());
         assertEquals("Com estoque", result.getContent().get(0).getBrand());
@@ -274,8 +277,7 @@ class ProductItemRepositoryTest {
     }
 
     private java.util.List<String> marcas(City cidade, com.h2gas.enums.ProductSortEnum ordem) {
-        return productItemRepository.findAvailableProducts(cidade.getId(), null, null, ordem.byShopRating(),
-                        PageRequest.of(0, 10, ordem.sort()))
+        return productItemRepository.findAvailableProducts(cidade.getId(), null, null, ordem.byShopRating(), DEZ_HORAS, PageRequest.of(0, 10, ordem.sort()))
                 .getContent().stream().map(ProductItem::getBrand).toList();
     }
 
@@ -352,5 +354,19 @@ class ProductItemRepositoryTest {
         entityManager.clear();
 
         assertEquals(java.util.List.of("Novo", "Antigo"), marcas(curitiba, com.h2gas.enums.ProductSortEnum.NEWEST));
+    }
+
+    @Test
+    @DisplayName("HU18: produto de loja fora do horário não aparece no catálogo")
+    void naoDeveListarProdutoDeLojaForaDoHorario() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        produtoDe(criarFornecedor(curitiba, "aberta@h2gas.test"), "Da Aberta", "100.00");
+        Supplier fechada = criarFornecedor(curitiba, "fechada@h2gas.test");
+        fechada.setOpeningTime(java.time.LocalTime.of(19, 0));
+        fechada.setClosingTime(java.time.LocalTime.of(23, 0));
+        supplierRepository.saveAndFlush(fechada);
+        produtoDe(fechada, "Da Fechada", "100.00");
+
+        assertEquals(java.util.List.of("Da Aberta"), marcas(curitiba, com.h2gas.enums.ProductSortEnum.NAME));
     }
 }

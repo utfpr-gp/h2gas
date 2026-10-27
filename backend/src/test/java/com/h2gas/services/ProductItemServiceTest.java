@@ -187,7 +187,9 @@ class ProductItemServiceTest {
         supplier.setClosingTime(LocalTime.of(18, 0));
         supplier.setAverageDeliveryTime(Duration.ofMinutes(30));
         supplier.setActive(true);
-        supplier.setOpen(true);
+        // HU18: aberta pelo horário (o relógio dos testes marca 10:00)
+        supplier.setOpeningTime(java.time.LocalTime.of(8, 0));
+        supplier.setClosingTime(java.time.LocalTime.of(18, 0));
         supplier.setCity(city);
         supplierRepository.save(supplier);
 
@@ -236,7 +238,9 @@ class ProductItemServiceTest {
         supplier.setClosingTime(LocalTime.of(18, 0));
         supplier.setAverageDeliveryTime(Duration.ofMinutes(30));
         supplier.setActive(true);
-        supplier.setOpen(true);
+        // HU18: aberta pelo horário (o relógio dos testes marca 10:00)
+        supplier.setOpeningTime(java.time.LocalTime.of(8, 0));
+        supplier.setClosingTime(java.time.LocalTime.of(18, 0));
         supplier.setCity(city);
         supplierRepository.save(supplier);
 
@@ -486,7 +490,9 @@ class ProductItemServiceTest {
         supplierFirst.setAddress(address);
         supplierFirst.setCity(cityFirst);
         supplierFirst.setProductItems(null); // ou new ArrayList<>()
-        supplierFirst.setOpen(false);
+        // HU18: fechada pelo horário (o relógio dos testes marca 10:00)
+        supplierFirst.setOpeningTime(java.time.LocalTime.of(19, 0));
+        supplierFirst.setClosingTime(java.time.LocalTime.of(23, 0));
 
         supplierRepository.save(supplierFirst);
 
@@ -510,7 +516,9 @@ class ProductItemServiceTest {
         supplierSecond.setAddress(address2);
         supplierSecond.setCity(cityFirst);
         supplierSecond.setProductItems(null); // ou new ArrayList<>()
-        supplierSecond.setOpen(false);
+        // HU18: fechada pelo horário (o relógio dos testes marca 10:00)
+        supplierSecond.setOpeningTime(java.time.LocalTime.of(19, 0));
+        supplierSecond.setClosingTime(java.time.LocalTime.of(23, 0));
 
         supplierRepository.save(supplierSecond);
 
@@ -650,7 +658,9 @@ class ProductItemServiceTest {
         s.setClosingTime(LocalTime.of(18, 0));
         s.setAverageDeliveryTime(Duration.ofMinutes(30));
         s.setActive(true);
-        s.setOpen(true);
+        // HU18: aberta pelo horário (o relógio dos testes marca 10:00)
+        s.setOpeningTime(java.time.LocalTime.of(8, 0));
+        s.setClosingTime(java.time.LocalTime.of(18, 0));
         s.setCity(city);
         return supplierRepository.save(s);
     }

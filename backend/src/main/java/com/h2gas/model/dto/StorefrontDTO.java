@@ -15,7 +15,7 @@ public record StorefrontDTO(
         @Schema(example = "07:00", nullable = true) String openingTime,
         @Schema(example = "20:00", nullable = true) String closingTime,
         @Schema(description = "Tempo médio de entrega em minutos", example = "60", nullable = true) Long averageDeliveryTime,
-        @Schema(description = "Loja aberta agora") boolean open,
+        @Schema(description = "HU18: aberta agora pelo horário de funcionamento, na hora de Brasília") boolean open,
         @Schema(example = "3") Long cityId,
         @Schema(example = "Curitiba") String cityName,
         @Schema(example = "Centro", nullable = true) String addressNeighborhood,

@@ -250,7 +250,9 @@ class CategoryProductServiceTest {
         supplierFirst.setAddress(address);
         supplierFirst.setCity(cityFirst);
         supplierFirst.setProductItems(null); // ou new ArrayList<>()
-        supplierFirst.setOpen(false);
+        // HU18: fechada pelo horário (o relógio dos testes marca 10:00)
+        supplierFirst.setOpeningTime(java.time.LocalTime.of(19, 0));
+        supplierFirst.setClosingTime(java.time.LocalTime.of(23, 0));
 
         supplierRepository.save(supplierFirst);
 
@@ -273,7 +275,9 @@ class CategoryProductServiceTest {
         supplierSecond.setAddress(address2);
         supplierSecond.setCity(cityFirst);
         supplierSecond.setProductItems(null); // ou new ArrayList<>()
-        supplierSecond.setOpen(false);
+        // HU18: fechada pelo horário (o relógio dos testes marca 10:00)
+        supplierSecond.setOpeningTime(java.time.LocalTime.of(19, 0));
+        supplierSecond.setClosingTime(java.time.LocalTime.of(23, 0));
 
         supplierRepository.save(supplierSecond);
 

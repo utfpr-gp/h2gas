@@ -18,6 +18,9 @@ import com.h2gas.enums.ProductSortEnum;
 import com.h2gas.enums.StockFilterEnum;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.time.Clock;
+import java.time.LocalTime;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,6 +35,10 @@ import java.util.stream.Collectors;
 
 @Component
 public class ProductItemService {
+    // HU18: hora de Brasília para "aberta agora"
+    @Autowired
+    private Clock clock;
+
     @Autowired
     private ProductItemRepository productItemRepository;
 
@@ -111,7 +118,9 @@ public class ProductItemService {
         // sem ordenação escolhida, vale o Sort que já veio no Pageable (chamadas internas e a HU02)
         Pageable sorted = sort == ProductSortEnum.NONE ? pageable
                 : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort.sort());
-        return productItemRepository.findAvailableProducts(cityId, category, term, sort.byShopRating(), sorted)
+        // HU18: só produtos de loja aberta agora pelo horário (Brasília)
+        return productItemRepository.findAvailableProducts(cityId, category, term, sort.byShopRating(),
+                        LocalTime.now(clock), sorted)
                 .map(productItemMapper::toDto);
     }
 

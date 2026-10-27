@@ -76,7 +76,9 @@ class OrderServiceTransactionTest {
         supplier.setClosingTime(LocalTime.of(18, 0));
         supplier.setAverageDeliveryTime(Duration.ofMinutes(30));
         supplier.setActive(true);
-        supplier.setOpen(true);
+        // HU18: aberta pelo horário (o relógio dos testes marca 10:00)
+        supplier.setOpeningTime(java.time.LocalTime.of(8, 0));
+        supplier.setClosingTime(java.time.LocalTime.of(18, 0));
         supplier.setAddress(supplierAddress);
         supplier.setCity(city);
         supplier = supplierRepository.save(supplier);

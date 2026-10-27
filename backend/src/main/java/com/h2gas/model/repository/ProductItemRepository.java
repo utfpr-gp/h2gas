@@ -10,6 +10,8 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalTime;
+
 public interface ProductItemRepository extends JpaRepository<ProductItem, Long> {
     Page<ProductItem> findBySupplierId(String id, Pageable pageable);
 
@@ -36,7 +38,14 @@ public interface ProductItemRepository extends JpaRepository<ProductItem, Long> 
     long countBySupplierIdAndStockQuantity(String supplierId, int stock);
     long countBySupplierIdAndStockQuantityBetween(String supplierId, int min, int max);
 
-    String AVAILABLE_WHERE = " WHERE p.supplier.active = true AND p.supplier.open = true"
+    // HU18: a loja que vende precisa estar aberta agora pelo horário (mesma regra de SupplierRepository.OPEN_NOW)
+    String SUPPLIER_OPEN_NOW = "(p.supplier.openingTime IS NOT NULL AND p.supplier.closingTime IS NOT NULL AND ("
+            + "(p.supplier.openingTime < p.supplier.closingTime"
+            + " AND :now >= p.supplier.openingTime AND :now < p.supplier.closingTime)"
+            + " OR (p.supplier.openingTime > p.supplier.closingTime"
+            + " AND (:now >= p.supplier.openingTime OR :now < p.supplier.closingTime))))";
+
+    String AVAILABLE_WHERE = " WHERE p.supplier.active = true AND " + SUPPLIER_OPEN_NOW
             + " AND (:cityId IS NULL OR p.supplier.city.id = :cityId)"
             + " AND (:category IS NULL OR LOWER(p.categoryProduct.productType.name) = LOWER(:category))"
             + " AND p.stockQuantity > 0"
@@ -56,15 +65,12 @@ public interface ProductItemRepository extends JpaRepository<ProductItem, Long> 
                                              @Param("category") String category,
                                              @Param("q") String q,
                                              @Param("byShopRating") boolean byShopRating,
+                                             @Param("now") LocalTime now,
                                              Pageable pageable);
 
-    default Page<ProductItem> findAvailableProducts(Long cityId, String category, String q, Pageable pageable) {
-        return findAvailableProducts(cityId, category, q, false, pageable);
-    }
-
     // F7 §5.21: busca opcional (q em minúsculas) por marca, categoria ou tipo; LOCATE pelo mesmo motivo da HU12
-    default Page<ProductItem> findAvailableProducts(Long cityId, String category, Pageable pageable) {
-        return findAvailableProducts(cityId, category, null, pageable);
+    default Page<ProductItem> findAvailableProducts(Long cityId, String category, LocalTime now, Pageable pageable) {
+        return findAvailableProducts(cityId, category, null, false, now, pageable);
     }
 
     @Lock(LockModeType.OPTIMISTIC)
