@@ -87,6 +87,45 @@ describe('SupplierCardComponent', () => {
     expect(rating().getAttribute('aria-label')).toBe('Ver as 14 avaliações da loja, nota 4,3 de 5');
   });
 
+  // ---- HU15 ----
+  const selos = () => Array.from(
+    (fixture.nativeElement as HTMLElement).querySelectorAll('[data-testid="supplier-type"]')) as HTMLElement[];
+
+  it('deveMostrarOsSelosDeTipo', () => {
+    component.supplier = {
+      id: '7', name: 'Gás Centro', productTypes: [
+        { id: 1, name: 'Água', icon: 'water_drop' },
+        { id: 2, name: 'Gás', icon: 'local_fire_department' }
+      ]
+    } as Supplier;
+    fixture.detectChanges();
+
+    expect(selos().length).toBe(2);
+    expect(selos()[0].textContent).toContain('Água');
+    expect(selos()[1].textContent).toContain('Gás');
+  });
+
+  it('deveUsarOIconeDoTipo', () => {
+    component.supplier = {
+      id: '7', name: 'Gás Centro', productTypes: [{ id: 2, name: 'Gás', icon: 'local_fire_department' }]
+    } as Supplier;
+    fixture.detectChanges();
+
+    expect(selos()[0].querySelector('.material-icons')?.textContent).toContain('local_fire_department');
+    // o nome é texto de verdade, não só ícone: leitor de tela precisa ler o tipo
+    expect(selos()[0].textContent).toContain('Gás');
+  });
+
+  it('naoDeveMostrarSeloQuandoALojaNaoTemTipo', () => {
+    component.supplier = { id: '7', name: 'Loja Sem Catálogo', productTypes: [] } as unknown as Supplier;
+    fixture.detectChanges();
+    expect(selos().length).toBe(0);
+
+    component.supplier = { id: '7', name: 'Loja Antiga' } as Supplier;
+    fixture.detectChanges();
+    expect(selos().length).toBe(0);
+  });
+
   // ---- F7 §5.27 ----
   it('naoDeveAbrirProdutosAoClicarNasEstrelas', () => {
     component.supplier = { id: '7', name: 'Gás Centro', averageRating: 4.2, reviewCount: 14 } as Supplier;

@@ -11,10 +11,11 @@ import { DEFAULT_PRODUCT_TYPE_ICON, ProductType } from '../../models/product-typ
 export class CategoryChipBarComponent {
   @Input() categories: ProductType[] = [];
   @Input() selected: string | null = null;
-  @Output() categorySelected = new EventEmitter<string | null>();
+  // HU15: emite o tipo inteiro — a lista de lojas filtra por id, a de produtos por nome
+  @Output() categorySelected = new EventEmitter<ProductType | null>();
 
-  select(name: string | null) {
-    this.categorySelected.emit(name);
+  select(type: ProductType | null) {
+    this.categorySelected.emit(type);
   }
 
   iconFor(type: ProductType): string {

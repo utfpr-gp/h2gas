@@ -40,11 +40,6 @@ type ViewMode = 'suppliers' | 'products';
   templateUrl: './supplier-list.component.html',
 })
 export class SupplierListComponent implements OnInit {
-  readonly promoBanners = [
-    { title: 'Fardinho de Água', subtitle: 'Compre água de diferentes tamanhos', icon: 'water_drop' },
-    { title: 'Gás de Cozinha e Industrial', subtitle: 'Botijões de vários tamanhos, com entrega ou retirada', icon: 'local_fire_department' },
-  ];
-
   viewMode: ViewMode = 'suppliers';
   query = '';
   loading = false;
@@ -52,7 +47,8 @@ export class SupplierListComponent implements OnInit {
   suppliers: Supplier[] = [];
   products: ProductItem[] = [];
   categories: ProductType[] = [];
-  selectedCategory: string | null = null;
+  // HU15: o tipo escolhido vale nas duas visões — lojas filtram por id, produtos por nome
+  selectedType: ProductType | null = null;
   sortByPrice = false;
 
   currentPage = 0;
@@ -78,9 +74,10 @@ export class SupplierListComponent implements OnInit {
       this.query = q;
       this.reload();
     });
+    // HU15: os chips de tipo aparecem nas duas visões, então as categorias carregam sempre
+    this.loadCategories();
     if (this.route.snapshot.queryParamMap.get('view') === 'products') {
       this.viewMode = 'products';
-      this.loadCategories();
       this.getProducts();
     } else {
       this.getSuppliers();
@@ -105,7 +102,9 @@ export class SupplierListComponent implements OnInit {
 
   getSuppliers(page: number = 0) {
     this.loading = true;
-    this.supplierService.getAllSupplierOpenAndActive(page, SUPPLIERS_PAGE_SIZE, this.cityId, this.query || undefined).subscribe({
+    this.supplierService.getAllSupplierOpenAndActive(
+      page, SUPPLIERS_PAGE_SIZE, this.cityId, this.query || undefined, this.selectedType?.id,
+    ).subscribe({
       next: (response) => {
         this.suppliers = response.data;
         this.applyPage(response);
@@ -121,7 +120,7 @@ export class SupplierListComponent implements OnInit {
     this.loading = true;
     const sort = this.sortByPrice ? 'priceDelivery,asc' : undefined;
     this.productItemService.getProductsFromActiveSuppliers(
-      page, PRODUCTS_PAGE_SIZE, this.cityId, this.selectedCategory ?? undefined, sort, this.query || undefined,
+      page, PRODUCTS_PAGE_SIZE, this.cityId, this.selectedType?.name ?? undefined, sort, this.query || undefined,
     ).subscribe({
       next: (response) => {
         this.products = response.data;
@@ -138,7 +137,6 @@ export class SupplierListComponent implements OnInit {
   setView(mode: ViewMode) {
     if (this.viewMode === mode) return;
     this.viewMode = mode;
-    if (mode === 'products') this.loadCategories();
     this.reload();
   }
 
@@ -171,9 +169,10 @@ export class SupplierListComponent implements OnInit {
     });
   }
 
-  selectCategory(name: string | null) {
-    this.selectedCategory = name;
-    this.getProducts();
+  // HU15: o mesmo chip filtra as duas visões
+  selectCategory(type: ProductType | null) {
+    this.selectedType = type;
+    this.reload();
   }
 
   toggleSortByPrice() {

@@ -15,8 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 import com.h2gas.model.dto.SupplierSummaryDTO;
 import com.h2gas.model.entity.*;
 import com.h2gas.model.mapper.*;
+import com.h2gas.model.dto.ProductTypeChipDTO;
 import com.h2gas.model.dto.StoreReviewDTO;
 import com.h2gas.model.dto.StorefrontDTO;
+import com.h2gas.model.repository.CategoryProductRepository;
 import com.h2gas.model.repository.ReviewRepository;
 import com.h2gas.model.repository.SupplierRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +42,9 @@ public class SupplierService {
 
     @Autowired
     private ReviewRepository reviewRepository;
+
+    @Autowired
+    private CategoryProductRepository categoryProductRepository;
 
     @Autowired
     private CloudinaryService cloudinaryService;
@@ -92,26 +97,48 @@ public class SupplierService {
     }
 
     public Page<SupplierDTO> findAllSuppliersOpenAndActive(Long cityId, Pageable pageable) {
-        return supplierRepository.findOpenForCatalog(cityId, null, pageable).map(supplierMapper::toDto);
+        return supplierRepository.findOpenForCatalog(cityId, null, null, pageable).map(supplierMapper::toDto);
     }
 
     // HU13: o catálogo devolve a vitrine pública das lojas (sem dados internos), com a nota
-    public Page<StorefrontDTO> findAllSuppliersOpenAndActive(Long cityId, String q, Pageable pageable) {
+    // HU15: productTypeId filtra pelo tipo vendido; cada loja leva os tipos que vende
+    public Page<StorefrontDTO> findAllSuppliersOpenAndActive(Long cityId, String q, Long productTypeId, Pageable pageable) {
         String term = q == null || q.isBlank() ? null : q.trim().toLowerCase(java.util.Locale.ROOT);
-        Page<SupplierDTO> page = supplierRepository.findOpenForCatalog(cityId, term, pageable).map(supplierMapper::toDto);
+        Page<SupplierDTO> page = supplierRepository.findOpenForCatalog(cityId, term, productTypeId, pageable)
+                .map(supplierMapper::toDto);
         addRatings(page.getContent());
-        return page.map(SupplierService::toStorefront);
+        Map<String, List<ProductTypeChipDTO>> typesBySupplier = productTypesBySupplier(
+                page.getContent().stream().map(SupplierDTO::getId).toList());
+        return page.map(dto -> toStorefront(dto, typesBySupplier.getOrDefault(dto.getId(), List.of())));
     }
 
     // HU13: página da loja na vitrine pública
     public StorefrontDTO findStorefront(String id) {
-        return toStorefront(findById(id));
+        SupplierDTO dto = findById(id);
+        return toStorefront(dto, productTypesBySupplier(List.of(id)).getOrDefault(id, List.of()));
     }
 
-    private static StorefrontDTO toStorefront(SupplierDTO d) {
+    // HU15: ordem alfabética dos selos em pt-BR (acento não muda o lugar: "Água" antes de "Gás")
+    private static final java.text.Collator ALFABETICA_PT_BR =
+            java.text.Collator.getInstance(java.util.Locale.forLanguageTag("pt-BR"));
+
+    // HU15: tipos de produto das lojas da página, lidos em uma consulta agrupada (como a nota em addRatings)
+    private Map<String, List<ProductTypeChipDTO>> productTypesBySupplier(List<String> supplierIds) {
+        if (supplierIds.isEmpty()) {
+            return Map.of();
+        }
+        return categoryProductRepository.findTypesBySupplierIds(supplierIds).stream()
+                .collect(Collectors.groupingBy(CategoryProductRepository.SupplierProductTypeRow::getSupplierId,
+                        Collectors.mapping(row -> new ProductTypeChipDTO(row.getTypeId(), row.getTypeName(), row.getTypeIcon()),
+                                Collectors.collectingAndThen(Collectors.toList(), tipos -> tipos.stream()
+                                        .sorted((a, b) -> ALFABETICA_PT_BR.compare(a.name(), b.name()))
+                                        .toList()))));
+    }
+
+    private static StorefrontDTO toStorefront(SupplierDTO d, List<ProductTypeChipDTO> productTypes) {
         return new StorefrontDTO(d.getId(), d.getName(), d.getDescription(), d.getLogoUrl(), d.getBannerUrl(),
                 d.getOpeningTime(), d.getClosingTime(), d.getAverageDeliveryTime(), d.isOpen(), d.getCityId(), d.getCityName(),
-                d.getAddressNeighborhood(), d.getAverageRating(), d.getReviewCount());
+                d.getAddressNeighborhood(), d.getAverageRating(), d.getReviewCount(), productTypes);
     }
 
     // F7 §5.27: avaliações da loja com o primeiro nome do cliente; comentário em branco vira nulo

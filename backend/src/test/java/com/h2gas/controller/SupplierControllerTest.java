@@ -135,12 +135,12 @@ class SupplierControllerTest {
     void deveAceitarParametroCityIdOpcionalNoEndpointActivesOpen() throws Exception {
         Page<StorefrontDTO> page = new PageImpl<>(List.of(vitrine("Fornecedor Curitiba", null, 0L)), PageRequest.of(0, 10), 1);
 
-        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), isNull(), any())).thenReturn(page);
+        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), isNull(), isNull(), any())).thenReturn(page);
 
         mockMvc.perform(get("/api/suppliers/actives/open").param("cityId", "7"))
                 .andExpect(status().isOk());
 
-        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), isNull(), any());
+        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), isNull(), isNull(), any());
     }
 
     // HU13: visitante precisa da cidade (PublicCatalogAccessTest); o admin logado segue vendo todas as cidades
@@ -149,12 +149,12 @@ class SupplierControllerTest {
         autenticarComo("ROLE_ADMIN");
         Page<StorefrontDTO> page = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
 
-        when(supplierService.findAllSuppliersOpenAndActive(isNull(), isNull(), any())).thenReturn(page);
+        when(supplierService.findAllSuppliersOpenAndActive(isNull(), isNull(), isNull(), any())).thenReturn(page);
 
         mockMvc.perform(get("/api/suppliers/actives/open"))
                 .andExpect(status().isOk());
 
-        verify(supplierService).findAllSuppliersOpenAndActive(isNull(), isNull(), any());
+        verify(supplierService).findAllSuppliersOpenAndActive(isNull(), isNull(), isNull(), any());
     }
 
     @Test
@@ -324,24 +324,52 @@ class SupplierControllerTest {
 
     @Test
     void deveRepassarABuscaComACidade() throws Exception {
-        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), eq("gás azul"), any()))
+        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), eq("gás azul"), isNull(), any()))
                 .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
 
         mockMvc.perform(get("/api/suppliers/actives/open").param("cityId", "7").param("q", "gás azul"))
                 .andExpect(status().isOk());
 
-        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), eq("gás azul"), any());
+        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), eq("gás azul"), isNull(), any());
     }
 
     @Test
     void deveExporNotaEContagemNoCatalogo() throws Exception {
-        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), isNull(), any()))
+        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), isNull(), isNull(), any()))
                 .thenReturn(new PageImpl<>(List.of(vitrine("Gás Centro", 4.3, 14L)), PageRequest.of(0, 10), 1));
 
         mockMvc.perform(get("/api/suppliers/actives/open").param("cityId", "7"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].averageRating").value(4.3))
                 .andExpect(jsonPath("$.data[0].reviewCount").value(14));
+    }
+
+    // ---- HU15 ----
+
+    @Test
+    void deveRepassarOTipoDeProdutoAoServico() throws Exception {
+        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), isNull(), eq(3L), any()))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
+
+        mockMvc.perform(get("/api/suppliers/actives/open").param("cityId", "7").param("productTypeId", "3"))
+                .andExpect(status().isOk());
+
+        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), isNull(), eq(3L), any());
+    }
+
+    @Test
+    void deveDevolverOsTiposNaVitrine() throws Exception {
+        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), isNull(), isNull(), any()))
+                .thenReturn(new PageImpl<>(List.of(vitrine("Gás Centro", 4.3, 14L, List.of(
+                        new com.h2gas.model.dto.ProductTypeChipDTO(1L, "Água", "water_drop"),
+                        new com.h2gas.model.dto.ProductTypeChipDTO(2L, "Gás", "local_fire_department")))),
+                        PageRequest.of(0, 10), 1));
+
+        mockMvc.perform(get("/api/suppliers/actives/open").param("cityId", "7"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].productTypes[0].name").value("Água"))
+                .andExpect(jsonPath("$.data[0].productTypes[0].icon").value("water_drop"))
+                .andExpect(jsonPath("$.data[0].productTypes[1].name").value("Gás"));
     }
 
     @Test
@@ -391,8 +419,13 @@ class SupplierControllerTest {
     }
 
     private static StorefrontDTO vitrine(String nome, Double nota, Long avaliacoes) {
+        return vitrine(nome, nota, avaliacoes, List.of());
+    }
+
+    private static StorefrontDTO vitrine(String nome, Double nota, Long avaliacoes,
+                                         List<com.h2gas.model.dto.ProductTypeChipDTO> tipos) {
         return new StorefrontDTO("loja-1", nome, "Entrega rápida", null, null, "07:00", "20:00", 60L, true,
-                7L, "Curitiba", "Centro", nota, avaliacoes);
+                7L, "Curitiba", "Centro", nota, avaliacoes, tipos);
     }
 
     private static void autenticarComo(String role) {

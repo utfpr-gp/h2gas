@@ -122,8 +122,9 @@ public class SupplierController {
     }
 
     @Operation(summary = "Lista as lojas ativas e abertas (vitrine pública)",
-            description = "Aberta a visitantes. Retorna a vitrine das lojas ativas e abertas, ordenadas por nome, filtradas pela cidade (RN05) "
-                    + "e pela busca q no nome da loja; cada loja traz averageRating (média, 1 casa; nula sem avaliações) e reviewCount. "
+            description = "Aberta a visitantes. Retorna a vitrine das lojas ativas e abertas, ordenadas por nome, filtradas pela cidade (RN05), "
+                    + "pela busca q no nome da loja e pelo tipo de produto vendido (productTypeId); cada loja traz averageRating "
+                    + "(média, 1 casa; nula sem avaliações), reviewCount e productTypes (os tipos que vende, para os selos do card). "
                     + "Sem login, cityId é obrigatório; o admin logado pode omitir para ver todas as cidades")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista paginada da vitrine das lojas"),
@@ -136,11 +137,14 @@ public class SupplierController {
             @Parameter(description = "Número da página (0-based)") @RequestParam(value = "page", required = false) Integer page,
             @Parameter(description = "Tamanho da página") @RequestParam(value = "size", required = false) Integer size,
             @Parameter(description = "Filtra por cidade do endereço ativo do cliente (RN05)") @RequestParam(value = "cityId", required = false) Long cityId,
-            @Parameter(description = "Trecho do nome da loja", example = "gás") @RequestParam(value = "q", required = false) String q
+            @Parameter(description = "Trecho do nome da loja", example = "gás") @RequestParam(value = "q", required = false) String q,
+            @Parameter(description = "HU15: só as lojas que vendem esse tipo de produto (id de /api/product-types);"
+                    + " tipo inexistente devolve página vazia", example = "1")
+            @RequestParam(value = "productTypeId", required = false) Long productTypeId
     ) {
         CatalogAccess.requireCityForVisitor(cityId);
         Pageable pageable = PaginationUtil.getPageableRequest(page, size);
-        Page<StorefrontDTO> result = supplierService.findAllSuppliersOpenAndActive(cityId, q, pageable);
+        Page<StorefrontDTO> result = supplierService.findAllSuppliersOpenAndActive(cityId, q, productTypeId, pageable);
         PageResponse<StorefrontDTO> response = new PageResponse<>(result);
 
         return ResponseEntity.ok(response);

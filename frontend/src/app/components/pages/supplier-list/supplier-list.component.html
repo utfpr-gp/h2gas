@@ -37,32 +37,29 @@
         </div>
     </div>
 
+    <!-- HU15: a mesma faixa de tipos nas duas visões -->
+    <app-category-chip-bar [categories]="categories" [selected]="selectedType?.name ?? null"
+        (categorySelected)="selectCategory($event)"></app-category-chip-bar>
+
     <!-- ================== LOJAS ================== -->
     <ng-container *ngIf="viewMode === 'suppliers'">
-        <div *ngIf="!query" class="grid sm:grid-cols-2 gap-3 mb-6">
-            <div *ngFor="let banner of promoBanners" class="flex items-center gap-3 rounded-xl border border-primary/15 bg-primary/5 p-4">
-                <span class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-primary shrink-0" aria-hidden="true">
-                    <span class="material-icons">{{ banner.icon }}</span>
+        <div class="flex flex-wrap items-center justify-between gap-2 my-4">
+            <h2 class="text-lg font-bold text-base-content">
+                {{ query ? 'Resultado da busca' : 'Lojas próximas' }}
+                <span *ngIf="!loading" class="text-sm font-normal text-neutral">
+                    · {{ totalElements }} {{ totalElements === 1 ? 'loja' : 'lojas' }}
                 </span>
-                <span class="min-w-0">
-                    <span class="block font-semibold text-gray-800">{{ banner.title }}</span>
-                    <span class="block text-sm text-gray-600">{{ banner.subtitle }}</span>
-                </span>
-            </div>
+            </h2>
+            <!-- HU16 acrescenta aqui a ordenação das lojas -->
         </div>
 
-        <div class="flex items-baseline justify-between gap-2 mb-3">
-            <h2 class="text-lg font-bold text-gray-800">{{ query ? 'Resultado da busca' : 'Lojas próximas' }}</h2>
-            <span *ngIf="!loading" class="text-sm text-gray-500">{{ totalElements }} {{ totalElements === 1 ? 'loja' : 'lojas' }}</span>
+        <div *ngIf="!loading && !suppliers.length" data-testid="empty-state" class="text-center bg-base-100 rounded-xl border border-base-300 py-10 px-4">
+            <span class="material-icons text-base-300" style="font-size: 48px">storefront</span>
+            <p class="text-base-content font-semibold mt-2">{{ query ? 'Nenhuma loja com esse nome' : 'Nenhuma loja aberta no seu endereço agora' }}</p>
+            <p class="text-sm text-neutral">{{ query ? 'Confira o nome ou limpe a busca.' : 'Tente mais tarde ou troque o endereço de entrega.' }}</p>
         </div>
 
-        <div *ngIf="!loading && !suppliers.length" data-testid="empty-state" class="text-center bg-white rounded-xl border border-gray-200 py-10 px-4">
-            <span class="material-icons text-gray-300" style="font-size: 48px">storefront</span>
-            <p class="text-gray-700 font-semibold mt-2">{{ query ? 'Nenhuma loja com esse nome' : 'Nenhuma loja aberta no seu endereço agora' }}</p>
-            <p class="text-sm text-gray-500">{{ query ? 'Confira o nome ou limpe a busca.' : 'Tente mais tarde ou troque o endereço de entrega.' }}</p>
-        </div>
-
-        <div class="flex flex-col gap-3" [class.opacity-60]="loading">
+        <div data-testid="supplier-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4" [class.opacity-60]="loading">
             <app-supplier-card *ngFor="let supplier of suppliers" [supplier]="supplier" (viewProducts)="navigate($event)"
                 (viewReviews)="openReviews($event)"></app-supplier-card>
         </div>
@@ -71,22 +68,21 @@
     <!-- ================== PRODUTOS ================== -->
     <ng-container *ngIf="viewMode === 'products'">
         <h2 class="sr-only">Produtos disponíveis</h2>
-        <app-category-chip-bar [categories]="categories" [selected]="selectedCategory" (categorySelected)="selectCategory($event)"></app-category-chip-bar>
 
         <div class="flex flex-wrap items-center justify-between gap-2 my-4">
+            <span *ngIf="!loading" class="text-sm text-neutral">{{ totalElements }} {{ totalElements === 1 ? 'produto' : 'produtos' }}</span>
             <button type="button" data-testid="sort-price" (click)="toggleSortByPrice()" [attr.aria-pressed]="sortByPrice"
-                class="btn btn-sm rounded-full min-h-11 sm:min-h-8"
-                [ngClass]="sortByPrice ? 'border-primary bg-primary/10 text-primary' : 'btn-ghost border-gray-200 bg-white text-gray-600'">
+                class="btn btn-sm rounded-full min-h-11 sm:min-h-8 ms-auto"
+                [ngClass]="sortByPrice ? 'border-primary bg-primary/10 text-primary' : 'btn-ghost border-base-300 bg-base-100 text-neutral'">
                 <span class="material-icons text-sm" aria-hidden="true">sort</span>
                 Menor preço
             </button>
-            <span *ngIf="!loading" class="text-sm text-gray-500">{{ totalElements }} {{ totalElements === 1 ? 'produto' : 'produtos' }}</span>
         </div>
 
-        <div *ngIf="!loading && !products.length" data-testid="empty-state" class="text-center bg-white rounded-xl border border-gray-200 py-10 px-4">
-            <span class="material-icons text-gray-300" style="font-size: 48px">inventory_2</span>
-            <p class="text-gray-700 font-semibold mt-2">{{ query ? 'Nenhum produto encontrado' : 'Nenhum produto disponível agora' }}</p>
-            <p class="text-sm text-gray-500">{{ query ? 'Troque a busca ou o tipo.' : 'Tente outro tipo ou mais tarde.' }}</p>
+        <div *ngIf="!loading && !products.length" data-testid="empty-state" class="text-center bg-base-100 rounded-xl border border-base-300 py-10 px-4">
+            <span class="material-icons text-base-300" style="font-size: 48px">inventory_2</span>
+            <p class="text-base-content font-semibold mt-2">{{ query ? 'Nenhum produto encontrado' : 'Nenhum produto disponível agora' }}</p>
+            <p class="text-sm text-neutral">{{ query ? 'Troque a busca ou o tipo.' : 'Tente outro tipo ou mais tarde.' }}</p>
         </div>
 
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4" [class.opacity-60]="loading">

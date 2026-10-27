@@ -113,8 +113,9 @@ export class ProductListComponent implements OnInit {
     });
   }
 
-  onCategorySelected(name: string | null) {
-    this.selectedCategory = name;
+  // HU15: o chip passou a emitir o tipo inteiro; aqui o filtro segue sendo pelo nome
+  onCategorySelected(type: ProductType | null) {
+    this.selectedCategory = type?.name ?? null;
     this.getProducts(this.idSupplier!);
   }
 

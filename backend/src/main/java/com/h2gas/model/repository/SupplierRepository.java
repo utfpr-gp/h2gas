@@ -20,10 +20,14 @@ public interface SupplierRepository extends JpaRepository<Supplier, String> {
     boolean existsByCityId(Long cityId);
 
     // F7 §5.21: catálogo do cliente — lojas ativas e abertas, da cidade do endereço (RN05), com busca opcional pelo nome
+    // HU15: productTypeId opcional — só as lojas que têm alguma categoria daquele tipo (Gás, Água…)
     @Query("SELECT s FROM Supplier s WHERE s.active = true AND s.open = true"
             + " AND (:cityId IS NULL OR s.city.id = :cityId)"
-            + " AND (:q IS NULL OR LOCATE(:q, LOWER(s.name)) > 0) ORDER BY s.name")
-    Page<Supplier> findOpenForCatalog(@Param("cityId") Long cityId, @Param("q") String q, Pageable pageable);
+            + " AND (:q IS NULL OR LOCATE(:q, LOWER(s.name)) > 0)"
+            + " AND (:productTypeId IS NULL OR EXISTS (SELECT 1 FROM CategoryProduct c"
+            + " WHERE c.supplier = s AND c.productType.id = :productTypeId)) ORDER BY s.name")
+    Page<Supplier> findOpenForCatalog(@Param("cityId") Long cityId, @Param("q") String q,
+                                      @Param("productTypeId") Long productTypeId, Pageable pageable);
 
     // F7 fatia 6: aprovação de fornecedores — status e busca opcionais, aplicados no banco para a paginação bater
     @Query("select s from Supplier s where (:active is null or s.active = :active) and (:q is null"
