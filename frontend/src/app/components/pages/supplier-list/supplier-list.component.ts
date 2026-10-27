@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, debounceTime } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
@@ -18,12 +18,28 @@ import { ProductCardComponent } from '../../product-card/product-card.component'
 import { SupplierCardComponent } from '../../supplier-card/supplier-card.component';
 import { StoreReviewsDialogComponent } from '../../store-reviews-dialog/store-reviews-dialog.component';
 import { CartOtherStoreDialogComponent } from '../../cart-other-store-dialog/cart-other-store-dialog.component';
+import { CatalogSortMenuComponent, SortOption } from '../../catalog-sort-menu/catalog-sort-menu.component';
 import { backendMessage } from '../../../utils/backend-message';
 
 const SUPPLIERS_PAGE_SIZE = 10;
 const PRODUCTS_PAGE_SIZE = 12;
 
 type ViewMode = 'suppliers' | 'products';
+
+// HU16: opções do botão "Ordenar"; a primeira de cada lista é a padrão
+const SUPPLIER_SORT_OPTIONS: SortOption[] = [
+  { value: 'name', label: 'Nome (A-Z)' },
+  { value: 'rating', label: 'Melhor avaliação' },
+  { value: 'deliveryTime', label: 'Menor tempo de entrega' },
+  { value: 'openFirst', label: 'Abertas primeiro' },
+];
+const PRODUCT_SORT_OPTIONS: SortOption[] = [
+  { value: 'priceDelivery,asc', label: 'Menor preço' },
+  { value: 'priceDelivery,desc', label: 'Maior preço' },
+  { value: 'brand,asc', label: 'Nome (A-Z)' },
+  { value: 'rating', label: 'Melhor avaliado' },
+  { value: 'createdAt,desc', label: 'Mais recentes' },
+];
 
 // HU01/HU02 + F7 §5.21: catálogo do cliente (lojas e produtos da cidade do endereço ativo, RN05)
 @Component({
@@ -36,6 +52,7 @@ type ViewMode = 'suppliers' | 'products';
     SupplierCardComponent,
     StoreReviewsDialogComponent,
     CartOtherStoreDialogComponent,
+    CatalogSortMenuComponent,
   ],
   templateUrl: './supplier-list.component.html',
 })
@@ -49,7 +66,9 @@ export class SupplierListComponent implements OnInit {
   categories: ProductType[] = [];
   // HU15: o tipo escolhido vale nas duas visões — lojas filtram por id, produtos por nome
   selectedType: ProductType | null = null;
-  sortByPrice = false;
+  // HU16: cada visão guarda a própria ordenação
+  supplierSort = SUPPLIER_SORT_OPTIONS[0].value;
+  productSort = PRODUCT_SORT_OPTIONS[0].value;
 
   currentPage = 0;
   totalPages = 0;
@@ -72,16 +91,41 @@ export class SupplierListComponent implements OnInit {
   ngOnInit(): void {
     this.search$.pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef)).subscribe((q) => {
       this.query = q;
-      this.reload();
+      this.applyFilters();
     });
-    // HU15: os chips de tipo aparecem nas duas visões, então as categorias carregam sempre
-    this.loadCategories();
-    if (this.route.snapshot.queryParamMap.get('view') === 'products') {
-      this.viewMode = 'products';
-      this.getProducts();
-    } else {
-      this.getSuppliers();
-    }
+    const params = this.route.snapshot.queryParamMap;
+    if (params.get('view') === 'products') this.viewMode = 'products';
+    // HU16: busca, tipo e ordenação vêm da URL, para sobreviver ao recarregar e à volta de uma loja
+    this.query = params.get('q')?.trim() ?? '';
+    const ordem = params.get('ordem');
+    if (ordem && this.sortOptions.some((o) => o.value === ordem)) this.activeSort = ordem;
+    const tipoId = Number(params.get('tipo')) || null;
+    // HU15: os chips de tipo aparecem nas duas visões, então as categorias carregam sempre;
+    // com tipo na URL, a primeira busca espera os tipos para saber o nome (a visão de produtos filtra por ele)
+    this.loadCategories(() => {
+      if (tipoId != null) {
+        this.selectedType = this.categories.find((c) => c.id === tipoId) ?? null;
+        this.reload();
+      }
+    });
+    if (tipoId == null) this.reload();
+  }
+
+  get sortOptions(): SortOption[] {
+    return this.viewMode === 'products' ? PRODUCT_SORT_OPTIONS : SUPPLIER_SORT_OPTIONS;
+  }
+
+  get activeSort(): string {
+    return this.viewMode === 'products' ? this.productSort : this.supplierSort;
+  }
+
+  set activeSort(value: string) {
+    if (this.viewMode === 'products') this.productSort = value;
+    else this.supplierSort = value;
+  }
+
+  get hasActiveFilters(): boolean {
+    return !!this.query || this.selectedType != null || this.activeSort !== this.sortOptions[0].value;
   }
 
   private get cityId(): number | undefined {
@@ -103,7 +147,7 @@ export class SupplierListComponent implements OnInit {
   getSuppliers(page: number = 0) {
     this.loading = true;
     this.supplierService.getAllSupplierOpenAndActive(
-      page, SUPPLIERS_PAGE_SIZE, this.cityId, this.query || undefined, this.selectedType?.id,
+      page, SUPPLIERS_PAGE_SIZE, this.cityId, this.query || undefined, this.selectedType?.id, this.supplierSort,
     ).subscribe({
       next: (response) => {
         this.suppliers = response.data;
@@ -118,9 +162,8 @@ export class SupplierListComponent implements OnInit {
 
   getProducts(page: number = 0) {
     this.loading = true;
-    const sort = this.sortByPrice ? 'priceDelivery,asc' : undefined;
     this.productItemService.getProductsFromActiveSuppliers(
-      page, PRODUCTS_PAGE_SIZE, this.cityId, this.selectedType?.name ?? undefined, sort, this.query || undefined,
+      page, PRODUCTS_PAGE_SIZE, this.cityId, this.selectedType?.name ?? undefined, this.productSort, this.query || undefined,
     ).subscribe({
       next: (response) => {
         this.products = response.data;
@@ -137,7 +180,7 @@ export class SupplierListComponent implements OnInit {
   setView(mode: ViewMode) {
     if (this.viewMode === mode) return;
     this.viewMode = mode;
-    this.reload();
+    this.applyFilters();
   }
 
   toggleView() {
@@ -148,11 +191,38 @@ export class SupplierListComponent implements OnInit {
     this.search$.next(value.trim());
   }
 
+  // HU16: o campo segue o estado ([value]="query"); limpar não mexe mais no DOM à mão
   clearSearch() {
     this.query = '';
-    const input = document.getElementById('catalog-search') as HTMLInputElement | null;
-    if (input) input.value = '';
+    this.applyFilters();
+  }
+
+  changeSort(value: string) {
+    this.activeSort = value;
+    this.applyFilters();
+  }
+
+  clearFilters() {
+    this.query = '';
+    this.selectedType = null;
+    this.activeSort = this.sortOptions[0].value;
+    this.applyFilters();
+  }
+
+  // HU16: todo filtro recarrega da primeira página e fica refletido na URL
+  private applyFilters() {
+    this.syncUrl();
     this.reload();
+  }
+
+  private syncUrl() {
+    const queryParams: Params = {
+      view: this.viewMode === 'products' ? 'products' : null,
+      q: this.query || null,
+      tipo: this.selectedType?.id ?? null,
+      ordem: this.activeSort !== this.sortOptions[0].value ? this.activeSort : null,
+    };
+    this.router.navigate([], { relativeTo: this.route, queryParams, queryParamsHandling: 'merge', replaceUrl: true });
   }
 
   onPageChange(page: number) {
@@ -161,24 +231,26 @@ export class SupplierListComponent implements OnInit {
   }
 
   // ---- produtos ----
-  loadCategories() {
+  loadCategories(onLoaded?: () => void) {
     if (this.categories.length > 0) return;
     this.productTypeService.findAll().subscribe({
-      next: (response) => (this.categories = response),
-      error: (err) => this.toastr.error(`Erro ao carregar as categorias: ${backendMessage(err)}`),
+      next: (response) => {
+        this.categories = response;
+        onLoaded?.();
+      },
+      error: (err) => {
+        this.toastr.error(`Erro ao carregar as categorias: ${backendMessage(err)}`);
+        onLoaded?.(); // sem os tipos, a lista carrega sem o filtro de tipo em vez de ficar vazia
+      },
     });
   }
 
   // HU15: o mesmo chip filtra as duas visões
   selectCategory(type: ProductType | null) {
     this.selectedType = type;
-    this.reload();
+    this.applyFilters();
   }
 
-  toggleSortByPrice() {
-    this.sortByPrice = !this.sortByPrice;
-    this.getProducts();
-  }
 
   navigate(id?: string) {
     this.router.navigate(['/fornecedores', id, 'produtos']);

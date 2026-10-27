@@ -160,19 +160,33 @@ Produtos além do Menor preço da HU02").
 - O input ganha `[value]="query"` e `#catalogSearch` (`@ViewChild`);
   `clearSearch()` deixa de usar `document.getElementById`.
 
-### 5.3 Frontend — barra de filtros
+### 5.3 Frontend — ordenação e filtros
 
-- Componente novo `app-catalog-filter-bar` (standalone,
-  `components/catalog-filter-bar/`), tira horizontal rolável logo abaixo
-  da busca, no idioma visual dos chips existentes:
-  - chip "Ordenar" abrindo menu com as quatro opções (uma marcada);
-  - chips de filtro ativo (tipo escolhido, termo buscado) com X próprio;
-  - botão "Limpar" quando há qualquer filtro ativo.
-  - `@Input() sort`, `@Input() activeType`, `@Input() query`;
-    `@Output() sortChange`, `@Output() clearAll`.
+- Componente novo `app-catalog-sort-menu` (standalone,
+  `components/catalog-sort-menu/`): **um botão "Ordenar"** alinhado à
+  direita, que abre o menu com as opções da visão atual e marca a ativa
+  (`role="menuitemradio"`, `aria-checked`). Substitui o toggle "Menor
+  preço" e serve as **duas** visões — as opções é que mudam (lojas: Nome,
+  Melhor avaliação, Menor tempo de entrega, Abertas primeiro; produtos: as
+  cinco da §5.1a).
+  - `@Input() options: { value, label }[]`, `@Input() value`;
+    `@Output() valueChange` (não emite ao escolher a opção já ativa).
+  - Fecha ao escolher, ao clicar fora e no Esc.
+  - Botão único, e não chips lado a lado, por decisão do autor
+    (2026-10-26): aguenta as opções que a HU17 vai somar sem quebrar no
+    celular.
+  - O menu sempre mostra uma opção ativa, então a visão "Produtos" passa a
+    abrir em **Menor preço** (antes vinha sem ordem até ligar o toggle). Na
+    API, `sort` ausente continua sem ordem, para não mudar o contrato de
+    quem já consome a rota.
+- Botão "Limpar filtros" ao lado do menu, só quando há busca, tipo ou
+  ordenação diferente da padrão (Cenário 9).
 - `supplier-list.component.ts` passa a refletir `q`, `tipo` e `ordem` em
   **query params** (`router.navigate([], { queryParams, replaceUrl: true })`)
   e a lê-los na inicialização (Cenário 8), junto do `?view=` que já existe.
+  Ordenação da URL que não pertence à visão aberta (ex.: `ordem=brand,asc`
+  em Lojas) é ignorada e cai na padrão; com `tipo` na URL, a primeira busca
+  espera a lista de tipos, porque a visão de produtos filtra pelo nome.
 - Card da loja fechada: selo "Fechada" (`badge` com token de aviso) e o
   botão "Ver produtos" segue disponível — o que a loja fechada não tem é
   ação de compra, já garantida no catálogo dela.
@@ -211,6 +225,7 @@ Produtos além do Menor preço da HU02").
    O assert `expect(byId('filter-button')).toBeNull()` (linha 145) é
    removido, com comentário-âncora `// ---- HU16 §4 (revoga F7 §5.21) ----`.
 5. `catalog-sort-menu.component.spec.ts`: `deveEmitirAOrdenacaoEscolhida`,
+   `naoDeveEmitirAoEscolherAMesmaOpcao`, `deveFecharAoClicarFora`,
    `deveMarcarAOpcaoAtiva`, `deveFecharAoEscolher`, `deveFecharNoEsc`,
    `deveListarAsOpcoesDaVisaoAtual`.
 6. `supplier.service.spec.ts`: `deveEnviarOSortNaQuery`.

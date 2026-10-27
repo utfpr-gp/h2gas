@@ -320,3 +320,8 @@ html {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* HU16: o X nativo do Chrome em type="search" se somava ao botão de limpar das telas — fica só o da aplicação */
+input[type="search"]::-webkit-search-cancel-button {
+  appearance: none;
+}
