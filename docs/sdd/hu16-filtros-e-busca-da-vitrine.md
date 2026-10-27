@@ -38,6 +38,11 @@ pelo nome sem a interface atrapalhar, para achar rápido onde comprar.
   lojas **fechadas**, depois das abertas, com o selo "Fechada" no card e
   sem a ação de compra. Nas outras ordenações a vitrine segue como hoje,
   só com lojas abertas.
+- **Cenário 6a — Ordenar produtos**: Dado a visão "Produtos", Quando o
+  cliente abre "Ordenar", Então escolhe entre Menor preço (o que já
+  existia), Maior preço, Nome (A-Z), Melhor avaliado e Mais recentes, e a
+  lista recarrega na ordem pedida. "Melhor avaliado" usa a nota da **loja**
+  que vende o produto — produto não tem avaliação própria.
 - **Cenário 7 — Filtros combinam**: Dado um tipo de produto selecionado
   (HU15) e um termo buscado, Quando o cliente troca a ordenação, Então os
   três valem juntos, a lista volta para a primeira página e a cidade do
@@ -122,6 +127,26 @@ pelo nome sem a interface atrapalhar, para achar rápido onde comprar.
 - OpenAPI: `@Parameter` de `sort` com os valores aceitos descritos, e
   `@ApiResponse` 400 com a mensagem do contrato.
 
+### 5.1a Backend — ordenação dos produtos
+
+Decisão do autor em 2026-10-26: a visão "Produtos" tinha só "Menor preço"
+e ganha as mesmas opções de um catálogo de verdade. Isto **revoga** o
+"Fora de Escopo" da primeira versão deste script ("ordenação na visão
+Produtos além do Menor preço da HU02").
+
+- `GET /api/product-items/by-supplier-open` já aceita `sort` (HU02, via
+  `PaginationUtil`); passam a ser aceitos, em lista fechada:
+  `priceDelivery,asc` (padrão de hoje), `priceDelivery,desc`, `brand,asc`,
+  `createdAt,desc` e `rating`.
+- `rating` é o único que **não** sai do `Sort` do Spring: produto não tem
+  nota, então ordena pela média da loja que o vende. Exige
+  `LEFT JOIN Review r ON r.supplier = p.supplier` + `GROUP BY p` em
+  `ProductItemRepository.findAvailableProducts`, com `AVG(r.rating) DESC` e
+  nulos por último — mesmo tratamento do `sort=rating` das lojas (§5.1).
+- Valor fora da lista → **400** "Ordenação inválida.", a mesma mensagem das
+  lojas.
+- OpenAPI: `@Parameter` de `sort` com os valores aceitos.
+
 ### 5.2 Frontend — correção da busca
 
 - `supplier-list.component.html:15`: `type="search"` → `type="text"`,
@@ -167,6 +192,13 @@ pelo nome sem a interface atrapalhar, para achar rápido onde comprar.
    `deveRecusarOrdenacaoInvalida` (400 com a mensagem do contrato),
    `deveUsarNomeComoOrdenacaoPadrao`.
 
+2a. `ProductItemServiceTest` / `ProductItemControllerTest`:
+   `deveOrdenarProdutosPorMaiorPreco`, `deveOrdenarProdutosPorNome`,
+   `deveOrdenarProdutosPelosMaisRecentes`,
+   `deveOrdenarProdutosPelaNotaDaLoja`,
+   `deveColocarProdutoDeLojaSemNotaNoFim`,
+   `deveRecusarOrdenacaoInvalidaDeProdutos` (400).
+
 **Frontend**
 3. `supplier-list.component.spec.ts` (o teste que reproduz o bug vem
    primeiro): `naoDeveUsarInputDoTipoSearch`,
@@ -178,9 +210,9 @@ pelo nome sem a interface atrapalhar, para achar rápido onde comprar.
    `deveLimparTodosOsFiltros`, `deveMarcarLojaFechadaComSelo`.
    O assert `expect(byId('filter-button')).toBeNull()` (linha 145) é
    removido, com comentário-âncora `// ---- HU16 §4 (revoga F7 §5.21) ----`.
-5. `catalog-filter-bar.component.spec.ts`: `deveEmitirAOrdenacaoEscolhida`,
-   `deveMarcarAOrdenacaoAtivaComAriaPressed`,
-   `deveMostrarLimparSomenteComFiltroAtivo`, `deveEmitirLimparTudo`.
+5. `catalog-sort-menu.component.spec.ts`: `deveEmitirAOrdenacaoEscolhida`,
+   `deveMarcarAOpcaoAtiva`, `deveFecharAoEscolher`, `deveFecharNoEsc`,
+   `deveListarAsOpcoesDaVisaoAtual`.
 6. `supplier.service.spec.ts`: `deveEnviarOSortNaQuery`.
 
 **E2E (registrado no DoD)**: em 390 e 1280 px — digitar na busca e
@@ -197,7 +229,6 @@ só em "Abertas primeiro".
 - Levar a busca da página da loja ao padrão de `/inicio` (F7 §5.24).
 - Mover a busca para dentro da navbar global (fora desde o F7 §6).
 - Guardar a preferência de filtro do usuário entre sessões.
-- Ordenação na visão "Produtos" além do "Menor preço" da HU02.
 
 ## 8. Definição de Pronto
 
@@ -206,8 +237,10 @@ só em "Abertas primeiro".
 - [ ] `clearSearch()` sem acesso direto ao DOM.
 - [ ] `GET /api/suppliers/actives/open` aceita `sort` com as quatro
       opções, recusa valor inválido com 400 e está documentado no Swagger.
-- [ ] Barra de filtros com ordenação, chips de filtro ativo e "Limpar";
-      estado na URL sobrevivendo ao recarregar.
+- [ ] Botão "Ordenar" com menu nas duas visões, com as opções de cada uma
+      e a ativa marcada; estado na URL sobrevivendo ao recarregar.
+- [ ] Produtos ordenáveis por menor/maior preço, nome, mais recentes e
+      nota da loja.
 - [ ] Loja fechada aparece com selo apenas em "Abertas primeiro".
 - [ ] Testes da seção 6 verdes; `mvn -f backend/pom.xml test` e
       `ng test` sem falha nova; `ng build` ok.
