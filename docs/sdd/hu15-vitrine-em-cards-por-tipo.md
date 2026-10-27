@@ -229,6 +229,38 @@ diferentes, então um título não teria uma loja só para mostrar.
   `deveEmitirALojaAoTocarNoNome`) e `supplier-list.component.spec.ts`
   (`deveMostrarALojaNosProdutos`, `deveAbrirALojaAoTocarNoNomeDoProduto`).
 
+### 5.5 Revisão: card de produto (2026-10-27)
+
+Pedido do autor: "Comprar agora" verde, UX e UI melhores, o produto bem
+exibido sem o fundo branco em volta e ícones modernos. Decisões dele: card
+vertical com foto grande; Adicionar em contorno e Comprar agora verde,
+lado a lado; ícones novos só no card por enquanto.
+
+- **Foto**: área 4:3 com a imagem por cima (`absolute`), para a proporção
+  valer com foto em pé. As fotos reais não têm fundo branco (são fotos de
+  ambiente), então a própria foto, desfocada e decorativa (`aria-hidden`,
+  `alt=""`), preenche as laterais, e a foto nítida fica inteira por cima,
+  com as bordas dissolvidas por máscara (`.product-photo-edge`) — sem faixa
+  vazia nem emenda. Mesmo endereço nas duas: um download só.
+- **Preço**: entrega como preço principal (`text-lg`, "com entrega");
+  retirada como linha secundária ("Retirada na loja · R$ …").
+- **Ações** lado a lado: Adicionar em contorno; Comprar agora preenchido em
+  verde. O verde é o 700 da paleta (`--btn-color: var(--color-green-700)`),
+  não o `success` do tema: com texto branco em 14 px o `success` (#16a34a)
+  dá ~3,3:1, abaixo dos 4,5:1; o 700 dá ~5:1. **Revoga o F7 §5.21**, que
+  fazia do Adicionar a única ação cheia.
+- **Selo "Entrega grátis"** sobre a foto, texto escuro em fundo claro e o
+  ícone em verde (o verde em texto pequeno não passaria no contraste).
+- **Ícones** Material Symbols Rounded (peso 400, sem preenchimento), pelo
+  Google Fonts com `icon_names` — só os 4 ícones do card. O resto do app
+  segue com Material Icons.
+- **Moldura**: `rounded-2xl`, borda clara, sombra só no hover de quem tem
+  ponteiro.
+- Testes em `product-card.component.spec.ts`: `deveDestacarComprarAgoraEmVerde`,
+  `deveDeixarAsDuasAcoesLadoALado`, `deveExibirAFotoSemCaixaBranca`,
+  `deveMostrarOIconeQuandoNaoHaFoto`, `deveUsarOsIconesArredondados`,
+  `deveDarDestaqueAoPrecoDeEntrega`.
+
 ## 6. Plano de Testes (TDD)
 
 **Backend**

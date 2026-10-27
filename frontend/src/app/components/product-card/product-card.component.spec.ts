@@ -40,7 +40,7 @@ describe('ProductCardComponent', () => {
 
     const selo = fixture.nativeElement.querySelector('[data-testid="free-delivery"]') as HTMLElement;
     expect(selo).toBeTruthy();
-    expect(selo.textContent).toContain('Entrega Grátis');
+    expect(selo.textContent).toContain('Entrega grátis');
   });
 
   it('naoDeveExibirBadgeQuandoHouverFrete', () => {
@@ -60,20 +60,80 @@ describe('ProductCardComponent', () => {
     expect(retirada.textContent).toMatch(/95[.,]00/);
   });
 
-  it('deveUsarAAcaoDeDestaqueNoAdicionar', () => {
+  // ---- HU15 §5.5 (revoga o F7 §5.21): Comprar agora é a ação cheia, em verde; Adicionar fica em contorno ----
+  it('deveDestacarComprarAgoraEmVerde', () => {
     component.product = { id: 1, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as any;
     fixture.detectChanges();
 
-    const botao = fixture.nativeElement.querySelector('[data-testid="add-to-cart"]') as HTMLButtonElement;
-    expect(botao.classList).toContain('btn-accent');
-    expect(botao.classList).not.toContain('bg-primary');
+    const comprar = fixture.nativeElement.querySelector('[data-testid="buy-now"]') as HTMLButtonElement;
+    const adicionar = fixture.nativeElement.querySelector('[data-testid="add-to-cart"]') as HTMLButtonElement;
+    expect(comprar.classList).toContain('btn-success');
+    expect(comprar.classList).not.toContain('btn-outline');
+    expect(adicionar.classList).toContain('btn-outline');
+    expect(adicionar.classList).not.toContain('btn-success');
+  });
+
+  it('deveDeixarAsDuasAcoesLadoALado', () => {
+    component.product = { id: 1, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as any;
+    fixture.detectChanges();
+
+    const acoes = fixture.nativeElement.querySelector('[data-testid="product-actions"]') as HTMLElement;
+    expect(acoes.classList).toContain('grid-cols-2');
+    expect(acoes.querySelector('[data-testid="add-to-cart"]')).not.toBeNull();
+    expect(acoes.querySelector('[data-testid="buy-now"]')).not.toBeNull();
+    expect((acoes.querySelector('[data-testid="buy-now"]') as HTMLElement).classList).toContain('min-h-11');
+  });
+
+  it('deveExibirAFotoSemCaixaBranca', () => {
+    component.product = { id: 1, brand: 'Ultragaz', imageUrl: 'x.jpg', priceDelivery: 120, pricePickup: 100 } as any;
+    fixture.detectChanges();
+
+    const img = fixture.nativeElement.querySelector('[data-testid="product-image"]') as HTMLImageElement;
+    const preenchimento = fixture.nativeElement.querySelector('[data-testid="product-media-fill"]') as HTMLImageElement;
+    // a foto nítida aparece inteira; a mesma foto, desfocada e decorativa, preenche as laterais
+    expect(img.classList).toContain('object-contain');
+    expect(img.getAttribute('alt')).toContain('Ultragaz');
+    expect(preenchimento.classList).toContain('object-cover');
+    expect(preenchimento.getAttribute('aria-hidden')).toBe('true');
+    expect(preenchimento.getAttribute('alt')).toBe('');
+    expect((fixture.nativeElement.querySelector('[data-testid="product-media"]') as HTMLElement).classList).toContain('aspect-[4/3]');
+  });
+
+  it('deveMostrarOIconeQuandoNaoHaFoto', () => {
+    component.product = { id: 1, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as any;
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('img')).toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="product-media"]')?.textContent).toContain('inventory_2');
+  });
+
+  it('deveUsarOsIconesArredondados', () => {
+    component.product = { id: 1, brand: 'Ultragaz', supplierId: 'l', supllierName: 'Loja', freeDelivery: true,
+      priceDelivery: 100, pricePickup: 100 } as any;
+    component.showStore = true;
+    fixture.detectChanges();
+
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('.material-icons')).toBeNull();
+    expect(el.querySelectorAll('.material-symbols-rounded').length).toBeGreaterThan(0);
+  });
+
+  it('deveDarDestaqueAoPrecoDeEntrega', () => {
+    component.product = { id: 1, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as any;
+    fixture.detectChanges();
+
+    const entrega = fixture.nativeElement.querySelector('[data-testid="price-delivery-value"]') as HTMLElement;
+    const retirada = fixture.nativeElement.querySelector('[data-testid="price-pickup"]') as HTMLElement;
+    expect(entrega.classList).toContain('text-lg');
+    expect(retirada.classList).toContain('text-sm');
+    expect(retirada.textContent).toContain('Retirada na loja');
   });
 
   it('deveCarregarAImagemSobDemandaComTamanhoReservado', () => {
     component.product = { id: 1, brand: 'Ultragaz', imageUrl: 'x.jpg', priceDelivery: 120, pricePickup: 100 } as any;
     fixture.detectChanges();
 
-    const img = fixture.nativeElement.querySelector('img') as HTMLImageElement;
+    const img = fixture.nativeElement.querySelector('[data-testid="product-image"]') as HTMLImageElement;
     expect(img.getAttribute('loading')).toBe('lazy');
     expect(img.getAttribute('width')).toBeTruthy();
     expect(img.getAttribute('height')).toBeTruthy();
