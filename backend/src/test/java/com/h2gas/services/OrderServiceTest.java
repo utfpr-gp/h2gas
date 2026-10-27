@@ -178,7 +178,6 @@ class OrderServiceTest {
                 null,
                 "Gás azul",
                 productTypeSecond,
-                null,
                 null
         );
         categoryProductRepository.save(category);

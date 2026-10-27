@@ -31,8 +31,9 @@ public interface SupplierRepository extends JpaRepository<Supplier, String> {
     String CATALOG_WHERE = " WHERE s.active = true AND (:includeClosed = true OR " + OPEN_NOW + ")"
             + " AND (:cityId IS NULL OR s.city.id = :cityId)"
             + " AND (:q IS NULL OR LOCATE(:q, LOWER(s.name)) > 0)"
-            + " AND (:productTypeId IS NULL OR EXISTS (SELECT 1 FROM CategoryProduct c"
-            + " WHERE c.supplier = s AND c.productType.id = :productTypeId))";
+            // HU19: a loja "vende" o tipo quando tem produto com estoque numa categoria dele
+            + " AND (:productTypeId IS NULL OR EXISTS (SELECT 1 FROM ProductItem pi WHERE pi.supplier = s"
+            + " AND pi.stockQuantity > 0 AND pi.categoryProduct.productType.id = :productTypeId))";
 
     // HU16: a ordem vem de :sort (StorefrontSortEnum.param). Cada critério só pesa na ordenação dele e vira
     // constante nas outras; nota e tempo vazios vão para o fim, e o nome desempata sempre.

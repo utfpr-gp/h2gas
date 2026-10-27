@@ -26,6 +26,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -60,11 +61,11 @@ class CatalogoPermissoesTest {
     }
 
     @Test
-    @DisplayName("HU12: admin não escreve categoria (403)")
-    void deveRetornar403AoAdminEscreverCategoria() throws Exception {
-        mockMvc.perform(delete("/api/category-products/1")).andExpect(status().isForbidden());
+    @DisplayName("HU19: o admin escreve categoria (revoga o 403 da HU12)")
+    void deveRetornarOkAoAdminEscreverCategoria() throws Exception {
+        mockMvc.perform(delete("/api/category-products/1")).andExpect(status().isOk());
 
-        verifyNoInteractions(categoryProductService);
+        verify(categoryProductService).deleteCategory(1L);
     }
 
     @Test

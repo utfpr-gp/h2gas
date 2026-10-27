@@ -760,12 +760,31 @@ class SupplierServiceTest {
         return productTypeRepository.save(tipo);
     }
 
+    @Autowired
+    private com.h2gas.model.repository.ProductItemRepository productItemRepository;
+
+    // HU19: a categoria é global; a loja "vende" o tipo quando tem produto (com estoque) numa categoria dele
     private void categoria(Supplier loja, com.h2gas.model.entity.ProductType tipo, String nome) {
-        com.h2gas.model.entity.CategoryProduct categoria = new com.h2gas.model.entity.CategoryProduct();
-        categoria.setName(nome);
-        categoria.setProductType(tipo);
-        categoria.setSupplier(loja);
-        categoryProductRepository.save(categoria);
+        com.h2gas.model.entity.CategoryProduct categoria = categoryProductRepository.findAll().stream()
+                .filter(c -> c.getProductType().getId().equals(tipo.getId()) && c.getName().equals(nome))
+                .findFirst().orElseGet(() -> {
+                    com.h2gas.model.entity.CategoryProduct nova = new com.h2gas.model.entity.CategoryProduct();
+                    nova.setName(nome);
+                    nova.setProductType(tipo);
+                    return categoryProductRepository.save(nova);
+                });
+        produtoNaCategoria(loja, categoria, nome, 5);
+    }
+
+    private void produtoNaCategoria(Supplier loja, com.h2gas.model.entity.CategoryProduct categoria, String marca, int estoque) {
+        com.h2gas.model.entity.ProductItem produto = new com.h2gas.model.entity.ProductItem();
+        produto.setBrand(marca);
+        produto.setPriceDelivery(new java.math.BigDecimal("100.00"));
+        produto.setPricePickup(new java.math.BigDecimal("100.00"));
+        produto.setStockQuantity(estoque);
+        produto.setSupplier(loja);
+        produto.setCategoryProduct(categoria);
+        productItemRepository.save(produto);
     }
 
     private List<com.h2gas.model.dto.StorefrontDTO> vitrine(Long cityId, String q, Long productTypeId) {
@@ -773,7 +792,7 @@ class SupplierServiceTest {
     }
 
     @Test
-    @DisplayName("HU15: a vitrine traz os tipos que a loja vende, com o ícone do tipo")
+    @DisplayName("HU19: a vitrine traz os tipos dos produtos que a loja vende, com o ícone do tipo")
     void deveTrazerOsTiposDeProdutoDaLoja() {
         City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
         Supplier loja = lojaAberta("Loja Completa", curitiba);
@@ -788,7 +807,7 @@ class SupplierServiceTest {
     }
 
     @Test
-    @DisplayName("HU15: tipo não se repete quando a loja tem várias categorias dele")
+    @DisplayName("HU19: tipo não se repete quando a loja vende em várias categorias dele")
     void naoDeveRepetirTipoQuandoALojaTemVariasCategorias() {
         City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
         Supplier loja = lojaAberta("Loja Só de Gás", curitiba);
@@ -802,7 +821,7 @@ class SupplierServiceTest {
     }
 
     @Test
-    @DisplayName("HU15: loja sem categoria vem com lista de tipos vazia, nunca nula")
+    @DisplayName("HU19: loja sem produto vem com lista de tipos vazia, nunca nula")
     void deveDevolverListaVaziaDeTiposParaLojaSemCategoria() {
         City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
         lojaAberta("Loja Sem Catálogo", curitiba);
@@ -811,6 +830,21 @@ class SupplierServiceTest {
 
         assertNotNull(dto.productTypes());
         assertTrue(dto.productTypes().isEmpty());
+    }
+
+    @Test
+    @DisplayName("HU19: produto sem estoque não conta como tipo vendido (RN02)")
+    void naoDeveContarProdutoSemEstoqueNosTipos() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        Supplier loja = lojaAberta("Loja Sem Estoque", curitiba);
+        com.h2gas.model.entity.ProductType gas = tipo("Gás", "local_fire_department");
+        com.h2gas.model.entity.CategoryProduct p13 = new com.h2gas.model.entity.CategoryProduct();
+        p13.setName("P13");
+        p13.setProductType(gas);
+        produtoNaCategoria(loja, categoryProductRepository.save(p13), "Esgotado", 0);
+
+        assertTrue(vitrine(curitiba.getId(), null, null).get(0).productTypes().isEmpty());
+        assertTrue(vitrine(curitiba.getId(), null, gas.getId()).isEmpty());
     }
 
     @Test

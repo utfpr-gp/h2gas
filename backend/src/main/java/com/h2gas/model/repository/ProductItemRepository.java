@@ -11,6 +11,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalTime;
+import java.util.Collection;
+import java.util.List;
 
 public interface ProductItemRepository extends JpaRepository<ProductItem, Long> {
     Page<ProductItem> findBySupplierId(String id, Pageable pageable);
@@ -44,6 +46,22 @@ public interface ProductItemRepository extends JpaRepository<ProductItem, Long> 
             + " AND :now >= p.supplier.openingTime AND :now < p.supplier.closingTime)"
             + " OR (p.supplier.openingTime > p.supplier.closingTime"
             + " AND (:now >= p.supplier.openingTime OR :now < p.supplier.closingTime))))";
+
+    // HU19: tipos de produto que cada loja da página vende (produtos com estoque, RN02), numa consulta só (sem N+1).
+    // A ordem alfabética é aplicada no serviço, com collation pt-BR: o banco ordena "Gás" antes de "Água" no H2.
+    @Query("""
+        SELECT DISTINCT p.supplier.id AS supplierId, t.id AS typeId, t.name AS typeName, t.icon AS typeIcon
+        FROM ProductItem p JOIN p.categoryProduct c JOIN c.productType t
+        WHERE p.supplier.id IN :supplierIds AND p.stockQuantity > 0
+        """)
+    List<SupplierProductTypeRow> findTypesBySupplierIds(@Param("supplierIds") Collection<String> supplierIds);
+
+    interface SupplierProductTypeRow {
+        String getSupplierId();
+        Long getTypeId();
+        String getTypeName();
+        String getTypeIcon();
+    }
 
     String AVAILABLE_WHERE = " WHERE p.supplier.active = true AND " + SUPPLIER_OPEN_NOW
             + " AND (:cityId IS NULL OR p.supplier.city.id = :cityId)"

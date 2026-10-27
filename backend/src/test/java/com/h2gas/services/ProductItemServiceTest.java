@@ -84,8 +84,8 @@ class ProductItemServiceTest {
         Supplier supplierFirst = createSupplierForTest(1);
         Supplier supplierSecond = createSupplierForTest(2);
 
-        CategoryProduct categoryProductFirst = createCategoryForTest("20L", supplierFirst);
-        CategoryProduct categoryProductSecond = createCategoryForTest("50L", supplierSecond);
+        CategoryProduct categoryProductFirst = createCategoryForTest("20L");
+        CategoryProduct categoryProductSecond = createCategoryForTest("50L");
 
         ProductItem productItemFirst = new ProductItem();
         productItemFirst.setBrand("Agua azul");
@@ -193,7 +193,7 @@ class ProductItemServiceTest {
         supplier.setCity(city);
         supplierRepository.save(supplier);
 
-        CategoryProduct categoryProduct = createCategoryForTest("HU02", supplier);
+        CategoryProduct categoryProduct = createCategoryForTest("HU02");
 
         ProductItem caro = new ProductItem();
         caro.setBrand("Produto Caro");
@@ -244,7 +244,7 @@ class ProductItemServiceTest {
         supplier.setCity(city);
         supplierRepository.save(supplier);
 
-        CategoryProduct categoryProduct = createCategoryForTest("Água 20L", supplier);
+        CategoryProduct categoryProduct = createCategoryForTest("Água 20L");
 
         ProductItem copap = new ProductItem();
         copap.setBrand("CopapFixture");
@@ -277,22 +277,37 @@ class ProductItemServiceTest {
 
 
     @Test
-    @DisplayName("F7: categoria de outro fornecedor no cadastro de produto é 403, não 500")
-    void deveRetornar403AoUsarCategoriaDeOutroFornecedor() {
+    @DisplayName("HU19: o fornecedor cadastra produto com qualquer categoria (são globais)")
+    void deveCadastrarProdutoComQualquerCategoria() {
         Supplier logado = createSupplierForTest(1);
-        logado.setName("Fornecedor 403 Teste");
+        logado.setName("Fornecedor Categoria Global");
         supplierRepository.save(logado);
-        CategoryProduct deOutro = createCategoryForTest("13kg", createSupplierForTest(2));
+        CategoryProduct global = createCategoryForTest("13kg");
         CreateProductItemDTO dto = new CreateProductItemDTO();
         dto.setBrand("Ultragaz");
-        dto.setCategoryProductId(deOutro.getId());
+        dto.setCategoryProductId(global.getId());
         dto.setPrice(new BigDecimal("100.00"));
         dto.setShippingFee(new BigDecimal("10.00"));
 
-        ForbiddenResourceException erro = assertThrows(ForbiddenResourceException.class,
-                () -> productItemService.createProductItem(dto, null, "Fornecedor 403 Teste"));
+        ProductItemDTO criado = productItemService.createProductItem(dto, null, "Fornecedor Categoria Global");
 
-        assertEquals("Categoria informada não pertence ao fornecedor logado.", erro.getMessage());
+        assertEquals(global.getId(), criado.getCategoryProductId());
+    }
+
+    @Test
+    @DisplayName("HU19: categoria inexistente no cadastro de produto é 404")
+    void deveRetornar404ParaCategoriaInexistenteNoCadastro() {
+        Supplier logado = createSupplierForTest(1);
+        logado.setName("Fornecedor 404 Categoria");
+        supplierRepository.save(logado);
+        CreateProductItemDTO dto = new CreateProductItemDTO();
+        dto.setBrand("Ultragaz");
+        dto.setCategoryProductId(987_654L);
+        dto.setPrice(new BigDecimal("100.00"));
+        dto.setShippingFee(new BigDecimal("10.00"));
+
+        assertThrows(com.h2gas.exceptions.ResourceNotFoundException.class,
+                () -> productItemService.createProductItem(dto, null, "Fornecedor 404 Categoria"));
     }
 
     private CreateProductItemDTO dtoDeProduto(Long categoriaId, String preco, String frete) {
@@ -312,7 +327,7 @@ class ProductItemServiceTest {
         Supplier logado = createSupplierForTest(1);
         logado.setName("Fornecedor Preços Teste");
         supplierRepository.save(logado);
-        CategoryProduct categoria = createCategoryForTest("13kg", logado);
+        CategoryProduct categoria = createCategoryForTest("13kg");
 
         ProductItemDTO criado = productItemService.createProductItem(
                 dtoDeProduto(categoria.getId(), "100.00", "20.00"), null, "Fornecedor Preços Teste");
@@ -331,7 +346,7 @@ class ProductItemServiceTest {
         Supplier logado = createSupplierForTest(1);
         logado.setName("Fornecedor Grátis Teste");
         supplierRepository.save(logado);
-        CategoryProduct categoria = createCategoryForTest("13kg", logado);
+        CategoryProduct categoria = createCategoryForTest("13kg");
 
         ProductItemDTO criado = productItemService.createProductItem(
                 dtoDeProduto(categoria.getId(), "100.00", "0.00"), null, "Fornecedor Grátis Teste");
@@ -379,25 +394,16 @@ class ProductItemServiceTest {
     }
 
     @Test
-    @DisplayName("HU10: não move o produto para categoria de outro fornecedor")
-    void deveRejeitarMoverProdutoParaCategoriaDeOutroFornecedor() {
+    @DisplayName("HU19: o dono move o produto para qualquer categoria")
+    void deveMoverProdutoParaQualquerCategoria() {
         ProductItem produto = productItemRepository.findById(validIdItemProduct).orElseThrow();
-        CategoryProduct deOutro = createCategoryForTest("outra", createSupplierForTest(2));
+        CategoryProduct outra = createCategoryForTest("outra");
 
-        assertThrows(ForbiddenResourceException.class, () -> productItemService.updateProductItem(validIdItemProduct,
-                dtoDeProduto(deOutro.getId(), "150.00", "0.00"), produto.getSupplier()));
-        assertEquals(produto.getCategoryProduct().getId(),
+        productItemService.updateProductItem(validIdItemProduct,
+                dtoDeProduto(outra.getId(), "150.00", "0.00"), produto.getSupplier());
+
+        assertEquals(outra.getId(),
                 productItemRepository.findById(validIdItemProduct).orElseThrow().getCategoryProduct().getId());
-    }
-
-    @Test
-    @DisplayName("HU10: categoria legada sem fornecedor não é aceita como destino (403, não 500)")
-    void deveRejeitarMoverProdutoParaCategoriaSemFornecedor() {
-        ProductItem produto = productItemRepository.findById(validIdItemProduct).orElseThrow();
-        CategoryProduct semDono = createCategoryForTest("legada", null);
-
-        assertThrows(ForbiddenResourceException.class, () -> productItemService.updateProductItem(validIdItemProduct,
-                dtoDeProduto(semDono.getId(), "150.00", "0.00"), produto.getSupplier()));
     }
 
     @Test
@@ -413,7 +419,7 @@ class ProductItemServiceTest {
         assertEquals(categoriaAntes, productItemRepository.findById(validIdItemProduct).orElseThrow().getCategoryProduct().getId());
     }
 
-    CategoryProduct createCategoryForTest(String name, Supplier supplier) {
+    CategoryProduct createCategoryForTest(String name) {
         ProductType productTypeAgua = new ProductType(
                 null,
                 "Água Mineral",
@@ -425,8 +431,7 @@ class ProductItemServiceTest {
                 null,
                 name,
                 productTypeAgua,
-                null,
-                supplier
+                null
         );
 
         categoryProductRepository.save(categoryProduct);
@@ -630,8 +635,8 @@ class ProductItemServiceTest {
         City londrina = cityRepository.save(new City(null, "Londrina", "PR"));
         Supplier lojaCuritiba = lojaAberta("cwb", curitiba);
         Supplier lojaLondrina = lojaAberta("ldn", londrina);
-        CategoryProduct vinteCwb = createCategoryForTest("20L", lojaCuritiba);
-        CategoryProduct vinteLdn = createCategoryForTest("20L", lojaLondrina);
+        CategoryProduct vinteCwb = createCategoryForTest("20L");
+        CategoryProduct vinteLdn = createCategoryForTest("20L");
         salvarProduto(lojaCuritiba, vinteCwb, "Minalba", 10);
         salvarProduto(lojaCuritiba, vinteCwb, "Ouro Fino", 10);
         salvarProduto(lojaCuritiba, vinteCwb, "Minalba Zerada", 0);

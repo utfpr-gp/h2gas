@@ -154,11 +154,8 @@ public class ProductItemService {
     public ProductItemDTO createProductItem(CreateProductItemDTO dto, MultipartFile file, String nameUser) {
         ProductItem productItem = createProductItemMapper.toEntity(dto);
         Supplier supplier = supplierService.findEntityByName(nameUser);
+        // HU19: a categoria é global — qualquer uma serve; categoria inexistente é 404
         CategoryProduct categoryProduct = categoryProductService.findEntityById(dto.getCategoryProductId());
-
-        if (!categoryProduct.getSupplier().getId().equals(supplier.getId())) {
-            throw new ForbiddenResourceException("Categoria informada não pertence ao fornecedor logado.");
-        }
 
         if (file != null) {
             try {
@@ -195,7 +192,7 @@ public class ProductItemService {
         ProductItem productItemUpdate = productItemRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Produto com " + id + " não encontrado"));
 
-        // HU10/HU12: só o dono edita (o admin não mexe em produto); a categoria nova também precisa ser do dono
+        // HU10/HU12: só o dono edita (o admin não mexe em produto); HU19: a categoria é global, qualquer uma serve
         String ownerId = productItemUpdate.getSupplier().getId();
         if (!ownerId.equals(actor.getId())) {
             throw new ForbiddenResourceException("Produto não pertence ao fornecedor logado.");
@@ -206,9 +203,6 @@ public class ProductItemService {
             CategoryProduct categoryProduct = categoryProductService.findEntityById(
                     productItemDto.getCategoryProductId()
             );
-            if (categoryProduct.getSupplier() == null || !categoryProduct.getSupplier().getId().equals(ownerId)) {
-                throw new ForbiddenResourceException("Categoria informada não pertence ao fornecedor do produto.");
-            }
             productItemUpdate.setCategoryProduct(categoryProduct);
         }
 

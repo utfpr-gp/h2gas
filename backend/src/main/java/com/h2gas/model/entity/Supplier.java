@@ -71,7 +71,5 @@ public class Supplier extends User{
     @Column(name = "banner_url", length = 500)
     private String bannerUrl;
 
-    @OneToMany(mappedBy = "supplier", cascade = CascadeType.ALL)
-    private Set<CategoryProduct> categoryProducts = new HashSet<>();
 
 }

@@ -52,6 +52,8 @@ class PublicCatalogAccessTest {
         mockMvc.perform(get("/api/product-items/by-supplier/loja-inexistente")).andExpect(semBloqueio());
         mockMvc.perform(get("/api/product-items/by-supplier-open").param("cityId", "1")).andExpect(status().isOk());
         mockMvc.perform(get("/api/product-types")).andExpect(status().isOk());
+        // HU19: a lista de categorias é pública (vitrine e formulário de produto)
+        mockMvc.perform(get("/api/category-products")).andExpect(status().isOk());
     }
 
     @Test
@@ -68,6 +70,7 @@ class PublicCatalogAccessTest {
     @DisplayName("HU13: escrita nas bases do catálogo continua protegida")
     void naoDevePermitirEscritaNasRotasDoCatalogo() throws Exception {
         mockMvc.perform(post("/api/product-types").contentType(MediaType.APPLICATION_JSON).content("{}")).andExpect(bloqueada());
+        mockMvc.perform(post("/api/category-products").contentType(MediaType.APPLICATION_JSON).content("{}")).andExpect(bloqueada());
         mockMvc.perform(post("/api/product-items").contentType(MediaType.APPLICATION_JSON).content("{}")).andExpect(bloqueada());
         mockMvc.perform(put("/api/suppliers/mine/banner")).andExpect(bloqueada());
         mockMvc.perform(delete("/api/product-items/1")).andExpect(bloqueada());
@@ -89,7 +92,8 @@ class PublicCatalogAccessTest {
     void deveDocumentarAsRotasDaVitrineComoPublicas() throws Exception {
         var docs = mockMvc.perform(get("/v3/api-docs")).andExpect(status().isOk());
         for (String path : java.util.List.of("/api/suppliers/actives/open", "/api/suppliers/{id}/storefront", "/api/suppliers/{id}/reviews",
-                "/api/product-items/by-supplier/{supplierId}", "/api/product-items/by-supplier-open", "/api/product-types")) {
+                "/api/product-items/by-supplier/{supplierId}", "/api/product-items/by-supplier-open", "/api/product-types",
+                "/api/category-products")) {
             docs.andExpect(jsonPath("$.paths['" + path + "'].get.security").isEmpty());
         }
         docs.andExpect(jsonPath("$.paths['/api/suppliers/{id}'].get.security").doesNotExist());

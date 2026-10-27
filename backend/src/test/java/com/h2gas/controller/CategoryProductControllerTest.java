@@ -29,9 +29,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -62,12 +65,16 @@ class CategoryProductControllerTest {
     @MockitoBean
     private CategoryProductMapper categoryProductMapper;
 
-    @BeforeEach
-    void autenticarComoFornecedor() {
-        User fornecedor = new User(null, "Fornecedor", "f@teste.com", "41999999999", "12345678900", "senha", UserTypeEnum.SUPPLIER);
-        fornecedor.setId("forn-1");
+    private static void autenticarComo(UserTypeEnum tipo, String id) {
+        User usuario = new User(null, "Usuario", "u@teste.com", "41999999999", "12345678900", "senha", tipo);
+        usuario.setId(id);
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
-                fornecedor, null, List.of(new SimpleGrantedAuthority("ROLE_SUPPLIER"))));
+                usuario, null, List.of(new SimpleGrantedAuthority("ROLE_" + tipo.name()))));
+    }
+
+    @BeforeEach
+    void autenticarComoAdmin() {
+        autenticarComo(UserTypeEnum.ADMIN, "admin-1");
     }
 
     @AfterEach
@@ -75,18 +82,33 @@ class CategoryProductControllerTest {
         SecurityContextHolder.clearContext();
     }
 
+    // ---- HU19: categorias globais — só o admin escreve ----
+
     @Test
-    void deveRetornar201AoCriarCategoria() throws Exception {
-        when(categoryProductService.createCategory("forn-1", new CategoryRequestDTO("P13", 2L)))
-                .thenReturn(new CategoryProductDTO(5L, "P13", "Gás", 2L, "forn-1"));
+    void deveCriarComoAdmin() throws Exception {
+        when(categoryProductService.createCategory(new CategoryRequestDTO("P13", 2L)))
+                .thenReturn(new CategoryProductDTO(5L, "P13", "Gás", 2L));
 
-        // supplierId no corpo é ignorado: vale o do token
         mockMvc.perform(post("/api/category-products").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"P13\",\"productTypeId\":2,\"supplierId\":\"outro\"}"))
+                        .content("{\"name\":\"P13\",\"productTypeId\":2}"))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(5));
+                .andExpect(jsonPath("$.id").value(5))
+                .andExpect(jsonPath("$.supplierId").doesNotExist());
 
-        verify(categoryProductService).createCategory("forn-1", new CategoryRequestDTO("P13", 2L));
+        verify(categoryProductService).createCategory(new CategoryRequestDTO("P13", 2L));
+    }
+
+    @Test
+    void deveRetornar403AoFornecedorEscreverCategoria() throws Exception {
+        autenticarComo(UserTypeEnum.SUPPLIER, "forn-1");
+
+        mockMvc.perform(post("/api/category-products").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"P13\",\"productTypeId\":2}")).andExpect(status().isForbidden());
+        mockMvc.perform(put("/api/category-products/5").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"P13\",\"productTypeId\":2}")).andExpect(status().isForbidden());
+        mockMvc.perform(delete("/api/category-products/5")).andExpect(status().isForbidden());
+
+        verifyNoInteractions(categoryProductService);
     }
 
     @Test
@@ -98,12 +120,39 @@ class CategoryProductControllerTest {
                         .content("{\"name\":\"P13\"}"))
                 .andExpect(status().isBadRequest());
 
-        verify(categoryProductService, never()).createCategory(any(), any());
-        verify(categoryProductService, never()).update(any(), any(), any());
+        verify(categoryProductService, never()).createCategory(any());
+        verify(categoryProductService, never()).update(any(), any());
     }
 
     @Test
-    void deveListarAsCategoriasDoToken() throws Exception {
+    void deveEditarEExcluirComoAdmin() throws Exception {
+        when(categoryProductService.update(eq(5L), eq(new CategoryRequestDTO("P45", 2L))))
+                .thenReturn(new CategoryProductDTO(5L, "P45", "Gás", 2L));
+
+        mockMvc.perform(put("/api/category-products/5").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"P45\",\"productTypeId\":2}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("P45"));
+        mockMvc.perform(delete("/api/category-products/5")).andExpect(status().isOk());
+
+        verify(categoryProductService).deleteCategory(5L);
+    }
+
+    @Test
+    void deveListarTodasAsCategoriasSemExigirPapel() throws Exception {
+        SecurityContextHolder.clearContext();
+        when(categoryProductService.findAllCategoryProducts())
+                .thenReturn(List.of(new CategoryProductDTO(5L, "P13", "Gás", 2L)));
+
+        mockMvc.perform(get("/api/category-products"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("P13"))
+                .andExpect(jsonPath("$[0].type").value("Gás"));
+    }
+
+    @Test
+    void deveListarAsCategoriasQueALojaUsa() throws Exception {
+        autenticarComo(UserTypeEnum.SUPPLIER, "forn-1");
         when(categoryProductService.findMine("forn-1"))
                 .thenReturn(List.of(new SupplierCategoryDTO(5L, "P13", "Gás", 2L, "local_fire_department", 3L)));
 

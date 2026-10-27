@@ -84,7 +84,7 @@ class OrderServiceTransactionTest {
         supplier = supplierRepository.save(supplier);
 
         productType = productTypeRepository.save(new ProductType(null, "Gás", null));
-        category = categoryProductRepository.save(new CategoryProduct(null, "Gás 13kg", productType, null, null));
+        category = categoryProductRepository.save(new CategoryProduct(null, "Gás 13kg", productType, null));
         comEstoque = productItemRepository.saveAndFlush(produto("Com estoque", 10));
         semEstoque = productItemRepository.saveAndFlush(produto("Sem estoque", 0));
     }

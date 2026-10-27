@@ -86,19 +86,16 @@ class ProductItemRepositoryTest {
         CategoryProduct categoriaGasCuritiba = new CategoryProduct();
         categoriaGasCuritiba.setName("Gás 13kg");
         categoriaGasCuritiba.setProductType(gas);
-        categoriaGasCuritiba.setSupplier(fornecedorCuritiba);
         categoriaGasCuritiba = categoryProductRepository.saveAndFlush(categoriaGasCuritiba);
 
         CategoryProduct categoriaAguaCuritiba = new CategoryProduct();
         categoriaAguaCuritiba.setName("Água 20L");
         categoriaAguaCuritiba.setProductType(agua);
-        categoriaAguaCuritiba.setSupplier(fornecedorCuritiba);
         categoriaAguaCuritiba = categoryProductRepository.saveAndFlush(categoriaAguaCuritiba);
 
         CategoryProduct categoriaGasGuarapuava = new CategoryProduct();
         categoriaGasGuarapuava.setName("Gás 13kg");
         categoriaGasGuarapuava.setProductType(gas);
-        categoriaGasGuarapuava.setSupplier(fornecedorGuarapuava);
         categoriaGasGuarapuava = categoryProductRepository.saveAndFlush(categoriaGasGuarapuava);
 
         criarProduto(fornecedorCuritiba, categoriaGasCuritiba, "Botijão Curitiba", new BigDecimal("100.00"));
@@ -121,7 +118,6 @@ class ProductItemRepositoryTest {
         CategoryProduct categoria = new CategoryProduct();
         categoria.setName("Gás 13kg");
         categoria.setProductType(gas);
-        categoria.setSupplier(supplier);
         categoria = categoryProductRepository.saveAndFlush(categoria);
 
         criarProduto(supplier, categoria, "Botijão 1", new BigDecimal("100.00"));
@@ -143,13 +139,11 @@ class ProductItemRepositoryTest {
         CategoryProduct categoriaGas = new CategoryProduct();
         categoriaGas.setName("Gás 13kg");
         categoriaGas.setProductType(gas);
-        categoriaGas.setSupplier(supplier);
         categoriaGas = categoryProductRepository.saveAndFlush(categoriaGas);
 
         CategoryProduct categoriaAgua = new CategoryProduct();
         categoriaAgua.setName("Água 20L");
         categoriaAgua.setProductType(agua);
-        categoriaAgua.setSupplier(supplier);
         categoriaAgua = categoryProductRepository.saveAndFlush(categoriaAgua);
 
         criarProduto(supplier, categoriaGas, "UltragazFixture", new BigDecimal("120.00"));
@@ -175,7 +169,6 @@ class ProductItemRepositoryTest {
         CategoryProduct categoria = new CategoryProduct();
         categoria.setName("Gás 13kg");
         categoria.setProductType(tipo);
-        categoria.setSupplier(supplier);
         return categoryProductRepository.saveAndFlush(categoria);
     }
 
@@ -254,7 +247,6 @@ class ProductItemRepositoryTest {
         CategoryProduct categoria = new CategoryProduct();
         categoria.setName("P13");
         categoria.setProductType(gas);
-        categoria.setSupplier(loja);
         return criarProduto(loja, categoryProductRepository.saveAndFlush(categoria), marca, new BigDecimal(preco));
     }
 
