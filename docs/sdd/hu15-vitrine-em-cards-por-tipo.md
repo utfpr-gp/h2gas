@@ -193,6 +193,18 @@ layout — nenhum comportamento muda:
   forma irregular), tipos como pílulas, e a área de toque da nota (que abre as
   avaliações) de 44 px sem aumentar o card.
 
+Segunda rodada, ainda em 2026-10-27:
+
+- **um produto por linha no celular**: a grade de produtos (página da loja e
+  visão "Produtos" da vitrine) vira `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`
+  — antes, uma categoria com um produto só deixava o card espremido na
+  metade esquerda da tela. De 640 px para cima nada muda;
+- **sai a aba "Categorias"** da barra inferior. Cliente: Início · Pedidos ·
+  Perfil; visitante: Início · Entrar. Isso revoga a aba que a HU13
+  ("Início, Categorias e Entrar") e o F7 (barra inferior da Figura 11) haviam
+  definido. Os produtos seguem a um toque pelo seletor Lojas/Produtos da
+  própria vitrine, e `?view=products` na URL continua funcionando.
+
 Medido com o Chrome em 390 px: a primeira loja passa de ~510 px para ~400 px
 do topo, sem rolagem horizontal.
 

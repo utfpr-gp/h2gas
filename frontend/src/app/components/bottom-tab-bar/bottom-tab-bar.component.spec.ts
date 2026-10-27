@@ -30,9 +30,25 @@ describe('BottomTabBarComponent', () => {
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/inicio'], { queryParams: {} });
   });
 
-  it('deveNavegarParaInicioComViewProductsAoClicarEmCategorias', () => {
-    (fixture.nativeElement.querySelector('[data-testid="tab-categorias"]') as HTMLButtonElement).click();
-    expect(routerSpy.navigate).toHaveBeenCalledWith(['/inicio'], { queryParams: { view: 'products' } });
+  // HU15 (revisão mobile): a aba "Categorias" saiu — a visão Produtos fica no seletor Lojas/Produtos da vitrine
+  it('naoDeveMostrarAbaDeCategorias', () => {
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="tab-categorias"]')).toBeNull();
+    expect(el.textContent).not.toContain('Categorias');
+
+    fixture.componentRef.setInput('visitor', true);
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="tab-categorias"]')).toBeNull();
+    expect(el.textContent).not.toContain('Categorias');
+  });
+
+  it('deveTerTresAbasParaOClienteEDuasParaOVisitante', () => {
+    const abas = () => (fixture.nativeElement as HTMLElement).querySelectorAll('[data-testid^="tab-"]').length;
+    expect(abas()).toBe(3);
+
+    fixture.componentRef.setInput('visitor', true);
+    fixture.detectChanges();
+    expect(abas()).toBe(2);
   });
 
   it('deveNavegarParaMeusPedidosAoClicarEmPedidos', () => {
@@ -45,7 +61,7 @@ describe('BottomTabBarComponent', () => {
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/meus-dados'], { queryParams: {} });
   });
 
-  // HU13: o visitante vê Início, Categorias e Entrar
+  // HU13: o visitante vê Início e Entrar (pedidos e perfil pedem conta)
   it('deveMostrarEntrarParaVisitante', () => {
     fixture.componentRef.setInput('visitor', true);
     fixture.detectChanges();

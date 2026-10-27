@@ -18,12 +18,12 @@ interface TabBarItem {
   templateUrl: './bottom-tab-bar.component.html'
 })
 export class BottomTabBarComponent {
-  // HU13: o visitante vê Início, Categorias e Entrar (pedidos e perfil pedem conta)
+  // HU13: o visitante vê Início e Entrar (pedidos e perfil pedem conta).
+  // HU15 (revisão mobile): a aba "Categorias" saiu — Produtos fica no seletor Lojas/Produtos da vitrine
   @Input() visitor = false;
 
   private readonly shopTabs: TabBarItem[] = [
     { id: 'inicio', label: 'Início', icon: 'home', path: '/inicio', queryParams: {} },
-    { id: 'categorias', label: 'Categorias', icon: 'category', path: '/inicio', queryParams: { view: 'products' } },
   ];
   private readonly customerTabs: TabBarItem[] = [
     ...this.shopTabs,
