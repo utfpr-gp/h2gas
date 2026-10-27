@@ -4,8 +4,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, debounceTime } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { OrderService } from '../../../services/order.service';
-import { SupplierService } from '../../../services/supplier.service';
-import { UserService } from '../../../services/user.service';
+import { StoreHoursStatusComponent } from '../../store-hours-status/store-hours-status.component';
 import { DeliveryMode, OrderResponse } from '../../../models/order.model';
 import { HistoryStatus, OrderHistoryFilter, OrderHistorySummary, PaymentMethod } from '../../../models/order-history';
 import { paymentLabel } from '../../../models/payment-label';
@@ -22,7 +21,7 @@ const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart
 @Component({
   selector: 'app-order-history',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, StoreHoursStatusComponent],
   templateUrl: './order-history.component.html',
   host: { class: 'flex-1 flex flex-col' },
   animations: [fadeIn],
@@ -59,26 +58,15 @@ export class OrderHistoryComponent implements OnInit {
   loading = true;
   expanded = new Set<string>();
 
-  storeOpen = false;
-  private supplierId?: string;
   private readonly search$ = new Subject<string>();
   private readonly destroyRef = inject(DestroyRef);
 
   constructor(
     private orderService: OrderService,
-    private supplierService: SupplierService,
-    private userService: UserService,
     private toastr: ToastrService,
   ) {}
 
   ngOnInit(): void {
-    this.supplierId = this.userService.getUserLocalStorage()?.supplierId;
-    if (this.supplierId) {
-      this.supplierService.getOpen(this.supplierId).subscribe({
-        next: (open) => (this.storeOpen = !!open),
-        error: (err) => this.toastr.error(`Erro ao ler se a loja está aberta: ${backendMessage(err)}`),
-      });
-    }
     this.search$.pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef)).subscribe((q) => {
       this.query = q;
       this.reload();
@@ -196,19 +184,4 @@ export class OrderHistoryComponent implements OnInit {
     else this.expanded.add(o.id);
   }
 
-  // ---- loja aberta/fechada (fica aqui e em Pedidos recebidos) ----
-  toggleStore(event: Event) {
-    const open = (event.target as HTMLInputElement).checked;
-    if (!this.supplierId) return;
-    this.supplierService.openDistribuidor({ status: open }, this.supplierId).subscribe({
-      next: () => {
-        this.storeOpen = open;
-        this.toastr.success(open ? 'Loja aberta.' : 'Loja fechada.');
-      },
-      error: (err) => {
-        (event.target as HTMLInputElement).checked = this.storeOpen;
-        this.toastr.error(`Não foi possível ${open ? 'abrir' : 'fechar'} a loja: ${backendMessage(err)}`);
-      },
-    });
-  }
 }

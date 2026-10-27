@@ -58,7 +58,6 @@ public class Supplier extends User{
     @OneToMany(mappedBy = "supplier")
     private List<ProductItem> productItems;
 
-    private boolean open = false;
 
     // abaixo disso o produto aparece como estoque baixo na tela de produtos do fornecedor
     @Column(name = "low_stock_threshold", nullable = false)

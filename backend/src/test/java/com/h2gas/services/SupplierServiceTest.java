@@ -144,7 +144,6 @@ class SupplierServiceTest {
                 "12345678901234",
                 "Testando descricao",
                 true,
-                false,
                 address2,
                 cityFirst
         );
@@ -161,7 +160,6 @@ class SupplierServiceTest {
                 "12345678901234",
                 "Testando descricao 2",
                 true,
-                false,
                 address,
                 cityFirst
         );
@@ -181,7 +179,6 @@ class SupplierServiceTest {
             String cnpj,
             String description,
             boolean active,
-            boolean open,
             Address address,
             City city
     ) {
@@ -206,7 +203,6 @@ class SupplierServiceTest {
         supplier.setAddress(address);
         supplier.setCity(city);
         supplier.setProductItems(null);
-        supplier.setOpen(open);
 
         return supplier;
     }
@@ -278,7 +274,6 @@ class SupplierServiceTest {
                 "12345678901234",
                 "Testando descricao 2",
                 true,
-                false,
                 newAddress,
                 city
         );
@@ -334,7 +329,7 @@ class SupplierServiceTest {
                 "Fornecedor Curitiba", "fornecedorcuritiba@gmail",
                 "111222333", "999888777", "senhateste",
                 "98765432101234", "Fornecedor de Curitiba",
-                true, true, addressCuritiba, curitiba);
+                true, addressCuritiba, curitiba);
         supplierRepository.save(supplierCuritiba);
 
         Pageable pageable = PageRequest.of(0, 10);
@@ -361,7 +356,7 @@ class SupplierServiceTest {
                 "Fornecedor Aberto", "fornecedoraberto@gmail",
                 "222333444", "888777666", "senhateste",
                 "12312312312345", "Fornecedor sempre aberto",
-                true, true, addressAberta, cityAberta);
+                true, addressAberta, cityAberta);
         supplierRepository.save(supplierAberto);
 
         Pageable pageable = PageRequest.of(0, 10);
@@ -419,7 +414,7 @@ class SupplierServiceTest {
         Address address = addressRepository.save(new Address(
                 null, "Rua " + nome, "loja", "10", "centro", "Centro", "85600-000", city, null));
         return supplierRepository.save(getSupplier(nome, email, "46999990000", "000111222",
-                "senhateste", cnpj, "descricao", active, true, address, city));
+                "senhateste", cnpj, "descricao", active, address, city));
     }
 
     @Test
@@ -531,14 +526,22 @@ class SupplierServiceTest {
         for (Object[] loja : new Object[][]{{"Gás Azul Curitiba", curitiba, true}, {"Gás Azul Londrina", londrina, true},
                 {"Gás Azul Fechado", curitiba, false}, {"Água Verde Curitiba", curitiba, true}}) {
             Address a = addressRepository.save(new Address(null, "Rua " + loja[0], "loja", "1", "c", "Centro", "80000-000", (City) loja[1], null));
-            supplierRepository.save(getSupplier((String) loja[0], loja[0].toString().replace(" ", "") + "@t", "41900000000", "1",
-                    "s", "11222333000144", "d", true, (Boolean) loja[2], a, (City) loja[1]));
+            Supplier fornecedor = getSupplier((String) loja[0], loja[0].toString().replace(" ", "") + "@t", "41900000000", "1",
+                    "s", "11222333000144", "d", true, a, (City) loja[1]);
+            if (!(Boolean) loja[2]) {
+                // HU18: fechada pelo horário (o relógio dos testes marca 10:00)
+                fornecedor.setOpeningTime(LocalTime.of(19, 0));
+                fornecedor.setClosingTime(LocalTime.of(23, 0));
+            }
+            supplierRepository.save(fornecedor);
         }
 
         Page<com.h2gas.model.dto.StorefrontDTO> result = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), "GÁS AZUL", null, StorefrontSortEnum.NAME, PageRequest.of(0, 10));
 
-        assertEquals(List.of("Gás Azul Curitiba"), result.getContent().stream().map(com.h2gas.model.dto.StorefrontDTO::name).toList());
-        assertEquals(2, supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, null, StorefrontSortEnum.NAME, PageRequest.of(0, 10)).getTotalElements());
+        // HU18 (revisão de 2026-10-27): a fechada aparece também, depois das abertas
+        assertEquals(List.of("Gás Azul Curitiba", "Gás Azul Fechado"),
+                result.getContent().stream().map(com.h2gas.model.dto.StorefrontDTO::name).toList());
+        assertEquals(3, supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, null, StorefrontSortEnum.NAME, PageRequest.of(0, 10)).getTotalElements());
     }
 
     private void avaliar(Supplier loja, User cliente, int nota) {
@@ -563,7 +566,7 @@ class SupplierServiceTest {
     private Supplier lojaAberta(String nome, City cidade) {
         Address a = addressRepository.save(new Address(null, "Rua " + nome, "loja", "1", "c", "Centro", "80000-000", cidade, null));
         return supplierRepository.save(getSupplier(nome, nome.replace(" ", "") + "@t", "41900000000", "1",
-                "s", "11222333000144", "d", true, true, a, cidade));
+                "s", "11222333000144", "d", true, a, cidade));
     }
 
     @Test
@@ -893,7 +896,9 @@ class SupplierServiceTest {
 
     private Supplier fechada(String nome, City cidade) {
         Supplier loja = lojaAberta(nome, cidade);
-        loja.setOpen(false);
+        // HU18: fechada pelo horário (o relógio dos testes marca 10:00)
+        loja.setOpeningTime(java.time.LocalTime.of(19, 0));
+        loja.setClosingTime(java.time.LocalTime.of(23, 0));
         return supplierRepository.save(loja);
     }
 
@@ -950,25 +955,14 @@ class SupplierServiceTest {
     }
 
     @Test
-    @DisplayName("HU16: abertas primeiro traz também as fechadas, depois das abertas")
-    void deveListarAbertasPrimeiroIncluindoFechadas() {
+    @DisplayName("HU18: em qualquer ordenação as lojas fechadas vêm depois das abertas")
+    void deveColocarAsFechadasDepoisDasAbertasEmQualquerOrdenacao() {
         City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
         fechada("A Fechada", curitiba);
         lojaAberta("B Aberta", curitiba);
 
-        assertEquals(List.of("B Aberta", "A Fechada"), nomes(curitiba.getId(), null, null, StorefrontSortEnum.OPEN_FIRST));
-    }
-
-    @Test
-    @DisplayName("HU16: nas demais ordenações a vitrine segue só com lojas abertas")
-    void naoDeveTrazerLojaFechadaNasDemaisOrdenacoes() {
-        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
-        fechada("A Fechada", curitiba);
-        lojaAberta("B Aberta", curitiba);
-
-        for (StorefrontSortEnum ordem : List.of(StorefrontSortEnum.NAME, StorefrontSortEnum.RATING,
-                StorefrontSortEnum.DELIVERY_TIME)) {
-            assertEquals(List.of("B Aberta"), nomes(curitiba.getId(), null, null, ordem), ordem.name());
+        for (StorefrontSortEnum ordem : StorefrontSortEnum.values()) {
+            assertEquals(List.of("B Aberta", "A Fechada"), nomes(curitiba.getId(), null, null, ordem), ordem.name());
         }
     }
 
@@ -985,5 +979,75 @@ class SupplierServiceTest {
 
         assertEquals(List.of("Gás Azul Curitiba"),
                 nomes(curitiba.getId(), "azul", gas.getId(), StorefrontSortEnum.DELIVERY_TIME));
+    }
+
+    // ---- HU18: aberta pelo horário (o relógio dos testes marca 10:00 em Brasília) ----
+
+    private Supplier comHorario(Supplier loja, Integer abre, Integer fecha) {
+        loja.setOpeningTime(abre == null ? null : LocalTime.of(abre, 0));
+        loja.setClosingTime(fecha == null ? null : LocalTime.of(fecha, 0));
+        return supplierRepository.save(loja);
+    }
+
+    @Test
+    @DisplayName("HU18: as lojas dentro do horário vêm antes das outras")
+    void deveListarAsDentroDoHorarioAntesDasOutras() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        comHorario(lojaAberta("A Dentro", curitiba), 8, 18);
+        comHorario(lojaAberta("B Abre Mais Tarde", curitiba), 11, 20);
+        comHorario(lojaAberta("C Já Fechou", curitiba), 6, 10);
+
+        assertEquals(List.of("A Dentro", "B Abre Mais Tarde", "C Já Fechou"),
+                nomes(curitiba.getId(), null, null, StorefrontSortEnum.NAME));
+    }
+
+    @Test
+    @DisplayName("HU18: horário que vira a meia-noite vale na janela certa")
+    void deveIncluirLojaDaMadrugadaNaJanelaCertaDoHorario() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        comHorario(lojaAberta("A Vira A Noite E Vai Até 11h", curitiba), 22, 11);
+        comHorario(lojaAberta("B Noturna Até 2h", curitiba), 18, 2);
+
+        assertEquals(List.of("A Vira A Noite E Vai Até 11h", "B Noturna Até 2h"),
+                nomes(curitiba.getId(), null, null, StorefrontSortEnum.NAME));
+    }
+
+    @Test
+    @DisplayName("HU18: loja sem horário cadastrado conta como fechada")
+    void deveTratarLojaSemHorarioComoFechadaNaVitrine() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        comHorario(lojaAberta("A Sem Horário", curitiba), null, 18);
+        lojaAberta("B Com Horário", curitiba);
+
+        assertEquals(List.of("B Com Horário", "A Sem Horário"), nomes(curitiba.getId(), null, null, StorefrontSortEnum.NAME));
+    }
+
+    @Test
+    @DisplayName("HU18: a vitrine traz as fora do horário, marcadas como fechadas")
+    void deveTrazerAsForaDoHorarioMarcadasComoFechadas() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        comHorario(lojaAberta("A Fora Do Horário", curitiba), 19, 23);
+        lojaAberta("B Dentro Do Horário", curitiba);
+
+        List<com.h2gas.model.dto.StorefrontDTO> lojas = supplierService.findAllSuppliersOpenAndActive(
+                curitiba.getId(), null, null, StorefrontSortEnum.NAME, PageRequest.of(0, 10)).getContent();
+
+        assertEquals(List.of("B Dentro Do Horário", "A Fora Do Horário"),
+                lojas.stream().map(com.h2gas.model.dto.StorefrontDTO::name).toList());
+        assertTrue(lojas.get(0).open());
+        assertFalse(lojas.get(1).open());
+    }
+
+    @Test
+    @DisplayName("HU18: o open da vitrine da loja é calculado pelo horário")
+    void deveCalcularOpenNaVitrine() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        Supplier dentro = lojaAberta("Dentro", curitiba);
+        Supplier fora = comHorario(lojaAberta("Fora", curitiba), 19, 23);
+
+        assertTrue(supplierService.findStorefront(dentro.getId()).open());
+        assertFalse(supplierService.findStorefront(fora.getId()).open());
+        assertTrue(supplierService.isOpenNow(dentro.getId()));
+        assertFalse(supplierService.isOpenNow(fora.getId()));
     }
 }

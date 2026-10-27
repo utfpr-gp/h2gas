@@ -128,13 +128,25 @@ describe('SupplierCardComponent', () => {
 
   // ---- HU16: "abertas primeiro" traz lojas fechadas para a vitrine ----
   it('deveMarcarLojaFechadaComSelo', () => {
-    component.supplier = { id: '7', name: 'Gás Centro', open: false } as Supplier;
+    component.supplier = { id: '7', name: 'Gás Centro', open: false, openingTime: '08:00' } as Supplier;
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('[data-testid="supplier-closed"]')?.textContent).toContain('Fechada');
+    expect(fixture.nativeElement.querySelector('[data-testid="supplier-closed"]')?.textContent).toContain('Fechada · abre às 08:00');
 
     component.supplier = { id: '7', name: 'Gás Centro', open: true } as Supplier;
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('[data-testid="supplier-closed"]')).toBeNull();
+  });
+
+  it('deveAcinzentarALojaFechada', () => {
+    const card = () => fixture.nativeElement.querySelector('[data-testid="view-products"]') as HTMLElement;
+    component.supplier = { id: '7', name: 'Gás Centro', open: false } as Supplier;
+    fixture.detectChanges();
+    expect(card().classList).toContain('grayscale');
+    expect(card().classList).toContain('opacity-60');
+
+    component.supplier = { id: '7', name: 'Gás Centro', open: true } as Supplier;
+    fixture.detectChanges();
+    expect(card().classList).not.toContain('grayscale');
   });
 
   // ---- F7 §5.27 ----

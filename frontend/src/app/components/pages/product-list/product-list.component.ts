@@ -113,6 +113,12 @@ export class ProductListComponent implements OnInit {
     });
   }
 
+  // HU18: fora do horário a loja aparece, mas não vende
+  get closedNotice(): string | null {
+    if (!this.store || this.store.open) return null;
+    return this.store.openingTime ? `Loja fechada · abre às ${this.store.openingTime}` : 'Loja fechada';
+  }
+
   // HU15: o chip passou a emitir o tipo inteiro; aqui o filtro segue sendo pelo nome
   onCategorySelected(type: ProductType | null) {
     this.selectedCategory = type?.name ?? null;

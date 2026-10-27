@@ -1,4 +1,5 @@
 <!-- HU15: card compacto — logo quadrada à esquerda, nome e metadados à direita; o card inteiro abre a loja -->
+<!-- HU18: loja fora do horário fica acinzentada -->
 <div
   data-testid="view-products"
   role="button"
@@ -7,6 +8,7 @@
   (click)="onViewProducts()"
   (keydown.enter)="onViewProducts()"
   (keydown.space)="onViewProducts(); $event.preventDefault()"
+  [class.grayscale]="supplier.open === false" [class.opacity-60]="supplier.open === false"
   class="flex items-center gap-3 p-2 rounded-xl min-h-11 cursor-pointer transition-colors
          hover:bg-base-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
 
@@ -24,9 +26,9 @@
   <div class="min-w-0 flex-grow">
     <div class="flex items-center gap-2 min-w-0">
       <h2 class="font-semibold text-base-content truncate">{{ supplier.name }}</h2>
-      <!-- HU16: "abertas primeiro" mostra também as lojas fechadas -->
+      <!-- HU18: lojas fora do horário aparecem depois das abertas, com o horário de abertura -->
       <span *ngIf="supplier.open === false" data-testid="supplier-closed"
-        class="badge badge-sm badge-warning shrink-0">Fechada</span>
+        class="badge badge-sm badge-warning shrink-0">Fechada<ng-container *ngIf="supplier.openingTime"> · abre às {{ supplier.openingTime }}</ng-container></span>
     </div>
 
     <!-- nota e, ao lado, o que a loja vende (HU15) -->

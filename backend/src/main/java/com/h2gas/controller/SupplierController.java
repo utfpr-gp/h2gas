@@ -123,13 +123,14 @@ public class SupplierController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Lista as lojas ativas e abertas (vitrine pública)",
-            description = "Aberta a visitantes. Retorna a vitrine das lojas ativas e abertas, ordenadas por nome, filtradas pela cidade (RN05), "
+    @Operation(summary = "Lista as lojas ativas da vitrine, abertas antes das fechadas (vitrine pública)",
+            description = "Aberta a visitantes. Retorna a vitrine das lojas ativas — as abertas agora pelo horário primeiro, depois as "
+                    + "fechadas (HU18) —, filtradas pela cidade (RN05), "
                     + "pela busca q no nome da loja e pelo tipo de produto vendido (productTypeId); cada loja traz averageRating "
                     + "(média, 1 casa; nula sem avaliações), reviewCount e productTypes (os tipos que vende, para os selos do card). "
                     + "Sem login, cityId é obrigatório; o admin logado pode omitir para ver todas as cidades. "
-                    + "sort escolhe a ordem (HU16): name (padrão), rating, deliveryTime ou openFirst — esta última é a única "
-                    + "que inclui as lojas fechadas, depois das abertas")
+                    + "sort escolhe a ordem (HU16): name (padrão), rating ou deliveryTime. Lojas fora do horário também vêm, "
+                    + "sempre depois das abertas e com open=false (HU18)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista paginada da vitrine das lojas"),
             @ApiResponse(responseCode = "400", description = "Visitante sem cityId, ou sort fora da lista (\"Ordenação inválida.\")")
@@ -146,8 +147,8 @@ public class SupplierController {
                     + " tipo inexistente devolve página vazia", example = "1")
             @RequestParam(value = "productTypeId", required = false) Long productTypeId,
             @Parameter(description = "HU16: ordem da lista — name (padrão), rating (melhor avaliação), deliveryTime "
-                    + "(menor tempo de entrega) ou openFirst (abertas primeiro, incluindo as fechadas)",
-                    schema = @Schema(allowableValues = {"name", "rating", "deliveryTime", "openFirst"}))
+                    + "(menor tempo de entrega); as fechadas vêm sempre depois das abertas",
+                    schema = @Schema(allowableValues = {"name", "rating", "deliveryTime"}))
             @RequestParam(value = "sort", required = false) String sort
     ) {
         CatalogAccess.requireCityForVisitor(cityId);
@@ -399,25 +400,6 @@ public class SupplierController {
         return ResponseEntity.ok(updated);
     }
 
-    @Operation(summary = "Abre ou fecha a loja", description = "Corpo {\"status\": true|false}. O fornecedor só altera a própria loja")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Status atualizado"),
-            @ApiResponse(responseCode = "403", description = "Fornecedor alterando outra loja")
-    })
-    @PatchMapping("/{id}/status")
-    @ResponseBody
-    @RolesAllowed({"ADMIN", "SUPPLIER"})
-    public ResponseEntity<Map<String, String>> changeStatusOpenClosed(@PathVariable String id,
-                                                              @RequestBody Map<String, Boolean> status) {
-        User actor = currentUser();
-        if (actor.getUserType() == UserTypeEnum.SUPPLIER && !actor.getId().equals(id)) {
-            throw new ForbiddenResourceException("Você só pode abrir ou fechar a sua própria loja.");
-        }
-        boolean novoStatus = status.get("status");
-        supplierService.updateStatusOpenClosed(id, novoStatus);
-        return ResponseEntity.ok(Map.of("message", "Status atualizado."));
-    }
-
     @GetMapping("/{id}/active")
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER"})
@@ -426,11 +408,18 @@ public class SupplierController {
         return ResponseEntity.ok(active);
     }
 
+    // HU18: o estado é calculado pelo horário de funcionamento — a loja não abre nem fecha por botão
+    @Operation(summary = "Diz se a loja está aberta agora",
+            description = "Calculado pelo horário de funcionamento da loja, na hora de Brasília. Loja sem horário cadastrado "
+                    + "está fechada; fechamento antes da abertura significa que a loja fecha depois da meia-noite")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "true se a loja está aberta agora"),
+            @ApiResponse(responseCode = "404", description = "Loja inexistente")
+    })
     @GetMapping("/{id}/open")
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER"})
     public ResponseEntity<Boolean> getSupplierOpen(@PathVariable String id) {
-        boolean active = supplierService.findById(id).isOpen();
-        return ResponseEntity.ok(active);
+        return ResponseEntity.ok(supplierService.isOpenNow(id));
     }
 }

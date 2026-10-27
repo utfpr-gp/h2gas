@@ -61,7 +61,9 @@ class DelivererServiceTest {
         s.setClosingTime(LocalTime.of(18, 0));
         s.setAverageDeliveryTime(Duration.ofMinutes(30));
         s.setActive(true);
-        s.setOpen(true);
+        // HU18: aberta pelo horário (o relógio dos testes marca 10:00)
+        s.setOpeningTime(java.time.LocalTime.of(8, 0));
+        s.setClosingTime(java.time.LocalTime.of(18, 0));
         s.setCity(city);
         return supplierRepository.save(s);
     }

@@ -97,4 +97,24 @@ describe('ProductCardComponent', () => {
     expect(component.buyNow.emit).toHaveBeenCalledWith(jasmine.objectContaining({ id: 10, quantitySelect: 1 }));
     expect(component.addToCart.emit).not.toHaveBeenCalled();
   });
+
+  // ---- HU18: produto de loja fechada aparece, mas não dá para comprar ----
+  it('deveBloquearACompraComMotivo', () => {
+    component.product = { id: 10, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as ProductItem;
+    component.blockedReason = 'Loja fechada · abre às 08:00';
+    fixture.detectChanges();
+    spyOn(component.addToCart, 'emit');
+    spyOn(component.buyNow, 'emit');
+
+    const adicionar = fixture.nativeElement.querySelector('[data-testid="add-to-cart"]') as HTMLButtonElement;
+    const comprar = fixture.nativeElement.querySelector('[data-testid="buy-now"]') as HTMLButtonElement;
+    expect(adicionar.disabled).toBeTrue();
+    expect(comprar.disabled).toBeTrue();
+    expect(adicionar.getAttribute('title')).toBe('Loja fechada · abre às 08:00');
+
+    component.onAdd();
+    component.onBuyNow();
+    expect(component.addToCart.emit).not.toHaveBeenCalled();
+    expect(component.buyNow.emit).not.toHaveBeenCalled();
+  });
 });
