@@ -96,12 +96,14 @@ export class SupplierService extends AbstractService<Supplier> {
 
   // RN05: sempre com a cidade do endereço ativo; q busca no nome da loja (F7 §5.21)
   // HU15: productTypeId traz só as lojas que vendem aquele tipo (Gás, Água…)
+  // HU16: sort escolhe a ordem (name, rating, deliveryTime, openFirst)
   getAllSupplierOpenAndActive(page: number = 0, size: number = 10, cityId?: number, q?: string,
-                              productTypeId?: number): Observable<PaginatedResponse<Supplier>> {
+                              productTypeId?: number, sort?: string): Observable<PaginatedResponse<Supplier>> {
     let params = new HttpParams().set('page', page).set('size', size);
     if (cityId != null) params = params.set('cityId', cityId);
     if (q?.trim()) params = params.set('q', q.trim());
     if (productTypeId != null) params = params.set('productTypeId', productTypeId);
+    if (sort) params = params.set('sort', sort);
     return this.http.get<PaginatedResponse<Supplier>>(`${this.baseUrl}/actives/open`, { params });
   }
 

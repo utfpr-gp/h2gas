@@ -1,0 +1,21 @@
+<div class="relative">
+  <button type="button" data-testid="sort-menu" aria-haspopup="menu" [attr.aria-expanded]="open" (click)="toggle()"
+    class="btn btn-sm btn-ghost rounded-full min-h-11 sm:min-h-8 border-base-300 bg-base-100 text-base-content font-normal">
+    <span class="material-icons text-sm" aria-hidden="true">sort</span>
+    Ordenar: <span class="font-semibold">{{ activeLabel }}</span>
+    <span class="material-icons text-sm" aria-hidden="true">expand_more</span>
+  </button>
+
+  <ul *ngIf="open" role="menu" data-testid="sort-options" aria-label="Ordenar por"
+    class="absolute right-0 mt-1 z-20 w-60 rounded-xl border border-base-300 bg-base-100 shadow-lg py-1">
+    <li *ngFor="let option of options" role="none">
+      <button type="button" role="menuitemradio" [attr.aria-checked]="option.value === value"
+        [attr.data-testid]="'sort-' + option.value" (click)="choose(option.value)"
+        class="w-full flex items-center justify-between gap-2 px-4 min-h-11 text-sm text-left hover:bg-base-200"
+        [ngClass]="option.value === value ? 'text-primary font-semibold' : 'text-base-content'">
+        <span data-testid="sort-label">{{ option.label }}</span>
+        <span *ngIf="option.value === value" class="material-icons text-base" aria-hidden="true">check</span>
+      </button>
+    </li>
+  </ul>
+</div>

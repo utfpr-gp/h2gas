@@ -126,6 +126,17 @@ describe('SupplierCardComponent', () => {
     expect(selos().length).toBe(0);
   });
 
+  // ---- HU16: "abertas primeiro" traz lojas fechadas para a vitrine ----
+  it('deveMarcarLojaFechadaComSelo', () => {
+    component.supplier = { id: '7', name: 'Gás Centro', open: false } as Supplier;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="supplier-closed"]')?.textContent).toContain('Fechada');
+
+    component.supplier = { id: '7', name: 'Gás Centro', open: true } as Supplier;
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[data-testid="supplier-closed"]')).toBeNull();
+  });
+
   // ---- F7 §5.27 ----
   it('naoDeveAbrirProdutosAoClicarNasEstrelas', () => {
     component.supplier = { id: '7', name: 'Gás Centro', averageRating: 4.2, reviewCount: 14 } as Supplier;

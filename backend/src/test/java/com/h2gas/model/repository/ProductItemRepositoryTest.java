@@ -231,4 +231,126 @@ class ProductItemRepositoryTest {
         assertEquals(1, result.getTotalElements());
         assertEquals("Com estoque", result.getContent().get(0).getBrand());
     }
+
+    // ---- HU16: ordenação dos produtos ----
+
+    @Autowired
+    private ReviewRepository reviewRepository;
+
+    @Autowired
+    private OrderRepository orderRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager entityManager;
+
+    private ProductItem produtoDe(Supplier loja, String marca, String preco) {
+        ProductType gas = productTypeRepository.save(new ProductType(null, "Gás " + marca, null));
+        CategoryProduct categoria = new CategoryProduct();
+        categoria.setName("P13");
+        categoria.setProductType(gas);
+        categoria.setSupplier(loja);
+        return criarProduto(loja, categoryProductRepository.saveAndFlush(categoria), marca, new BigDecimal(preco));
+    }
+
+    private void avaliar(Supplier loja, com.h2gas.model.entity.User cliente, int nota) {
+        com.h2gas.model.entity.Order pedido = new com.h2gas.model.entity.Order();
+        pedido.setCustomer(cliente);
+        pedido.setSupplier(loja);
+        pedido.setStatus(com.h2gas.enums.OrderStatusEnum.DELIVERED);
+        pedido = orderRepository.save(pedido);
+        com.h2gas.model.entity.Review avaliacao = new com.h2gas.model.entity.Review();
+        avaliacao.setOrder(pedido);
+        avaliacao.setSupplier(loja);
+        avaliacao.setRating(nota);
+        reviewRepository.saveAndFlush(avaliacao);
+    }
+
+    private com.h2gas.model.entity.User cliente() {
+        return userRepository.save(new com.h2gas.model.entity.User(null, "Cliente", "cliente-hu16@h2gas.test",
+                "41999990000", "99988877766", "x", UserTypeEnum.CUSTOMER));
+    }
+
+    private java.util.List<String> marcas(City cidade, com.h2gas.enums.ProductSortEnum ordem) {
+        return productItemRepository.findAvailableProducts(cidade.getId(), null, null, ordem.byShopRating(),
+                        PageRequest.of(0, 10, ordem.sort()))
+                .getContent().stream().map(ProductItem::getBrand).toList();
+    }
+
+    @Test
+    @DisplayName("HU16: melhor avaliado ordena pela nota da loja que vende o produto")
+    void deveOrdenarProdutosPelaNotaDaLoja() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        com.h2gas.model.entity.User cliente = cliente();
+        Supplier media = criarFornecedor(curitiba, "media@h2gas.test");
+        Supplier otima = criarFornecedor(curitiba, "otima@h2gas.test");
+        produtoDe(media, "Da Loja Média", "100.00");
+        produtoDe(otima, "Da Loja Ótima", "120.00");
+        avaliar(media, cliente, 3);
+        avaliar(otima, cliente, 5);
+
+        assertEquals(java.util.List.of("Da Loja Ótima", "Da Loja Média"),
+                marcas(curitiba, com.h2gas.enums.ProductSortEnum.SHOP_RATING));
+    }
+
+    @Test
+    @DisplayName("HU16: produto de loja sem avaliação fica no fim")
+    void deveColocarProdutoDeLojaSemNotaNoFim() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        com.h2gas.model.entity.User cliente = cliente();
+        produtoDe(criarFornecedor(curitiba, "semnota@h2gas.test"), "Sem Nota", "50.00");
+        Supplier avaliada = criarFornecedor(curitiba, "avaliada@h2gas.test");
+        produtoDe(avaliada, "Com Nota", "60.00");
+        avaliar(avaliada, cliente, 1);
+
+        assertEquals(java.util.List.of("Com Nota", "Sem Nota"),
+                marcas(curitiba, com.h2gas.enums.ProductSortEnum.SHOP_RATING));
+    }
+
+    @Test
+    @DisplayName("HU16: maior preço primeiro")
+    void deveOrdenarProdutosPorMaiorPreco() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        Supplier loja = criarFornecedor(curitiba, "precos@h2gas.test");
+        produtoDe(loja, "Barato", "50.00");
+        produtoDe(loja, "Caro", "150.00");
+        produtoDe(loja, "Médio", "100.00");
+
+        assertEquals(java.util.List.of("Caro", "Médio", "Barato"),
+                marcas(curitiba, com.h2gas.enums.ProductSortEnum.PRICE_DESC));
+        assertEquals(java.util.List.of("Barato", "Médio", "Caro"),
+                marcas(curitiba, com.h2gas.enums.ProductSortEnum.PRICE_ASC));
+    }
+
+    @Test
+    @DisplayName("HU16: nome (A-Z) ordena pela marca")
+    void deveOrdenarProdutosPorNome() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        Supplier loja = criarFornecedor(curitiba, "nomes@h2gas.test");
+        produtoDe(loja, "Ultragaz", "100.00");
+        produtoDe(loja, "Copagaz", "100.00");
+        produtoDe(loja, "Liquigás", "100.00");
+
+        assertEquals(java.util.List.of("Copagaz", "Liquigás", "Ultragaz"),
+                marcas(curitiba, com.h2gas.enums.ProductSortEnum.NAME));
+    }
+
+    @Test
+    @DisplayName("HU16: mais recentes primeiro, pela data de cadastro")
+    void deveOrdenarProdutosPelosMaisRecentes() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        Supplier loja = criarFornecedor(curitiba, "recentes@h2gas.test");
+        ProductItem antigo = produtoDe(loja, "Antigo", "100.00");
+        ProductItem novo = produtoDe(loja, "Novo", "100.00");
+        // created_at vem do @CreationTimestamp; gravamos datas distintas para a ordem não depender do relógio
+        entityManager.getEntityManager().createNativeQuery("UPDATE product_items SET created_at = ?1 WHERE id = ?2")
+                .setParameter(1, java.time.LocalDateTime.of(2026, 1, 1, 8, 0)).setParameter(2, antigo.getId()).executeUpdate();
+        entityManager.getEntityManager().createNativeQuery("UPDATE product_items SET created_at = ?1 WHERE id = ?2")
+                .setParameter(1, java.time.LocalDateTime.of(2026, 6, 1, 8, 0)).setParameter(2, novo.getId()).executeUpdate();
+        entityManager.clear();
+
+        assertEquals(java.util.List.of("Novo", "Antigo"), marcas(curitiba, com.h2gas.enums.ProductSortEnum.NEWEST));
+    }
 }

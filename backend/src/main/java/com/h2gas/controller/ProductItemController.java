@@ -3,6 +3,7 @@ package com.h2gas.controller;
 import com.h2gas.util.CatalogAccess;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import com.h2gas.model.dto.ProductStockSummaryDTO;
+import com.h2gas.enums.ProductSortEnum;
 import com.h2gas.enums.StockFilterEnum;
 
 import com.h2gas.model.dto.*;
@@ -196,11 +197,12 @@ public class ProductItemController {
 
     @Operation(summary = "Lista produtos disponíveis na plataforma (vitrine pública)",
             description = "Aberta a visitantes. Retorna produtos de fornecedores ativos e abertos com estoque disponível (RN02: item zerado não aparece), "
-                    + "filtrados pela cidade (RN05), por categoria, pela busca q (marca, categoria ou tipo) e ordenados por preço de entrega. "
+                    + "filtrados pela cidade (RN05), por categoria e pela busca q (marca, categoria ou tipo), na ordem pedida em sort "
+                    + "(HU16: menor ou maior preço, nome, mais recentes ou nota da loja). "
                     + "Sem login, cityId é obrigatório; o admin logado pode omitir")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista paginada de produtos disponíveis"),
-            @ApiResponse(responseCode = "400", description = "Visitante sem cityId")
+            @ApiResponse(responseCode = "400", description = "Visitante sem cityId, ou sort fora da lista (\"Ordenação inválida.\")")
     })
     @SecurityRequirements
     @GetMapping("/by-supplier-open")
@@ -210,12 +212,18 @@ public class ProductItemController {
             @Parameter(description = "Tamanho da página") @RequestParam(value = "size", required = false) Integer size,
             @Parameter(description = "Filtra por cidade do endereço ativo do cliente (RN05)") @RequestParam(value = "cityId", required = false) Long cityId,
             @Parameter(description = "Filtra pelo nome da categoria (ex.: Gás, Água)") @RequestParam(value = "category", required = false) String category,
-            @Parameter(description = "Ordenação, ex.: priceDelivery,asc") @RequestParam(value = "sort", required = false) String sort,
+            @Parameter(description = "HU16: ordem da lista — priceDelivery,asc (menor preço), priceDelivery,desc (maior preço), "
+                    + "brand,asc (nome), createdAt,desc (mais recentes) ou rating (nota da loja que vende); "
+                    + "ausente = sem ordem definida; fora da lista = 400",
+                    schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {
+                            "priceDelivery,asc", "priceDelivery,desc", "brand,asc", "createdAt,desc", "rating"}))
+            @RequestParam(value = "sort", required = false) String sort,
             @Parameter(description = "Trecho da marca, da categoria ou do tipo", example = "minalba") @RequestParam(value = "q", required = false) String q
     ) {
         CatalogAccess.requireCityForVisitor(cityId);
-        Pageable pageable = PaginationUtil.getPageableRequest(page, size, sort);
-        Page<ProductItemDTO> result = productItemService.findBySupplierActiveAndSupplierOpen(cityId, category, q, pageable);
+        ProductSortEnum order = ProductSortEnum.fromParam(sort);
+        Pageable pageable = PaginationUtil.getPageableRequest(page, size);
+        Page<ProductItemDTO> result = productItemService.findBySupplierActiveAndSupplierOpen(cityId, category, q, order, pageable);
         PageResponse<ProductItemDTO> response = new PageResponse<>(result);
 
         return ResponseEntity.ok(response);

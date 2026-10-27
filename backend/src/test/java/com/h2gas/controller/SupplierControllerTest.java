@@ -6,6 +6,7 @@ import com.h2gas.configuration.security.SecurityFilter;
 import com.h2gas.configuration.security.TokenService;
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.exceptions.BusinessRuleException;
+import com.h2gas.enums.StorefrontSortEnum;
 import com.h2gas.model.dto.StorefrontDTO;
 import com.h2gas.model.dto.SupplierDTO;
 import com.h2gas.model.dto.SupplierDashboardDTO;
@@ -135,12 +136,12 @@ class SupplierControllerTest {
     void deveAceitarParametroCityIdOpcionalNoEndpointActivesOpen() throws Exception {
         Page<StorefrontDTO> page = new PageImpl<>(List.of(vitrine("Fornecedor Curitiba", null, 0L)), PageRequest.of(0, 10), 1);
 
-        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), isNull(), isNull(), any())).thenReturn(page);
+        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), isNull(), isNull(), eq(StorefrontSortEnum.NAME), any())).thenReturn(page);
 
         mockMvc.perform(get("/api/suppliers/actives/open").param("cityId", "7"))
                 .andExpect(status().isOk());
 
-        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), isNull(), isNull(), any());
+        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), isNull(), isNull(), eq(StorefrontSortEnum.NAME), any());
     }
 
     // HU13: visitante precisa da cidade (PublicCatalogAccessTest); o admin logado segue vendo todas as cidades
@@ -149,12 +150,12 @@ class SupplierControllerTest {
         autenticarComo("ROLE_ADMIN");
         Page<StorefrontDTO> page = new PageImpl<>(List.of(), PageRequest.of(0, 10), 0);
 
-        when(supplierService.findAllSuppliersOpenAndActive(isNull(), isNull(), isNull(), any())).thenReturn(page);
+        when(supplierService.findAllSuppliersOpenAndActive(isNull(), isNull(), isNull(), eq(StorefrontSortEnum.NAME), any())).thenReturn(page);
 
         mockMvc.perform(get("/api/suppliers/actives/open"))
                 .andExpect(status().isOk());
 
-        verify(supplierService).findAllSuppliersOpenAndActive(isNull(), isNull(), isNull(), any());
+        verify(supplierService).findAllSuppliersOpenAndActive(isNull(), isNull(), isNull(), eq(StorefrontSortEnum.NAME), any());
     }
 
     @Test
@@ -324,18 +325,18 @@ class SupplierControllerTest {
 
     @Test
     void deveRepassarABuscaComACidade() throws Exception {
-        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), eq("gás azul"), isNull(), any()))
+        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), eq("gás azul"), isNull(), eq(StorefrontSortEnum.NAME), any()))
                 .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
 
         mockMvc.perform(get("/api/suppliers/actives/open").param("cityId", "7").param("q", "gás azul"))
                 .andExpect(status().isOk());
 
-        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), eq("gás azul"), isNull(), any());
+        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), eq("gás azul"), isNull(), eq(StorefrontSortEnum.NAME), any());
     }
 
     @Test
     void deveExporNotaEContagemNoCatalogo() throws Exception {
-        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), isNull(), isNull(), any()))
+        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), isNull(), isNull(), eq(StorefrontSortEnum.NAME), any()))
                 .thenReturn(new PageImpl<>(List.of(vitrine("Gás Centro", 4.3, 14L)), PageRequest.of(0, 10), 1));
 
         mockMvc.perform(get("/api/suppliers/actives/open").param("cityId", "7"))
@@ -344,22 +345,54 @@ class SupplierControllerTest {
                 .andExpect(jsonPath("$.data[0].reviewCount").value(14));
     }
 
+    // ---- HU16 ----
+
+    @Test
+    void deveRepassarAOrdenacaoAoServico() throws Exception {
+        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), isNull(), isNull(), eq(StorefrontSortEnum.RATING), any()))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
+
+        mockMvc.perform(get("/api/suppliers/actives/open").param("cityId", "7").param("sort", "rating"))
+                .andExpect(status().isOk());
+
+        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), isNull(), isNull(), eq(StorefrontSortEnum.RATING), any());
+    }
+
+    @Test
+    void deveUsarNomeComoOrdenacaoPadrao() throws Exception {
+        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), isNull(), isNull(), eq(StorefrontSortEnum.NAME), any()))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
+
+        mockMvc.perform(get("/api/suppliers/actives/open").param("cityId", "7")).andExpect(status().isOk());
+
+        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), isNull(), isNull(), eq(StorefrontSortEnum.NAME), any());
+    }
+
+    @Test
+    void deveRecusarOrdenacaoInvalida() throws Exception {
+        mockMvc.perform(get("/api/suppliers/actives/open").param("cityId", "7").param("sort", "preco"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Ordenação inválida."));
+
+        verifyNoInteractions(supplierService);
+    }
+
     // ---- HU15 ----
 
     @Test
     void deveRepassarOTipoDeProdutoAoServico() throws Exception {
-        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), isNull(), eq(3L), any()))
+        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), isNull(), eq(3L), eq(StorefrontSortEnum.NAME), any()))
                 .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
 
         mockMvc.perform(get("/api/suppliers/actives/open").param("cityId", "7").param("productTypeId", "3"))
                 .andExpect(status().isOk());
 
-        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), isNull(), eq(3L), any());
+        verify(supplierService).findAllSuppliersOpenAndActive(eq(7L), isNull(), eq(3L), eq(StorefrontSortEnum.NAME), any());
     }
 
     @Test
     void deveDevolverOsTiposNaVitrine() throws Exception {
-        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), isNull(), isNull(), any()))
+        when(supplierService.findAllSuppliersOpenAndActive(eq(7L), isNull(), isNull(), eq(StorefrontSortEnum.NAME), any()))
                 .thenReturn(new PageImpl<>(List.of(vitrine("Gás Centro", 4.3, 14L, List.of(
                         new com.h2gas.model.dto.ProductTypeChipDTO(1L, "Água", "water_drop"),
                         new com.h2gas.model.dto.ProductTypeChipDTO(2L, "Gás", "local_fire_department")))),

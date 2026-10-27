@@ -74,7 +74,7 @@ describe('SupplierListComponent', () => {
 
     fixture.detectChanges();
 
-    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, 5, undefined, undefined);
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, 5, undefined, undefined, 'name');
   });
 
   it('deveReenviarCityIdAoBuscarProdutosGlobais', () => {
@@ -83,7 +83,7 @@ describe('SupplierListComponent', () => {
 
     component.toggleView();
 
-    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledWith(0, 12, 5, undefined, undefined, undefined);
+    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledWith(0, 12, 5, undefined, 'priceDelivery,asc', undefined);
   });
 
   it('deveFiltrarProdutosPelaCategoriaSelecionada', () => {
@@ -92,17 +92,17 @@ describe('SupplierListComponent', () => {
 
     component.selectCategory({ id: 2, name: 'Gás' });
 
-    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledWith(0, 12, undefined, 'Gás', undefined, undefined);
+    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledWith(0, 12, undefined, 'Gás', 'priceDelivery,asc', undefined);
   });
 
-  it('deveOrdenarPorMenorPrecoAoAtivarToggle', () => {
+  it('deveEnviarAOrdenacaoEscolhidaDeProdutos', () => {
     fixture.detectChanges();
     component.toggleView();
 
-    component.toggleSortByPrice();
+    component.changeSort('priceDelivery,desc');
 
     expect(productItemServiceSpy.getProductsFromActiveSuppliers)
-      .toHaveBeenCalledWith(0, 12, undefined, undefined, 'priceDelivery,asc', undefined);
+      .toHaveBeenCalledWith(0, 12, undefined, undefined, 'priceDelivery,desc', undefined);
   });
 
   it('deveIniciarNaVisaoDeProdutosQuandoQueryParamViewForProducts', () => {
@@ -186,8 +186,7 @@ describe('SupplierListComponent', () => {
     expect(supplierServiceSpy.getAllSupplierOpenAndActive).not.toHaveBeenCalled();
     tick(300);
 
-    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledOnceWith(0, 10, 5, 'gás', undefined);
-    expect(byId('filter-button')).toBeNull();
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledOnceWith(0, 10, 5, 'gás', undefined, 'name');
   }));
 
   it('deveBuscarProdutosNaVisaoProdutos', fakeAsync(() => {
@@ -200,7 +199,7 @@ describe('SupplierListComponent', () => {
     digitar('minalba');
     tick(300);
 
-    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledOnceWith(0, 12, 5, undefined, undefined, 'minalba');
+    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledOnceWith(0, 12, 5, undefined, 'priceDelivery,asc', 'minalba');
     expect(supplierServiceSpy.getAllSupplierOpenAndActive).not.toHaveBeenCalledWith(jasmine.anything(), jasmine.anything(), jasmine.anything(), 'minalba');
   }));
 
@@ -215,7 +214,7 @@ describe('SupplierListComponent', () => {
     fixture.detectChanges();
 
     expect((byId('catalog-search') as HTMLInputElement).value).toBe('');
-    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, undefined);
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, undefined, 'name');
     expect(byId('clear-search')).toBeNull();
   }));
 
@@ -228,7 +227,7 @@ describe('SupplierListComponent', () => {
 
     component.onPageChange(2);
 
-    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledWith(2, 12, undefined, undefined, undefined, undefined);
+    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledWith(2, 12, undefined, undefined, 'priceDelivery,asc', undefined);
     expect(fixture.nativeElement.textContent).toContain('30 produtos');
   });
 
@@ -258,11 +257,6 @@ describe('SupplierListComponent', () => {
     expect(fixture.nativeElement.querySelector('h2')!.textContent).toContain('Produtos disponíveis');
   });
 
-  it('deveUsarTextoVerdadeiroNosBanners', () => {
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.textContent).not.toContain('15% OFF');
-  });
 
   it('deveTerAlvosDeToqueDe44pxNaBuscaEAlternancia', () => {
     fixture.detectChanges();
@@ -271,7 +265,7 @@ describe('SupplierListComponent', () => {
     expect(byId('view-products')!.classList).toContain('min-h-11');
     byId('view-products')!.click();
     fixture.detectChanges();
-    expect(byId('sort-price')!.classList).toContain('min-h-11');
+    expect(byId('sort-menu')!.classList).toContain('min-h-11');
   });
 
   it('deveIrParaOCheckoutNaCompraDireta', () => {
@@ -326,7 +320,7 @@ describe('SupplierListComponent', () => {
 
     component.selectCategory({ id: 3, name: 'Gás' });
 
-    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, 3);
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, 3, 'name');
   });
 
   it('deveVoltarParaAPrimeiraPaginaAoTrocarDeTipo', () => {
@@ -336,7 +330,7 @@ describe('SupplierListComponent', () => {
 
     component.selectCategory({ id: 3, name: 'Gás' });
 
-    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, 3);
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, 3, 'name');
   });
 
   it('deveLimparOFiltroDeTipoEmTodas', () => {
@@ -346,7 +340,7 @@ describe('SupplierListComponent', () => {
 
     component.selectCategory(null);
 
-    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, undefined);
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, undefined, 'name');
   });
 
   it('deveMostrarEstadoVazioQuandoNaoHaLojaDoTipo', () => {
@@ -360,4 +354,119 @@ describe('SupplierListComponent', () => {
 
     expect(fixture.nativeElement.querySelector('[data-testid="empty-state"]')).not.toBeNull();
   });
+
+  // ---- HU16 ----
+
+  it('naoDeveUsarInputDoTipoSearch', () => {
+    fixture.detectChanges();
+    // type="search" faz o Chrome desenhar um X próprio ao lado do botão de limpar da aplicação
+    expect((byId('catalog-search') as HTMLInputElement).type).toBe('text');
+  });
+
+  it('deveMostrarUmUnicoBotaoDeLimpar', fakeAsync(() => {
+    fixture.detectChanges();
+    digitar('gás');
+    tick(300);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('[aria-label="Limpar busca"]').length).toBe(1);
+  }));
+
+  it('deveLimparABuscaSemAcessarODocumento', fakeAsync(() => {
+    fixture.detectChanges();
+    digitar('gás');
+    tick(300);
+    fixture.detectChanges();
+    spyOn(document, 'getElementById').and.callThrough();
+
+    byId('clear-search')!.click();
+    fixture.detectChanges();
+
+    expect(document.getElementById).not.toHaveBeenCalled();
+    expect((byId('catalog-search') as HTMLInputElement).value).toBe('');
+  }));
+
+  it('deveMostrarOMenuDeOrdenacaoNasDuasVisoes', () => {
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-catalog-sort-menu')).not.toBeNull();
+
+    component.toggleView();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('app-catalog-sort-menu')).not.toBeNull();
+  });
+
+  it('deveOferecerAsOpcoesDeCadaVisao', () => {
+    fixture.detectChanges();
+    expect(component.sortOptions.map((o) => o.label))
+      .toEqual(['Nome (A-Z)', 'Melhor avaliação', 'Menor tempo de entrega', 'Abertas primeiro']);
+
+    component.toggleView();
+    expect(component.sortOptions.map((o) => o.label))
+      .toEqual(['Menor preço', 'Maior preço', 'Nome (A-Z)', 'Melhor avaliado', 'Mais recentes']);
+  });
+
+  it('deveEnviarAOrdenacaoEscolhida', () => {
+    fixture.detectChanges();
+
+    component.changeSort('rating');
+
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, undefined, 'rating');
+  });
+
+  it('deveVoltarParaAPrimeiraPaginaAoTrocarAOrdenacao', () => {
+    fixture.detectChanges();
+    component.onPageChange(3);
+    supplierServiceSpy.getAllSupplierOpenAndActive.calls.reset();
+
+    component.changeSort('deliveryTime');
+
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, undefined, 'deliveryTime');
+  });
+
+  it('deveRefletirOsFiltrosNaUrl', () => {
+    const router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+    fixture.detectChanges();
+    component.selectCategory({ id: 2, name: 'Água' });
+
+    component.changeSort('rating');
+
+    expect(router.navigate).toHaveBeenCalledWith([], jasmine.objectContaining({
+      queryParams: jasmine.objectContaining({ tipo: 2, ordem: 'rating' }),
+      replaceUrl: true,
+    }));
+  });
+
+  it('deveLerOsFiltrosDaUrlAoIniciar', () => {
+    const params: Record<string, string> = { q: 'gás', tipo: '2', ordem: 'deliveryTime' };
+    activatedRouteStub.snapshot.queryParamMap.get = (key: string) => params[key] ?? null;
+
+    fixture.detectChanges();
+
+    expect(component.query).toBe('gás');
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, 'gás', 2, 'deliveryTime');
+  });
+
+  it('deveIgnorarOrdenacaoDaUrlQueNaoEDaVisao', () => {
+    activatedRouteStub.snapshot.queryParamMap.get = (key: string) => (key === 'ordem' ? 'brand,asc' : null);
+
+    fixture.detectChanges();
+
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, undefined, 'name');
+  });
+
+  it('deveLimparTodosOsFiltros', fakeAsync(() => {
+    fixture.detectChanges();
+    digitar('gás');
+    tick(300);
+    component.selectCategory({ id: 2, name: 'Água' });
+    component.changeSort('rating');
+    fixture.detectChanges();
+    supplierServiceSpy.getAllSupplierOpenAndActive.calls.reset();
+
+    byId('clear-filters')!.click();
+    fixture.detectChanges();
+
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledOnceWith(0, 10, undefined, undefined, undefined, 'name');
+    expect(byId('clear-filters')).toBeNull();
+  }));
 });

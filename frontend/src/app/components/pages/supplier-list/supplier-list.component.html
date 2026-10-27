@@ -12,7 +12,8 @@
     <div class="flex flex-col md:flex-row gap-3 mb-5">
         <label class="input input-bordered rounded-full flex items-center gap-2 w-full md:flex-1 bg-white min-h-11">
             <span class="material-icons text-gray-400" aria-hidden="true">search</span>
-            <input id="catalog-search" data-testid="catalog-search" type="search" class="grow"
+            <!-- HU16: type="text" — o "search" do Chrome desenha um X próprio ao lado do botão de limpar -->
+            <input id="catalog-search" data-testid="catalog-search" type="text" class="grow" [value]="query"
                 [placeholder]="viewMode === 'suppliers' ? 'Buscar loja pelo nome' : 'Buscar botijão, água, marca…'"
                 [attr.aria-label]="viewMode === 'suppliers' ? 'Buscar loja pelo nome' : 'Buscar produto por marca, categoria ou tipo'"
                 (input)="onSearch($any($event.target).value)" />
@@ -50,7 +51,7 @@
                     · {{ totalElements }} {{ totalElements === 1 ? 'loja' : 'lojas' }}
                 </span>
             </h2>
-            <!-- HU16 acrescenta aqui a ordenação das lojas -->
+            <ng-container *ngTemplateOutlet="filtros"></ng-container>
         </div>
 
         <div *ngIf="!loading && !suppliers.length" data-testid="empty-state" class="text-center bg-base-100 rounded-xl border border-base-300 py-10 px-4">
@@ -71,12 +72,7 @@
 
         <div class="flex flex-wrap items-center justify-between gap-2 my-4">
             <span *ngIf="!loading" class="text-sm text-neutral">{{ totalElements }} {{ totalElements === 1 ? 'produto' : 'produtos' }}</span>
-            <button type="button" data-testid="sort-price" (click)="toggleSortByPrice()" [attr.aria-pressed]="sortByPrice"
-                class="btn btn-sm rounded-full min-h-11 sm:min-h-8 ms-auto"
-                [ngClass]="sortByPrice ? 'border-primary bg-primary/10 text-primary' : 'btn-ghost border-base-300 bg-base-100 text-neutral'">
-                <span class="material-icons text-sm" aria-hidden="true">sort</span>
-                Menor preço
-            </button>
+            <ng-container *ngTemplateOutlet="filtros"></ng-container>
         </div>
 
         <div *ngIf="!loading && !products.length" data-testid="empty-state" class="text-center bg-base-100 rounded-xl border border-base-300 py-10 px-4">
@@ -89,6 +85,17 @@
             <app-product-card *ngFor="let product of products" [product]="product" (addToCart)="addToCart($event)" (buyNow)="buyNow($event)"></app-product-card>
         </div>
     </ng-container>
+
+    <!-- HU16: controles à direita, iguais nas duas visões; as opções de ordenação mudam com a visão -->
+    <ng-template #filtros>
+        <div class="flex items-center gap-2 ms-auto">
+            <button *ngIf="hasActiveFilters" type="button" data-testid="clear-filters" (click)="clearFilters()"
+                class="btn btn-sm btn-ghost rounded-full min-h-11 sm:min-h-8 text-primary">
+                Limpar filtros
+            </button>
+            <app-catalog-sort-menu [options]="sortOptions" [value]="activeSort" (valueChange)="changeSort($event)"></app-catalog-sort-menu>
+        </div>
+    </ng-template>
 
     <app-pagination [currentPage]="currentPage" [totalPages]="totalPages" (pageChange)="onPageChange($event)"></app-pagination>
 </div>

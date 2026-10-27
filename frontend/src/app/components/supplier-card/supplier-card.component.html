@@ -22,7 +22,12 @@
   </div>
 
   <div class="min-w-0 flex-grow">
-    <h2 class="font-semibold text-base-content truncate">{{ supplier.name }}</h2>
+    <div class="flex items-center gap-2 min-w-0">
+      <h2 class="font-semibold text-base-content truncate">{{ supplier.name }}</h2>
+      <!-- HU16: "abertas primeiro" mostra também as lojas fechadas -->
+      <span *ngIf="supplier.open === false" data-testid="supplier-closed"
+        class="badge badge-sm badge-warning shrink-0">Fechada</span>
+    </div>
 
     <!-- nota e, ao lado, o que a loja vende (HU15) -->
     <div class="flex items-center flex-wrap gap-x-2 gap-y-1">

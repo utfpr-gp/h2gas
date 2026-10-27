@@ -1,5 +1,6 @@
 package com.h2gas.services;
 
+import com.h2gas.enums.StorefrontSortEnum;
 import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.SupplierCreateDTO;
@@ -102,9 +103,12 @@ public class SupplierService {
 
     // HU13: o catálogo devolve a vitrine pública das lojas (sem dados internos), com a nota
     // HU15: productTypeId filtra pelo tipo vendido; cada loja leva os tipos que vende
-    public Page<StorefrontDTO> findAllSuppliersOpenAndActive(Long cityId, String q, Long productTypeId, Pageable pageable) {
+    // HU16: sort escolhe a ordem; "abertas primeiro" é a única que traz as lojas fechadas
+    public Page<StorefrontDTO> findAllSuppliersOpenAndActive(Long cityId, String q, Long productTypeId,
+                                                             StorefrontSortEnum sort, Pageable pageable) {
         String term = q == null || q.isBlank() ? null : q.trim().toLowerCase(java.util.Locale.ROOT);
-        Page<SupplierDTO> page = supplierRepository.findOpenForCatalog(cityId, term, productTypeId, pageable)
+        Page<SupplierDTO> page = supplierRepository
+                .findForCatalog(cityId, term, productTypeId, sort.includesClosed(), sort.param(), pageable)
                 .map(supplierMapper::toDto);
         addRatings(page.getContent());
         Map<String, List<ProductTypeChipDTO>> typesBySupplier = productTypesBySupplier(

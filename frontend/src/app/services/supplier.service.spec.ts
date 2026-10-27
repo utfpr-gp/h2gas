@@ -196,4 +196,13 @@ describe('SupplierService', () => {
     expect(semTipo.request.params.has('productTypeId')).toBeFalse();
     semTipo.flush({ data: [], page: 0, size: 10, totalElements: 0, totalPages: 0, hasNext: false, hasPrevious: false });
   });
+
+  // ---- HU16 ----
+  it('deveEnviarOSortNaQuery', () => {
+    service.getAllSupplierOpenAndActive(0, 10, 7, undefined, undefined, 'rating').subscribe();
+
+    const req = httpMock.expectOne((r) => r.url === `${environment.apiUrl}/suppliers/actives/open`);
+    expect(req.request.params.get('sort')).toBe('rating');
+    req.flush({ data: [], page: 0, size: 10, totalElements: 0, totalPages: 0, hasNext: false, hasPrevious: false });
+  });
 });
