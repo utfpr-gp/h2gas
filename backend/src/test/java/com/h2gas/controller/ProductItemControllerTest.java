@@ -36,6 +36,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -86,7 +87,7 @@ class ProductItemControllerTest {
         dto.setBrand("Botijão Curitiba");
         Page<ProductItemDTO> page = new PageImpl<>(List.of(dto), PageRequest.of(0, 10), 1);
 
-        when(productItemService.findBySupplierActiveAndSupplierOpen(eq(7L), eq("Gás"), isNull(), any()))
+        when(productItemService.findBySupplierActiveAndSupplierOpen(eq(7L), eq("Gás"), isNull(), eq(com.h2gas.enums.ProductSortEnum.PRICE_ASC), any()))
                 .thenReturn(page);
 
         mockMvc.perform(get("/api/product-items/by-supplier-open")
@@ -95,7 +96,7 @@ class ProductItemControllerTest {
                         .param("sort", "priceDelivery,asc"))
                 .andExpect(status().isOk());
 
-        verify(productItemService).findBySupplierActiveAndSupplierOpen(eq(7L), eq("Gás"), isNull(), any());
+        verify(productItemService).findBySupplierActiveAndSupplierOpen(eq(7L), eq("Gás"), isNull(), eq(com.h2gas.enums.ProductSortEnum.PRICE_ASC), any());
     }
 
     private void autenticarComo(String papel) {
@@ -256,12 +257,36 @@ class ProductItemControllerTest {
     @Test
     void deveRepassarABuscaComACidade() throws Exception {
         autenticarComo("CUSTOMER");
-        when(productItemService.findBySupplierActiveAndSupplierOpen(eq(7L), isNull(), eq("minalba"), any()))
+        when(productItemService.findBySupplierActiveAndSupplierOpen(eq(7L), isNull(), eq("minalba"), eq(com.h2gas.enums.ProductSortEnum.NONE), any()))
                 .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
 
         mockMvc.perform(get("/api/product-items/by-supplier-open").param("cityId", "7").param("q", "minalba"))
                 .andExpect(status().isOk());
 
-        verify(productItemService).findBySupplierActiveAndSupplierOpen(eq(7L), isNull(), eq("minalba"), any());
+        verify(productItemService).findBySupplierActiveAndSupplierOpen(eq(7L), isNull(), eq("minalba"), eq(com.h2gas.enums.ProductSortEnum.NONE), any());
+    }
+
+    // ---- HU16 ----
+
+    @Test
+    void deveRepassarAOrdenacaoPelaNotaDaLoja() throws Exception {
+        when(productItemService.findBySupplierActiveAndSupplierOpen(eq(7L), isNull(), isNull(),
+                eq(com.h2gas.enums.ProductSortEnum.SHOP_RATING), any()))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
+
+        mockMvc.perform(get("/api/product-items/by-supplier-open").param("cityId", "7").param("sort", "rating"))
+                .andExpect(status().isOk());
+
+        verify(productItemService).findBySupplierActiveAndSupplierOpen(eq(7L), isNull(), isNull(),
+                eq(com.h2gas.enums.ProductSortEnum.SHOP_RATING), any());
+    }
+
+    @Test
+    void deveRecusarOrdenacaoInvalidaDeProdutos() throws Exception {
+        mockMvc.perform(get("/api/product-items/by-supplier-open").param("cityId", "7").param("sort", "stockQuantity,asc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Ordenação inválida."));
+
+        verifyNoInteractions(productItemService);
     }
 }

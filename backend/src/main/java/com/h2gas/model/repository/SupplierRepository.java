@@ -1,5 +1,6 @@
 package com.h2gas.model.repository;
 
+import com.h2gas.enums.StorefrontSortEnum;
 import com.h2gas.model.entity.Supplier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,13 +22,32 @@ public interface SupplierRepository extends JpaRepository<Supplier, String> {
 
     // F7 §5.21: catálogo do cliente — lojas ativas e abertas, da cidade do endereço (RN05), com busca opcional pelo nome
     // HU15: productTypeId opcional — só as lojas que têm alguma categoria daquele tipo (Gás, Água…)
-    @Query("SELECT s FROM Supplier s WHERE s.active = true AND s.open = true"
+    // HU16: includeClosed traz também as fechadas (só na ordenação "abertas primeiro")
+    String CATALOG_WHERE = " WHERE s.active = true AND (:includeClosed = true OR s.open = true)"
             + " AND (:cityId IS NULL OR s.city.id = :cityId)"
             + " AND (:q IS NULL OR LOCATE(:q, LOWER(s.name)) > 0)"
             + " AND (:productTypeId IS NULL OR EXISTS (SELECT 1 FROM CategoryProduct c"
-            + " WHERE c.supplier = s AND c.productType.id = :productTypeId)) ORDER BY s.name")
-    Page<Supplier> findOpenForCatalog(@Param("cityId") Long cityId, @Param("q") String q,
-                                      @Param("productTypeId") Long productTypeId, Pageable pageable);
+            + " WHERE c.supplier = s AND c.productType.id = :productTypeId))";
+
+    // HU16: a ordem vem de :sort (StorefrontSortEnum.param). Cada critério só pesa na ordenação dele e vira
+    // constante nas outras; nota e tempo vazios vão para o fim, e o nome desempata sempre.
+    @Query(value = "SELECT s FROM Supplier s" + CATALOG_WHERE
+            + " ORDER BY CASE WHEN :sort = 'openFirst' AND s.open = false THEN 1 ELSE 0 END,"
+            + " CASE WHEN :sort = 'rating' AND (SELECT AVG(r.rating) FROM Review r WHERE r.supplier = s) IS NULL"
+            + " THEN 1 ELSE 0 END,"
+            + " CASE WHEN :sort = 'rating' THEN (SELECT AVG(r2.rating) FROM Review r2 WHERE r2.supplier = s) END DESC,"
+            + " CASE WHEN :sort = 'deliveryTime' AND s.averageDeliveryTime IS NULL THEN 1 ELSE 0 END,"
+            + " CASE WHEN :sort = 'deliveryTime' THEN s.averageDeliveryTime END,"
+            + " s.name",
+            countQuery = "SELECT COUNT(s) FROM Supplier s" + CATALOG_WHERE)
+    Page<Supplier> findForCatalog(@Param("cityId") Long cityId, @Param("q") String q,
+                                  @Param("productTypeId") Long productTypeId,
+                                  @Param("includeClosed") boolean includeClosed,
+                                  @Param("sort") String sort, Pageable pageable);
+
+    default Page<Supplier> findOpenForCatalog(Long cityId, String q, Long productTypeId, Pageable pageable) {
+        return findForCatalog(cityId, q, productTypeId, false, StorefrontSortEnum.NAME.param(), pageable);
+    }
 
     // F7 fatia 6: aprovação de fornecedores — status e busca opcionais, aplicados no banco para a paginação bater
     @Query("select s from Supplier s where (:active is null or s.active = :active) and (:q is null"

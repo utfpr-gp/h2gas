@@ -2,7 +2,9 @@ package com.h2gas.controller;
 
 import com.h2gas.util.CatalogAccess;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import com.h2gas.enums.StorefrontSortEnum;
 import com.h2gas.enums.UserTypeEnum;
+import io.swagger.v3.oas.annotations.media.Schema;
 import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ForbiddenResourceException;
 import jakarta.validation.Valid;
@@ -125,10 +127,12 @@ public class SupplierController {
             description = "Aberta a visitantes. Retorna a vitrine das lojas ativas e abertas, ordenadas por nome, filtradas pela cidade (RN05), "
                     + "pela busca q no nome da loja e pelo tipo de produto vendido (productTypeId); cada loja traz averageRating "
                     + "(média, 1 casa; nula sem avaliações), reviewCount e productTypes (os tipos que vende, para os selos do card). "
-                    + "Sem login, cityId é obrigatório; o admin logado pode omitir para ver todas as cidades")
+                    + "Sem login, cityId é obrigatório; o admin logado pode omitir para ver todas as cidades. "
+                    + "sort escolhe a ordem (HU16): name (padrão), rating, deliveryTime ou openFirst — esta última é a única "
+                    + "que inclui as lojas fechadas, depois das abertas")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista paginada da vitrine das lojas"),
-            @ApiResponse(responseCode = "400", description = "Visitante sem cityId")
+            @ApiResponse(responseCode = "400", description = "Visitante sem cityId, ou sort fora da lista (\"Ordenação inválida.\")")
     })
     @SecurityRequirements
     @GetMapping("/actives/open")
@@ -140,11 +144,16 @@ public class SupplierController {
             @Parameter(description = "Trecho do nome da loja", example = "gás") @RequestParam(value = "q", required = false) String q,
             @Parameter(description = "HU15: só as lojas que vendem esse tipo de produto (id de /api/product-types);"
                     + " tipo inexistente devolve página vazia", example = "1")
-            @RequestParam(value = "productTypeId", required = false) Long productTypeId
+            @RequestParam(value = "productTypeId", required = false) Long productTypeId,
+            @Parameter(description = "HU16: ordem da lista — name (padrão), rating (melhor avaliação), deliveryTime "
+                    + "(menor tempo de entrega) ou openFirst (abertas primeiro, incluindo as fechadas)",
+                    schema = @Schema(allowableValues = {"name", "rating", "deliveryTime", "openFirst"}))
+            @RequestParam(value = "sort", required = false) String sort
     ) {
         CatalogAccess.requireCityForVisitor(cityId);
+        StorefrontSortEnum order = StorefrontSortEnum.fromParam(sort);
         Pageable pageable = PaginationUtil.getPageableRequest(page, size);
-        Page<StorefrontDTO> result = supplierService.findAllSuppliersOpenAndActive(cityId, q, productTypeId, pageable);
+        Page<StorefrontDTO> result = supplierService.findAllSuppliersOpenAndActive(cityId, q, productTypeId, order, pageable);
         PageResponse<StorefrontDTO> response = new PageResponse<>(result);
 
         return ResponseEntity.ok(response);

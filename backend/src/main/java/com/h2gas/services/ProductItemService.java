@@ -14,10 +14,12 @@ import com.h2gas.model.repository.ProductItemRepository;
 import com.h2gas.model.repository.OrderItemRepository;
 import com.h2gas.model.repository.SupplierRepository;
 import com.h2gas.model.dto.ProductStockSummaryDTO;
+import com.h2gas.enums.ProductSortEnum;
 import com.h2gas.enums.StockFilterEnum;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -99,8 +101,17 @@ public class ProductItemService {
     }
 
     public Page<ProductItemDTO> findBySupplierActiveAndSupplierOpen(Long cityId, String category, String q, Pageable pageable) {
+        return findBySupplierActiveAndSupplierOpen(cityId, category, q, ProductSortEnum.NONE, pageable);
+    }
+
+    // HU16: a ordenação escolhida no catálogo vira o Sort da página, ou a nota da loja quando é "melhor avaliado"
+    public Page<ProductItemDTO> findBySupplierActiveAndSupplierOpen(Long cityId, String category, String q,
+                                                                     ProductSortEnum sort, Pageable pageable) {
         String term = q == null || q.isBlank() ? null : q.trim().toLowerCase(java.util.Locale.ROOT);
-        return productItemRepository.findAvailableProducts(cityId, category, term, pageable)
+        // sem ordenação escolhida, vale o Sort que já veio no Pageable (chamadas internas e a HU02)
+        Pageable sorted = sort == ProductSortEnum.NONE ? pageable
+                : PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sort.sort());
+        return productItemRepository.findAvailableProducts(cityId, category, term, sort.byShopRating(), sorted)
                 .map(productItemMapper::toDto);
     }
 

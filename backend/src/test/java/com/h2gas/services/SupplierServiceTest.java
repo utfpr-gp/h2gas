@@ -1,6 +1,7 @@
 package com.h2gas.services;
 
 import com.h2gas.exceptions.BusinessRuleException;
+import com.h2gas.enums.StorefrontSortEnum;
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.model.dto.AddressDTO;
 import com.h2gas.model.dto.SupplierCreateDTO;
@@ -534,10 +535,10 @@ class SupplierServiceTest {
                     "s", "11222333000144", "d", true, (Boolean) loja[2], a, (City) loja[1]));
         }
 
-        Page<com.h2gas.model.dto.StorefrontDTO> result = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), "GÁS AZUL", null, PageRequest.of(0, 10));
+        Page<com.h2gas.model.dto.StorefrontDTO> result = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), "GÁS AZUL", null, StorefrontSortEnum.NAME, PageRequest.of(0, 10));
 
         assertEquals(List.of("Gás Azul Curitiba"), result.getContent().stream().map(com.h2gas.model.dto.StorefrontDTO::name).toList());
-        assertEquals(2, supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, null, PageRequest.of(0, 10)).getTotalElements());
+        assertEquals(2, supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, null, StorefrontSortEnum.NAME, PageRequest.of(0, 10)).getTotalElements());
     }
 
     private void avaliar(Supplier loja, User cliente, int nota) {
@@ -576,7 +577,7 @@ class SupplierServiceTest {
         avaliar(avaliada, cliente, 4);
         avaliar(avaliada, cliente, 4);
 
-        Page<com.h2gas.model.dto.StorefrontDTO> result = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, null, PageRequest.of(0, 10));
+        Page<com.h2gas.model.dto.StorefrontDTO> result = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, null, StorefrontSortEnum.NAME, PageRequest.of(0, 10));
 
         com.h2gas.model.dto.StorefrontDTO dto = result.getContent().stream().filter(d -> d.name().equals("Loja Avaliada")).findFirst().orElseThrow();
         assertEquals(4.3, dto.averageRating());
@@ -589,7 +590,7 @@ class SupplierServiceTest {
         City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
         lojaAberta("Loja Sem Nota", curitiba);
 
-        com.h2gas.model.dto.StorefrontDTO dto = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, null, PageRequest.of(0, 10)).getContent().get(0);
+        com.h2gas.model.dto.StorefrontDTO dto = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, null, StorefrontSortEnum.NAME, PageRequest.of(0, 10)).getContent().get(0);
 
         assertNull(dto.averageRating());
         assertEquals(0L, dto.reviewCount());
@@ -765,7 +766,7 @@ class SupplierServiceTest {
     }
 
     private List<com.h2gas.model.dto.StorefrontDTO> vitrine(Long cityId, String q, Long productTypeId) {
-        return supplierService.findAllSuppliersOpenAndActive(cityId, q, productTypeId, PageRequest.of(0, 10)).getContent();
+        return supplierService.findAllSuppliersOpenAndActive(cityId, q, productTypeId, StorefrontSortEnum.NAME, PageRequest.of(0, 10)).getContent();
     }
 
     @Test
@@ -876,5 +877,113 @@ class SupplierServiceTest {
 
         assertEquals(3, tres.size());
         assertEquals(consultasComUmaLoja, consultasComTresLojas);
+    }
+
+    // ---- HU16: ordenação da vitrine ----
+
+    private List<String> nomes(Long cityId, String q, Long tipo, StorefrontSortEnum ordem) {
+        return supplierService.findAllSuppliersOpenAndActive(cityId, q, tipo, ordem, PageRequest.of(0, 10))
+                .getContent().stream().map(com.h2gas.model.dto.StorefrontDTO::name).toList();
+    }
+
+    private Supplier comTempo(Supplier loja, Integer minutos) {
+        loja.setAverageDeliveryTime(minutos == null ? null : Duration.ofMinutes(minutos));
+        return supplierRepository.save(loja);
+    }
+
+    private Supplier fechada(String nome, City cidade) {
+        Supplier loja = lojaAberta(nome, cidade);
+        loja.setOpen(false);
+        return supplierRepository.save(loja);
+    }
+
+    private User cliente() {
+        return userRepository.save(new User(null, "Cliente", "cliente-hu16@t", "41999990000", "99988877766", "x",
+                UserTypeEnum.CUSTOMER));
+    }
+
+    @Test
+    @DisplayName("HU16: melhor avaliação vem da maior para a menor média")
+    void deveOrdenarPorMelhorAvaliacao() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        User cliente = cliente();
+        Supplier media = lojaAberta("A Média", curitiba);
+        Supplier otima = lojaAberta("B Ótima", curitiba);
+        avaliar(media, cliente, 3);
+        avaliar(otima, cliente, 5);
+
+        assertEquals(List.of("B Ótima", "A Média"), nomes(curitiba.getId(), null, null, StorefrontSortEnum.RATING));
+    }
+
+    @Test
+    @DisplayName("HU16: loja sem avaliação fica no fim da ordenação por nota")
+    void deveColocarLojaSemAvaliacaoNoFim() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        User cliente = cliente();
+        lojaAberta("A Sem Nota", curitiba);
+        avaliar(lojaAberta("B Nota Baixa", curitiba), cliente, 1);
+
+        assertEquals(List.of("B Nota Baixa", "A Sem Nota"), nomes(curitiba.getId(), null, null, StorefrontSortEnum.RATING));
+    }
+
+    @Test
+    @DisplayName("HU16: menor tempo de entrega primeiro")
+    void deveOrdenarPorMenorTempoDeEntrega() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        comTempo(lojaAberta("A Demorada", curitiba), 90);
+        comTempo(lojaAberta("B Rápida", curitiba), 20);
+        comTempo(lojaAberta("C Média", curitiba), 45);
+
+        assertEquals(List.of("B Rápida", "C Média", "A Demorada"),
+                nomes(curitiba.getId(), null, null, StorefrontSortEnum.DELIVERY_TIME));
+    }
+
+    @Test
+    @DisplayName("HU16: loja sem tempo cadastrado fica no fim da ordenação por tempo")
+    void deveColocarLojaSemTempoNoFim() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        comTempo(lojaAberta("A Sem Tempo", curitiba), null);
+        comTempo(lojaAberta("B Com Tempo", curitiba), 60);
+
+        assertEquals(List.of("B Com Tempo", "A Sem Tempo"),
+                nomes(curitiba.getId(), null, null, StorefrontSortEnum.DELIVERY_TIME));
+    }
+
+    @Test
+    @DisplayName("HU16: abertas primeiro traz também as fechadas, depois das abertas")
+    void deveListarAbertasPrimeiroIncluindoFechadas() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        fechada("A Fechada", curitiba);
+        lojaAberta("B Aberta", curitiba);
+
+        assertEquals(List.of("B Aberta", "A Fechada"), nomes(curitiba.getId(), null, null, StorefrontSortEnum.OPEN_FIRST));
+    }
+
+    @Test
+    @DisplayName("HU16: nas demais ordenações a vitrine segue só com lojas abertas")
+    void naoDeveTrazerLojaFechadaNasDemaisOrdenacoes() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        fechada("A Fechada", curitiba);
+        lojaAberta("B Aberta", curitiba);
+
+        for (StorefrontSortEnum ordem : List.of(StorefrontSortEnum.NAME, StorefrontSortEnum.RATING,
+                StorefrontSortEnum.DELIVERY_TIME)) {
+            assertEquals(List.of("B Aberta"), nomes(curitiba.getId(), null, null, ordem), ordem.name());
+        }
+    }
+
+    @Test
+    @DisplayName("HU16: cidade (RN05), busca e tipo continuam valendo ao ordenar")
+    void deveManterCidadeBuscaETipoAoOrdenar() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        City londrina = cityRepository.save(new City(null, "Londrina", "PR"));
+        com.h2gas.model.entity.ProductType gas = tipo("Gás", "local_fire_department");
+        categoria(comTempo(lojaAberta("Gás Azul Curitiba", curitiba), 30), gas, "P13");
+        categoria(comTempo(lojaAberta("Gás Azul Londrina", londrina), 10), gas, "P13");
+        comTempo(lojaAberta("Gás Azul Sem Catálogo", curitiba), 5);
+        categoria(comTempo(lojaAberta("Água Verde Curitiba", curitiba), 1), gas, "P13");
+
+        assertEquals(List.of("Gás Azul Curitiba"),
+                nomes(curitiba.getId(), "azul", gas.getId(), StorefrontSortEnum.DELIVERY_TIME));
     }
 }
