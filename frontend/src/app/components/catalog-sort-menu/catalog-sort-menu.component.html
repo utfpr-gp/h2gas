@@ -1,8 +1,8 @@
 <div class="relative">
-  <button type="button" data-testid="sort-menu" aria-haspopup="menu" [attr.aria-expanded]="open" (click)="toggle()"
+  <button type="button" data-testid="sort-menu" aria-haspopup="menu" [attr.aria-expanded]="open" [attr.aria-label]="'Ordenar por: ' + activeLabel" (click)="toggle()"
     class="btn btn-sm btn-ghost rounded-full min-h-11 sm:min-h-8 border-base-300 bg-base-100 text-base-content font-normal">
     <span class="material-icons text-sm" aria-hidden="true">sort</span>
-    Ordenar: <span class="font-semibold">{{ activeLabel }}</span>
+    <span class="hidden sm:inline">Ordenar:</span> <span class="font-semibold">{{ activeLabel }}</span>
     <span class="material-icons text-sm" aria-hidden="true">expand_more</span>
   </button>
 

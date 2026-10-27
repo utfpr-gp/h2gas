@@ -9,8 +9,8 @@
   (keydown.enter)="onViewProducts()"
   (keydown.space)="onViewProducts(); $event.preventDefault()"
   [class.grayscale]="supplier.open === false" [class.opacity-60]="supplier.open === false"
-  class="flex items-center gap-3 p-2 rounded-xl min-h-11 cursor-pointer transition-colors
-         hover:bg-base-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+  class="flex items-center gap-3 p-3 md:p-2 rounded-xl min-h-11 cursor-pointer transition-colors
+         border border-base-300 md:border-transparent hover:bg-base-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
 
   <!-- F7 fatia 6: logo da loja; sem logo (ou com a imagem quebrada) fica o ícone -->
   <div class="w-20 h-20 rounded-xl overflow-hidden bg-base-200 border border-base-300 shrink-0
@@ -31,13 +31,15 @@
         class="badge badge-sm badge-warning shrink-0">Fechada<ng-container *ngIf="supplier.openingTime"> · abre às {{ supplier.openingTime }}</ng-container></span>
     </div>
 
-    <!-- nota e, ao lado, o que a loja vende (HU15) -->
-    <div class="flex items-center flex-wrap gap-x-2 gap-y-1">
-      <app-store-rating [average]="supplier.averageRating" [count]="supplier.reviewCount" [clickable]="true"
-        (openReviews)="viewReviews.emit(supplier)"></app-store-rating>
+    <!-- a nota tem a própria linha; quando é botão (abre as avaliações), a área de toque cresce para 44px sem aumentar o card -->
+    <app-store-rating class="block [&_button]:min-h-11 [&_button]:py-1.5 [&_button]:-my-1.5 md:[&_button]:min-h-8 md:[&_button]:py-0 md:[&_button]:my-0"
+      [average]="supplier.averageRating" [count]="supplier.reviewCount" [clickable]="true"
+      (openReviews)="viewReviews.emit(supplier)"></app-store-rating>
 
+    <!-- o que a loja vende (HU15) -->
+    <div class="flex flex-wrap gap-1 mt-0.5" *ngIf="supplier.productTypes?.length">
       <span *ngFor="let tipo of supplier.productTypes" data-testid="supplier-type"
-        class="inline-flex items-center gap-1 text-xs text-neutral">
+        class="inline-flex items-center gap-1 rounded-full bg-base-200 px-2 py-0.5 text-xs text-neutral">
         <span class="material-icons text-xs" aria-hidden="true">{{ tipo.icon }}</span>{{ tipo.name }}
       </span>
     </div>

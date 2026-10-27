@@ -176,6 +176,26 @@ no banco tornaria o resultado dependente do ambiente.
   `border-base-300`, `bg-primary/10`) nos arquivos tocados — sem HEX
   literal novo (F2).
 
+### 5.3 Revisão: vitrine no celular (2026-10-27)
+
+Pedido do autor ao ver a vitrine em 390 px: layout apertado, botões difíceis
+de tocar, muita rolagem até as lojas e visual pouco cuidado. Só classes de
+layout — nenhum comportamento muda:
+
+- título de uma linha, à esquerda, e sem subtítulo no celular (o desktop
+  segue como estava);
+- seletor Lojas/Produtos em largura total, com os dois lados do mesmo tamanho;
+- linha "Lojas próximas · N" e o botão de ordenar na **mesma** linha; o botão
+  mostra só a opção ativa (o rótulo "Ordenar:" volta de `sm` para cima, e o
+  `aria-label` continua dizendo "Ordenar por: …");
+- faixa de tipos sangrando até a borda da tela e círculos de 48 px no celular;
+- card da loja com borda, nota e tipos em linhas próprias (antes quebravam de
+  forma irregular), tipos como pílulas, e a área de toque da nota (que abre as
+  avaliações) de 44 px sem aumentar o card.
+
+Medido com o Chrome em 390 px: a primeira loja passa de ~510 px para ~400 px
+do topo, sem rolagem horizontal.
+
 ## 6. Plano de Testes (TDD)
 
 **Backend**

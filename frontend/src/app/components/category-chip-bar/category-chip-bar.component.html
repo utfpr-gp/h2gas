@@ -1,4 +1,4 @@
-<div class="flex gap-3 overflow-x-auto pb-2" role="group" aria-label="Filtrar por tipo">
+<div class="flex gap-3 overflow-x-auto pt-1 pb-2 -mx-4 px-4 md:mx-0 md:px-0" role="group" aria-label="Filtrar por tipo">
   <button
     type="button"
     data-testid="chip-all"
@@ -6,7 +6,7 @@
     [attr.aria-pressed]="selected === null"
     (click)="select(null)">
     <span
-      class="w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all duration-200 active:scale-95"
+      class="w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center border-2 transition-all duration-200 active:scale-95"
       [ngClass]="selected === null ? 'border-accent bg-accent text-white scale-105 shadow-md' : 'border-gray-200 text-gray-500 hover:border-accent/50'">
       <span class="material-icons">apps</span>
     </span>
@@ -21,7 +21,7 @@
     [attr.aria-pressed]="selected === categoria.name"
     (click)="select(categoria)">
     <span
-      class="w-14 h-14 rounded-full flex items-center justify-center border-2 transition-all duration-200 active:scale-95"
+      class="w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center border-2 transition-all duration-200 active:scale-95"
       [ngClass]="selected === categoria.name ? 'border-accent bg-accent text-white scale-105 shadow-md' : 'border-gray-200 text-gray-500 hover:border-accent/50'">
       <span class="material-icons">{{ iconFor(categoria) }}</span>
     </span>
