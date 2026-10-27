@@ -395,6 +395,13 @@ class SupplierControllerTest {
         verifyNoInteractions(supplierService);
     }
 
+    // ---- HU18 (revisão): "abertas primeiro" virou o padrão; o valor deixou de existir ----
+    @Test
+    void deveRecusarAbertasPrimeiroComoOrdenacao() throws Exception {
+        mockMvc.perform(get("/api/suppliers/actives/open").param("cityId", "7").param("sort", "openFirst"))
+                .andExpect(status().isBadRequest());
+    }
+
     // ---- HU15 ----
 
     @Test

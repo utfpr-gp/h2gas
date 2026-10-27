@@ -6,9 +6,8 @@ import com.h2gas.exceptions.BusinessRuleException;
 public enum StorefrontSortEnum {
     NAME("name"),
     RATING("rating"),
-    DELIVERY_TIME("deliveryTime"),
-    // única que traz também as lojas fechadas, depois das abertas
-    OPEN_FIRST("openFirst");
+    // HU18: "abertas primeiro" deixou de ser opção — em toda ordenação as fechadas vêm depois das abertas
+    DELIVERY_TIME("deliveryTime");
 
     private final String param;
 
@@ -18,10 +17,6 @@ public enum StorefrontSortEnum {
 
     public String param() {
         return param;
-    }
-
-    public boolean includesClosed() {
-        return this == OPEN_FIRST;
     }
 
     public static StorefrontSortEnum fromParam(String value) {

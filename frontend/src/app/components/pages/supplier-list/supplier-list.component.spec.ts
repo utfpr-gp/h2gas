@@ -398,7 +398,7 @@ describe('SupplierListComponent', () => {
   it('deveOferecerAsOpcoesDeCadaVisao', () => {
     fixture.detectChanges();
     expect(component.sortOptions.map((o) => o.label))
-      .toEqual(['Nome (A-Z)', 'Melhor avaliação', 'Menor tempo de entrega', 'Abertas primeiro']);
+      .toEqual(['Nome (A-Z)', 'Melhor avaliação', 'Menor tempo de entrega']);
 
     component.toggleView();
     expect(component.sortOptions.map((o) => o.label))

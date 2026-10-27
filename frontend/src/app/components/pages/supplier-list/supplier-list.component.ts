@@ -31,7 +31,7 @@ const SUPPLIER_SORT_OPTIONS: SortOption[] = [
   { value: 'name', label: 'Nome (A-Z)' },
   { value: 'rating', label: 'Melhor avaliação' },
   { value: 'deliveryTime', label: 'Menor tempo de entrega' },
-  { value: 'openFirst', label: 'Abertas primeiro' },
+  // HU18: "Abertas primeiro" saiu — as fechadas já vêm sempre depois das abertas
 ];
 const PRODUCT_SORT_OPTIONS: SortOption[] = [
   { value: 'priceDelivery,asc', label: 'Menor preço' },

@@ -84,11 +84,19 @@
         (categorySelected)="onCategorySelected($event)">
     </app-category-chip-bar>
 
+    <!-- HU18: loja fechada mostra o catálogo, mas sem compra -->
+    <div *ngIf="closedNotice" data-testid="store-closed-notice" role="status"
+        class="alert alert-warning alert-soft mt-6 text-sm">
+        <span class="material-icons text-base" aria-hidden="true">schedule</span>
+        {{ closedNotice }}. Você pode ver os produtos, mas só dá para comprar com a loja aberta.
+    </div>
+
     <div data-testid="product-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6 transition-opacity duration-200"
         [class.opacity-60]="loading" [@staggerList]="listVersion">
         <app-product-card
             *ngFor="let product of products"
             [product]="product"
+            [blockedReason]="closedNotice"
             (addToCart)="addToCart($event)"
             (buyNow)="buyNow($event)">
         </app-product-card>

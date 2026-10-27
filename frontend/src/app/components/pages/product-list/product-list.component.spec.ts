@@ -257,4 +257,27 @@ describe('ProductListComponent', () => {
     expect(supplierServiceSpy.getStorefront).toHaveBeenCalledWith('fixture-supplier-hu02');
     expect(byId('store-header')!.querySelector('h1')!.textContent).toContain('Gás Centro Curitiba');
   });
+
+  // ---- HU18: loja fechada mostra o catálogo, sem compra ----
+  it('deveBloquearACompraEmLojaFechada', () => {
+    productItemServiceSpy.getProductsBySupplierId.and.returnValue(of({
+      data: [{ id: 1, brand: 'Ultragaz', supplierId: 'fixture-supplier-hu02' }],
+      page: 0, size: 10, totalElements: 1, totalPages: 1, hasNext: false, hasPrevious: false,
+    } as any));
+    recriarCom({ ...loja, open: false, openingTime: '07:00' });
+
+    expect(byId('store-closed-notice')!.textContent).toContain('Loja fechada · abre às 07:00');
+    expect((byId('add-to-cart') as HTMLButtonElement).disabled).toBeTrue();
+  });
+
+  it('deveLiberarACompraEmLojaAberta', () => {
+    productItemServiceSpy.getProductsBySupplierId.and.returnValue(of({
+      data: [{ id: 1, brand: 'Ultragaz', supplierId: 'fixture-supplier-hu02' }],
+      page: 0, size: 10, totalElements: 1, totalPages: 1, hasNext: false, hasPrevious: false,
+    } as any));
+    recriarCom({ ...loja, open: true });
+
+    expect(byId('store-closed-notice')).toBeNull();
+    expect((byId('add-to-cart') as HTMLButtonElement).disabled).toBeFalse();
+  });
 });

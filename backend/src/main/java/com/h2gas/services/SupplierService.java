@@ -120,12 +120,12 @@ public class SupplierService {
 
     // HU13: o catálogo devolve a vitrine pública das lojas (sem dados internos), com a nota
     // HU15: productTypeId filtra pelo tipo vendido; cada loja leva os tipos que vende
-    // HU16: sort escolhe a ordem; "abertas primeiro" é a única que traz as lojas fechadas
+    // HU16: sort escolhe a ordem. HU18: as fechadas também aparecem, sempre depois das abertas
     public Page<StorefrontDTO> findAllSuppliersOpenAndActive(Long cityId, String q, Long productTypeId,
                                                              StorefrontSortEnum sort, Pageable pageable) {
         String term = q == null || q.isBlank() ? null : q.trim().toLowerCase(java.util.Locale.ROOT);
         Page<SupplierDTO> page = supplierRepository
-                .findForCatalog(cityId, term, productTypeId, sort.includesClosed(), sort.param(), now(), pageable)
+                .findForCatalog(cityId, term, productTypeId, true, sort.param(), now(), pageable)
                 .map(this::toDtoWithOpen);
         addRatings(page.getContent());
         Map<String, List<ProductTypeChipDTO>> typesBySupplier = productTypesBySupplier(

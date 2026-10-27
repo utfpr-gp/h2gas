@@ -56,8 +56,8 @@
 
         <div *ngIf="!loading && !suppliers.length" data-testid="empty-state" class="text-center bg-base-100 rounded-xl border border-base-300 py-10 px-4">
             <span class="material-icons text-base-300" style="font-size: 48px">storefront</span>
-            <p class="text-base-content font-semibold mt-2">{{ query ? 'Nenhuma loja com esse nome' : 'Nenhuma loja aberta no seu endereço agora' }}</p>
-            <p class="text-sm text-neutral">{{ query ? 'Confira o nome ou limpe a busca.' : 'Tente mais tarde ou troque o endereço de entrega.' }}</p>
+            <p class="text-base-content font-semibold mt-2">{{ query ? 'Nenhuma loja com esse nome' : 'Nenhuma loja no seu endereço' }}</p>
+            <p class="text-sm text-neutral">{{ query ? 'Confira o nome ou limpe a busca.' : 'Troque o endereço de entrega ou tente outro tipo.' }}</p>
         </div>
 
         <div data-testid="supplier-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-4" [class.opacity-60]="loading">

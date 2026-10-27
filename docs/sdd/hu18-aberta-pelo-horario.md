@@ -23,9 +23,12 @@ horário que cadastrei, sem depender de lembrar de apertar um botão.
   08:00–18:00, Quando são 10:00 em Brasília, Então ela aparece na vitrine,
   no catálogo de produtos e no cabeçalho da loja como "Aberta".
 - **Cenário 2 — Fechada fora do horário**: Dado a mesma loja, Quando são
-  19:00 em Brasília, Então ela não aparece na vitrine (nem os produtos
-  dela), exceto na ordenação "Abertas primeiro", onde vem depois das
-  abertas com o selo "Fechada".
+  19:00 em Brasília, Então ela continua na vitrine, **depois de todas as
+  abertas** (em qualquer ordenação), com o selo "Fechada · abre às 08:00";
+  os produtos dela não aparecem na visão "Produtos" da vitrine.
+- **Cenário 2a — Catálogo da loja fechada**: Dado o cliente na página de
+  uma loja fechada, Então vê os produtos, mas "Adicionar" e "Comprar agora"
+  ficam desabilitados, com o aviso "Loja fechada · abre às 08:00".
 - **Cenário 3 — Limites do horário**: Dado o horário 08:00–18:00, Então às
   08:00 a loja está aberta e às 18:00 está fechada (a abertura conta, o
   fechamento não).
@@ -90,9 +93,14 @@ horário que cadastrei, sem depender de lembrar de apertar um botão.
      (s.openingTime < s.closingTime AND :now >= s.openingTime AND :now < s.closingTime)
      OR (s.openingTime > s.closingTime AND (:now >= s.openingTime OR :now < s.closingTime))))
   ```
-- Usada em `CATALOG_WHERE` (no lugar de `s.open = true`), no `CASE` de
-  "abertas primeiro" do `findForCatalog` e em `AVAILABLE_WHERE` (no lugar de
-  `p.supplier.open = true`, com `p.supplier` no lugar de `s`).
+- Usada no primeiro critério do `ORDER BY` do `findForCatalog` (abertas
+  antes das fechadas, em toda ordenação) e em `AVAILABLE_WHERE` (no lugar de
+  `p.supplier.open = true`, com `p.supplier` no lugar de `s`). A vitrine de
+  lojas passa sempre `includeClosed = true`.
+- **Revisão do autor (2026-10-27, ao ver a tela)**: lojas fechadas também
+  aparecem na vitrine. Com isso a opção "Abertas primeiro" da HU16 deixa de
+  existir (`sort=openFirst` passa a ser 400 "Ordenação inválida."), porque
+  virou o comportamento de toda ordenação.
 
 ### 5.3 API
 - `StorefrontDTO.open` e `GET /api/suppliers/{id}/open` continuam, agora
@@ -105,6 +113,11 @@ horário que cadastrei, sem depender de lembrar de apertar um botão.
   ``ALTER TABLE suppliers DROP COLUMN `open`;``
 
 ### 5.4 Frontend
+- Card da loja fechada: selo "Fechada · abre às HH:mm". Página da loja
+  fechada: aviso no topo e `app-product-card` com `blockedReason`, que
+  desabilita "Adicionar" e "Comprar agora".
+- Menu "Ordenar" sem "Abertas primeiro"; estado vazio deixa de falar em
+  "aberta".
 - `received-orders` e `order-history`: o `store-toggle` vira selo somente
   leitura (`data-testid="store-status"`) com o estado e o próximo horário
   ("fecha às" / "abre às"), e link para `/configuracao`.
@@ -118,10 +131,12 @@ horário que cadastrei, sem depender de lembrar de apertar um botão.
    `deveEstarFechadaForaDoHorario`, `deveAbrirNaHoraDaAberturaEFecharNaHoraDoFechamento`,
    `deveTratarHorarioQueViraAMeiaNoite`, `deveTratarLojaSemHorarioComoFechada`.
 2. `SupplierServiceTest` (com `Clock` fixo):
-   `deveListarSoLojasDentroDoHorario`,
+   `deveListarAsDentroDoHorarioAntesDasOutras`,
+   `deveColocarAsFechadasDepoisDasAbertasEmQualquerOrdenacao`,
    `deveIncluirLojaDaMadrugadaNaJanelaCertaDoHorario`,
-   `deveTrazerAsForaDoHorarioDepoisEmAbertasPrimeiro`,
-   `deveCalcularOpenNaVitrine`.
+   `deveTrazerAsForaDoHorarioMarcadasComoFechadas`,
+   `deveCalcularOpenNaVitrine`; `SupplierControllerTest`:
+   `deveRecusarAbertasPrimeiroComoOrdenacao`.
 3. `ProductItemRepositoryTest`: `naoDeveListarProdutoDeLojaForaDoHorario`.
 4. `SupplierControllerTest`: `naoDeveExistirRotaDeStatus` (o teste de 403
    no `/status` sai); `deveCalcularOOpenDaLoja`.
@@ -133,6 +148,9 @@ horário que cadastrei, sem depender de lembrar de apertar um botão.
    `deveMostrarOEstadoDaLojaSemInterruptor`, `deveMostrarOProximoHorario`,
    `naoDeveChamarARotaDeStatus`.
 7. `supplier.service.spec.ts`: sai o teste de `openDistribuidor`.
+7a. `product-card.component.spec.ts`: `deveBloquearACompraComMotivo`;
+    `product-list.component.spec.ts`: `deveBloquearACompraEmLojaFechada`,
+    `deveLiberarACompraEmLojaAberta`.
 
 **E2E (registrado no DoD)**: loja 08:00–18:00 visível de dia e ausente à
 noite; loja 18:00–02:00 visível de madrugada; "Abertas primeiro" com o selo;

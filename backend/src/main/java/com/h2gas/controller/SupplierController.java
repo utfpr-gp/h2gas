@@ -123,13 +123,14 @@ public class SupplierController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Lista as lojas ativas e abertas (vitrine pública)",
-            description = "Aberta a visitantes. Retorna a vitrine das lojas ativas e abertas, ordenadas por nome, filtradas pela cidade (RN05), "
+    @Operation(summary = "Lista as lojas ativas da vitrine, abertas antes das fechadas (vitrine pública)",
+            description = "Aberta a visitantes. Retorna a vitrine das lojas ativas — as abertas agora pelo horário primeiro, depois as "
+                    + "fechadas (HU18) —, filtradas pela cidade (RN05), "
                     + "pela busca q no nome da loja e pelo tipo de produto vendido (productTypeId); cada loja traz averageRating "
                     + "(média, 1 casa; nula sem avaliações), reviewCount e productTypes (os tipos que vende, para os selos do card). "
                     + "Sem login, cityId é obrigatório; o admin logado pode omitir para ver todas as cidades. "
-                    + "sort escolhe a ordem (HU16): name (padrão), rating, deliveryTime ou openFirst — esta última é a única "
-                    + "que inclui as lojas fechadas, depois das abertas")
+                    + "sort escolhe a ordem (HU16): name (padrão), rating ou deliveryTime. Lojas fora do horário também vêm, "
+                    + "sempre depois das abertas e com open=false (HU18)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista paginada da vitrine das lojas"),
             @ApiResponse(responseCode = "400", description = "Visitante sem cityId, ou sort fora da lista (\"Ordenação inválida.\")")
@@ -146,8 +147,8 @@ public class SupplierController {
                     + " tipo inexistente devolve página vazia", example = "1")
             @RequestParam(value = "productTypeId", required = false) Long productTypeId,
             @Parameter(description = "HU16: ordem da lista — name (padrão), rating (melhor avaliação), deliveryTime "
-                    + "(menor tempo de entrega) ou openFirst (abertas primeiro, incluindo as fechadas)",
-                    schema = @Schema(allowableValues = {"name", "rating", "deliveryTime", "openFirst"}))
+                    + "(menor tempo de entrega); as fechadas vêm sempre depois das abertas",
+                    schema = @Schema(allowableValues = {"name", "rating", "deliveryTime"}))
             @RequestParam(value = "sort", required = false) String sort
     ) {
         CatalogAccess.requireCityForVisitor(cityId);

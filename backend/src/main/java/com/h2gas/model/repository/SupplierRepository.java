@@ -27,7 +27,7 @@ public interface SupplierRepository extends JpaRepository<Supplier, String> {
             + "(s.openingTime < s.closingTime AND :now >= s.openingTime AND :now < s.closingTime)"
             + " OR (s.openingTime > s.closingTime AND (:now >= s.openingTime OR :now < s.closingTime))))";
 
-    // HU16: includeClosed traz também as fechadas (só na ordenação "abertas primeiro")
+    // HU18: a vitrine traz também as lojas fechadas (includeClosed), sempre depois das abertas
     String CATALOG_WHERE = " WHERE s.active = true AND (:includeClosed = true OR " + OPEN_NOW + ")"
             + " AND (:cityId IS NULL OR s.city.id = :cityId)"
             + " AND (:q IS NULL OR LOCATE(:q, LOWER(s.name)) > 0)"
@@ -36,8 +36,9 @@ public interface SupplierRepository extends JpaRepository<Supplier, String> {
 
     // HU16: a ordem vem de :sort (StorefrontSortEnum.param). Cada critério só pesa na ordenação dele e vira
     // constante nas outras; nota e tempo vazios vão para o fim, e o nome desempata sempre.
+    // HU18: antes de tudo, abertas agora antes das fechadas.
     @Query(value = "SELECT s FROM Supplier s" + CATALOG_WHERE
-            + " ORDER BY CASE WHEN :sort = 'openFirst' AND NOT " + OPEN_NOW + " THEN 1 ELSE 0 END,"
+            + " ORDER BY CASE WHEN " + OPEN_NOW + " THEN 0 ELSE 1 END,"
             + " CASE WHEN :sort = 'rating' AND (SELECT AVG(r.rating) FROM Review r WHERE r.supplier = s) IS NULL"
             + " THEN 1 ELSE 0 END,"
             + " CASE WHEN :sort = 'rating' THEN (SELECT AVG(r2.rating) FROM Review r2 WHERE r2.supplier = s) END DESC,"

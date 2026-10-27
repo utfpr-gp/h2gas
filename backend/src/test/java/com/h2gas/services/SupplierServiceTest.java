@@ -538,8 +538,10 @@ class SupplierServiceTest {
 
         Page<com.h2gas.model.dto.StorefrontDTO> result = supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), "GÁS AZUL", null, StorefrontSortEnum.NAME, PageRequest.of(0, 10));
 
-        assertEquals(List.of("Gás Azul Curitiba"), result.getContent().stream().map(com.h2gas.model.dto.StorefrontDTO::name).toList());
-        assertEquals(2, supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, null, StorefrontSortEnum.NAME, PageRequest.of(0, 10)).getTotalElements());
+        // HU18 (revisão de 2026-10-27): a fechada aparece também, depois das abertas
+        assertEquals(List.of("Gás Azul Curitiba", "Gás Azul Fechado"),
+                result.getContent().stream().map(com.h2gas.model.dto.StorefrontDTO::name).toList());
+        assertEquals(3, supplierService.findAllSuppliersOpenAndActive(curitiba.getId(), null, null, StorefrontSortEnum.NAME, PageRequest.of(0, 10)).getTotalElements());
     }
 
     private void avaliar(Supplier loja, User cliente, int nota) {
@@ -953,25 +955,14 @@ class SupplierServiceTest {
     }
 
     @Test
-    @DisplayName("HU16: abertas primeiro traz também as fechadas, depois das abertas")
-    void deveListarAbertasPrimeiroIncluindoFechadas() {
+    @DisplayName("HU18: em qualquer ordenação as lojas fechadas vêm depois das abertas")
+    void deveColocarAsFechadasDepoisDasAbertasEmQualquerOrdenacao() {
         City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
         fechada("A Fechada", curitiba);
         lojaAberta("B Aberta", curitiba);
 
-        assertEquals(List.of("B Aberta", "A Fechada"), nomes(curitiba.getId(), null, null, StorefrontSortEnum.OPEN_FIRST));
-    }
-
-    @Test
-    @DisplayName("HU16: nas demais ordenações a vitrine segue só com lojas abertas")
-    void naoDeveTrazerLojaFechadaNasDemaisOrdenacoes() {
-        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
-        fechada("A Fechada", curitiba);
-        lojaAberta("B Aberta", curitiba);
-
-        for (StorefrontSortEnum ordem : List.of(StorefrontSortEnum.NAME, StorefrontSortEnum.RATING,
-                StorefrontSortEnum.DELIVERY_TIME)) {
-            assertEquals(List.of("B Aberta"), nomes(curitiba.getId(), null, null, ordem), ordem.name());
+        for (StorefrontSortEnum ordem : StorefrontSortEnum.values()) {
+            assertEquals(List.of("B Aberta", "A Fechada"), nomes(curitiba.getId(), null, null, ordem), ordem.name());
         }
     }
 
@@ -999,14 +990,15 @@ class SupplierServiceTest {
     }
 
     @Test
-    @DisplayName("HU18: a vitrine traz só as lojas dentro do horário")
-    void deveListarSoLojasDentroDoHorario() {
+    @DisplayName("HU18: as lojas dentro do horário vêm antes das outras")
+    void deveListarAsDentroDoHorarioAntesDasOutras() {
         City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
         comHorario(lojaAberta("A Dentro", curitiba), 8, 18);
         comHorario(lojaAberta("B Abre Mais Tarde", curitiba), 11, 20);
         comHorario(lojaAberta("C Já Fechou", curitiba), 6, 10);
 
-        assertEquals(List.of("A Dentro"), nomes(curitiba.getId(), null, null, StorefrontSortEnum.NAME));
+        assertEquals(List.of("A Dentro", "B Abre Mais Tarde", "C Já Fechou"),
+                nomes(curitiba.getId(), null, null, StorefrontSortEnum.NAME));
     }
 
     @Test
@@ -1016,28 +1008,29 @@ class SupplierServiceTest {
         comHorario(lojaAberta("A Vira A Noite E Vai Até 11h", curitiba), 22, 11);
         comHorario(lojaAberta("B Noturna Até 2h", curitiba), 18, 2);
 
-        assertEquals(List.of("A Vira A Noite E Vai Até 11h"), nomes(curitiba.getId(), null, null, StorefrontSortEnum.NAME));
+        assertEquals(List.of("A Vira A Noite E Vai Até 11h", "B Noturna Até 2h"),
+                nomes(curitiba.getId(), null, null, StorefrontSortEnum.NAME));
     }
 
     @Test
-    @DisplayName("HU18: loja sem horário cadastrado fica fora da vitrine")
+    @DisplayName("HU18: loja sem horário cadastrado conta como fechada")
     void deveTratarLojaSemHorarioComoFechadaNaVitrine() {
         City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
         comHorario(lojaAberta("A Sem Horário", curitiba), null, 18);
         lojaAberta("B Com Horário", curitiba);
 
-        assertEquals(List.of("B Com Horário"), nomes(curitiba.getId(), null, null, StorefrontSortEnum.NAME));
+        assertEquals(List.of("B Com Horário", "A Sem Horário"), nomes(curitiba.getId(), null, null, StorefrontSortEnum.NAME));
     }
 
     @Test
-    @DisplayName("HU18: abertas primeiro traz as fora do horário depois das abertas")
-    void deveTrazerAsForaDoHorarioDepoisEmAbertasPrimeiro() {
+    @DisplayName("HU18: a vitrine traz as fora do horário, marcadas como fechadas")
+    void deveTrazerAsForaDoHorarioMarcadasComoFechadas() {
         City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
         comHorario(lojaAberta("A Fora Do Horário", curitiba), 19, 23);
         lojaAberta("B Dentro Do Horário", curitiba);
 
         List<com.h2gas.model.dto.StorefrontDTO> lojas = supplierService.findAllSuppliersOpenAndActive(
-                curitiba.getId(), null, null, StorefrontSortEnum.OPEN_FIRST, PageRequest.of(0, 10)).getContent();
+                curitiba.getId(), null, null, StorefrontSortEnum.NAME, PageRequest.of(0, 10)).getContent();
 
         assertEquals(List.of("B Dentro Do Horário", "A Fora Do Horário"),
                 lojas.stream().map(com.h2gas.model.dto.StorefrontDTO::name).toList());
