@@ -208,6 +208,27 @@ Segunda rodada, ainda em 2026-10-27:
 Medido com o Chrome em 390 px: a primeira loja passa de ~510 px para ~400 px
 do topo, sem rolagem horizontal.
 
+### 5.4 Revisão: a loja no card de produto (2026-10-27)
+
+Pedido do autor: na visão "Produtos" da vitrine, que mistura lojas, mostrar
+quem vende cada produto. Decisão: **no card**, e não num título por
+categoria — a mesma categoria (ex.: "Gás 13kg") reúne produtos de lojas
+diferentes, então um título não teria uma loja só para mostrar.
+
+- `app-product-card` ganha `showStore` (padrão `false`) e a saída
+  `viewStore`. Com `showStore`, uma linha abaixo do nome com o ícone de loja
+  e o nome dela, como botão (`aria-label` "Ver a loja …", 44 px no celular)
+  que leva à página da loja pelo `navigate` que a vitrine já tinha.
+- Só a vitrine liga `showStore`; a página da loja não, porque lá todos os
+  produtos são da mesma loja, já no cabeçalho.
+- Sem mudança no backend: `ProductItemDTO` já trazia `supplierId` e
+  `supllierName`. A grafia errada do campo é de origem; corrigi-la muda o
+  contrato da API e fica fora deste ajuste.
+- Testes: `product-card.component.spec.ts` (`deveMostrarALojaQuandoPedido`,
+  `naoDeveMostrarALojaPorPadrao`, `naoDeveMostrarALojaSemNome`,
+  `deveEmitirALojaAoTocarNoNome`) e `supplier-list.component.spec.ts`
+  (`deveMostrarALojaNosProdutos`, `deveAbrirALojaAoTocarNoNomeDoProduto`).
+
 ## 6. Plano de Testes (TDD)
 
 **Backend**

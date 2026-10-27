@@ -117,4 +117,48 @@ describe('ProductCardComponent', () => {
     expect(component.addToCart.emit).not.toHaveBeenCalled();
     expect(component.buyNow.emit).not.toHaveBeenCalled();
   });
+
+  // ---- HU15 (revisão): na vitrine de produtos o card diz qual loja vende ----
+  const loja = () => fixture.nativeElement.querySelector('[data-testid="product-store"]') as HTMLButtonElement | null;
+  const deLoja = { id: 10, brand: 'Ultragaz', supplierId: 'loja-7', supllierName: 'Gás Centro Curitiba' } as ProductItem;
+
+  it('deveMostrarALojaQuandoPedido', () => {
+    component.product = deLoja;
+    component.showStore = true;
+    fixture.detectChanges();
+
+    expect(loja()?.textContent).toContain('Gás Centro Curitiba');
+    expect(loja()?.getAttribute('aria-label')).toBe('Ver a loja Gás Centro Curitiba');
+    expect(loja()?.classList).toContain('min-h-11');
+  });
+
+  it('naoDeveMostrarALojaPorPadrao', () => {
+    component.product = deLoja;
+    fixture.detectChanges();
+
+    expect(loja()).toBeNull();
+  });
+
+  it('naoDeveMostrarALojaSemNome', () => {
+    component.product = { id: 10, brand: 'Ultragaz', supplierId: 'loja-7' } as ProductItem;
+    component.showStore = true;
+    fixture.detectChanges();
+
+    expect(loja()).toBeNull();
+  });
+
+  it('deveEmitirALojaAoTocarNoNome', () => {
+    component.product = deLoja;
+    component.showStore = true;
+    fixture.detectChanges();
+    spyOn(component.viewStore, 'emit');
+    spyOn(component.addToCart, 'emit');
+    spyOn(component.buyNow, 'emit');
+
+    loja()!.click();
+
+    expect(component.viewStore.emit).toHaveBeenCalledOnceWith('loja-7');
+    expect(component.addToCart.emit).not.toHaveBeenCalled();
+    expect(component.buyNow.emit).not.toHaveBeenCalled();
+  });
 });

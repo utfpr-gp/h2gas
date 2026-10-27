@@ -469,4 +469,32 @@ describe('SupplierListComponent', () => {
     expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledOnceWith(0, 10, undefined, undefined, undefined, 'name');
     expect(byId('clear-filters')).toBeNull();
   }));
+
+  // ---- HU15 (revisão): a loja aparece no card de produto e leva até ela ----
+  it('deveMostrarALojaNosProdutos', () => {
+    productItemServiceSpy.getProductsFromActiveSuppliers.and.returnValue(of({
+      data: [{ id: 1, brand: 'Ultragaz', category: 'P13', type: 'Gás', supplierId: 'loja-7', supllierName: 'Gás Centro' }],
+      page: 0, size: 12, totalElements: 1, totalPages: 1, hasNext: false, hasPrevious: false,
+    } as any));
+    fixture.detectChanges();
+    component.toggleView();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="product-store"]')?.textContent).toContain('Gás Centro');
+  });
+
+  it('deveAbrirALojaAoTocarNoNomeDoProduto', () => {
+    const router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+    productItemServiceSpy.getProductsFromActiveSuppliers.and.returnValue(of({
+      data: [{ id: 1, brand: 'Ultragaz', category: 'P13', type: 'Gás', supplierId: 'loja-7', supllierName: 'Gás Centro' }],
+      page: 0, size: 12, totalElements: 1, totalPages: 1, hasNext: false, hasPrevious: false,
+    } as any));
+    fixture.detectChanges();
+    component.toggleView();
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('[data-testid="product-store"]') as HTMLButtonElement).click();
+
+    expect(router.navigate).toHaveBeenCalledWith(['/fornecedores', 'loja-7', 'produtos']);
+  });
 });

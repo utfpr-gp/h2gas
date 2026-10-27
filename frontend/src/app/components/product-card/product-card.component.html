@@ -11,6 +11,13 @@
 
   <div class="p-3 flex flex-col flex-grow gap-1">
     <h3 class="font-semibold text-sm text-gray-800 truncate">{{ product.brand }} {{ product.category }}</h3>
+    <!-- HU15 (revisão): quem vende — só na vitrine de produtos, que mistura lojas -->
+    <button *ngIf="showStore && product.supllierName" type="button" data-testid="product-store"
+      [attr.aria-label]="'Ver a loja ' + product.supllierName" (click)="onViewStore()"
+      class="self-start inline-flex items-center gap-1 -ml-1 px-1 rounded-md text-xs text-primary hover:bg-base-200 min-h-11 sm:min-h-8 max-w-full">
+      <span class="material-icons text-sm" aria-hidden="true">storefront</span>
+      <span class="truncate">{{ product.supllierName }}</span>
+    </button>
     <span *ngIf="product.freeDelivery" data-testid="free-delivery"
       class="self-start inline-flex items-center gap-1 rounded-full bg-green-100 text-green-700 text-[11px] font-bold px-2 py-0.5">
       <span class="material-icons text-xs">local_shipping</span>Entrega Grátis
