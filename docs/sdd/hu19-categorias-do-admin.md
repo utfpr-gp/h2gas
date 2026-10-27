@@ -39,7 +39,9 @@ um produto, sem precisar criá-la.
   categoria.
 - **Cenário 6 — Vitrine segue certa**: Dado uma loja, Então os selos de
   tipo do card e o filtro por tipo da vitrine (HU15) refletem os produtos
-  que ela vende de fato, não as categorias.
+  que ela vende de fato, não as categorias. Produto sem estoque não conta
+  (RN02): uma loja só com produto esgotado não mostra selo de tipo nem
+  aparece no filtro daquele tipo.
 
 ## 4. Estado atual (achados)
 
@@ -83,9 +85,18 @@ um produto, sem precisar criá-la.
 
 - Sai `GET /by-supplier/{supplierId}`.
 - `ProductItemService`: saem as checagens de dono da categoria; fica o 404.
+- A listagem (`GET /api/category-products`) é ordenada por tipo e nome **no
+  serviço, com `Collator` pt-BR**, e não no `ORDER BY`: o H2 dos testes põe
+  "Gás" antes de "Água" (comparação binária) e o MySQL faz o contrário — o
+  mesmo problema que a HU15 já resolveu nos selos.
+- Nome repetido no mesmo tipo (criar ou renomear) → 400 "Categoria já
+  cadastrada." (`BusinessRuleException`, o mesmo padrão dos tipos).
 - HU15: tipos da loja e o filtro `productTypeId` passam a vir de
-  `ProductItem` (`EXISTS (SELECT 1 FROM ProductItem p WHERE p.supplier = s
-  AND p.categoryProduct.productType.id = :productTypeId)`).
+  `ProductItem` com estoque (`EXISTS (SELECT 1 FROM ProductItem pi WHERE
+  pi.supplier = s AND pi.stockQuantity > 0 AND
+  pi.categoryProduct.productType.id = :productTypeId)`); a consulta dos tipos
+  por página sai de `CategoryProductRepository` e vai para
+  `ProductItemRepository.findTypesBySupplierIds`.
 
 ### 5.3 Frontend
 - Nova `/admin/categorias` (`admin-categories`), no padrão de
@@ -99,24 +110,33 @@ um produto, sem precisar criá-la.
 
 **Backend**
 1. `CategoryProductServiceTest`: `deveCriarCategoriaGlobal`,
-   `deveRecusarNomeRepetidoNoMesmoTipo`, `devePermitirMesmoNomeEmOutroTipo`,
-   `deveRenomearCategoria`, `deveRecusarExcluirCategoriaComProdutos`,
-   `deveListarAsCategoriasQueALojaUsa`.
+   `deveRecusarNomeRepetidoNoMesmoTipo` (inclui o mesmo nome em outro tipo),
+   `deveRecusarRenomearParaNomeQueJaExisteNoTipo`, `deveRenomearCategoria`,
+   `deveRecusarExcluirCategoriaComProdutos`,
+   `deveListarAsCategoriasQueALojaUsa`, `deveListarTodasAsCategoriasOrdenadas`.
 2. `CategoryProductControllerTest`: `deveCriarComoAdmin` (201),
    `deveRetornar403AoFornecedorCriar`, `deveListarSemToken`.
 3. `CatalogoPermissoesTest`: `deveRetornar403AoAdminEscreverCategoria`
    inverte para `deveRetornar403AoFornecedorEscreverCategoria`.
 4. `ProductItemServiceTest`: `deveCadastrarProdutoComQualquerCategoria`
    (saem os testes "categoria de outro fornecedor → 403").
-5. `SupplierServiceTest` (HU15): `deveTrazerOsTiposPelosProdutosDaLoja`,
-   `deveFiltrarLojasPeloTipoDosProdutos`.
+5. `SupplierServiceTest` (HU15, reescritos): os selos e o filtro por tipo
+   derivam dos produtos — `deveTrazerOsTiposDeProdutoDaLoja`,
+   `naoDeveContarProdutoSemEstoqueNosTipos`, `deveFiltrarLojasPeloTipoDeProduto`.
+5a. `PublicCatalogAccessTest`: `GET /api/category-products` abre sem token e
+    aparece sem cadeado no OpenAPI; a escrita segue protegida.
 
 **Frontend**
-6. `admin-categories.component.spec.ts`: listar, criar, renomear, erro de
-   duplicada, excluir com confirmação.
-7. `menu.component.spec.ts`: "Categorias" no admin, sem "Categoria de
-   produtos" no fornecedor.
-8. `product-item-form.component.spec.ts`: `deveListarTodasAsCategorias`.
+6. `admin-categories.component.spec.ts`:
+   `deveListarAsCategoriasAgrupadasPorTipo`, `deveCriarCategoriaNoTipoEscolhido`,
+   `naoDeveCriarSemNomeOuSemTipo`, `deveSugerirNomesPeloTipoEscolhido`,
+   `deveMostrarErroDeCategoriaRepetida`, `deveRenomearCategoria`,
+   `deveExcluirSoDepoisDeConfirmar`, `deveCancelarAExclusao`,
+   `deveMostrarOMotivoQuandoACategoriaTemProdutos`.
+7. `menu.component.spec.ts`: "Categorias" no admin;
+   `naoDeveOferecerCategoriasAoFornecedor`.
+8. `product-item-form.component.spec.ts`: o formulário lista `findAll`;
+   `category-product.service.spec.ts`: `deveListarTodasAsCategorias`.
 
 **Migração (registrada no DoD)**: no MySQL local, duas lojas com "P13" em
 Gás → uma categoria, produtos repostos,
