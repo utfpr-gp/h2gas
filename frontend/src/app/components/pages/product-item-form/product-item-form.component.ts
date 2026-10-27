@@ -182,14 +182,11 @@ export class ProductItemFormComponent implements OnInit {
   }
 
 
+  // HU19: as categorias são globais (cadastradas pelo admin) — o fornecedor escolhe entre todas
   findAllCategoryProducts() {
-    console.log(this.user?.supplierId);
-    
-    this.categoryService.findBySupplierId(this.user?.supplierId!).subscribe({
+    this.categoryService.findAll().subscribe({
       next: (response) => {
-        this.categoryProduct = response.data;
-        console.log(this.categoryProduct);
-        
+        this.categoryProduct = response;
       },
       error: (err) => {
         this.toastr.error(`Erro ao carregar as categorias: ${backendMessage(err)}`)        

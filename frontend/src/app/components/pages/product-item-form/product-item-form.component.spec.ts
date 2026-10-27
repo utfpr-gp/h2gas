@@ -37,8 +37,8 @@ describe('ProductItemFormComponent', () => {
       id: 5, brand: 'Liquigás', categoryProductId: 3, description: 'Edição', priceDelivery: 95, pricePickup: 80,
       price: 80, shippingFee: 15, stockQuantity: 4, imageUrl: 'http://img/x.jpg', freeDelivery: false, ...productEdicao,
     } as any));
-    const categoryServiceSpy = jasmine.createSpyObj('CategoryProductService', ['findBySupplierId']);
-    categoryServiceSpy.findBySupplierId.and.returnValue(of({ data: [{ id: 3, name: 'Gás 13kg', type: 'Gás' }] } as any));
+    const categoryServiceSpy = jasmine.createSpyObj('CategoryProductService', ['findAll']);
+    categoryServiceSpy.findAll.and.returnValue(of([{ id: 3, name: 'Gás 13kg', type: 'Gás' }] as any));
     const userServiceSpy = jasmine.createSpyObj('UserService', ['getUserLocalStorage']);
     userServiceSpy.getUserLocalStorage.and.returnValue({ id: 'f1', supplierId: 'f1' });
     toastrSpy = jasmine.createSpyObj('ToastrService', ['success', 'warning', 'error']);

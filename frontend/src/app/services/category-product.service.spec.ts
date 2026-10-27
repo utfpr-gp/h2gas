@@ -42,4 +42,20 @@ describe('CategoryProductService', () => {
     expect(put.request.body).toEqual({ name: 'P45 Plus', productTypeId: 2 });
     put.flush({ id: 9, name: 'P45 Plus' });
   });
+
+  // ---- HU19: categorias globais ----
+  it('deveListarTodasAsCategorias', () => {
+    service.findAll().subscribe((r) => expect(r.length).toBe(2));
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/category-products`);
+    expect(req.request.method).toBe('GET');
+    req.flush([{ id: 1, name: '20L', type: 'Água' }, { id: 2, name: 'P13', type: 'Gás' }]);
+  });
+
+  it('deveExcluirCategoria', () => {
+    service.delete(9).subscribe();
+    const req = httpMock.expectOne(`${environment.apiUrl}/category-products/9`);
+    expect(req.request.method).toBe('DELETE');
+    req.flush(9);
+  });
 });

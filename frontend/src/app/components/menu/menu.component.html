@@ -62,6 +62,9 @@
             <a routerLink="/admin/tipos" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
               <span class="material-icons" aria-hidden="true">category</span><span>Tipos</span>
             </a>
+            <a routerLink="/admin/categorias" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
+              <span class="material-icons" aria-hidden="true">label</span><span>Categorias</span>
+            </a>
           </ng-container>
 
           <!-- Dropdown Produtos -->
@@ -75,10 +78,6 @@
               <li>
                 <a routerLink="/product-items" routerLinkActive="bg-gray-100 font-semibold" ariaCurrentWhenActive="page" (click)="productsMenuOpen = false"
                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Item produtos</a>
-              </li>
-              <li>
-                <a routerLink="/category-products" routerLinkActive="bg-gray-100 font-semibold" ariaCurrentWhenActive="page" (click)="productsMenuOpen = false"
-                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Categoria de produtos</a>
               </li>
             </ul>
           </div>
@@ -307,6 +306,9 @@
           <a routerLink="/admin/tipos" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
             <span class="material-icons" aria-hidden="true">category</span>Tipos
           </a>
+          <a routerLink="/admin/categorias" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
+            <span class="material-icons" aria-hidden="true">label</span>Categorias
+          </a>
         </ng-container>
         <ng-container *ngIf="isSupplier">
           <a routerLink="/dashboard" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
@@ -327,7 +329,6 @@
           </button>
           <div *ngIf="submenuOpen" @expandCollapse class="flex flex-col pl-9 gap-1">
             <a routerLink="/product-items" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="{{ t.hover }} px-3 py-2 rounded-md">Item produtos</a>
-            <a routerLink="/category-products" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="{{ t.hover }} px-3 py-2 rounded-md">Categoria de produtos</a>
           </div>
         </ng-container>
 

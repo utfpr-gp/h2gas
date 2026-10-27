@@ -351,7 +351,7 @@ describe('MenuComponent', () => {
       .map((a) => a.getAttribute('href'));
 
     for (const [onde, hrefs] of [['desktop', desktop], ['mobile', mobile]] as const) {
-      expect(hrefs).withContext(onde).toEqual(jasmine.arrayContaining(['/admin', '/admin/usuarios', '/supplier-approval', '/register-city', '/admin/tipos']));
+      expect(hrefs).withContext(onde).toEqual(jasmine.arrayContaining(['/admin', '/admin/usuarios', '/supplier-approval', '/register-city', '/admin/tipos', '/admin/categorias']));
       expect(hrefs).withContext(onde).not.toContain('/inicio');
       expect(hrefs).withContext(onde).not.toContain('/meus-pedidos');
     }
@@ -359,6 +359,17 @@ describe('MenuComponent', () => {
 
     abrirMenu();
     expect(itens()).toEqual(['Meus Dados', 'Painel', 'Sair']);
+  });
+
+  // ---- HU19: categorias são do admin ----
+  it('naoDeveOferecerCategoriasAoFornecedor', () => {
+    entrarComo(perfis.fornecedor);
+    (byId('mobile-menu-button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const hrefs = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('a')).map((a) => a.getAttribute('href'));
+    expect(hrefs).not.toContain('/category-products');
+    expect((fixture.nativeElement as HTMLElement).textContent).not.toContain('Categoria de produtos');
   });
 
   it('naoDeveMostrarInicioDoCatalogoParaFornecedor', () => {
