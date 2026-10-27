@@ -49,9 +49,9 @@ describe('OrderHistoryComponent', () => {
     orderSpy = jasmine.createSpyObj('OrderService', ['listMyHistory', 'getMyHistorySummary']);
     orderSpy.listMyHistory.and.returnValue(of(page));
     orderSpy.getMyHistorySummary.and.returnValue(of({ delivered: 70, canceled: 4, revenue: 4523, averageTicket: 64.61 }));
-    const supplierSpy = jasmine.createSpyObj('SupplierService', ['getOpen', 'openDistribuidor']);
+    const supplierSpy = jasmine.createSpyObj('SupplierService', ['getOpen', 'getMySettings']);
     supplierSpy.getOpen.and.returnValue(of(true));
-    supplierSpy.openDistribuidor.and.returnValue(of({}));
+    supplierSpy.getMySettings.and.returnValue(of({ openingTime: '08:00', closingTime: '18:00', averageDeliveryTime: 30, lowStockThreshold: 8 }));
     const userSpy = jasmine.createSpyObj('UserService', ['getUserLocalStorage']);
     userSpy.getUserLocalStorage.and.returnValue({ id: 'f1', supplierId: 'f1', userType: 'SUPPLIER' });
 
@@ -176,5 +176,13 @@ describe('OrderHistoryComponent', () => {
     await setup(pagina([]));
 
     expect(byId('empty-state')?.textContent).toContain('Nenhum pedido finalizado');
+  });
+
+  // ---- HU18 ----
+  it('deveMostrarOEstadoDaLojaSemInterruptor', async () => {
+    await setup();
+
+    expect(fixture.nativeElement.querySelector('app-store-hours-status')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="store-toggle"]')).toBeNull();
   });
 });

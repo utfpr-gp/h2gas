@@ -60,30 +60,7 @@
               }
             </div>
 
-            <div class="flex items-center gap-4">
-              <label class="inline-flex relative items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  class="sr-only peer" 
-                  [checked]="showSupplier"
-                  (change)="onToggleSupplier($event)"
-                />
-                <div
-                  class="w-11 h-6 bg-gray-200 rounded-full peer
-                         peer-focus:ring-4 peer-focus:ring-blue-300
-                         peer-checked:bg-blue-600
-                         transition-colors duration-200"
-                ></div>
-                <div
-                  class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full
-                         peer-checked:translate-x-full peer-checked:border-white
-                         transition-transform duration-200"
-                ></div>
-                <span class="ml-3 text-sm font-medium text-gray-900">
-                  {{ showSupplier ? 'Distribuidora Aberta' : 'Distribuidora Fechada' }}
-                </span>
-              </label>
-            </div>
+            <!-- HU18: a loja abre e fecha pelo horário; o interruptor saiu -->
           </div>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 text-gray-600">
             <div class="flex items-center gap-3 transform transition-transform duration-300 hover:translate-x-1">

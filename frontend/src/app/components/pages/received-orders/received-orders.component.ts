@@ -9,7 +9,7 @@ import { OrderResponse } from '../../../models/order.model';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { OrderStatus } from '../../../models/order-status.enum';
-import { SupplierService } from '../../../services/supplier.service';
+import { StoreHoursStatusComponent } from '../../store-hours-status/store-hours-status.component';
 import { DelivererService } from '../../../services/deliverer.service';
 import { Deliverer } from '../../../models/deliverer';
 import { OrderStatusTimelineComponent } from '../../order-status-timeline/order-status-timeline.component';
@@ -24,6 +24,7 @@ import { backendMessage } from '../../../utils/backend-message';
     ReactiveFormsModule,
     OrderStatusTimelineComponent,
     RouterLink,
+    StoreHoursStatusComponent,
   ],
   templateUrl: './received-orders.component.html',
   animations: [fadeIn, staggerList],
@@ -36,14 +37,12 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private toastr: ToastrService,
     private router: Router,
-    private supplierService: SupplierService,
     private delivererService: DelivererService,
   ) { }
 
   userLogado?: User;
   orders?: OrderResponse[];
   orderStatus = OrderStatus;
-  showSupplier = false;
 
   // HU06: fila com pendentes no topo, pedido selecionado no detalhe (Figura 14)
   selectedOrder?: OrderResponse;
@@ -86,7 +85,6 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.userLogado = this.userService.getUserLocalStorage();
     this.loadOrders();
-    this.getOpenStatus();
     // a HU08 (SSE) não cobre o painel do fornecedor: pedido novo chega por atualização periódica
     this.refreshSub = interval(this.refreshIntervalMs).subscribe(() => this.loadOrders());
   }
@@ -160,21 +158,6 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
     this.orders = orders;
     const stillThere = this.selectedOrder && orders.find((o) => o.id === this.selectedOrder!.id);
     this.selectedOrder = stillThere || this.pendingOrders[0] || orders[0];
-  }
-
-  onToggleSupplier(checked: any) {
-    this.showSupplier = checked.target.checked;
-    this.supplierService.openDistribuidor({ status: this.showSupplier }, this.userLogado?.supplierId!).subscribe({
-      next: () => this.toastr.success(this.showSupplier ? 'Distribuidora aberta.' : 'Distribuidora fechada.'),
-      error: (err) => this.toastr.error(`Erro ao abrir distribuidora: ${backendMessage(err)}`),
-    });
-  }
-
-  getOpenStatus() {
-    this.supplierService.getOpen(this.userLogado?.supplierId!).subscribe({
-      next: (response) => this.showSupplier = response,
-      error: (err) => this.toastr.error(`Erro ao buscar a distribuidora: ${backendMessage(err)}`),
-    });
   }
 
   changeStatus(order: OrderResponse, action: string) {

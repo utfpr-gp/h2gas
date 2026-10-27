@@ -40,8 +40,9 @@ describe('ReceivedOrdersComponent', () => {
     toastrSpy = jasmine.createSpyObj('ToastrService', ['success', 'warning', 'error', 'info']);
     const userServiceSpy = jasmine.createSpyObj('UserService', ['getUserLocalStorage']);
     userServiceSpy.getUserLocalStorage.and.returnValue({ id: 'sup-1', supplierId: 'sup-1' });
-    const supplierServiceSpy = jasmine.createSpyObj('SupplierService', ['getOpen', 'openDistribuidor']);
+    const supplierServiceSpy = jasmine.createSpyObj('SupplierService', ['getOpen', 'getMySettings']);
     supplierServiceSpy.getOpen.and.returnValue(of(true));
+    supplierServiceSpy.getMySettings.and.returnValue(of({ openingTime: '08:00', closingTime: '18:00', averageDeliveryTime: 30, lowStockThreshold: 8 }));
 
     await TestBed.configureTestingModule({
       imports: [ReceivedOrdersComponent],
@@ -264,5 +265,13 @@ describe('ReceivedOrdersComponent', () => {
 
       expect(fixture.nativeElement.querySelector('[data-testid=no-deliverers]')).toBeTruthy();
     });
+  });
+
+  // ---- HU18 ----
+  it('deveMostrarOEstadoDaLojaSemInterruptor', () => {
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-store-hours-status')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('[data-testid="store-toggle"]')).toBeNull();
   });
 });

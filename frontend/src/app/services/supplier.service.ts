@@ -89,10 +89,6 @@ export class SupplierService extends AbstractService<Supplier> {
     return this.http.get(`${this.baseUrl}/by-user/${userId}`);
   }
 
-  openDistribuidor(data: any, id: string) {
-    return this.http.patch(`${this.baseUrl}/${id}/status`, data);
-  }
-
 
   // RN05: sempre com a cidade do endereço ativo; q busca no nome da loja (F7 §5.21)
   // HU15: productTypeId traz só as lojas que vendem aquele tipo (Gás, Água…)

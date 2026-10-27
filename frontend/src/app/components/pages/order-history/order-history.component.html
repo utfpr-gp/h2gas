@@ -4,10 +4,8 @@
             <h1 class="text-2xl font-bold text-gray-800">Histórico de pedidos</h1>
             <p class="text-sm text-gray-500">Pedidos entregues e cancelados da sua loja.</p>
         </div>
-        <label class="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
-            <input type="checkbox" data-testid="store-toggle" class="toggle toggle-success toggle-sm" [checked]="storeOpen" (change)="toggleStore($event)" />
-            {{ storeOpen ? 'Loja aberta' : 'Loja fechada' }}
-        </label>
+        <!-- HU18: a loja abre e fecha pelo horário; aqui só o estado, sem interruptor -->
+        <app-store-hours-status></app-store-hours-status>
     </header>
 
     <!-- Resumo (acompanha os filtros) -->
