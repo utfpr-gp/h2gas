@@ -82,8 +82,17 @@
             <p class="text-sm text-neutral">{{ query ? 'Troque a busca ou o tipo.' : 'Tente outro tipo ou mais tarde.' }}</p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" [class.opacity-60]="loading">
-            <app-product-card [showStore]="true" (viewStore)="navigate($event)" *ngFor="let product of products" [product]="product" (addToCart)="addToCart($event)" (buyNow)="buyNow($event)"></app-product-card>
+        <div class="space-y-8" [class.opacity-60]="loading">
+            <section *ngFor="let section of productSections" data-testid="product-section">
+                <h2 *ngIf="!selectedType" data-testid="type-heading" class="text-lg font-bold text-base-content mb-3">{{ section.type }}</h2>
+                <div *ngFor="let category of section.categories" data-testid="category-section" class="mb-6 last:mb-0">
+                    <h3 data-testid="category-heading" class="text-sm font-semibold text-neutral mb-2">{{ category.name }}</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <app-product-card [showStore]="true" (viewStore)="navigate($event)" *ngFor="let product of category.products" [product]="product"
+                            (addToCart)="addToCart($event)" (buyNow)="buyNow($event)"></app-product-card>
+                    </div>
+                </div>
+            </section>
         </div>
     </ng-container>
 

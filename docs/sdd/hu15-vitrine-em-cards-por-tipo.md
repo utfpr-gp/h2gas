@@ -272,6 +272,26 @@ lado a lado; ícones novos só no card por enquanto.
   `deveUsarASacolaNaRetirada`; no backend, `ProductItemMapperTest`
   (`deveLevarALogoDaLojaQueVende`, `deveDeixarALogoNulaSemLogo`).
 
+### 5.6 Revisão: produtos agrupados por tipo e categoria (2026-10-27)
+
+Na página da loja e na visão "Produtos" da vitrine, a grade única vira
+seções: um título por **tipo** (Gás, Água), na ordem dos chips, e dentro
+dele um subtítulo por **categoria** (Gás 13kg, Gás 45kg), em ordem
+alfabética pt-BR. Com um tipo já escolhido no chip, o título do tipo some
+(só sobram as categorias). Produto sem tipo ou sem categoria vai para
+"Outros", sempre por último.
+
+- Só frontend: função pura `groupProductsByTypeAndCategory` em
+  `utils/product-sections.ts`, usada pelos dois componentes. Agrupa **a
+  página atual** que o backend devolveu — não muda paginação, filtro nem
+  ordenação da API (RN05 segue no backend).
+- Cada categoria mantém a grade `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`
+  da 5.3.
+- Testes: `product-sections.spec.ts` (ordem dos tipos, ordem das
+  categorias, sem seção vazia com o tipo filtrado, "Outros");
+  `deveAgruparProdutosPorTipoECategoria` em `product-list.component.spec.ts`
+  e `supplier-list.component.spec.ts`.
+
 ## 6. Plano de Testes (TDD)
 
 **Backend**

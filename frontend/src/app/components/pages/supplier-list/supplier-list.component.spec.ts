@@ -126,6 +126,24 @@ describe('SupplierListComponent', () => {
     expect(toastrSpy.success).toHaveBeenCalledWith('Produto adicionado ao carrinho.');
   });
 
+  it('deveAgruparProdutosPorTipoECategoria', () => {
+    fixture.detectChanges();
+    component.viewMode = 'products';
+    component.categories = [{ id: 1, name: 'Gás' }, { id: 2, name: 'Água' }];
+    component.products = [
+      { id: 1, brand: 'Copagaz', type: 'Gás', category: 'Gás 45kg' },
+      { id: 2, brand: 'Minalba', type: 'Água', category: 'Água 20L' },
+      { id: 3, brand: 'Ultragaz', type: 'Gás', category: 'Gás 13kg' },
+    ] as ProductItem[];
+    fixture.detectChanges();
+
+    const secoes = [...fixture.nativeElement.querySelectorAll('[data-testid="product-section"]')] as HTMLElement[];
+    expect(secoes.map((secao) => secao.querySelector('[data-testid="type-heading"]')?.textContent?.trim())).toEqual(['Gás', 'Água']);
+    const categoriasDoGas = [...secoes[0].querySelectorAll('[data-testid="category-heading"]')]
+      .map((titulo) => titulo.textContent?.trim());
+    expect(categoriasDoGas).toEqual(['Gás 13kg', 'Gás 45kg']);
+  });
+
   // HU14
   it('deveAbrirDialogoAoAdicionarDeOutraLoja', () => {
     fixture.detectChanges();

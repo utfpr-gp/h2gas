@@ -20,6 +20,7 @@ import { StoreReviewsDialogComponent } from '../../store-reviews-dialog/store-re
 import { CartOtherStoreDialogComponent } from '../../cart-other-store-dialog/cart-other-store-dialog.component';
 import { CatalogSortMenuComponent, SortOption } from '../../catalog-sort-menu/catalog-sort-menu.component';
 import { backendMessage } from '../../../utils/backend-message';
+import { groupProductsByTypeAndCategory } from '../../../utils/product-sections';
 
 const SUPPLIERS_PAGE_SIZE = 10;
 const PRODUCTS_PAGE_SIZE = 12;
@@ -158,6 +159,10 @@ export class SupplierListComponent implements OnInit {
         this.toastr.error(`Erro ao buscar fornecedores: ${backendMessage(err)}`);
       },
     });
+  }
+
+  get productSections() {
+    return groupProductsByTypeAndCategory(this.products, this.categories);
   }
 
   getProducts(page: number = 0) {
