@@ -101,7 +101,7 @@
 
         <!-- Drawer do carrinho (desktop e mobile): só o cliente compra -->
         <div *ngIf="isShopper" class="drawer drawer-end">
-          <input id="cart-drawer" type="checkbox" class="drawer-toggle" />
+          <input id="cart-drawer" type="checkbox" class="drawer-toggle" (change)="onCartToggle($any($event.target).checked)" />
   
           <!-- Botões que abrem o carrinho -->
           <div class="drawer-content flex items-center">
@@ -112,11 +112,11 @@
             >
               <span class="material-icons block" aria-hidden="true">shopping_cart</span>
               <span
-                *ngIf="cartProducts?.length"
+                *ngIf="cartCount"
                 data-testid="cart-count"
                 class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-info text-info-content text-[11px] font-bold leading-none flex items-center justify-center ring-2 ring-primary"
               >
-                {{ cartProducts!.length }}
+                {{ cartCount }}
               </span>
             </label>
   
@@ -127,16 +127,16 @@
             >
               <span class="material-icons block" aria-hidden="true">shopping_cart</span>
               <span
-                *ngIf="cartProducts?.length"
+                *ngIf="cartCount"
                 data-testid="cart-count"
                 class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-info text-info-content text-[11px] font-bold leading-none flex items-center justify-center ring-2 ring-primary"
               >
-                {{ cartProducts!.length }}
+                {{ cartCount }}
               </span>
             </label>
           </div>
   
-          <!-- Sidebar do carrinho -->
+          <!-- Sidebar do carrinho — HU20: itens, preços e disponibilidade vêm do backend -->
           <div class="drawer-side z-50">
             <label for="cart-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
             <div
@@ -148,88 +148,103 @@
                 <div>
                   <h2 class="text-xl font-bold text-gray-800">Carrinho</h2>
                   <p class="text-sm text-gray-500">
-                    {{ cartProducts!!.length }} item(s)
+                    {{ cartCount }} item(s)
                   </p>
                 </div>
               </div>
   
               <div
-                *ngIf="!cartProducts || cartProducts.length === 0"
+                *ngIf="!cartLines.length"
                 class="p-6 text-center text-gray-500"
               >
                 Seu carrinho está vazio
               </div>
+
+              <div *ngIf="cartLines.length && !cartPreview && cartPreviewLoading" data-testid="cart-loading"
+                class="p-6 text-center text-gray-500" aria-live="polite">
+                Carregando o carrinho…
+              </div>
   
-              <div *ngIf="cartProducts && cartProducts.length" class="p-6 space-y-4">
+              <div *ngIf="cartLines.length && cartPreview" class="p-6 space-y-4" [class.opacity-60]="cartPreviewLoading">
                 <div
-                  *ngFor="let cartProduct of cartProducts"
-                  class="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200"
+                  *ngFor="let item of cartPreview.items; trackBy: trackByCartItem"
+                  data-testid="cart-item"
+                  class="flex items-center justify-between gap-3 p-4 bg-white rounded-lg border"
+                  [ngClass]="item.available ? 'border-gray-200' : 'border-error/40 bg-error/5'"
                 >
-                  <div class="flex items-center space-x-4">
+                  <div class="flex items-center gap-4 min-w-0">
                     <img
-                      alt="Produto"
-                      class="w-16 h-16 object-contain"
-                      [src]="cartProduct.imageUrl"
+                      *ngIf="item.imageUrl"
+                      alt=""
+                      class="w-16 h-16 object-contain shrink-0"
+                      [src]="item.imageUrl"
                     />
-                    <div>
+                    <div class="min-w-0">
                       <h3 class="font-semibold text-gray-800">
-                        {{ cartProduct.type }} {{ cartProduct.brand }}
-                        {{ cartProduct.category }}
+                        {{ item.brand ? (item.type + ' ' + item.brand + ' ' + item.category) : 'Produto indisponível' }}
                       </h3>
-                      <p class="text-sm text-gray-500">
-                        {{ unitPriceForMode(cartProduct) | currency:'BRL':'symbol':'1.2-2' }}
+                      <p *ngIf="item.available" class="text-sm text-gray-500">
+                        {{ item.unitPrice | currency:'BRL':'symbol':'1.2-2' }}
                         <span class="text-xs">{{ deliveryMode === 'PICKUP' ? 'retirada' : 'entrega' }}</span>
+                      </p>
+                      <p *ngIf="!item.available" data-testid="cart-item-unavailable" class="text-sm font-semibold text-error">
+                        {{ unavailableLabel(item) }}
                       </p>
                     </div>
                   </div>
   
-                  <div class="flex items-center space-x-2">
-                    <button
-                      class="btn btn-square btn-sm"
-                      (click)="minusClickCart(cartProduct)"
-                      [disabled]="(cartProduct.quantitySelect ?? min) <= min"
-                    >
-                      –
-                    </button>
-  
-                    <input
-                      type="number"
-                      class="input input-bordered input-sm w-16 text-center"
-                      [(ngModel)]="cartProduct.quantitySelect"
-                      [min]="min"
-                      (input)="onQuantityInput(cartProduct)"
-                      readonly
-                    />
-  
-                    <button
-                      class="btn btn-square btn-sm"
-                      (click)="plusClickCart(cartProduct)"
-                      [disabled]="(cartProduct.quantitySelect ?? 0) >= (cartProduct.stockQuantity ?? 0)"
-                    >
-                      +
-                    </button>
+                  <div class="flex items-center gap-2 shrink-0">
+                    <ng-container *ngIf="item.available">
+                      <button
+                        type="button"
+                        class="btn btn-square btn-sm"
+                        aria-label="Diminuir quantidade"
+                        (click)="minusClickCart(item)"
+                        [disabled]="item.quantity <= min"
+                      >
+                        –
+                      </button>
+                      <span data-testid="cart-item-quantity" class="w-8 text-center font-semibold">{{ item.quantity }}</span>
+                      <button
+                        type="button"
+                        class="btn btn-square btn-sm"
+                        aria-label="Aumentar quantidade"
+                        (click)="plusClickCart(item)"
+                        [disabled]="item.quantity >= (item.stockQuantity ?? 0)"
+                      >
+                        +
+                      </button>
+                    </ng-container>
   
                     <button
-                      class="text-red-500 hover:text-red-700 cursor-pointer flex items-center"
+                      type="button"
+                      data-testid="cart-item-remove"
+                      class="text-red-500 hover:text-red-700 cursor-pointer flex items-center gap-1"
                       aria-label="Remover do carrinho"
-                      (click)="deleteItemCart(cartProduct)"
+                      (click)="deleteItemCart(item)"
                     >
                       <span class="material-icons text-[20px]" aria-hidden="true">delete</span>
+                      <span *ngIf="!item.available" class="text-sm font-semibold">Remover</span>
                     </button>
                   </div>
                 </div>
               </div>
   
-              <div *ngIf="cartProducts && cartProducts.length" class="p-6 border-t border-gray-200">
+              <div *ngIf="cartLines.length" class="p-6 border-t border-gray-200">
                 <div class="flex justify-between items-center mb-4">
                   <span class="text-lg font-medium text-gray-800">Total:</span>
-                  <span class="text-xl font-bold text-gray-900">
-                    {{ totalPrice | currency:'BRL':'symbol':'1.2-2' }}
+                  <span data-testid="cart-total" class="text-xl font-bold text-gray-900">
+                    {{ cartPreview ? (cartPreview.subtotal | currency:'BRL':'symbol':'1.2-2') : '—' }}
                   </span>
                 </div>
+                <p *ngIf="cartHasUnavailable" data-testid="cart-blocked" class="text-sm text-error mb-3">
+                  Remova os itens indisponíveis para finalizar.
+                </p>
                 <button
-                  (click)="navigate('resumo-pedido')"
+                  type="button"
+                  (click)="checkout()"
                   data-testid="checkout-button"
+                  [disabled]="cartHasUnavailable"
                   class="btn btn-accent w-full rounded-lg min-h-11"
                 >
                   Finalizar Pedido

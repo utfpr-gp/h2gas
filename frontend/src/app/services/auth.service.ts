@@ -65,7 +65,7 @@ export class AuthService {
     localStorage.removeItem('user');
     this.locationContext.clear();
     // HU13: o carrinho sai junto com a sessão (e não ao entrar), para o visitante levar o carrinho ao login
-    this.cartService.setCart([]);
+    this.cartService.clear();
     this.cartService.clearBuyNow();
   }
 

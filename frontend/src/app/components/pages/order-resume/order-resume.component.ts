@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
-import { ProductItem } from '../../../models/product-item';
 import { CartService } from '../../../services/cart.service';
+import { CartApiService } from '../../../services/cart-api.service';
+import { CartLine, CartPreview, CartPreviewItem, UNAVAILABLE_REASON_LABELS } from '../../../models/cart';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AddressService } from '../../../services/address.service';
@@ -8,11 +9,9 @@ import { User } from '../../../models/user';
 import { UserService } from '../../../services/user.service';
 import { Address } from '../../../models/address';
 import { ToastrService } from 'ngx-toastr';
-import { DeliveryMode, OrderPreview, OrderRequest } from '../../../models/order.model';
-import { OrderItemRequest } from '../../../models/order-item.model';
+import { DeliveryMode, OrderRequest } from '../../../models/order.model';
 import { OrderService } from '../../../services/order.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
 import { fadeIn, listItem, popIn, stepSlide } from '../../../animations/checkout.animations';
 import { LocationContextService } from '../../../services/location-context.service';
 import { SupplierService } from '../../../services/supplier.service';
@@ -33,6 +32,7 @@ export class OrderResumeComponent implements OnInit {
 
   constructor(
     private cartService: CartService,
+    private cartApi: CartApiService,
     private addressService: AddressService,
     private userService: UserService,
     private toastr: ToastrService,
@@ -49,7 +49,10 @@ export class OrderResumeComponent implements OnInit {
     })
   }
 
-  productsCarts?: ProductItem[];
+  // HU20: o navegador tem só id + quantidade (lines); o que aparece vem do preview do backend
+  private lines: CartLine[] = [];
+  private fallbackSupplierId: string | null = null;
+  productsCarts: CartPreviewItem[] = [];
   formOrder!: FormGroup;
   order?: OrderRequest;
   userLogado?: User;
@@ -57,7 +60,7 @@ export class OrderResumeComponent implements OnInit {
   selectedAddressId?: number;
   isLoading: boolean = false;
   deliveryMode: DeliveryMode = 'DELIVERY';
-  preview?: OrderPreview;
+  preview?: CartPreview;
   step: 1 | 2 | 3 = 1;
   previewLoading = false;
   orderPlaced = false;
@@ -88,7 +91,7 @@ export class OrderResumeComponent implements OnInit {
     } else {
       this.cartService.clearBuyNow();
     }
-    this.productsCarts = this.currentItems();
+    this.loadLines();
     this.userLogado = this.userService.getUserLocalStorage();
     this.deliveryMode = this.cartService.getDeliveryMode();
     this.loadAddresses();
@@ -96,8 +99,12 @@ export class OrderResumeComponent implements OnInit {
   }
 
   nextStep() {
-    if (this.step === 1 && !this.productsCarts?.length) {
+    if (this.step === 1 && !this.productsCarts.length) {
       this.toastr.warning('Adicione ao menos um item para continuar.');
+      return;
+    }
+    if (this.hasUnavailable) {
+      this.toastr.warning('Remova os itens indisponíveis para continuar.');
       return;
     }
     if (this.step === 2 && this.deliveryMode === 'DELIVERY' && this.selectedAddressId == null) {
@@ -130,59 +137,87 @@ export class OrderResumeComponent implements OnInit {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  trackByProductId(_: number, product: ProductItem) {
-    return product.id;
+  trackByProductId(_: number, product: CartPreviewItem) {
+    return product.productId;
   }
 
-  increaseQuantity(product: ProductItem) {
-    this.changeQuantity(product, (product.quantitySelect ?? 1) + 1);
+  // HU20 Cenário 4: item indisponível bloqueia o checkout até sair do carrinho
+  get hasUnavailable(): boolean {
+    return this.productsCarts.some((item) => !item.available);
   }
 
-  decreaseQuantity(product: ProductItem) {
-    this.changeQuantity(product, (product.quantitySelect ?? 1) - 1);
+  unavailableLabel(item: CartPreviewItem): string {
+    return item.unavailableReason ? UNAVAILABLE_REASON_LABELS[item.unavailableReason] : '';
   }
 
-  removeItem(product: ProductItem) {
+  canIncrease(item: CartPreviewItem): boolean {
+    return item.available && (item.stockQuantity == null || item.quantity < item.stockQuantity);
+  }
+
+  increaseQuantity(product: CartPreviewItem) {
+    this.changeQuantity(product, product.quantity + 1);
+  }
+
+  decreaseQuantity(product: CartPreviewItem) {
+    this.changeQuantity(product, product.quantity - 1);
+  }
+
+  removeItem(product: CartPreviewItem) {
     if (this.buyNow) {
       this.cartService.clearBuyNow();
       this.navigate('/inicio');
       return;
     }
-    this.cartService.removeProduct(product.id!);
+    this.cartService.removeProduct(product.productId);
     this.reloadCart();
   }
 
-  private changeQuantity(product: ProductItem, quantity: number) {
+  private changeQuantity(product: CartPreviewItem, quantity: number) {
     if (quantity < 1) {
       return;
     }
     if (this.buyNow) {
       this.cartService.updateBuyNowQuantity(quantity);
     } else {
-      this.cartService.updateQuantity(product.id!, quantity);
+      this.cartService.updateQuantity(product.productId, quantity);
     }
-    this.bumpedProductId = product.id;
+    this.bumpedProductId = product.productId;
     setTimeout(() => this.bumpedProductId = undefined, 150);
     this.reloadCart();
   }
 
-  private currentItems(): ProductItem[] {
+  private loadLines() {
     if (!this.buyNow) {
-      return this.cartService.getCart();
+      this.lines = this.cartService.getCart();
+      this.fallbackSupplierId = this.cartService.getCartSupplierId();
+    } else {
+      const item = this.cartService.getBuyNow();
+      this.lines = item ? [{ productId: item.productId, quantity: item.quantity }] : [];
+      this.fallbackSupplierId = item?.supplierId ?? null;
     }
-    const item = this.cartService.getBuyNow();
-    return item ? [item] : [];
+    this.rebuildItems();
+  }
+
+  // a quantidade vale a do navegador (muda na hora); dados e preço, os do último preview
+  private rebuildItems() {
+    this.productsCarts = this.lines.map((line) => {
+      const fromPreview = this.preview?.items.find((item) => item.productId === line.productId);
+      return { available: true, ...fromPreview, productId: line.productId, quantity: line.quantity };
+    });
   }
 
   private reloadCart() {
-    this.productsCarts = this.currentItems();
+    this.loadLines();
     this.loadPreview();
+  }
+
+  get orderSupplierId(): string | null {
+    return this.preview?.supplierId ?? this.fallbackSupplierId;
   }
 
   // só as lojas dos fornecedores que ainda estão no carrinho
   get visiblePickupStores(): Supplier[] {
-    const supplierIds = (this.productsCarts ?? []).map((p) => p.supplierId);
-    return this.pickupStores.filter((s) => supplierIds.includes(s.id!));
+    return this.pickupStores.filter((s) => s.id === this.orderSupplierId);
   }
 
   get selectedAddress(): Address | undefined {
@@ -200,15 +235,14 @@ export class OrderResumeComponent implements OnInit {
 
   // HU05: na retirada o cliente vê onde retirar — a loja de cada fornecedor do carrinho
   loadPickupStores() {
-    const supplierIds = [...new Set((this.productsCarts ?? []).map((p) => p.supplierId).filter(Boolean))];
-    const jaCarregadas = this.pickupStores.map((s) => s.id);
-    if (!supplierIds.length || supplierIds.every((id) => jaCarregadas.includes(id))) {
+    const supplierId = this.orderSupplierId;
+    if (!supplierId || this.pickupStores.some((s) => s.id === supplierId)) {
       return;
     }
     this.pickupStoresLoading = true;
-    forkJoin(supplierIds.map((id) => this.supplierService.findById(id))).subscribe({
-      next: (stores) => {
-        this.pickupStores = stores;
+    this.supplierService.findById(supplierId).subscribe({
+      next: (store) => {
+        this.pickupStores = [store];
         this.pickupStoresLoading = false;
       },
       error: (err) => {
@@ -218,9 +252,9 @@ export class OrderResumeComponent implements OnInit {
     });
   }
 
-  // RN01: preço unitário, total por item e subtotal vêm do backend
+  // RN01 + HU20: dados, preço, total e disponibilidade vêm do backend
   loadPreview() {
-    if (!this.productsCarts?.length) {
+    if (!this.lines.length) {
       this.previewRequestId++;
       this.preview = undefined;
       this.previewLoading = false;
@@ -229,14 +263,13 @@ export class OrderResumeComponent implements OnInit {
     // cliques rápidos no +/− disparam vários previews; só a resposta mais recente vale
     const requestId = ++this.previewRequestId;
     this.previewLoading = true;
-    this.orderService.previewOrder({
-      items: this.toOrderItemRequests(this.productsCarts),
-      deliveryMode: this.deliveryMode,
-    }).subscribe({
+    this.cartApi.preview(this.lines, this.deliveryMode).subscribe({
       next: (preview) => {
         if (requestId === this.previewRequestId) {
           this.preview = preview;
           this.previewLoading = false;
+          this.rebuildItems();
+          if (this.step === 2 && this.deliveryMode === 'PICKUP') this.loadPickupStores();
         }
       },
       error: (err) => {
@@ -248,16 +281,7 @@ export class OrderResumeComponent implements OnInit {
     });
   }
 
-  previewItem(product: ProductItem) {
-    return this.preview?.items.find((item) => item.productItemRef === product.id);
-  }
 
-  private toOrderItemRequests(products: ProductItem[]): OrderItemRequest[] {
-    return products.map(p => ({
-      productItemRef: p.id ?? 0,
-      quantity: p.quantitySelect ?? 0
-    }));
-  }
 
   loadAddresses() {
     this.addressService.findAllByUser(this.userLogado?.id!).subscribe({
@@ -293,38 +317,30 @@ export class OrderResumeComponent implements OnInit {
       return;
     }
   
+    if (this.hasUnavailable) {
+      this.toastr.warning('Remova os itens indisponíveis para finalizar.');
+      return;
+    }
+
     this.isLoading = true;
-  
-    const productsBySupplier = new Map<string, typeof this.productsCarts>();
-    this.productsCarts!.forEach(p => {
-      if (!productsBySupplier.has(p.supplierId)) {
-        productsBySupplier.set(p.supplierId, []);
-      }
-      productsBySupplier.get(p.supplierId)!.push(p);
-    });
-  
-    const pedidosObservables = Array.from(productsBySupplier.entries()).map(
-      ([supplierId, products]) => {
-        const order: OrderRequest = {
-          customerUuid: this.userLogado!.id,
-          supplierRef: supplierId,
-          paymentMethod: this.formOrder.get('paymentMethod')?.value,
-          note: this.formOrder.get('observation')?.value,
-          addressId: this.deliveryMode === 'DELIVERY' ? this.selectedAddressId : undefined,
-          deliveryMode: this.deliveryMode,
-          items: this.toOrderItemRequests(products!)
-        };
-  
-        return this.orderService.createOrder(order);
-      }
-    );
-  
-    forkJoin(pedidosObservables).subscribe({
-      next: results => {
+
+    // HU14 + HU20: um pedido só, da loja do carrinho, com os ids e quantidades do navegador
+    const order: OrderRequest = {
+      customerUuid: this.userLogado!.id,
+      supplierRef: this.orderSupplierId ?? '',
+      paymentMethod: this.formOrder.get('paymentMethod')?.value,
+      note: this.formOrder.get('observation')?.value,
+      addressId: this.deliveryMode === 'DELIVERY' ? this.selectedAddressId : undefined,
+      deliveryMode: this.deliveryMode,
+      items: this.lines.map((line) => ({ productItemRef: line.productId, quantity: line.quantity })),
+    };
+
+    this.orderService.createOrder(order).subscribe({
+      next: () => {
         if (this.buyNow) {
           this.cartService.clearBuyNow();
         } else {
-          this.cartService.setCart([]);
+          this.cartService.clear();
         }
         this.isLoading = false;
         this.orderPlaced = true;
