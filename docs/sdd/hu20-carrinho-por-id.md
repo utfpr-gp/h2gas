@@ -131,13 +131,32 @@ Em 390 e 1280 px.
 
 ## 8. Definição de Pronto
 
-- [ ] `localStorage` e `sessionStorage` com só id e quantidade.
-- [ ] `POST /api/cart/preview` público, com os motivos de indisponibilidade
-      e documentado no Swagger.
-- [ ] Drawer e checkout com dados do backend; item indisponível com aviso,
+- [x] `localStorage` e `sessionStorage` com só id e quantidade.
+- [x] `POST /api/cart/preview` público, com os motivos de indisponibilidade
+      e documentado no Swagger (tag "Carrinho", sem cadeado).
+- [x] Drawer e checkout com dados do backend; item indisponível com aviso,
       remoção e checkout bloqueado.
-- [ ] Carrinho antigo convertido sem perda.
-- [ ] Testes da seção 6 verdes; `mvn test` e `ng test` sem falha nova;
-      `ng build` ok.
-- [ ] E2E em 390 e 1280 px registrado aqui com data.
-- [ ] Nada do "Fora de Escopo".
+- [x] Carrinho antigo convertido sem perda.
+- [x] Testes da seção 6 verdes; `mvn test` (454, só o `contextLoads` de
+      ambiente) e `ng test` (só as 10 falhas antigas de provider) sem falha
+      nova; `ng build` ok.
+- [x] E2E em 390 e 1280 px registrado aqui com data.
+- [x] Nada do "Fora de Escopo".
+
+### Registro do teste manual (2026-10-27, 22h46 de Brasília)
+
+- `POST /api/cart/preview` sem token: 200; lista vazia: 400. À noite, os
+  produtos das lojas reais voltaram `STORE_CLOSED`, e um id inexistente
+  voltou `NOT_FOUND`.
+- Visitante em 390 e 1280 px, com um carrinho no **formato antigo** injetado
+  no `localStorage` (marca "Velho", preço R$ 1): o app regravou
+  `[{productId:1,quantity:2},{productId:2,quantity:3}]` e
+  `cart-supplier`. O drawer mostrou marca, foto e preço do banco
+  (R$ 120,00). O item com estoque menor que a quantidade apareceu como "Sem
+  estoque suficiente", com "Remover", fora do total, e com o "Finalizar"
+  desabilitado.
+- Para ter uma loja aberta às 22h46, o fechamento da loja de fixture HU02 e
+  o estoque de um produto foram alterados no MySQL local, e restaurados
+  depois do teste.
+- O checkout (`/resumo-pedido`, exige login) ficou coberto pelos specs do
+  `order-resume`. Não foi aberto no navegador.
