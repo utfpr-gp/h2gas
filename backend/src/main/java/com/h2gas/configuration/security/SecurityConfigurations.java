@@ -45,6 +45,8 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.GET, "/api/suppliers/actives/open", "/api/suppliers/*/storefront",
                                 "/api/suppliers/*/reviews", "/api/product-items/by-supplier/*",
                                 "/api/product-items/by-supplier-open", "/api/product-types", "/api/category-products").permitAll()
+                        // HU20: o carrinho do visitante consulta preço e disponibilidade sem login
+                        .requestMatchers(HttpMethod.POST, "/api/cart/preview").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login/token/request").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login/token/validate").permitAll()
