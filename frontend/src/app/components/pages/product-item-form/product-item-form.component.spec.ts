@@ -24,7 +24,7 @@ describe('ProductItemFormComponent', () => {
   const preencher = (over: Record<string, unknown> = {}) =>
     component.formProductItem.patchValue({
       brand: 'Ultragaz', categoryProductId: 3, description: 'Botijão 13kg',
-      price: 100, shippingFee: 20, stockQuantity: 10, ...over,
+      price: 100, stockQuantity: 10, ...over,
     });
 
   beforeEach(() => { productEdicao = {}; });
@@ -34,8 +34,8 @@ describe('ProductItemFormComponent', () => {
     productItemServiceSpy.createWithFile.and.returnValue(of({} as any));
     productItemServiceSpy.update.and.returnValue(of({} as any));
     productItemServiceSpy.findById.and.returnValue(of({
-      id: 5, brand: 'Liquigás', categoryProductId: 3, description: 'Edição', priceDelivery: 95, pricePickup: 80,
-      price: 80, shippingFee: 15, stockQuantity: 4, imageUrl: 'http://img/x.jpg', freeDelivery: false, ...productEdicao,
+      id: 5, brand: 'Liquigás', categoryProductId: 3, description: 'Edição',
+      price: 80, stockQuantity: 4, imageUrl: 'http://img/x.jpg', ...productEdicao,
     } as any));
     const categoryServiceSpy = jasmine.createSpyObj('CategoryProductService', ['findAll']);
     categoryServiceSpy.findAll.and.returnValue(of([{ id: 3, name: 'Gás 13kg', type: 'Gás' }] as any));
@@ -69,7 +69,7 @@ describe('ProductItemFormComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('deveExigirPrecoEFreteParaSubmeter', async () => {
+  it('deveExigirPrecoParaSubmeter', async () => {
     await setup();
     component.file = arquivo;
 
@@ -77,12 +77,8 @@ describe('ProductItemFormComponent', () => {
     expect(component.formProductItem.invalid).toBeTrue();
     component.saveItemProduct();
 
-    preencher({ price: 100, shippingFee: null });
-    expect(component.formProductItem.invalid).toBeTrue();
-    component.saveItemProduct();
-
     expect(productItemServiceSpy.createWithFile).not.toHaveBeenCalled();
-    expect(toastrSpy.warning).toHaveBeenCalledTimes(2);
+    expect(toastrSpy.warning).toHaveBeenCalledTimes(1);
     expect(component.isLoading).toBeFalse();
   });
 
@@ -91,11 +87,20 @@ describe('ProductItemFormComponent', () => {
 
     preencher({ price: -1 });
     expect(component.formProductItem.get('price')!.hasError('min')).toBeTrue();
-    preencher({ price: 100, shippingFee: -5 });
-    expect(component.formProductItem.get('shippingFee')!.hasError('min')).toBeTrue();
   });
 
-  it('deveEnviarPriceEShippingFeeAoSalvar', async () => {
+  // ---- HU21: um preço só ----
+  it('deveTerUmUnicoCampoDePreco', async () => {
+    await setup();
+
+    expect(byId('price-input')).not.toBeNull();
+    expect(byId('shipping-fee-input')).toBeNull();
+    expect(byId('free-shipping-checkbox')).toBeNull();
+    expect(byId('price-preview')).toBeNull();
+    expect(component.formProductItem.get('shippingFee')).toBeNull();
+  });
+
+  it('deveEnviarSoOPreco', async () => {
     await setup();
     component.file = arquivo;
     preencher();
@@ -104,7 +109,7 @@ describe('ProductItemFormComponent', () => {
 
     const enviado = productItemServiceSpy.createWithFile.calls.mostRecent().args[0] as any;
     expect(enviado.price).toBe(100);
-    expect(enviado.shippingFee).toBe(20);
+    expect('shippingFee' in enviado).toBeFalse();
     expect('priceDelivery' in enviado).toBeFalse();
     expect('pricePickup' in enviado).toBeFalse();
     expect(productItemServiceSpy.createWithFile.calls.mostRecent().args[1]).toBe(arquivo);
@@ -120,92 +125,6 @@ describe('ProductItemFormComponent', () => {
     expect(productItemServiceSpy.createWithFile).not.toHaveBeenCalled();
     expect(toastrSpy.warning).toHaveBeenCalledWith(jasmine.stringMatching('imagem'));
     expect(component.isLoading).toBeFalse();
-  });
-
-  it('deveMostrarPreviaDeRetiradaEEntrega', async () => {
-    await setup();
-
-    preencher({ price: 100, shippingFee: 20 });
-    fixture.detectChanges();
-
-    const previa = byId('price-preview')!.textContent!;
-    expect(previa).toContain('Retirada');
-    expect(previa).toMatch(/100[.,]00/);
-    expect(previa).toContain('Entrega');
-    expect(previa).toMatch(/120[.,]00/);
-  });
-
-  it('naoDeveMostrarPreviaSemOsDoisValores', async () => {
-    await setup();
-
-    preencher({ price: 100, shippingFee: null });
-    fixture.detectChanges();
-
-    expect(byId('price-preview')).toBeNull();
-  });
-
-  const checkbox = () => byId('free-shipping-checkbox') as HTMLInputElement;
-  const campoFrete = () => byId('shipping-fee-input') as HTMLInputElement;
-
-  it('deveZerarOFreteAoMarcarFreteGratis', async () => {
-    await setup();
-    preencher({ price: 100, shippingFee: 20 });
-    fixture.detectChanges();
-    expect(checkbox().checked).toBeFalse();
-    expect(campoFrete().readOnly).toBeFalse();
-
-    checkbox().click();
-    fixture.detectChanges();
-
-    expect(component.formProductItem.value.shippingFee).toBe(0);
-    expect(checkbox().checked).toBeTrue();
-    expect(campoFrete().readOnly).toBeTrue();
-    expect(byId('price-preview')!.textContent).toMatch(/100[.,]00[\s\S]*100[.,]00/);
-  });
-
-  it('deveLiberarOFreteAoDesmarcarFreteGratis', async () => {
-    await setup();
-    preencher({ price: 100, shippingFee: 20 });
-    checkbox().click();
-    fixture.detectChanges();
-
-    checkbox().click();
-    fixture.detectChanges();
-
-    expect(component.formProductItem.value.shippingFee).toBeNull();
-    expect(campoFrete().readOnly).toBeFalse();
-    expect(checkbox().checked).toBeFalse();
-  });
-
-  it('deveMarcarFreteGratisNaEdicaoQuandoOFreteForZero', async () => {
-    productEdicao = { price: 90, shippingFee: 0, priceDelivery: 90, pricePickup: 90, freeDelivery: true };
-    await setup('5');
-    fixture.detectChanges();
-
-    expect(checkbox().checked).toBeTrue();
-    expect(campoFrete().readOnly).toBeTrue();
-  });
-
-  it('naoDeveMarcarFreteGratisQuandoHouverFrete', async () => {
-    await setup('5');
-    fixture.detectChanges();
-
-    expect(checkbox().checked).toBeFalse();
-    expect(campoFrete().readOnly).toBeFalse();
-  });
-
-  it('deveEnviarFreteZeroAoSalvarComFreteGratis', async () => {
-    await setup();
-    component.file = arquivo;
-    preencher({ price: 100, shippingFee: 20 });
-    checkbox().click();
-
-    component.saveItemProduct();
-
-    const enviado = productItemServiceSpy.createWithFile.calls.mostRecent().args[0] as any;
-    expect(enviado.price).toBe(100);
-    expect(enviado.shippingFee).toBe(0);
-    expect('freeShipping' in enviado).toBeFalse();
   });
 
   it('deveAceitarImagemSoltaNaAreaDeUpload', async () => {
@@ -238,24 +157,23 @@ describe('ProductItemFormComponent', () => {
     expect(navigateSpy).toHaveBeenCalledWith(['/product-items']);
   });
 
-  it('deveCarregarPrecoEFreteNaEdicao', async () => {
+  it('deveCarregarOPrecoNaEdicao', async () => {
     await setup('5');
 
     expect(component.formProductItem.value.price).toBe(80);
-    expect(component.formProductItem.value.shippingFee).toBe(15);
     expect(component.formProductItem.value.categoryProductId).toBe(3);
   });
 
   it('deveSalvarAEdicaoSemExigirNovaImagem', async () => {
     await setup('5');
-    preencher({ price: 90, shippingFee: 0 });
+    preencher({ price: 90 });
 
     component.updateProduct();
 
     const enviado = productItemServiceSpy.update.calls.mostRecent().args[1] as any;
     expect(productItemServiceSpy.update.calls.mostRecent().args[0]).toBe(5);
     expect(enviado.price).toBe(90);
-    expect(enviado.shippingFee).toBe(0);
+    expect('shippingFee' in enviado).toBeFalse();
     expect('priceDelivery' in enviado).toBeFalse();
     expect('pricePickup' in enviado).toBeFalse();
     expect(navigateSpy).toHaveBeenCalledWith(['/product-items']);

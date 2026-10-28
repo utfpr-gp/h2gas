@@ -53,7 +53,6 @@ export class ProductItemFormComponent implements OnInit {
     this.formProductItem = this.fb.group({
       brand: ['', [Validators.required]],
       price: [null, [Validators.required, Validators.min(0)]],
-      shippingFee: [null, [Validators.required, Validators.min(0)]],
       stockQuantity: [0, [Validators.required, Validators.min(0)]],
       description: ['', [Validators.required]],
       categoryProductId: [null, [Validators.required]]
@@ -89,28 +88,6 @@ export class ProductItemFormComponent implements OnInit {
   selectedImage: string | ArrayBuffer | null = null;
   file?: File;
   dragging = false;
-
-  private isFilled(value: unknown): boolean {
-    return value !== null && value !== undefined && value !== '';
-  }
-
-  // HU10: prévia do que o cliente paga — retirada = Preço; entrega = Preço + frete
-  get pricePreview(): { pickup: number; delivery: number } | null {
-    const { price, shippingFee } = this.formProductItem.value;
-    if (!this.isFilled(price) || !this.isFilled(shippingFee)) return null;
-    return { pickup: Number(price), delivery: Number(price) + Number(shippingFee) };
-  }
-
-  // frete zero = Entrega Grátis; o checkbox só reflete (e atalha) esse valor
-  get isFreeDelivery(): boolean {
-    const { shippingFee } = this.formProductItem.value;
-    return this.isFilled(shippingFee) && Number(shippingFee) === 0;
-  }
-
-  // marcar zera o frete; desmarcar limpa para o fornecedor informar o valor
-  toggleFreeShipping(checked: boolean) {
-    this.formProductItem.get('shippingFee')!.setValue(checked ? 0 : null);
-  }
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
