@@ -62,11 +62,11 @@ export const routes: Routes = [
         data: {roles: ['SUPPLIER']}
     },
     {
-        path: 'category-products',
-        // tela só do fornecedor: fora do bundle inicial
-        loadComponent: () => import('./components/pages/category-products/category-products.component').then((m) => m.CategoryProductsComponent),
+        // HU19: as categorias são globais — só o admin cadastra (tela fora do bundle inicial)
+        path: 'admin/categorias',
+        loadComponent: () => import('./components/pages/admin-categories/admin-categories.component').then((m) => m.AdminCategoriesComponent),
         canActivate: [authGuard],
-        data: {roles: ['SUPPLIER']}
+        data: {roles: ['ADMIN']}
     },
     {
         path: 'product-items', 

@@ -1,32 +1,37 @@
 package com.h2gas.services;
 
-import com.h2gas.exceptions.ForbiddenResourceException;
+import com.h2gas.exceptions.BusinessRuleException;
+import com.h2gas.exceptions.ResourceNotFoundException;
+import com.h2gas.model.dto.CategoryProductDTO;
 import com.h2gas.model.dto.CategoryRequestDTO;
 import com.h2gas.model.dto.SupplierCategoryDTO;
+import com.h2gas.model.entity.CategoryProduct;
+import com.h2gas.model.entity.ProductType;
+import com.h2gas.model.mapper.CategoryProductMapper;
+import com.h2gas.model.repository.CategoryProductRepository;
 import com.h2gas.model.repository.ProductItemRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.h2gas.exceptions.ResourceNotFoundException;
-import com.h2gas.model.dto.AddressDTO;
-import com.h2gas.model.dto.CategoryProductDTO;
-import com.h2gas.model.dto.CityDTO;
-import com.h2gas.model.entity.*;
-import com.h2gas.model.mapper.CategoryProductMapper;
-import com.h2gas.model.mapper.ProductTypeMapper;
-import com.h2gas.model.repository.CategoryProductRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Component;
-
+import java.text.Collator;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+// HU19: as categorias (P13, P45, Galão 20L…) são globais — só o admin cadastra, junto com os tipos
 @Component
 public class CategoryProductService {
+    // ordem alfabética em pt-BR: o banco (H2 nos testes) põe "Gás" antes de "Água"
+    private static final Collator ALFABETICA_PT_BR = Collator.getInstance(Locale.forLanguageTag("pt-BR"));
+    private static final Comparator<CategoryProductDTO> POR_TIPO_E_NOME = Comparator
+            .comparing(CategoryProductDTO::getType, ALFABETICA_PT_BR)
+            .thenComparing(CategoryProductDTO::getName, ALFABETICA_PT_BR);
+
     @Autowired
     private CategoryProductRepository categoryProductRepository;
 
@@ -37,19 +42,13 @@ public class CategoryProductService {
     private ProductTypeService productTypeService;
 
     @Autowired
-    private ProductTypeMapper productTypeMapper;
-
-    @Autowired
-    private SupplierService supplierService;
-
-    @Autowired
     private ProductItemRepository productItemRepository;
-
 
     public List<CategoryProductDTO> findAllCategoryProducts() {
         return categoryProductRepository.findAll()
                 .stream()
                 .map(categoryProductMapper::toDto)
+                .sorted(POR_TIPO_E_NOME)
                 .collect(Collectors.toList());
     }
 
@@ -64,28 +63,27 @@ public class CategoryProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada com ID: " + id));
     }
 
-    // F7 fatia 6: o fornecedor vem sempre do token (controller); nome único por tipo dentro da loja
     @Transactional
-    public CategoryProductDTO createCategory(String supplierId, CategoryRequestDTO request) {
+    public CategoryProductDTO createCategory(CategoryRequestDTO request) {
         String name = request.name().trim();
         ProductType productType = productTypeService.findEntityById(request.productTypeId());
-        if (categoryProductRepository.existsBySupplierIdAndProductTypeIdAndNameIgnoreCase(supplierId, productType.getId(), name)) {
-            throw duplicated(name, productType);
+        if (categoryProductRepository.existsByProductTypeIdAndNameIgnoreCase(productType.getId(), name)) {
+            throw new BusinessRuleException("Categoria já cadastrada.");
         }
         CategoryProduct categoryProduct = new CategoryProduct();
         categoryProduct.setName(name);
         categoryProduct.setProductType(productType);
-        categoryProduct.setSupplier(supplierService.findEntityById(supplierId));
         return categoryProductMapper.toDto(categoryProductRepository.save(categoryProduct));
     }
 
+    // categorias que a loja usa (as dos produtos dela), com a contagem dos produtos dela
     public List<SupplierCategoryDTO> findMine(String supplierId) {
         return categoryProductRepository.findMine(supplierId);
     }
 
     @Transactional
-    public void deleteCategory(Long id, String supplierId) {
-        CategoryProduct category = findOwned(id, supplierId);
+    public void deleteCategory(Long id) {
+        CategoryProduct category = findEntityById(id);
         // o cascade da entidade apagaria os produtos junto: com produto, a categoria fica
         long products = productItemRepository.countByCategoryProductId(id);
         if (products > 0) {
@@ -95,31 +93,13 @@ public class CategoryProductService {
         categoryProductRepository.delete(category);
     }
 
-    private CategoryProduct findOwned(Long id, String supplierId) {
-        CategoryProduct category = categoryProductRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada com ID: " + id));
-        if (category.getSupplier() == null || !category.getSupplier().getId().equals(supplierId)) {
-            throw new ForbiddenResourceException("Você só pode alterar as categorias da sua loja.");
-        }
-        return category;
-    }
-
-    private static ResponseStatusException duplicated(String name, ProductType productType) {
-        return new ResponseStatusException(HttpStatus.CONFLICT, "Você já tem a categoria " + name + " em " + productType.getName() + ".");
-    }
-
-    public Page<CategoryProductDTO> findAllBySupplierId(String supplierId, Pageable pageable) {
-        return categoryProductRepository.findBySupplierId(supplierId, pageable)
-                .map(categoryProductMapper::toDto);
-    }
-
     @Transactional
-    public CategoryProductDTO update(Long id, CategoryRequestDTO request, String supplierId) {
-        CategoryProduct categoryEdit = findOwned(id, supplierId);
+    public CategoryProductDTO update(Long id, CategoryRequestDTO request) {
+        CategoryProduct categoryEdit = findEntityById(id);
         String name = request.name().trim();
         ProductType productType = productTypeService.findEntityById(request.productTypeId());
-        if (categoryProductRepository.existsBySupplierIdAndProductTypeIdAndNameIgnoreCaseAndIdNot(supplierId, productType.getId(), name, id)) {
-            throw duplicated(name, productType);
+        if (categoryProductRepository.existsByProductTypeIdAndNameIgnoreCaseAndIdNot(productType.getId(), name, id)) {
+            throw new BusinessRuleException("Categoria já cadastrada.");
         }
         categoryEdit.setProductType(productType);
         categoryEdit.setName(name);

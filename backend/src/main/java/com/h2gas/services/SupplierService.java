@@ -19,7 +19,7 @@ import com.h2gas.model.mapper.*;
 import com.h2gas.model.dto.ProductTypeChipDTO;
 import com.h2gas.model.dto.StoreReviewDTO;
 import com.h2gas.model.dto.StorefrontDTO;
-import com.h2gas.model.repository.CategoryProductRepository;
+import com.h2gas.model.repository.ProductItemRepository;
 import com.h2gas.model.repository.ReviewRepository;
 import com.h2gas.model.repository.SupplierRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +47,7 @@ public class SupplierService {
     private ReviewRepository reviewRepository;
 
     @Autowired
-    private CategoryProductRepository categoryProductRepository;
+    private ProductItemRepository productItemRepository;
 
     // HU18: hora de Brasília para "aberta agora"
     @Autowired
@@ -148,8 +148,8 @@ public class SupplierService {
         if (supplierIds.isEmpty()) {
             return Map.of();
         }
-        return categoryProductRepository.findTypesBySupplierIds(supplierIds).stream()
-                .collect(Collectors.groupingBy(CategoryProductRepository.SupplierProductTypeRow::getSupplierId,
+        return productItemRepository.findTypesBySupplierIds(supplierIds).stream()
+                .collect(Collectors.groupingBy(ProductItemRepository.SupplierProductTypeRow::getSupplierId,
                         Collectors.mapping(row -> new ProductTypeChipDTO(row.getTypeId(), row.getTypeName(), row.getTypeIcon()),
                                 Collectors.collectingAndThen(Collectors.toList(), tipos -> tipos.stream()
                                         .sorted((a, b) -> ALFABETICA_PT_BR.compare(a.name(), b.name()))

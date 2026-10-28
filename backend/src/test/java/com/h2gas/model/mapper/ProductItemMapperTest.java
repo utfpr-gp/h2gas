@@ -27,7 +27,7 @@ class ProductItemMapperTest {
         ProductItem productItem = new ProductItem();
         productItem.setPriceDelivery(new BigDecimal("110.00"));
         productItem.setPricePickup(new BigDecimal("95.00"));
-        productItem.setCategoryProduct(new CategoryProduct(null, "Gás azul", new ProductType(null, "Gás", null), null, null));
+        productItem.setCategoryProduct(new CategoryProduct(null, "Gás azul", new ProductType(null, "Gás", null), null));
 
         ProductItemDTO dto = mapper.toDto(productItem);
 
@@ -45,7 +45,7 @@ class ProductItemMapperTest {
         ProductItem productItem = new ProductItem();
         productItem.setPriceDelivery(entrega == null ? null : new BigDecimal(entrega));
         productItem.setPricePickup(retirada == null ? null : new BigDecimal(retirada));
-        productItem.setCategoryProduct(new CategoryProduct(77L, "Gás azul", new ProductType(1L, "Gás", null), null, null));
+        productItem.setCategoryProduct(new CategoryProduct(77L, "Gás azul", new ProductType(1L, "Gás", null), null));
         return productItem;
     }
 

@@ -1,5 +1,6 @@
 package com.h2gas.services;
 
+import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ForbiddenResourceException;
 import com.h2gas.model.dto.CategoryRequestDTO;
 import com.h2gas.model.dto.SupplierCategoryDTO;
@@ -94,8 +95,7 @@ class CategoryProductServiceTest {
                 null,
                 "20L",
                 productTypeAgua,
-                null,
-                supplierFirst
+                null
         );
 
         categoryProductRepository.save(categoryProductFirst);
@@ -104,8 +104,7 @@ class CategoryProductServiceTest {
                 null,
                 "P13",
                 productTypeGas,
-                null,
-                supplierSecond
+                null
         );
 
         categoryProductRepository.save(categoryProductSecond);
@@ -152,9 +151,7 @@ class CategoryProductServiceTest {
     @Test
     @DisplayName("Cria uma nova categoria")
     void createCategory() {
-        Supplier supplier = createSupplierForTest(2);
-
-        CategoryProductDTO categoriaCriada = categoryProductService.createCategory(supplier.getId(),
+        CategoryProductDTO categoriaCriada = categoryProductService.createCategory(
                 new CategoryRequestDTO("Teste categoria criada", typeIdAux));
 
         assertNotNull(categoriaCriada);
@@ -170,7 +167,7 @@ class CategoryProductServiceTest {
     @DisplayName("Deleta uma categoria com sucesso")
     void deleteCategory() {
         assertTrue(categoryProductRepository.findById(validCategoryId).isPresent());
-        categoryProductService.deleteCategory(validCategoryId, supplierFirstId);
+        categoryProductService.deleteCategory(validCategoryId);
         assertFalse(categoryProductRepository.findById(validCategoryId).isPresent());
     }
 
@@ -180,7 +177,7 @@ class CategoryProductServiceTest {
         Long invalidId = 999L;
 
         Exception exception = assertThrows(RuntimeException.class, () -> {
-            categoryProductService.deleteCategory(invalidId, supplierFirstId);
+            categoryProductService.deleteCategory(invalidId);
         });
 
         assertEquals("Categoria não encontrada com ID: " + invalidId, exception.getMessage());
@@ -190,7 +187,7 @@ class CategoryProductServiceTest {
     @DisplayName("Deve atualizar uma categoria")
     void update() {
         CategoryProductDTO result = categoryProductService.update(validCategotyIdSecond,
-                new CategoryRequestDTO("Teste update", typeIdAux), supplierSecondId);
+                new CategoryRequestDTO("Teste update", typeIdAux));
         assertEquals("Teste update", result.getName());
     }
 
@@ -300,68 +297,87 @@ class CategoryProductServiceTest {
         productItemRepository.save(p);
     }
 
+    // ---- HU19: categorias globais, cadastradas só pelo admin ----
+
     @Test
-    @DisplayName("F7 fatia 6: lista só as categorias do fornecedor, com tipo, ícone e contagem de produtos")
-    void deveListarCategoriasDoFornecedorComContagemDeProdutos() {
+    @DisplayName("HU19: a loja vê só as categorias que usa, com a contagem dos produtos dela")
+    void deveListarAsCategoriasQueALojaUsa() {
         salvarProduto(validCategoryId, supplierFirstId);
         salvarProduto(validCategoryId, supplierFirstId);
-        categoryProductService.createCategory(supplierFirstId, new CategoryRequestDTO("10L", tipoAgua.getId()));
+        salvarProduto(validCategotyIdSecond, supplierSecondId);
+        categoryProductService.createCategory(new CategoryRequestDTO("10L", tipoAgua.getId()));
 
         List<SupplierCategoryDTO> minhas = categoryProductService.findMine(supplierFirstId);
 
-        assertEquals(List.of("10L", "20L"), minhas.stream().map(SupplierCategoryDTO::name).toList());
-        SupplierCategoryDTO vinte = minhas.get(1);
+        assertEquals(List.of("20L"), minhas.stream().map(SupplierCategoryDTO::name).toList());
+        SupplierCategoryDTO vinte = minhas.get(0);
         assertEquals("Água Mineral", vinte.type());
         assertEquals(tipoAgua.getId(), vinte.productTypeId());
         assertEquals("category", vinte.typeIcon());
         assertEquals(2, vinte.productCount());
-        assertEquals(0, minhas.get(0).productCount());
     }
 
     @Test
-    @DisplayName("F7 fatia 6: a categoria nasce na loja do token")
-    void deveCriarCategoriaNaLojaDoToken() {
-        CategoryProductDTO criada = categoryProductService.createCategory(supplierSecondId, new CategoryRequestDTO("  P45 ", typeIdAux));
+    @DisplayName("HU19: a categoria é global — nasce sem loja, com o nome sem espaços nas pontas")
+    void deveCriarCategoriaGlobal() {
+        CategoryProductDTO criada = categoryProductService.createCategory(new CategoryRequestDTO("  P45 ", typeIdAux));
 
         CategoryProduct entidade = categoryProductRepository.findById(criada.getId()).orElseThrow();
-        assertEquals(supplierSecondId, entidade.getSupplier().getId());
         assertEquals("P45", entidade.getName());
+        assertEquals(typeIdAux, entidade.getProductType().getId());
     }
 
     @Test
-    @DisplayName("F7 fatia 6: nome repetido no mesmo tipo e na mesma loja é 409")
+    @DisplayName("HU19: nome repetido no mesmo tipo é recusado; em outro tipo é permitido")
     void deveRecusarNomeRepetidoNoMesmoTipo() {
-        ResponseStatusException erro = assertThrows(ResponseStatusException.class,
-                () -> categoryProductService.createCategory(supplierFirstId, new CategoryRequestDTO("20l", tipoAgua.getId())));
-        assertEquals(HttpStatus.CONFLICT, erro.getStatusCode());
-        assertEquals("Você já tem a categoria 20l em Água Mineral.", erro.getReason());
+        BusinessRuleException erro = assertThrows(BusinessRuleException.class,
+                () -> categoryProductService.createCategory(new CategoryRequestDTO("20l", tipoAgua.getId())));
+        assertEquals("Categoria já cadastrada.", erro.getMessage());
 
-        // outro fornecedor ou outro tipo pode usar o mesmo nome
-        assertNotNull(categoryProductService.createCategory(supplierSecondId, new CategoryRequestDTO("20L", tipoAgua.getId())));
-        assertNotNull(categoryProductService.createCategory(supplierFirstId, new CategoryRequestDTO("20L", typeIdAux)));
+        assertNotNull(categoryProductService.createCategory(new CategoryRequestDTO("20L", typeIdAux)));
         // editar mantendo o próprio nome não conflita
-        assertNotNull(categoryProductService.update(validCategoryId, new CategoryRequestDTO("20L", tipoAgua.getId()), supplierFirstId));
+        assertNotNull(categoryProductService.update(validCategoryId, new CategoryRequestDTO("20L", tipoAgua.getId())));
     }
 
     @Test
-    @DisplayName("F7 fatia 6: fornecedor não edita nem exclui categoria de outro")
-    void deveRecusarEditarOuExcluirCategoriaDeOutroFornecedor() {
-        assertThrows(ForbiddenResourceException.class,
-                () -> categoryProductService.update(validCategoryId, new CategoryRequestDTO("Invadida", typeIdAux), supplierSecondId));
-        assertThrows(ForbiddenResourceException.class, () -> categoryProductService.deleteCategory(validCategoryId, supplierSecondId));
-        assertEquals("20L", categoryProductRepository.findById(validCategoryId).orElseThrow().getName());
+    @DisplayName("HU19: renomear para um nome que já existe no tipo é recusado")
+    void deveRecusarRenomearParaNomeQueJaExisteNoTipo() {
+        categoryProductService.createCategory(new CategoryRequestDTO("10L", tipoAgua.getId()));
+
+        assertThrows(BusinessRuleException.class,
+                () -> categoryProductService.update(validCategoryId, new CategoryRequestDTO("10l", tipoAgua.getId())));
     }
 
     @Test
-    @DisplayName("F7 fatia 6: categoria com produtos não é excluída (409)")
+    @DisplayName("HU19: renomear muda o nome que os produtos mostram")
+    void deveRenomearCategoria() {
+        salvarProduto(validCategoryId, supplierFirstId);
+
+        categoryProductService.update(validCategoryId, new CategoryRequestDTO("Galão 20L", tipoAgua.getId()));
+
+        assertEquals("Galão 20L", productItemRepository.findAll().get(0).getCategoryProduct().getName());
+    }
+
+    @Test
+    @DisplayName("HU19: categoria com produtos não é excluída (409)")
     void deveRecusarExcluirCategoriaComProdutos() {
         salvarProduto(validCategoryId, supplierFirstId);
 
         ResponseStatusException erro = assertThrows(ResponseStatusException.class,
-                () -> categoryProductService.deleteCategory(validCategoryId, supplierFirstId));
+                () -> categoryProductService.deleteCategory(validCategoryId));
 
         assertEquals(HttpStatus.CONFLICT, erro.getStatusCode());
         assertEquals("20L tem 1 produto. Mova ou exclua os produtos antes de excluir a categoria.", erro.getReason());
         assertTrue(categoryProductRepository.findById(validCategoryId).isPresent());
+    }
+
+    @Test
+    @DisplayName("HU19: a listagem traz todas as categorias, ordenadas por tipo e nome")
+    void deveListarTodasAsCategoriasOrdenadas() {
+        categoryProductService.createCategory(new CategoryRequestDTO("10L", tipoAgua.getId()));
+        categoryProductService.createCategory(new CategoryRequestDTO("P5", typeIdAux));
+
+        assertEquals(List.of("10L", "20L", "P13", "P5"),
+                categoryProductService.findAllCategoryProducts().stream().map(CategoryProductDTO::getName).toList());
     }
 }

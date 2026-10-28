@@ -35,7 +35,7 @@ public class CreateProductItemDTO {
     private BigDecimal shippingFee;
 
     @NotNull(message = "Categoria é obrigatória")
-    @Schema(description = "Categoria do próprio fornecedor", example = "3", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Categoria do produto (global, cadastrada pelo admin)", example = "3", requiredMode = Schema.RequiredMode.REQUIRED)
     private Long categoryProductId;
 
     private String imageUrl;

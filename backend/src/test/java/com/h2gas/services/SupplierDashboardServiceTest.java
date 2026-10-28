@@ -89,7 +89,6 @@ class SupplierDashboardServiceTest {
         CategoryProduct c = new CategoryProduct();
         c.setName(categoria);
         c.setProductType(tipo);
-        c.setSupplier(supplier);
         c = categoryProductRepository.save(c);
         ProductItem p = new ProductItem();
         p.setBrand(marca);
