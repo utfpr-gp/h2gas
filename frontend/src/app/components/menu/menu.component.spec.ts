@@ -12,6 +12,9 @@ import { AuthService } from '../../services/auth.service';
 import { LocationContextService } from '../../services/location-context.service';
 import { CartService } from '../../services/cart.service';
 import { UserService } from '../../services/user.service';
+import { CartApiService } from '../../services/cart-api.service';
+import { CartPreview } from '../../models/cart';
+import { of } from 'rxjs';
 
 @Component({ template: '' })
 class TelaVazia {}
@@ -83,19 +86,81 @@ describe('MenuComponent', () => {
   });
 
   it('deveOcultarContadorComCarrinhoVazio', () => {
-    TestBed.inject(CartService).setCart([]);
+    TestBed.inject(CartService).setCart([], null);
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('[data-testid="cart-count"]')).toBeNull();
   });
 
+  // HU20 Cenário 8: o contador soma as quantidades locais, sem ir ao servidor
   it('deveMostrarQuantidadeDeItensNoContador', () => {
-    TestBed.inject(CartService).setCart([{ id: 1, quantitySelect: 1 }, { id: 2, quantitySelect: 3 }]);
+    const previewSpy = spyOn(TestBed.inject(CartApiService), 'preview');
+    TestBed.inject(CartService).setCart([{ productId: 1, quantity: 1 }, { productId: 2, quantity: 3 }], 'loja-a');
     fixture.detectChanges();
 
     const contadores = fixture.nativeElement.querySelectorAll('[data-testid="cart-count"]') as NodeListOf<HTMLElement>;
     expect(contadores.length).toBeGreaterThan(0);
-    contadores.forEach((contador) => expect(contador.textContent?.trim()).toBe('2'));
+    contadores.forEach((contador) => expect(contador.textContent?.trim()).toBe('4'));
+    expect(previewSpy).not.toHaveBeenCalled();
+  });
+
+  // ---- HU20: o drawer mostra o que o backend devolve ----
+  const previewCom = (items: CartPreview['items'], subtotal = 0): CartPreview =>
+    ({ supplierId: 'loja-a', supplierName: 'Gás Centro', items, subtotal });
+
+  const abrirCarrinho = () => {
+    const toggle = fixture.nativeElement.querySelector('#cart-drawer') as HTMLInputElement;
+    toggle.checked = true;
+    toggle.dispatchEvent(new Event('change'));
+    fixture.detectChanges();
+  };
+
+  it('deveBuscarOsItensAoAbrirOCarrinho', () => {
+    const previewSpy = spyOn(TestBed.inject(CartApiService), 'preview').and.returnValue(of(previewCom([
+      { productId: 1, brand: 'Ultragaz', type: 'Gás', category: 'Gás 13kg', quantity: 2, stockQuantity: 5,
+        unitPrice: 110, totalPrice: 220, available: true },
+    ], 220)));
+    TestBed.inject(CartService).setCart([{ productId: 1, quantity: 2 }], 'loja-a');
+    fixture.detectChanges();
+    expect(previewSpy).not.toHaveBeenCalled();
+
+    abrirCarrinho();
+
+    expect(previewSpy).toHaveBeenCalledWith([{ productId: 1, quantity: 2 }], 'DELIVERY');
+    const el = fixture.nativeElement as HTMLElement;
+    expect(el.querySelector('[data-testid="cart-item"]')?.textContent).toContain('Ultragaz');
+    expect(el.querySelector('[data-testid="cart-item-quantity"]')?.textContent?.trim()).toBe('2');
+    expect(el.querySelector('[data-testid="cart-total"]')?.textContent).toMatch(/220[.,]00/);
+  });
+
+  it('deveAtualizarOPreviewAoMudarAQuantidade', () => {
+    const previewSpy = spyOn(TestBed.inject(CartApiService), 'preview').and.returnValue(of(previewCom([
+      { productId: 1, brand: 'Ultragaz', quantity: 2, stockQuantity: 5, unitPrice: 110, totalPrice: 220, available: true },
+    ], 220)));
+    TestBed.inject(CartService).setCart([{ productId: 1, quantity: 2 }], 'loja-a');
+    abrirCarrinho();
+
+    (fixture.nativeElement.querySelector('[aria-label="Aumentar quantidade"]') as HTMLButtonElement).click();
+
+    expect(TestBed.inject(CartService).getCart()).toEqual([{ productId: 1, quantity: 3 }]);
+    expect(previewSpy).toHaveBeenCalledWith([{ productId: 1, quantity: 3 }], 'DELIVERY');
+  });
+
+  it('deveMostrarItemIndisponivelComMotivo', () => {
+    spyOn(TestBed.inject(CartApiService), 'preview').and.returnValue(of(previewCom([
+      { productId: 1, brand: 'Ultragaz', quantity: 1, stockQuantity: 0, unitPrice: 110, totalPrice: 110,
+        available: false, unavailableReason: 'OUT_OF_STOCK' },
+    ])));
+    TestBed.inject(CartService).setCart([{ productId: 1, quantity: 1 }], 'loja-a');
+    abrirCarrinho();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelector('[data-testid="cart-item-unavailable"]')?.textContent).toContain('Sem estoque suficiente');
+    expect((el.querySelector('[data-testid="checkout-button"]') as HTMLButtonElement).disabled).toBeTrue();
+    expect(el.querySelector('[data-testid="cart-blocked"]')).not.toBeNull();
+
+    (el.querySelector('[data-testid="cart-item-remove"]') as HTMLButtonElement).click();
+    expect(TestBed.inject(CartService).getCart()).toEqual([]);
   });
 
   it('deveExibirDashboardPedidosEProdutosParaFornecedor', () => {
@@ -458,7 +523,7 @@ describe('MenuComponent', () => {
   });
 
   it('deveUsarAAcaoDeDestaqueNoFinalizarPedido', () => {
-    TestBed.inject(CartService).setCart([{ id: 1, quantitySelect: 1, priceDelivery: 10 }]);
+    TestBed.inject(CartService).setCart([{ productId: 1, quantity: 1 }], 'loja-a');
     entrarComo(perfis.cliente);
     fixture.detectChanges();
 

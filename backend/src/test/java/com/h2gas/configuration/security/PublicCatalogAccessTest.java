@@ -54,6 +54,9 @@ class PublicCatalogAccessTest {
         mockMvc.perform(get("/api/product-types")).andExpect(status().isOk());
         // HU19: a lista de categorias é pública (vitrine e formulário de produto)
         mockMvc.perform(get("/api/category-products")).andExpect(status().isOk());
+        // HU20: o carrinho do visitante consulta preço e disponibilidade sem login
+        mockMvc.perform(post("/api/cart/preview").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"items\":[{\"productId\":999999,\"quantity\":1}]}")).andExpect(status().isOk());
     }
 
     @Test
@@ -96,6 +99,7 @@ class PublicCatalogAccessTest {
                 "/api/category-products")) {
             docs.andExpect(jsonPath("$.paths['" + path + "'].get.security").isEmpty());
         }
+        docs.andExpect(jsonPath("$.paths['/api/cart/preview'].post.security").isEmpty());
         docs.andExpect(jsonPath("$.paths['/api/suppliers/{id}'].get.security").doesNotExist());
     }
 }

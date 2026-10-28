@@ -122,11 +122,19 @@ describe('OrderListComponent', () => {
     component.reorder(pedido);
 
     expect(orderServiceSpy.getReorderPreview).toHaveBeenCalledWith('pedido-1');
-    expect(cartServiceSpy.setCart).toHaveBeenCalledWith([
-      jasmine.objectContaining({
-        id: 5, brand: 'Ultragaz', supplierId: 'sup-1', quantitySelect: 2, priceDelivery: 120, pricePickup: 100,
-      }),
-    ]);
+    expect(cartServiceSpy.setCart).toHaveBeenCalledWith([{ productId: 5, quantity: 2 }], 'sup-1');
+  });
+
+  // HU20 Cenário 7: pedir de novo grava só ids e quantidades
+  it('deveGuardarSoIdsAoPedirDeNovo', () => {
+    previewRetorna({ availableItems: [botijao], unavailableItems: [agua] });
+
+    component.reorder(pedido);
+
+    const [linhas, loja] = cartServiceSpy.setCart.calls.mostRecent().args;
+    expect(linhas).toEqual([{ productId: 5, quantity: 2 }]);
+    expect(Object.keys(linhas[0])).toEqual(['productId', 'quantity']);
+    expect(loja).toBe('sup-1');
   });
 
   it('deveNotificarItensIndisponiveisSemBloquearOsDisponiveis', () => {
@@ -135,7 +143,7 @@ describe('OrderListComponent', () => {
     component.reorder(pedido);
 
     expect(toastrSpy.warning).toHaveBeenCalledWith(jasmine.stringMatching('Minalba'));
-    expect(cartServiceSpy.setCart).toHaveBeenCalledWith([jasmine.objectContaining({ id: 5 })]);
+    expect(cartServiceSpy.setCart).toHaveBeenCalledWith([{ productId: 5, quantity: 2 }], 'sup-1');
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/resumo-pedido']);
   });
 
@@ -146,7 +154,7 @@ describe('OrderListComponent', () => {
   });
 
   it('deveExibirUmUnicoAvisoAoRefazerComItensIndisponiveis', () => {
-    cartServiceSpy.getCart.and.returnValue([{ id: 99 } as any]);
+    cartServiceSpy.getCart.and.returnValue([{ productId: 99, quantity: 1 }]);
     previewRetorna({ availableItems: [botijao], unavailableItems: [agua] });
 
     component.reorder(pedido);

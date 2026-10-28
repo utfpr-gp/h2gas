@@ -12,6 +12,8 @@ import { OrderService } from '../../../services/order.service';
 import { LocationContextService } from '../../../services/location-context.service';
 import { Address } from '../../../models/address';
 import { SupplierService } from '../../../services/supplier.service';
+import { CartApiService } from '../../../services/cart-api.service';
+import { CartPreview, CartPreviewItem } from '../../../models/cart';
 
 describe('OrderResumeComponent', () => {
   let component: OrderResumeComponent;
@@ -25,29 +27,52 @@ describe('OrderResumeComponent', () => {
   let supplierServiceSpy: jasmine.SpyObj<SupplierService>;
   let queryModo: string | null;
   let buyNowItem: any;
+  let cartApiSpy: jasmine.SpyObj<CartApiService>;
+  // HU20: o preview devolve os dados do produto; estoque e disponibilidade ajustáveis por teste
+  let indisponiveis: Record<number, CartPreviewItem['unavailableReason']>;
+  const catalogo: Record<number, { brand: string; category: string; type: string; delivery: number; pickup: number }> = {
+    5: { brand: 'Liquigás', category: 'Gás 13kg', type: 'Gás', delivery: 110, pickup: 95 },
+    9: { brand: 'Ultragaz', category: 'Gás 13kg', type: 'Gás', delivery: 125, pickup: 110 },
+  };
+  const previewFake = (lines: { productId: number; quantity: number }[], mode: string): CartPreview => {
+    const items = lines.map((line) => {
+      const p = catalogo[line.productId];
+      const unitPrice = mode === 'PICKUP' ? p.pickup : p.delivery;
+      const reason = indisponiveis[line.productId] ?? null;
+      return { productId: line.productId, brand: p.brand, category: p.category, type: p.type, imageUrl: null,
+        quantity: line.quantity, stockQuantity: 10, unitPrice, totalPrice: unitPrice * line.quantity,
+        available: !reason, unavailableReason: reason };
+    });
+    const subtotal = items.filter((i) => i.available).reduce((sum, i) => sum + i.totalPrice, 0);
+    return { supplierId: lines[0]?.productId === 9 ? 'sup-2' : 'sup-1', supplierName: 'Gás Centro', items, subtotal };
+  };
 
   const casa: Address = { id: 1, addressName: 'Casa', streetName: 'Rua Um', number: '10', cityId: 1, cityName: 'Pato Branco' };
   const trabalho: Address = { id: 2, addressName: 'Trabalho', streetName: 'Rua Dois', number: '20', cityId: 1, cityName: 'Pato Branco' };
 
   beforeEach(async () => {
     localStorage.clear();
-    cart = [{ id: 5, supplierId: 'sup-1', priceDelivery: 110, pricePickup: 95, quantitySelect: 1 }];
+    cart = [{ productId: 5, quantity: 1 }];
+    indisponiveis = {};
     cartServiceSpy = jasmine.createSpyObj('CartService',
-      ['getCart', 'setCart', 'getDeliveryMode', 'setDeliveryMode', 'updateQuantity', 'removeProduct',
+      ['getCart', 'setCart', 'clear', 'getCartSupplierId', 'getDeliveryMode', 'setDeliveryMode', 'updateQuantity', 'removeProduct',
         'getBuyNow', 'updateBuyNowQuantity', 'clearBuyNow']);
+    cartServiceSpy.getCartSupplierId.and.callFake(() => (cart.length ? 'sup-1' : null));
     queryModo = null;
     buyNowItem = null;
     cartServiceSpy.getBuyNow.and.callFake(() => (buyNowItem ? { ...buyNowItem } : null));
-    cartServiceSpy.updateBuyNowQuantity.and.callFake((q: number) => { buyNowItem = { ...buyNowItem, quantitySelect: q }; });
+    cartServiceSpy.updateBuyNowQuantity.and.callFake((q: number) => { buyNowItem = { ...buyNowItem, quantity: q }; });
     cartServiceSpy.clearBuyNow.and.callFake(() => { buyNowItem = null; });
     cartServiceSpy.getDeliveryMode.and.returnValue('DELIVERY');
     cartServiceSpy.getCart.and.callFake(() => cart.map((item) => ({ ...item })));
     cartServiceSpy.updateQuantity.and.callFake((id: number, quantity: number) => {
-      cart = cart.map((item) => item.id === id ? { ...item, quantitySelect: quantity } : item);
+      cart = cart.map((item) => item.productId === id ? { ...item, quantity } : item);
     });
     cartServiceSpy.removeProduct.and.callFake((id: number) => {
-      cart = cart.filter((item) => item.id !== id);
+      cart = cart.filter((item) => item.productId !== id);
     });
+    cartApiSpy = jasmine.createSpyObj('CartApiService', ['preview']);
+    cartApiSpy.preview.and.callFake((lines, mode) => of(previewFake(lines, mode)));
     toastrSpy = jasmine.createSpyObj('ToastrService', ['success', 'warning', 'error', 'info']);
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
     supplierServiceSpy = jasmine.createSpyObj('SupplierService', ['findById']);
@@ -61,16 +86,12 @@ describe('OrderResumeComponent', () => {
     userServiceSpy.getUserLocalStorage.and.returnValue({ id: 'user-1' });
     orderServiceSpy = jasmine.createSpyObj('OrderService', ['createOrder', 'previewOrder']);
     orderServiceSpy.createOrder.and.returnValue(of({} as any));
-    orderServiceSpy.previewOrder.and.callFake((req) => of(
-      req.deliveryMode === 'PICKUP'
-        ? { items: [{ productItemRef: 5, quantity: 1, unitPrice: 95, totalPrice: 95 }], subtotal: 95 }
-        : { items: [{ productItemRef: 5, quantity: 1, unitPrice: 110, totalPrice: 110 }], subtotal: 110 }
-    ));
 
     await TestBed.configureTestingModule({
       imports: [OrderResumeComponent],
       providers: [
         { provide: CartService, useValue: cartServiceSpy },
+        { provide: CartApiService, useValue: cartApiSpy },
         { provide: AddressService, useValue: addressServiceSpy },
         { provide: UserService, useValue: userServiceSpy },
         { provide: OrderService, useValue: orderServiceSpy },
@@ -122,16 +143,64 @@ describe('OrderResumeComponent', () => {
   });
 
   it('deveChamarPreviewAoAlterarModalidade', () => {
-    expect(orderServiceSpy.previewOrder).toHaveBeenCalledWith(
-      { items: [{ productItemRef: 5, quantity: 1 }], deliveryMode: 'DELIVERY' }
-    );
+    expect(cartApiSpy.preview).toHaveBeenCalledWith([{ productId: 5, quantity: 1 }], 'DELIVERY');
 
     component.setDeliveryMode('PICKUP');
 
-    expect(orderServiceSpy.previewOrder).toHaveBeenCalledWith(
-      { items: [{ productItemRef: 5, quantity: 1 }], deliveryMode: 'PICKUP' }
-    );
+    expect(cartApiSpy.preview).toHaveBeenCalledWith([{ productId: 5, quantity: 1 }], 'PICKUP');
     expect(component.preview?.subtotal).toBe(95);
+    expect(orderServiceSpy.previewOrder).not.toHaveBeenCalled();
+  });
+
+  // ---- HU20: dados do backend e item indisponível ----
+  const abrirDeNovo = () => {
+    fixture = TestBed.createComponent(OrderResumeComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  };
+
+  it('deveExibirOsDadosDoPreview', () => {
+    fixture.detectChanges();
+    const item = fixture.nativeElement.querySelector('[data-testid="resume-item"]') as HTMLElement;
+
+    expect(item.textContent).toContain('Liquigás');
+    expect(item.textContent).toContain('Gás 13kg');
+    expect(item.textContent).toMatch(/110[.,]00/);
+  });
+
+  it('deveBloquearOCheckoutComItemIndisponivel', () => {
+    indisponiveis = { 5: 'OUT_OF_STOCK' };
+    abrirDeNovo();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelector('[data-testid="resume-item-unavailable"]')?.textContent).toContain('Sem estoque suficiente');
+    expect((el.querySelector('[data-testid="next-step"]') as HTMLButtonElement).disabled).toBeTrue();
+    expect(el.querySelector('[data-testid="resume-blocked"]')).not.toBeNull();
+
+    component.nextStep();
+    expect(component.step).toBe(1);
+
+    component.step = 3;
+    component.formOrder.patchValue({ paymentMethod: 'PIX' });
+    component.createOrder();
+    expect(orderServiceSpy.createOrder).not.toHaveBeenCalled();
+  });
+
+  it('deveRemoverItemIndisponivel', () => {
+    cart = [{ productId: 5, quantity: 1 }, { productId: 9, quantity: 1 }];
+    indisponiveis = { 9: 'STORE_CLOSED' };
+    abrirDeNovo();
+    expect(component.hasUnavailable).toBeTrue();
+
+    indisponiveis = {};
+    const remover = fixture.nativeElement.querySelectorAll('[data-testid="resume-item-remove"]')[1] as HTMLButtonElement;
+    expect(remover.textContent).toContain('Remover');
+    remover.click();
+    fixture.detectChanges();
+
+    expect(cartServiceSpy.removeProduct).toHaveBeenCalledWith(9);
+    expect(component.productsCarts.map((p) => p.productId)).toEqual([5]);
+    expect(component.hasUnavailable).toBeFalse();
   });
 
   it('naoDeveMaisCalcularTotalLocalmente', () => {
@@ -164,29 +233,27 @@ describe('OrderResumeComponent', () => {
   });
 
   it('deveRecalcularPreviewAoAlterarQuantidade', () => {
-    component.increaseQuantity(component.productsCarts![0]);
+    component.increaseQuantity(component.productsCarts[0]);
 
     expect(cartServiceSpy.updateQuantity).toHaveBeenCalledWith(5, 2);
-    expect(component.productsCarts![0].quantitySelect).toBe(2);
-    expect(orderServiceSpy.previewOrder).toHaveBeenCalledWith(
-      { items: [{ productItemRef: 5, quantity: 2 }], deliveryMode: 'DELIVERY' }
-    );
+    expect(component.productsCarts[0].quantity).toBe(2);
+    expect(cartApiSpy.preview).toHaveBeenCalledWith([{ productId: 5, quantity: 2 }], 'DELIVERY');
 
-    component.decreaseQuantity(component.productsCarts![0]);
+    component.decreaseQuantity(component.productsCarts[0]);
 
     expect(cartServiceSpy.updateQuantity).toHaveBeenCalledWith(5, 1);
   });
 
   it('deveRemoverItemERecalcularPreview', () => {
-    component.removeItem(component.productsCarts![0]);
+    component.removeItem(component.productsCarts[0]);
 
     expect(cartServiceSpy.removeProduct).toHaveBeenCalledWith(5);
-    expect(component.productsCarts!.length).toBe(0);
+    expect(component.productsCarts.length).toBe(0);
     expect(component.preview).toBeUndefined();
   });
 
   it('naoDeveAvancarComCarrinhoVazio', () => {
-    component.removeItem(component.productsCarts![0]);
+    component.removeItem(component.productsCarts[0]);
 
     component.nextStep();
 
@@ -229,7 +296,7 @@ describe('OrderResumeComponent', () => {
 
   it('deveExibirCarregandoEnquantoPreviewNaoChega', () => {
     const resposta = new Subject<any>();
-    orderServiceSpy.previewOrder.and.returnValue(resposta);
+    cartApiSpy.preview.and.returnValue(resposta);
 
     component.setDeliveryMode('PICKUP');
     fixture.detectChanges();
@@ -237,7 +304,7 @@ describe('OrderResumeComponent', () => {
     expect(component.previewLoading).toBeTrue();
     expect(fixture.nativeElement.querySelector('[data-testid="subtotal-loading"]')).toBeTruthy();
 
-    resposta.next({ items: [{ productItemRef: 5, quantity: 1, unitPrice: 95, totalPrice: 95 }], subtotal: 95 });
+    resposta.next(previewFake([{ productId: 5, quantity: 1 }], 'PICKUP'));
     fixture.detectChanges();
 
     expect(component.previewLoading).toBeFalse();
@@ -331,7 +398,7 @@ describe('OrderResumeComponent', () => {
   });
 
   // ---- F7 §5.23: compra direta ----
-  const abrirCompraDireta = (item: any = { id: 9, supplierId: 'sup-2', brand: 'Ultragaz', category: 'Gás 13kg', priceDelivery: 125, pricePickup: 110, quantitySelect: 1 }) => {
+  const abrirCompraDireta = (item: any = { productId: 9, quantity: 1, supplierId: 'sup-2' }) => {
     queryModo = 'compra-direta';
     buyNowItem = item;
     fixture = TestBed.createComponent(OrderResumeComponent);
@@ -352,8 +419,8 @@ describe('OrderResumeComponent', () => {
   it('deveUsarSoOProdutoDaCompraDireta', () => {
     abrirCompraDireta();
 
-    expect(component.productsCarts!.map((p) => p.id)).toEqual([9]);
-    expect(orderServiceSpy.previewOrder.calls.mostRecent().args[0].items).toEqual([{ productItemRef: 9, quantity: 1 }]);
+    expect(component.productsCarts.map((p) => p.productId)).toEqual([9]);
+    expect(cartApiSpy.preview.calls.mostRecent().args[0]).toEqual([{ productId: 9, quantity: 1 }]);
   });
 
   it('deveManterOCarrinhoAoConcluirACompraDireta', () => {
@@ -370,18 +437,19 @@ describe('OrderResumeComponent', () => {
     }));
     expect(cartServiceSpy.clearBuyNow).toHaveBeenCalled();
     expect(cartServiceSpy.setCart).not.toHaveBeenCalled();
+    expect(cartServiceSpy.clear).not.toHaveBeenCalled();
     expect(cart.length).toBe(1);
   });
 
   it('deveIgnorarItemAvulsoSemOParametroDeCompraDireta', () => {
-    buyNowItem = { id: 9, supplierId: 'sup-2', quantitySelect: 1 };
+    buyNowItem = { productId: 9, quantity: 1, supplierId: 'sup-2' };
     queryModo = null;
     fixture = TestBed.createComponent(OrderResumeComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
 
     expect(component.step).toBe(1);
-    expect(component.productsCarts!.map((p) => p.id)).toEqual([5]);
+    expect(component.productsCarts.map((p) => p.productId)).toEqual([5]);
     expect(cartServiceSpy.clearBuyNow).toHaveBeenCalled();
   });
 
@@ -394,14 +462,14 @@ describe('OrderResumeComponent', () => {
 
   it('deveAjustarAQuantidadeNoResumoDoItem', () => {
     abrirCompraDireta();
-    orderServiceSpy.previewOrder.calls.reset();
+    cartApiSpy.preview.calls.reset();
 
     (byId('buy-now-increase') as HTMLButtonElement).click();
     fixture.detectChanges();
 
     expect(cartServiceSpy.updateBuyNowQuantity).toHaveBeenCalledWith(2);
     expect(cartServiceSpy.updateQuantity).not.toHaveBeenCalled();
-    expect(orderServiceSpy.previewOrder.calls.mostRecent().args[0].items).toEqual([{ productItemRef: 9, quantity: 2 }]);
+    expect(cartApiSpy.preview.calls.mostRecent().args[0]).toEqual([{ productId: 9, quantity: 2 }]);
     expect(byId('buy-now-quantity')!.textContent).toContain('2');
   });
 });

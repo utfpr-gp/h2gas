@@ -5,10 +5,9 @@ import { UserService } from '../../../services/user.service';
 import { CommonModule } from '@angular/common';
 import { User } from '../../../models/user';
 import { ToastrService } from 'ngx-toastr';
-import { OrderResponse, ReorderItem } from '../../../models/order.model';
+import { OrderResponse } from '../../../models/order.model';
 import { CartService } from '../../../services/cart.service';
 import { OrderStatusChange, OrderTrackingService } from '../../../services/order-tracking.service';
-import { ProductItem } from '../../../models/product-item';
 import { PaginationComponent } from '../../pagination/pagination.component';
 import { Router } from '@angular/router';
 import { expandCollapse, staggerList } from '../../../animations/checkout.animations';
@@ -145,7 +144,11 @@ export class OrderListComponent implements OnInit, OnDestroy {
         }
 
         const carrinhoSubstituido = this.cartService.getCart().length > 0;
-        this.cartService.setCart(preview.availableItems.map((item) => this.toCartProduct(item)));
+        // HU20: o carrinho guarda só ids e quantidades; o resumo busca o resto no backend
+        this.cartService.setCart(
+          preview.availableItems.map((item) => ({ productId: item.productId!, quantity: item.quantity })),
+          preview.availableItems[0]?.supplierId ?? null,
+        );
 
         // F7 §5.10: uma ação, um toast — o aviso de itens indisponíveis já diz que o carrinho mudou
         if (preview.unavailableItems.length) {
@@ -160,20 +163,6 @@ export class OrderListComponent implements OnInit, OnDestroy {
         this.toastr.error(`Não foi possível refazer este pedido: ${backendMessage(err)}`);
       },
     });
-  }
-
-  private toCartProduct(item: ReorderItem): ProductItem {
-    return {
-      id: item.productId,
-      brand: item.productBrand,
-      category: item.category,
-      type: item.type,
-      imageUrl: item.imageUrl,
-      supplierId: item.supplierId ?? '',
-      priceDelivery: item.priceDelivery,
-      pricePickup: item.pricePickup,
-      quantitySelect: item.quantity,
-    };
   }
 
   navigate(route: string) {

@@ -4,9 +4,11 @@ import { Component, ElementRef, HostListener, OnDestroy, OnInit } from '@angular
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { User } from '../../models/user';
-import { ProductItem } from '../../models/product-item';
 import { DeliveryMode } from '../../models/order.model';
 import { CartService } from '../../services/cart.service';
+import { CartApiService } from '../../services/cart-api.service';
+import { CartLine, CartPreview, CartPreviewItem, UNAVAILABLE_REASON_LABELS } from '../../models/cart';
+import { backendMessage } from '../../utils/backend-message';
 import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { LocationContextService } from '../../services/location-context.service';
@@ -37,6 +39,7 @@ export class MenuComponent implements OnInit, OnDestroy {
     private router: Router,
     private authService: AuthService,
     private cartService: CartService,
+    private cartApi: CartApiService,
     private toastr: ToastrService,
     public locationContext: LocationContextService,
     private userService: UserService,
@@ -49,13 +52,16 @@ export class MenuComponent implements OnInit, OnDestroy {
   userMenuOpen = false;
   showDropdown = false;
   user?: User;
-  cartProducts?: ProductItem[];
+  // HU20: o navegador só tem id + quantidade; o drawer mostra o que o backend devolve
+  cartLines: CartLine[] = [];
+  cartCount = 0;
+  cartPreview?: CartPreview;
+  cartPreviewLoading = false;
+  private cartPreviewRequestId = 0;
   isCartOpen = false;
   deliveryMode: DeliveryMode = 'DELIVERY';
 
-  quantity: number = 1;
   min: number = 1;
-  max: number = 10;
 
   mobileMenuOpen = false;
   submenuOpen = false;
@@ -75,20 +81,17 @@ export class MenuComponent implements OnInit, OnDestroy {
     this.submenuOpen = !this.submenuOpen;
   }
 
-  onQuantityInput(cartProduct?: ProductItem) {
-    if (cartProduct!.quantitySelect! < this.min) {
-      cartProduct!.quantitySelect = this.min;
-      this.toastr.warning('Informe um valor positivo.');
-    }
-  }
-
   ngOnInit(): void {
     const userJson = localStorage.getItem('user');
-    this.cartService.cartProducts$.subscribe(cart => {
-      this.cartProducts = cart;
-      console.log('Carrinho atualizado:', this.cartProducts);
+    this.cartService.cartProducts$.subscribe(lines => {
+      this.cartLines = lines;
+      if (this.isCartOpen) this.loadCartPreview();
     });
-    this.cartService.deliveryMode$.subscribe(mode => this.deliveryMode = mode);
+    this.cartService.count$.subscribe(count => this.cartCount = count);
+    this.cartService.deliveryMode$.subscribe(mode => {
+      this.deliveryMode = mode;
+      if (this.isCartOpen) this.loadCartPreview();
+    });
 
     if (userJson) {
       this.user = JSON.parse(userJson);
@@ -208,13 +211,44 @@ export class MenuComponent implements OnInit, OnDestroy {
     return this.isSupplier || this.isAdmin;
   }
 
-  unitPriceForMode(product: ProductItem): number | undefined {
-    return this.deliveryMode === 'PICKUP' ? product.pricePickup : product.priceDelivery;
+  // HU20: ao abrir o drawer, os dados, o preço (RN01) e a disponibilidade vêm do backend
+  onCartToggle(open: boolean) {
+    this.isCartOpen = open;
+    if (open) this.loadCartPreview();
   }
 
-  // estimativa do drawer; o valor cobrado vem do preview do backend no checkout (RN01)
-  get totalPrice() {
-    return this.cartProducts!.reduce((sum, item) => sum + (this.unitPriceForMode(item) ?? 0) * item.quantitySelect!, 0);
+  loadCartPreview() {
+    const requestId = ++this.cartPreviewRequestId;
+    if (!this.cartLines.length) {
+      this.cartPreview = undefined;
+      this.cartPreviewLoading = false;
+      return;
+    }
+    this.cartPreviewLoading = true;
+    this.cartApi.preview(this.cartLines, this.deliveryMode).subscribe({
+      next: (preview) => {
+        if (requestId !== this.cartPreviewRequestId) return; // cliques rápidos: só a resposta mais nova vale
+        this.cartPreview = preview;
+        this.cartPreviewLoading = false;
+      },
+      error: (err) => {
+        if (requestId !== this.cartPreviewRequestId) return;
+        this.cartPreviewLoading = false;
+        this.toastr.error(`Erro ao carregar o carrinho: ${backendMessage(err)}`);
+      },
+    });
+  }
+
+  get cartHasUnavailable(): boolean {
+    return !!this.cartPreview?.items.some((item) => !item.available);
+  }
+
+  unavailableLabel(item: CartPreviewItem): string {
+    return item.unavailableReason ? UNAVAILABLE_REASON_LABELS[item.unavailableReason] : '';
+  }
+
+  trackByCartItem(_: number, item: CartPreviewItem) {
+    return item.productId;
   }
 
 
@@ -263,18 +297,24 @@ export class MenuComponent implements OnInit, OnDestroy {
     }
   }
 
-  minusClickCart(cartProduct: ProductItem) {
-    cartProduct!.quantitySelect = (cartProduct!.quantitySelect ?? this.min) > this.min
-      ? (cartProduct!.quantitySelect ?? this.min) - 1
-      : (cartProduct!.quantitySelect ?? this.min);
+  minusClickCart(item: CartPreviewItem) {
+    if (item.quantity > this.min) this.cartService.updateQuantity(item.productId, item.quantity - 1);
   }
 
-  deleteItemCart(cartProduct: ProductItem) {
-    this.cartService.setCart(this.cartService.getCart().filter(item => item.id !== cartProduct.id));
+  deleteItemCart(item: CartPreviewItem) {
+    this.cartService.removeProduct(item.productId);
   }
 
-  plusClickCart(cartProduct: ProductItem) {
-    cartProduct!.quantitySelect = (cartProduct!.quantitySelect ?? 0) + 1
+  plusClickCart(item: CartPreviewItem) {
+    if (item.quantity < (item.stockQuantity ?? 0)) this.cartService.updateQuantity(item.productId, item.quantity + 1);
+  }
+
+  checkout() {
+    if (this.cartHasUnavailable) return;
+    const toggle = this.host.nativeElement.querySelector<HTMLInputElement>('#cart-drawer');
+    if (toggle) toggle.checked = false;
+    this.isCartOpen = false;
+    this.navigate('resumo-pedido');
   }
 
   logout() {
