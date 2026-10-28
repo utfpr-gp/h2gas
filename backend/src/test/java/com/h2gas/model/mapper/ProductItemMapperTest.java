@@ -87,4 +87,32 @@ class ProductItemMapperTest {
         assertEquals(77L, dto.getCategoryProductId());
         assertEquals("Gás", dto.getType());
     }
+
+    // ---- HU15 §5.5: o card de produto mostra a logo redonda da loja que vende ----
+
+    @Test
+    @DisplayName("HU15: o produto leva a logo da loja que vende")
+    void deveLevarALogoDaLojaQueVende() {
+        ProductItem productItem = produto("110.00", "95.00");
+        com.h2gas.model.entity.Supplier loja = new com.h2gas.model.entity.Supplier();
+        loja.setName("Gás Centro");
+        loja.setLogoUrl("https://res.cloudinary.com/h2gas/logo.png");
+        productItem.setSupplier(loja);
+
+        ProductItemDTO dto = novoMapper().toDto(productItem);
+
+        assertEquals("https://res.cloudinary.com/h2gas/logo.png", dto.getSupplierLogoUrl());
+        assertEquals("Gás Centro", dto.getSupllierName());
+    }
+
+    @Test
+    @DisplayName("HU15: loja sem logo deixa a logo do produto nula")
+    void deveDeixarALogoNulaSemLogo() {
+        ProductItem productItem = produto("110.00", "95.00");
+        com.h2gas.model.entity.Supplier loja = new com.h2gas.model.entity.Supplier();
+        loja.setName("Sem Logo");
+        productItem.setSupplier(loja);
+
+        assertNull(novoMapper().toDto(productItem).getSupplierLogoUrl());
+    }
 }

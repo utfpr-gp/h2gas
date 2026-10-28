@@ -23,6 +23,10 @@ public class ProductItemDTO {
     private String type;
     private String supllierName;
     private String supplierId;
+    // HU15 §5.5: o card de produto mostra a logo redonda da loja que vende
+    @io.swagger.v3.oas.annotations.media.Schema(description = "Logo da loja que vende (Cloudinary); nula sem logo",
+            nullable = true, example = "https://res.cloudinary.com/h2gas/image/upload/logo.png")
+    private String supplierLogoUrl;
     private Long categoryProductId;
 //    private SupplierDTO supplier;
     private String imageUrl;

@@ -176,6 +176,122 @@ no banco tornaria o resultado dependente do ambiente.
   `border-base-300`, `bg-primary/10`) nos arquivos tocados — sem HEX
   literal novo (F2).
 
+### 5.3 Revisão: vitrine no celular (2026-10-27)
+
+Pedido do autor ao ver a vitrine em 390 px: layout apertado, botões difíceis
+de tocar, muita rolagem até as lojas e visual pouco cuidado. Só classes de
+layout — nenhum comportamento muda:
+
+- título de uma linha, à esquerda, e sem subtítulo no celular (o desktop
+  segue como estava);
+- seletor Lojas/Produtos em largura total, com os dois lados do mesmo tamanho;
+- linha "Lojas próximas · N" e o botão de ordenar na **mesma** linha; o botão
+  mostra só a opção ativa (o rótulo "Ordenar:" volta de `sm` para cima, e o
+  `aria-label` continua dizendo "Ordenar por: …");
+- faixa de tipos sangrando até a borda da tela e círculos de 48 px no celular;
+- card da loja com borda, nota e tipos em linhas próprias (antes quebravam de
+  forma irregular), tipos como pílulas, e a área de toque da nota (que abre as
+  avaliações) de 44 px sem aumentar o card.
+
+Segunda rodada, ainda em 2026-10-27:
+
+- **um produto por linha no celular**: a grade de produtos (página da loja e
+  visão "Produtos" da vitrine) vira `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`
+  — antes, uma categoria com um produto só deixava o card espremido na
+  metade esquerda da tela. De 640 px para cima nada muda;
+- **sai a aba "Categorias"** da barra inferior. Cliente: Início · Pedidos ·
+  Perfil; visitante: Início · Entrar. Isso revoga a aba que a HU13
+  ("Início, Categorias e Entrar") e o F7 (barra inferior da Figura 11) haviam
+  definido. Os produtos seguem a um toque pelo seletor Lojas/Produtos da
+  própria vitrine, e `?view=products` na URL continua funcionando.
+
+Medido com o Chrome em 390 px: a primeira loja passa de ~510 px para ~400 px
+do topo, sem rolagem horizontal.
+
+### 5.4 Revisão: a loja no card de produto (2026-10-27)
+
+Pedido do autor: na visão "Produtos" da vitrine, que mistura lojas, mostrar
+quem vende cada produto. Decisão: **no card**, e não num título por
+categoria — a mesma categoria (ex.: "Gás 13kg") reúne produtos de lojas
+diferentes, então um título não teria uma loja só para mostrar.
+
+- `app-product-card` ganha `showStore` (padrão `false`) e a saída
+  `viewStore`. Com `showStore`, uma linha abaixo do nome com o ícone de loja
+  e o nome dela, como botão (`aria-label` "Ver a loja …", 44 px no celular)
+  que leva à página da loja pelo `navigate` que a vitrine já tinha.
+- Só a vitrine liga `showStore`; a página da loja não, porque lá todos os
+  produtos são da mesma loja, já no cabeçalho.
+- Sem mudança no backend: `ProductItemDTO` já trazia `supplierId` e
+  `supllierName`. A grafia errada do campo é de origem; corrigi-la muda o
+  contrato da API e fica fora deste ajuste.
+- Testes: `product-card.component.spec.ts` (`deveMostrarALojaQuandoPedido`,
+  `naoDeveMostrarALojaPorPadrao`, `naoDeveMostrarALojaSemNome`,
+  `deveEmitirALojaAoTocarNoNome`) e `supplier-list.component.spec.ts`
+  (`deveMostrarALojaNosProdutos`, `deveAbrirALojaAoTocarNoNomeDoProduto`).
+
+### 5.5 Revisão: card de produto (2026-10-27)
+
+Pedido do autor: "Comprar agora" verde, UX e UI melhores, o produto bem
+exibido sem o fundo branco em volta e ícones modernos. Decisões dele: card
+vertical com foto grande; Adicionar em contorno e Comprar agora verde,
+lado a lado; ícones novos só no card por enquanto.
+
+- **Foto**: área 4:3 com a imagem por cima (`absolute`), para a proporção
+  valer com foto em pé. As fotos reais não têm fundo branco (são fotos de
+  ambiente), então a própria foto, desfocada e decorativa (`aria-hidden`,
+  `alt=""`), preenche as laterais, e a foto nítida fica inteira por cima,
+  com as bordas dissolvidas por máscara (`.product-photo-edge`) — sem faixa
+  vazia nem emenda. Mesmo endereço nas duas: um download só.
+- **Preço**: entrega como preço principal (`text-lg`, "com entrega");
+  retirada como linha secundária ("Retirada na loja · R$ …").
+- **Ações** lado a lado: Adicionar em contorno; Comprar agora preenchido em
+  verde. O verde é o 700 da paleta (`--btn-color: var(--color-green-700)`),
+  não o `success` do tema: com texto branco em 14 px o `success` (#16a34a)
+  dá ~3,3:1, abaixo dos 4,5:1; o 700 dá ~5:1. **Revoga o F7 §5.21**, que
+  fazia do Adicionar a única ação cheia.
+- **Selo "Entrega grátis"** sobre a foto, texto escuro em fundo claro e o
+  ícone em verde (o verde em texto pequeno não passaria no contraste).
+- **Ícones** Material Symbols Rounded (peso 400, sem preenchimento), pelo
+  Google Fonts com `icon_names` — só os 4 ícones do card. O resto do app
+  segue com Material Icons.
+- **Moldura**: `rounded-2xl`, borda clara, sombra só no hover de quem tem
+  ponteiro.
+- **Loja com avatar redondo** (pedido seguinte do autor): a linha da loja mostra a
+  logo num círculo de 24 px; sem logo, ou se a imagem quebrar, a inicial do nome.
+  Para isso o `ProductItemDTO` ganhou `supplierLogoUrl` (`@Schema`, opcional, nulo
+  sem logo), preenchido pelo `ProductItemMapper` a partir de `Supplier.logoUrl` —
+  campo novo e opcional, nenhum consumidor quebra.
+- **Retirada** com o ícone de sacola (`shopping_bag`), no lugar do `storefront` que
+  repetia o da loja; o subconjunto de ícones carregado passa a
+  `add_shopping_cart, inventory_2, local_shipping, shopping_bag`.
+- Testes em `product-card.component.spec.ts`: `deveDestacarComprarAgoraEmVerde`,
+  `deveDeixarAsDuasAcoesLadoALado`, `deveExibirAFotoSemCaixaBranca`,
+  `deveMostrarOIconeQuandoNaoHaFoto`, `deveUsarOsIconesArredondados`,
+  `deveDarDestaqueAoPrecoDeEntrega`, `deveMostrarALogoRedondaDaLoja`,
+  `deveMostrarAInicialDaLojaSemLogo`, `deveVoltarParaAInicialSeALogoQuebrar`,
+  `deveUsarASacolaNaRetirada`; no backend, `ProductItemMapperTest`
+  (`deveLevarALogoDaLojaQueVende`, `deveDeixarALogoNulaSemLogo`).
+
+### 5.6 Revisão: produtos agrupados por tipo e categoria (2026-10-27)
+
+Na página da loja e na visão "Produtos" da vitrine, a grade única vira
+seções: um título por **tipo** (Gás, Água), na ordem dos chips, e dentro
+dele um subtítulo por **categoria** (Gás 13kg, Gás 45kg), em ordem
+alfabética pt-BR. Com um tipo já escolhido no chip, o título do tipo some
+(só sobram as categorias). Produto sem tipo ou sem categoria vai para
+"Outros", sempre por último.
+
+- Só frontend: função pura `groupProductsByTypeAndCategory` em
+  `utils/product-sections.ts`, usada pelos dois componentes. Agrupa **a
+  página atual** que o backend devolveu — não muda paginação, filtro nem
+  ordenação da API (RN05 segue no backend).
+- Cada categoria mantém a grade `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`
+  da 5.3.
+- Testes: `product-sections.spec.ts` (ordem dos tipos, ordem das
+  categorias, sem seção vazia com o tipo filtrado, "Outros");
+  `deveAgruparProdutosPorTipoECategoria` em `product-list.component.spec.ts`
+  e `supplier-list.component.spec.ts`.
+
 ## 6. Plano de Testes (TDD)
 
 **Backend**

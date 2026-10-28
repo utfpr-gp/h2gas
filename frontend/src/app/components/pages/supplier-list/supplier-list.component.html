@@ -1,15 +1,16 @@
-<div class="max-w-7xl w-full mx-auto px-4 md:px-8 pt-6 pb-24 md:pb-10">
-    <header class="mb-5 text-center">
-        <h1 class="text-2xl md:text-3xl font-bold text-gray-800">
+<div class="max-w-7xl w-full mx-auto px-4 md:px-8 pt-4 md:pt-6 pb-24 md:pb-10">
+    <!-- no celular o título é só uma linha, à esquerda: a lista é o que importa e deve aparecer sem rolar muito -->
+    <header class="mb-3 md:mb-5 md:text-center">
+        <h1 class="text-xl md:text-3xl font-bold text-gray-800">
             {{ viewMode === 'suppliers' ? 'Fornecedores de Água e Gás' : 'Produtos' }}
         </h1>
-        <p class="text-sm text-gray-500 mt-1">
+        <p class="hidden md:block text-sm text-gray-500 mt-1">
             {{ viewMode === 'suppliers' ? 'Lojas que entregam no seu endereço.' : 'Compare preços de entrega e de retirada.' }}
         </p>
     </header>
 
     <!-- Busca única (filtra sozinha) e alternância Lojas/Produtos -->
-    <div class="flex flex-col md:flex-row gap-3 mb-5">
+    <div class="flex flex-col md:flex-row gap-2 md:gap-3 mb-3 md:mb-5">
         <label class="input input-bordered rounded-full flex items-center gap-2 w-full md:flex-1 bg-white min-h-11">
             <span class="material-icons text-gray-400" aria-hidden="true">search</span>
             <!-- HU16: type="text" — o "search" do Chrome desenha um X próprio ao lado do botão de limpar -->
@@ -22,14 +23,14 @@
                 <span class="material-icons text-base" aria-hidden="true">close</span>
             </button>
         </label>
-        <div class="join self-center md:self-auto" role="group" aria-label="Ver lojas ou produtos">
-            <button type="button" data-testid="view-suppliers" class="btn join-item rounded-l-full min-h-11"
+        <div class="join w-full md:w-auto" role="group" aria-label="Ver lojas ou produtos">
+            <button type="button" data-testid="view-suppliers" class="btn join-item flex-1 md:flex-none rounded-l-full min-h-11"
                 [attr.aria-pressed]="viewMode === 'suppliers'"
                 [ngClass]="viewMode === 'suppliers' ? 'border-primary bg-primary/10 text-primary' : 'btn-ghost border-gray-200 bg-white text-gray-600'"
                 (click)="setView('suppliers')">
                 <span class="material-icons text-base" aria-hidden="true">storefront</span>Lojas
             </button>
-            <button type="button" data-testid="view-products" class="btn join-item rounded-r-full min-h-11"
+            <button type="button" data-testid="view-products" class="btn join-item flex-1 md:flex-none rounded-r-full min-h-11"
                 [attr.aria-pressed]="viewMode === 'products'"
                 [ngClass]="viewMode === 'products' ? 'border-primary bg-primary/10 text-primary' : 'btn-ghost border-gray-200 bg-white text-gray-600'"
                 (click)="setView('products')">
@@ -44,8 +45,8 @@
 
     <!-- ================== LOJAS ================== -->
     <ng-container *ngIf="viewMode === 'suppliers'">
-        <div class="flex flex-wrap items-center justify-between gap-2 my-4">
-            <h2 class="text-lg font-bold text-base-content">
+        <div class="flex items-center justify-between gap-2 my-3">
+            <h2 class="text-base md:text-lg font-bold text-base-content">
                 {{ query ? 'Resultado da busca' : 'Lojas próximas' }}
                 <span *ngIf="!loading" class="text-sm font-normal text-neutral">
                     · {{ totalElements }} {{ totalElements === 1 ? 'loja' : 'lojas' }}
@@ -70,7 +71,7 @@
     <ng-container *ngIf="viewMode === 'products'">
         <h2 class="sr-only">Produtos disponíveis</h2>
 
-        <div class="flex flex-wrap items-center justify-between gap-2 my-4">
+        <div class="flex items-center justify-between gap-2 my-3">
             <span *ngIf="!loading" class="text-sm text-neutral">{{ totalElements }} {{ totalElements === 1 ? 'produto' : 'produtos' }}</span>
             <ng-container *ngTemplateOutlet="filtros"></ng-container>
         </div>
@@ -81,8 +82,17 @@
             <p class="text-sm text-neutral">{{ query ? 'Troque a busca ou o tipo.' : 'Tente outro tipo ou mais tarde.' }}</p>
         </div>
 
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4" [class.opacity-60]="loading">
-            <app-product-card *ngFor="let product of products" [product]="product" (addToCart)="addToCart($event)" (buyNow)="buyNow($event)"></app-product-card>
+        <div class="space-y-8" [class.opacity-60]="loading">
+            <section *ngFor="let section of productSections" data-testid="product-section">
+                <h2 *ngIf="!selectedType" data-testid="type-heading" class="text-lg font-bold text-base-content mb-3">{{ section.type }}</h2>
+                <div *ngFor="let category of section.categories" data-testid="category-section" class="mb-6 last:mb-0">
+                    <h3 data-testid="category-heading" class="text-sm font-semibold text-neutral mb-2">{{ category.name }}</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <app-product-card [showStore]="true" (viewStore)="navigate($event)" *ngFor="let product of category.products" [product]="product"
+                            (addToCart)="addToCart($event)" (buyNow)="buyNow($event)"></app-product-card>
+                    </div>
+                </div>
+            </section>
         </div>
     </ng-container>
 

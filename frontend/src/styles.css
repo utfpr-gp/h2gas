@@ -325,3 +325,19 @@ html {
 input[type="search"]::-webkit-search-cancel-button {
   appearance: none;
 }
+
+/* HU15 §5.5: ícones do card de produto — Material Symbols arredondado, traço regular e sem preenchimento */
+.material-symbols-rounded {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  line-height: 1;
+}
+
+/* HU15 §5.5: a foto nítida do card de produto se dissolve nas bordas, sem emenda dura com o preenchimento desfocado */
+.product-photo-edge {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 7%, black 93%, transparent),
+    linear-gradient(to bottom, transparent, black 7%, black 93%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent, black 7%, black 93%, transparent),
+    linear-gradient(to bottom, transparent, black 7%, black 93%, transparent);
+  mask-composite: intersect;
+}

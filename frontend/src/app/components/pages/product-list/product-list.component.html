@@ -91,15 +91,23 @@
         {{ closedNotice }}. Você pode ver os produtos, mas só dá para comprar com a loja aberta.
     </div>
 
-    <div data-testid="product-grid" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6 transition-opacity duration-200"
+    <div data-testid="product-grid" class="mt-6 space-y-8 transition-opacity duration-200"
         [class.opacity-60]="loading" [@staggerList]="listVersion">
-        <app-product-card
-            *ngFor="let product of products"
-            [product]="product"
-            [blockedReason]="closedNotice"
-            (addToCart)="addToCart($event)"
-            (buyNow)="buyNow($event)">
-        </app-product-card>
+        <section *ngFor="let section of productSections" data-testid="product-section">
+            <h2 *ngIf="!selectedCategory" data-testid="type-heading" class="text-lg font-bold text-base-content mb-3">{{ section.type }}</h2>
+            <div *ngFor="let category of section.categories" data-testid="category-section" class="mb-6 last:mb-0">
+                <h3 data-testid="category-heading" class="text-sm font-semibold text-neutral mb-2">{{ category.name }}</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <app-product-card
+                        *ngFor="let product of category.products"
+                        [product]="product"
+                        [blockedReason]="closedNotice"
+                        (addToCart)="addToCart($event)"
+                        (buyNow)="buyNow($event)">
+                    </app-product-card>
+                </div>
+            </div>
+        </section>
     </div>
 
     <!-- Paginação -->

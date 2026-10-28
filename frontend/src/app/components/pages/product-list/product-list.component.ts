@@ -19,6 +19,7 @@ import { StoreRatingComponent } from '../../store-rating/store-rating.component'
 import { StoreReviewsDialogComponent } from '../../store-reviews-dialog/store-reviews-dialog.component';
 import { CartOtherStoreDialogComponent } from '../../cart-other-store-dialog/cart-other-store-dialog.component';
 import { backendMessage } from '../../../utils/backend-message';
+import { groupProductsByTypeAndCategory } from '../../../utils/product-sections';
 
 @Component({
   selector: 'app-product-list',
@@ -117,6 +118,10 @@ export class ProductListComponent implements OnInit {
   get closedNotice(): string | null {
     if (!this.store || this.store.open) return null;
     return this.store.openingTime ? `Loja fechada · abre às ${this.store.openingTime}` : 'Loja fechada';
+  }
+
+  get productSections() {
+    return groupProductsByTypeAndCategory(this.products ?? [], this.categories);
   }
 
   // HU15: o chip passou a emitir o tipo inteiro; aqui o filtro segue sendo pelo nome

@@ -42,6 +42,7 @@ public class ProductItemMapper {
         if (data.getSupplier() != null) {
             productItemDTO.setSupllierName(data.getSupplier().getName());
             productItemDTO.setSupplierId(data.getSupplier().getId());
+            productItemDTO.setSupplierLogoUrl(data.getSupplier().getLogoUrl());
         }
 
         return productItemDTO;
