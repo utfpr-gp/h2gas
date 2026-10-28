@@ -66,13 +66,20 @@ no checkout por um preço antigo ou um produto que acabou.
     `deliveryMode` `DELIVERY|PICKUP` (padrão `DELIVERY`); fora disso, 400;
   - resposta `CartPreviewDTO { supplierId, supplierName, items[], subtotal }`;
     cada item: `productId, brand, category, type, imageUrl, quantity,
-    unitPrice, totalPrice, available, unavailableReason`;
+    stockQuantity, unitPrice, totalPrice, available, unavailableReason`
+    (`stockQuantity` mantém o limite do botão "+" que o drawer já tem);
   - preço pelo modo com `OrderItemService.unitPriceFor` (RN01);
   - `available = false` com motivo: `NOT_FOUND`, `OUT_OF_STOCK` (estoque
     zerado ou menor que a quantidade, RN02), `STORE_INACTIVE`,
     `STORE_CLOSED` (regra da HU18); item indisponível fica fora do
     subtotal.
 - OpenAPI completo (rota pública, sem cadeado).
+- Ordem dos motivos quando mais de um vale: `NOT_FOUND`, `STORE_INACTIVE`,
+  `STORE_CLOSED`, `OUT_OF_STOCK`. `supplierId`/`supplierName` vêm do
+  primeiro produto encontrado.
+- `POST /api/orders/preview` continua existindo (sem remoção de rota); o
+  checkout passa a usar o preview do carrinho. O pedido segue enviado com
+  `supplierRef` = a loja do carrinho (`cart-supplier`).
 
 ### 5.2 Frontend
 - `CartService` guarda `[{ productId, quantity }]` em `cart-product` e o
