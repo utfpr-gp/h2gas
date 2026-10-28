@@ -37,7 +37,7 @@ describe('AppComponent', () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
 
-    ['/login', '/login/senha', '/register', '/register-supplier'].forEach((rota) =>
+    ['/login', '/login/senha', '/cadastro', '/cadastro/fornecedor'].forEach((rota) =>
       expect(app.hiddenMenuRoutes).toContain(rota));
   });
 
@@ -64,10 +64,10 @@ describe('AppComponent', () => {
       return !!(fixture.nativeElement as HTMLElement).querySelector('app-footer');
     };
 
-    for (const rota of ['/', '/onde-voce-esta', '/login', '/login/senha', '/register', '/recuperar-senha', '/entregas', '/entregas/historico', '/entregas/42']) {
+    for (const rota of ['/', '/onde-voce-esta', '/login', '/login/senha', '/cadastro', '/recuperar-senha', '/entregas', '/entregas/historico', '/entregas/42']) {
       expect(await footerEm(rota)).withContext(rota).toBeFalse();
     }
-    for (const rota of ['/sobre', '/contato', '/inicio', '/meus-pedidos?x=1', '/dashboard']) {
+    for (const rota of ['/sobre', '/contato', '/inicio', '/meus-pedidos?x=1', '/minha-loja/painel']) {
       expect(await footerEm(rota)).withContext(rota).toBeTrue();
     }
   });

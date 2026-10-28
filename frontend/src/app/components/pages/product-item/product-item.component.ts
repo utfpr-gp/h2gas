@@ -125,7 +125,7 @@ export class ProductItemComponent implements OnInit {
   }
 
   edit(p: ProductItem) {
-    this.router.navigate(['/product-items/edit', p.id]);
+    this.router.navigate(['/minha-loja/produtos', p.id, 'editar']);
   }
 
   askDelete(p: ProductItem) {

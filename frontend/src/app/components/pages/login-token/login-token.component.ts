@@ -103,7 +103,7 @@ export class LoginTokenComponent {
   }
 
   goToRegister() {
-    navigateKeepingReturnUrl(this.router, '/register', this.returnUrl);
+    navigateKeepingReturnUrl(this.router, '/cadastro', this.returnUrl);
   }
 
   private goToCodeStep() {

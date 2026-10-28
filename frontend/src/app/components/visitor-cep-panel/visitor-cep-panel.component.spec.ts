@@ -88,12 +88,12 @@ describe('VisitorCepPanelComponent', () => {
   });
 
   it('deveVoltarParaOReturnUrl', () => {
-    queryParams = { returnUrl: '/fornecedores/loja-1/produtos' };
+    queryParams = { returnUrl: '/lojas/loja-1' };
     addressSpy.buscaViaCep.and.returnValue(of({ localidade: 'Curitiba', uf: 'PR', ibge: '4106902', bairro: '' }));
 
     informarCep('80420-000');
 
     expect(location.current()!.label).toBe('Curitiba');
-    expect(routerSpy.navigateByUrl).toHaveBeenCalledWith('/fornecedores/loja-1/produtos');
+    expect(routerSpy.navigateByUrl).toHaveBeenCalledWith('/lojas/loja-1');
   });
 });

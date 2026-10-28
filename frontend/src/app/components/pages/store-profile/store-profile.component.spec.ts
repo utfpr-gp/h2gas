@@ -82,7 +82,7 @@ describe('StoreProfileComponent', () => {
     expect((byId('store-description') as HTMLTextAreaElement).value).toBe('Desde 1990');
     expect(byId('store-cnpj')?.textContent).toContain('12.345.678/0001-01');
     expect(byId('store-address')?.textContent).toContain('Rua XV de Novembro, 700 · Centro · Curitiba - PR');
-    expect(byId('hours-link')?.getAttribute('href')).toBe('/configuracao');
+    expect(byId('hours-link')?.getAttribute('href')).toBe('/minha-loja/configuracoes');
   });
 
   it('deveSalvarSoNomeTelefoneEDescricao', async () => {

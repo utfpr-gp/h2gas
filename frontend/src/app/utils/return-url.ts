@@ -6,7 +6,8 @@ export function safeReturnUrl(raw: string | null | undefined): string | null {
   if (!raw || !raw.startsWith('/') || raw.startsWith('//') || raw.startsWith('/\\')) {
     return null;
   }
-  if (/^\/(login|register)(\/|\?|$)/.test(raw)) {
+  // F8: `cadastro` é a URL nova; `register` segue recusada porque redireciona para ela
+  if (/^\/(login|cadastro|register)(\/|\?|$)/.test(raw)) {
     return null;
   }
   return raw;

@@ -167,7 +167,7 @@ describe('LoginTokenComponent', () => {
     expect(navigateSpy).toHaveBeenCalledWith(['/login/senha']);
 
     (byId('go-register') as HTMLButtonElement).click();
-    expect(navigateSpy).toHaveBeenCalledWith(['/register']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/cadastro']);
   });
 
   // HU13: entrar não apaga o carrinho montado como visitante
@@ -216,6 +216,6 @@ describe('LoginTokenComponent', () => {
 
     (byId('go-register') as HTMLButtonElement).click();
 
-    expect(navigateSpy).toHaveBeenCalledWith(['/register'], { queryParams: { returnUrl: '/resumo-pedido' } });
+    expect(navigateSpy).toHaveBeenCalledWith(['/cadastro'], { queryParams: { returnUrl: '/resumo-pedido' } });
   });
 });

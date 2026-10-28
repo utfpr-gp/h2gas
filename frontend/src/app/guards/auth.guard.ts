@@ -27,11 +27,11 @@ export const authGuard: CanActivateFn = (route, state) => {
   }
 
   if (expectedRoles && !expectedRoles.includes(user?.userType)) {
-    router.navigate(['/unauthorized']);
+    router.navigate(['/acesso-negado']);
     return false;
   }
   
-  const skipSupplierCheckRoutes = ['/aguardando-aprovacao', '/login', '/register'];
+  const skipSupplierCheckRoutes = ['/aguardando-aprovacao', '/login', '/cadastro'];
 
   const currentUrl = state.url; // pega a rota que o usuário está tentando acessar
 

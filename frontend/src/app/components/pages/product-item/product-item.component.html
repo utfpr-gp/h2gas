@@ -4,7 +4,7 @@
             <h1 class="text-2xl font-bold text-gray-800">Produtos</h1>
             <p class="text-sm text-gray-500">Estoque, preços e fotos do que você vende.</p>
         </div>
-        <a routerLink="/product-items/new" data-testid="new-product" class="btn btn-primary rounded-xl">
+        <a routerLink="/minha-loja/produtos/novo" data-testid="new-product" class="btn btn-primary rounded-xl">
             <span class="material-icons text-base">add</span>
             Novo produto
         </a>
@@ -28,7 +28,7 @@
     </div>
     <p *ngIf="summary" class="text-xs text-gray-500 -mt-2 mb-4">
         Estoque baixo é de 1 até {{ summary.lowStockThreshold }} unidades.
-        <a routerLink="/configuracao" data-testid="adjust-threshold" class="link link-primary">Ajustar o estoque mínimo</a>
+        <a routerLink="/minha-loja/configuracoes" data-testid="adjust-threshold" class="link link-primary">Ajustar o estoque mínimo</a>
     </p>
 
     <label class="input input-bordered rounded-xl flex items-center gap-2 w-full md:w-80 bg-white mb-4">

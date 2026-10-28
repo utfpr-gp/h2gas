@@ -139,9 +139,9 @@ export class MenuComponent implements OnInit, OnDestroy {
       case 'SUPPLIER':
         return [
           { id: 'minha-loja', label: 'Minha loja', icon: 'storefront', route: '/minha-loja' },
-          { id: 'dashboard', label: 'Dashboard', icon: 'insights', route: '/dashboard' },
-          { id: 'pedidos-recebidos', label: 'Pedidos recebidos', icon: 'inbox', route: '/dashboard-fornecedor' },
-          { id: 'configuracao', label: 'Configurações', icon: 'settings', route: '/configuracao' },
+          { id: 'dashboard', label: 'Dashboard', icon: 'insights', route: '/minha-loja/painel' },
+          { id: 'pedidos-recebidos', label: 'Pedidos recebidos', icon: 'inbox', route: '/minha-loja/pedidos' },
+          { id: 'configuracao', label: 'Configurações', icon: 'settings', route: '/minha-loja/configuracoes' },
         ];
       case 'ADMIN':
         return [
