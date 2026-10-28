@@ -40,14 +40,14 @@ export const routes: Routes = [
     {path: 'login', component: LoginTokenComponent},
     {path: 'login/token', redirectTo: 'login', pathMatch: 'full'},
     {path: 'login/senha', component: LoginComponent},
-    {path: 'register', component: RegisterComponent},
-    { path: 'unauthorized', component: UnauthorizedComponent },
+    {path: 'cadastro', component: RegisterComponent},
+    { path: 'acesso-negado', component: UnauthorizedComponent },
     {
-        path: 'register-supplier', 
+        path: 'cadastro/fornecedor', 
         component: RegisterSupplierComponent
     },
     {
-        path: 'distributor/new', 
+        path: 'admin/fornecedores/novo', 
         component: DistribuitorFormComponent,
         canActivate: [authGuard],
         data: {roles: ['ADMIN', 'SUPPLIER']}
@@ -69,20 +69,20 @@ export const routes: Routes = [
         data: {roles: ['ADMIN']}
     },
     {
-        path: 'product-items', 
+        path: 'minha-loja/produtos', 
         // tela só do fornecedor: fora do bundle inicial
         loadComponent: () => import('./components/pages/product-item/product-item.component').then((m) => m.ProductItemComponent),
         canActivate: [authGuard],
         data: {roles: ['SUPPLIER']}
     },
     {
-        path: 'product-items/new', 
+        path: 'minha-loja/produtos/novo', 
         component: ProductItemFormComponent,
         canActivate: [authGuard],
         data: {roles: ['SUPPLIER']}
     },
     {
-        path: 'product-items/edit/:id', 
+        path: 'minha-loja/produtos/:id/editar', 
         component: ProductItemFormComponent,
         canActivate: [authGuard],
         data: {roles: ['SUPPLIER']}
@@ -106,14 +106,14 @@ export const routes: Routes = [
         data: {roles: ['ADMIN']}
     },
     {
-        path: 'register-city', 
+        path: 'admin/cidades', 
         // tela só do admin: fora do bundle inicial
         loadComponent: () => import('./components/pages/city-register/city-register.component').then((m) => m.CityRegisterComponent),
         canActivate: [authGuard],
         data: {roles: ['ADMIN']}
     },
     {
-        path: 'supplier-approval',
+        path: 'admin/fornecedores',
         // tela só do admin: fora do bundle inicial
         loadComponent: () => import('./components/pages/supplier-approval/supplier-approval.component')
             .then((m) => m.SupplierApprovalComponent),
@@ -137,7 +137,7 @@ export const routes: Routes = [
         canActivate: [authGuard]
     },
     {
-        path: 'fornecedores/:id/produtos', 
+        path: 'lojas/:id', 
         component: ProductListComponent,
         canActivate: [authGuard],
         data: {roles: ['ADMIN', 'SUPPLIER', 'CUSTOMER'], allowVisitor: true}
@@ -170,13 +170,13 @@ export const routes: Routes = [
         data: {roles: ['ADMIN', 'CUSTOMER']}
     },
     {
-        path: 'dashboard',
+        path: 'minha-loja/painel',
         component: SupplierDashboardComponent,
         canActivate: [authGuard],
         data: {roles: ['SUPPLIER']}
     },
     {
-        path: 'dashboard-fornecedor',
+        path: 'minha-loja/pedidos',
         component: ReceivedOrdersComponent,
         canActivate: [authGuard],
         data: {roles: ['ADMIN', 'SUPPLIER']}
@@ -206,13 +206,13 @@ export const routes: Routes = [
         data: {roles: ['ADMIN', 'DELIVERER']}
     },
     {
-        path: 'entregadores',
+        path: 'minha-loja/entregadores',
         component: ManageDeliverersComponent,
         canActivate: [authGuard],
         data: {roles: ['SUPPLIER']}
     },
     {
-        path: 'historico-pedidos',
+        path: 'minha-loja/pedidos/historico',
         // tela só do fornecedor (o histórico vem do token): fora do bundle inicial
         loadComponent: () => import('./components/pages/order-history/order-history.component').then((m) => m.OrderHistoryComponent),
         canActivate: [authGuard],
@@ -231,7 +231,7 @@ export const routes: Routes = [
         component: ResetPasswordComponent
     },
     {
-        path: 'email-sent', 
+        path: 'email-enviado', 
         component: EmailSentComponent
     },
     {
@@ -243,11 +243,28 @@ export const routes: Routes = [
         component: ContactComponent
     },
     {
-        path: 'configuracao',
+        path: 'minha-loja/configuracoes',
         // tela só do fornecedor (o admin não tem loja): fora do bundle inicial
         loadComponent: () => import('./components/pages/configuration/configuration.component').then((m) => m.ConfigurationComponent),
         canActivate: [authGuard],
         data: {roles: ['SUPPLIER']}
     },
 
+    // F8: URLs antigas (favoritos e links) seguem funcionando — redirecionam para a nova, mantendo o :id
+    {path: 'register', redirectTo: 'cadastro', pathMatch: 'full'},
+    {path: 'unauthorized', redirectTo: 'acesso-negado', pathMatch: 'full'},
+    {path: 'register-supplier', redirectTo: 'cadastro/fornecedor', pathMatch: 'full'},
+    {path: 'distributor/new', redirectTo: 'admin/fornecedores/novo', pathMatch: 'full'},
+    {path: 'product-items', redirectTo: 'minha-loja/produtos', pathMatch: 'full'},
+    {path: 'product-items/new', redirectTo: 'minha-loja/produtos/novo', pathMatch: 'full'},
+    {path: 'product-items/edit/:id', redirectTo: 'minha-loja/produtos/:id/editar', pathMatch: 'full'},
+    {path: 'register-city', redirectTo: 'admin/cidades', pathMatch: 'full'},
+    {path: 'supplier-approval', redirectTo: 'admin/fornecedores', pathMatch: 'full'},
+    {path: 'fornecedores/:id/produtos', redirectTo: 'lojas/:id', pathMatch: 'full'},
+    {path: 'dashboard', redirectTo: 'minha-loja/painel', pathMatch: 'full'},
+    {path: 'dashboard-fornecedor', redirectTo: 'minha-loja/pedidos', pathMatch: 'full'},
+    {path: 'entregadores', redirectTo: 'minha-loja/entregadores', pathMatch: 'full'},
+    {path: 'historico-pedidos', redirectTo: 'minha-loja/pedidos/historico', pathMatch: 'full'},
+    {path: 'email-sent', redirectTo: 'email-enviado', pathMatch: 'full'},
+    {path: 'configuracao', redirectTo: 'minha-loja/configuracoes', pathMatch: 'full'},
 ];
