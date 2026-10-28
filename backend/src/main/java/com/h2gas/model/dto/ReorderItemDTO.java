@@ -31,11 +31,8 @@ public class ReorderItemDTO {
     @Schema(description = "Quantidade, limitada ao estoque atual; 0 se indisponível", example = "2")
     private int quantity;
 
-    @Schema(description = "Preço atual de entrega", example = "120.00")
-    private Double priceDelivery;
-
-    @Schema(description = "Preço atual de retirada", example = "100.00")
-    private Double pricePickup;
+    @Schema(description = "HU21: preço atual do produto", example = "100.00")
+    private Double price;
 
     @Schema(description = "Motivo da indisponibilidade; nulo se disponível",
             allowableValues = {"PRODUTO_REMOVIDO", "SEM_ESTOQUE"})

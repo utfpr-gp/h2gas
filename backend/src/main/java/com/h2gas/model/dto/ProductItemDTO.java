@@ -12,13 +12,9 @@ import java.time.LocalDateTime;
 public class ProductItemDTO {
     private Long id;
     private String brand;
-    private Double priceDelivery;
-    private Double pricePickup;
-    // HU10: contrato do fornecedor, derivado dos dois valores (price = retirada; shippingFee = entrega − retirada)
+    // HU21: preço único do produto; o frete vem da distância (HU17)
+    @io.swagger.v3.oas.annotations.media.Schema(description = "Preço do produto (R$), igual na entrega e na retirada", example = "100.00")
     private Double price;
-    private Double shippingFee;
-    // HU10: computado na leitura (priceDelivery == pricePickup); nunca persistido
-    private boolean freeDelivery;
     private String category;
     private String type;
     private String supllierName;

@@ -54,12 +54,12 @@ public class ProductItemController {
     }
 
     @Operation(summary = "Cadastra um produto do fornecedor logado",
-            description = "Exige price (Preço, valor de retirada) e shippingFee (Preço do frete). Entrega = price + shippingFee; "
-                    + "frete zero vira a etiqueta Entrega Grátis na leitura. A categoria precisa ser do próprio fornecedor. "
+            description = "HU21: exige price, o preço único do produto (igual na entrega e na retirada; o frete vem da distância). "
+                    + "Um shippingFee enviado por cliente antigo é ignorado. A categoria é global (HU19). "
                     + "multipart/form-data: parte 'product' (JSON) e parte 'file' (imagem)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Produto cadastrado"),
-            @ApiResponse(responseCode = "400", description = "Preço ou frete ausente/negativo, marca/categoria ausentes ou estoque negativo"),
+            @ApiResponse(responseCode = "400", description = "Preço ausente ou negativo, marca/categoria ausentes ou estoque negativo"),
             @ApiResponse(responseCode = "403", description = "Sem token válido, papel sem permissão ou categoria de outro fornecedor"),
             @ApiResponse(responseCode = "404", description = "Categoria inexistente"),
             @ApiResponse(responseCode = "502", description = "Falha ao enviar a imagem")
@@ -108,8 +108,8 @@ public class ProductItemController {
     }
 
     @Operation(summary = "Edita um produto do fornecedor logado",
-            description = "Atualiza marca, price e shippingFee (retirada = price; entrega = price + shippingFee), estoque e descrição. Só o fornecedor dono "
-                    + "do produto edita, e a categoria nova precisa ser do mesmo fornecedor")
+            description = "Atualiza marca, price (preço único, HU21), categoria, estoque e descrição. Só o fornecedor dono "
+                    + "do produto edita")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Produto atualizado"),
             @ApiResponse(responseCode = "400", description = "Preço ausente ou negativo, marca/categoria ausentes ou estoque negativo"),
@@ -212,11 +212,11 @@ public class ProductItemController {
             @Parameter(description = "Tamanho da página") @RequestParam(value = "size", required = false) Integer size,
             @Parameter(description = "Filtra por cidade do endereço ativo do cliente (RN05)") @RequestParam(value = "cityId", required = false) Long cityId,
             @Parameter(description = "Filtra pelo nome da categoria (ex.: Gás, Água)") @RequestParam(value = "category", required = false) String category,
-            @Parameter(description = "HU16: ordem da lista — priceDelivery,asc (menor preço), priceDelivery,desc (maior preço), "
+            @Parameter(description = "HU16: ordem da lista — price,asc (menor preço), price,desc (maior preço), "
                     + "brand,asc (nome), createdAt,desc (mais recentes) ou rating (nota da loja que vende); "
                     + "ausente = sem ordem definida; fora da lista = 400",
                     schema = @io.swagger.v3.oas.annotations.media.Schema(allowableValues = {
-                            "priceDelivery,asc", "priceDelivery,desc", "brand,asc", "createdAt,desc", "rating"}))
+                            "price,asc", "price,desc", "brand,asc", "createdAt,desc", "rating"}))
             @RequestParam(value = "sort", required = false) String sort,
             @Parameter(description = "Trecho da marca, da categoria ou do tipo", example = "minalba") @RequestParam(value = "q", required = false) String q
     ) {

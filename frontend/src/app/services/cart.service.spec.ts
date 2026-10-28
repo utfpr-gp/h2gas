@@ -34,7 +34,7 @@ describe('CartService', () => {
 
   // ---- HU20: só id e quantidade no navegador ----
   it('deveGuardarSoIdEQuantidade', () => {
-    service.addProduct({ id: 5, supplierId: 'loja-a', brand: 'Ultragaz', priceDelivery: 110, imageUrl: 'x.png',
+    service.addProduct({ id: 5, supplierId: 'loja-a', brand: 'Ultragaz', price: 110, imageUrl: 'x.png',
       stockQuantity: 9, quantitySelect: 2 } as any);
 
     expect(salvo()).toEqual([{ productId: 5, quantity: 2 }]);
@@ -44,7 +44,7 @@ describe('CartService', () => {
 
   it('deveConverterOCarrinhoAntigo', () => {
     localStorage.setItem('cart-product', JSON.stringify([
-      { id: 5, brand: 'Ultragaz', supplierId: 'loja-a', priceDelivery: 110, quantitySelect: 3 },
+      { id: 5, brand: 'Ultragaz', supplierId: 'loja-a', price: 110, quantitySelect: 3 },
       { id: 7, brand: 'Minalba', supplierId: 'loja-a' },
     ]));
     criar();
@@ -111,7 +111,7 @@ describe('CartService', () => {
   it('deveGuardarSoIdNoComprarAgora', () => {
     service.setCart([{ productId: 1, quantity: 2 }], 'loja-a');
 
-    service.startBuyNow({ id: 9, brand: 'Ultragaz', supplierId: 's1', priceDelivery: 100, quantitySelect: 5 } as any);
+    service.startBuyNow({ id: 9, brand: 'Ultragaz', supplierId: 's1', price: 100, quantitySelect: 5 } as any);
 
     expect(JSON.parse(sessionStorage.getItem('buy-now-item')!)).toEqual({ productId: 9, quantity: 1, supplierId: 's1' });
     expect(service.getBuyNow()).toEqual({ productId: 9, quantity: 1, supplierId: 's1' });

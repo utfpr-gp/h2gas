@@ -89,8 +89,7 @@ class ProductItemServiceTest {
 
         ProductItem productItemFirst = new ProductItem();
         productItemFirst.setBrand("Agua azul");
-        productItemFirst.setPriceDelivery(new BigDecimal("150.00"));
-        productItemFirst.setPricePickup(new BigDecimal("150.00"));
+        productItemFirst.setPrice(new BigDecimal("150.00"));
         productItemFirst.setDescription("teste descrição");
         productItemFirst.setImageUrl("urlImageTest//");
         productItemFirst.setStockQuantity(5);
@@ -103,8 +102,7 @@ class ProductItemServiceTest {
 
         ProductItem productItemSecond = new ProductItem();
         productItemSecond.setBrand("Agua vermelho");
-        productItemSecond.setPriceDelivery(new BigDecimal("150.00"));
-        productItemSecond.setPricePickup(new BigDecimal("150.00"));
+        productItemSecond.setPrice(new BigDecimal("150.00"));
         productItemSecond.setDescription("teste descricao 2");
         productItemSecond.setImageUrl("urlImageTest2//");
         productItemSecond.setStockQuantity(5);
@@ -197,8 +195,7 @@ class ProductItemServiceTest {
 
         ProductItem caro = new ProductItem();
         caro.setBrand("Produto Caro");
-        caro.setPriceDelivery(new BigDecimal("200.00"));
-        caro.setPricePickup(new BigDecimal("200.00"));
+        caro.setPrice(new BigDecimal("200.00"));
         caro.setStockQuantity(5);
         caro.setCategoryProduct(categoryProduct);
         caro.setSupplier(supplier);
@@ -206,14 +203,13 @@ class ProductItemServiceTest {
 
         ProductItem barato = new ProductItem();
         barato.setBrand("Produto Barato");
-        barato.setPriceDelivery(new BigDecimal("50.00"));
-        barato.setPricePickup(new BigDecimal("50.00"));
+        barato.setPrice(new BigDecimal("50.00"));
         barato.setStockQuantity(5);
         barato.setCategoryProduct(categoryProduct);
         barato.setSupplier(supplier);
         productItemRepository.save(barato);
 
-        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "priceDelivery"));
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "price"));
         Page<ProductItemDTO> result = productItemService.findBySupplierActiveAndSupplierOpen(
                 city.getId(), null, pageable);
 
@@ -248,8 +244,7 @@ class ProductItemServiceTest {
 
         ProductItem copap = new ProductItem();
         copap.setBrand("CopapFixture");
-        copap.setPriceDelivery(new BigDecimal("15.00"));
-        copap.setPricePickup(new BigDecimal("15.00"));
+        copap.setPrice(new BigDecimal("15.00"));
         copap.setStockQuantity(5);
         copap.setCategoryProduct(categoryProduct);
         copap.setSupplier(supplier);
@@ -257,8 +252,7 @@ class ProductItemServiceTest {
 
         ProductItem minalba = new ProductItem();
         minalba.setBrand("MinalbaFixture");
-        minalba.setPriceDelivery(new BigDecimal("25.00"));
-        minalba.setPricePickup(new BigDecimal("25.00"));
+        minalba.setPrice(new BigDecimal("25.00"));
         minalba.setStockQuantity(5);
         minalba.setCategoryProduct(categoryProduct);
         minalba.setSupplier(supplier);
@@ -287,7 +281,6 @@ class ProductItemServiceTest {
         dto.setBrand("Ultragaz");
         dto.setCategoryProductId(global.getId());
         dto.setPrice(new BigDecimal("100.00"));
-        dto.setShippingFee(new BigDecimal("10.00"));
 
         ProductItemDTO criado = productItemService.createProductItem(dto, null, "Fornecedor Categoria Global");
 
@@ -304,81 +297,49 @@ class ProductItemServiceTest {
         dto.setBrand("Ultragaz");
         dto.setCategoryProductId(987_654L);
         dto.setPrice(new BigDecimal("100.00"));
-        dto.setShippingFee(new BigDecimal("10.00"));
 
         assertThrows(com.h2gas.exceptions.ResourceNotFoundException.class,
                 () -> productItemService.createProductItem(dto, null, "Fornecedor 404 Categoria"));
     }
 
-    private CreateProductItemDTO dtoDeProduto(Long categoriaId, String preco, String frete) {
+    private CreateProductItemDTO dtoDeProduto(Long categoriaId, String preco) {
         CreateProductItemDTO dto = new CreateProductItemDTO();
         dto.setBrand("Ultragaz");
         dto.setCategoryProductId(categoriaId);
         dto.setPrice(new BigDecimal(preco));
-        dto.setShippingFee(new BigDecimal(frete));
         dto.setStockQuantity(7);
         dto.setDescription("Botijão de teste");
         return dto;
     }
 
     @Test
-    @DisplayName("HU10: cria produto derivando retirada = preço e entrega = preço + frete")
-    void deveDerivarPrecoDeEntregaSomandoOFrete() {
+    @DisplayName("HU21: cria produto com um preço só")
+    void deveGravarOPrecoUnico() {
         Supplier logado = createSupplierForTest(1);
         logado.setName("Fornecedor Preços Teste");
         supplierRepository.save(logado);
         CategoryProduct categoria = createCategoryForTest("13kg");
 
         ProductItemDTO criado = productItemService.createProductItem(
-                dtoDeProduto(categoria.getId(), "100.00", "20.00"), null, "Fornecedor Preços Teste");
+                dtoDeProduto(categoria.getId(), "100.00"), null, "Fornecedor Preços Teste");
 
         ProductItem salvo = productItemRepository.findById(criado.getId()).orElseThrow();
-        assertEquals(0, new BigDecimal("120.00").compareTo(salvo.getPriceDelivery()));
-        assertEquals(0, new BigDecimal("100.00").compareTo(salvo.getPricePickup()));
-        assertEquals(120.0, criado.getPriceDelivery());
-        assertEquals(100.0, criado.getPricePickup());
-        assertFalse(criado.isFreeDelivery());
+        assertEquals(0, new BigDecimal("100.00").compareTo(salvo.getPrice()));
+        assertEquals(100.0, criado.getPrice());
     }
 
     @Test
-    @DisplayName("HU10: frete zero ao criar sinaliza Entrega Grátis")
-    void deveSinalizarEntregaGratisQuandoOFreteForZero() {
-        Supplier logado = createSupplierForTest(1);
-        logado.setName("Fornecedor Grátis Teste");
-        supplierRepository.save(logado);
-        CategoryProduct categoria = createCategoryForTest("13kg");
-
-        ProductItemDTO criado = productItemService.createProductItem(
-                dtoDeProduto(categoria.getId(), "100.00", "0.00"), null, "Fornecedor Grátis Teste");
-
-        assertTrue(criado.isFreeDelivery());
-    }
-
-    @Test
-    @DisplayName("HU10: editar grava preço e frete, derivando as duas colunas")
-    void deveAtualizarPrecoEFreteAoEditarProduto() {
+    @DisplayName("HU21: editar grava o novo preço único")
+    void deveAtualizarOPrecoUnico() {
         ProductItem produto = productItemRepository.findById(validIdItemProduct).orElseThrow();
         Supplier dono = produto.getSupplier();
 
         ProductItemDTO atualizado = productItemService.updateProductItem(validIdItemProduct,
-                dtoDeProduto(produto.getCategoryProduct().getId(), "110.00", "20.00"), dono);
+                dtoDeProduto(produto.getCategoryProduct().getId(), "110.00"), dono);
 
         ProductItem salvo = productItemRepository.findById(validIdItemProduct).orElseThrow();
-        assertEquals(0, new BigDecimal("130.00").compareTo(salvo.getPriceDelivery()));
-        assertEquals(0, new BigDecimal("110.00").compareTo(salvo.getPricePickup()));
-        assertEquals(130.0, atualizado.getPriceDelivery());
-        assertEquals(110.0, atualizado.getPricePickup());
-    }
-
-    @Test
-    @DisplayName("HU10: frete zero na edição passa a sinalizar Entrega Grátis")
-    void deveSinalizarEntregaGratisAoEditarComFreteZero() {
-        ProductItem produto = productItemRepository.findById(validIdItemProduct).orElseThrow();
-
-        ProductItemDTO atualizado = productItemService.updateProductItem(validIdItemProduct,
-                dtoDeProduto(produto.getCategoryProduct().getId(), "99.90", "0.00"), produto.getSupplier());
-
-        assertTrue(atualizado.isFreeDelivery());
+        assertEquals(0, new BigDecimal("110.00").compareTo(salvo.getPrice()));
+        assertEquals(110.0, atualizado.getPrice());
     }
 
     @Test
@@ -388,9 +349,9 @@ class ProductItemServiceTest {
         Supplier intruso = createSupplierForTest(2);
 
         assertThrows(ForbiddenResourceException.class, () -> productItemService.updateProductItem(validIdItemProduct,
-                dtoDeProduto(produto.getCategoryProduct().getId(), "1.00", "0.00"), intruso));
+                dtoDeProduto(produto.getCategoryProduct().getId(), "1.00"), intruso));
         assertEquals(0, new BigDecimal("150.00").compareTo(
-                productItemRepository.findById(validIdItemProduct).orElseThrow().getPriceDelivery()));
+                productItemRepository.findById(validIdItemProduct).orElseThrow().getPrice()));
     }
 
     @Test
@@ -400,7 +361,7 @@ class ProductItemServiceTest {
         CategoryProduct outra = createCategoryForTest("outra");
 
         productItemService.updateProductItem(validIdItemProduct,
-                dtoDeProduto(outra.getId(), "150.00", "0.00"), produto.getSupplier());
+                dtoDeProduto(outra.getId(), "150.00"), produto.getSupplier());
 
         assertEquals(outra.getId(),
                 productItemRepository.findById(validIdItemProduct).orElseThrow().getCategoryProduct().getId());
@@ -414,7 +375,7 @@ class ProductItemServiceTest {
         ProductItemDTO lido = productItemService.findById(validIdItemProduct);
 
         productItemService.updateProductItem(validIdItemProduct,
-                dtoDeProduto(lido.getCategoryProductId(), "140.00", "10.00"), produto.getSupplier());
+                dtoDeProduto(lido.getCategoryProductId(), "140.00"), produto.getSupplier());
 
         assertEquals(categoriaAntes, productItemRepository.findById(validIdItemProduct).orElseThrow().getCategoryProduct().getId());
     }
@@ -540,8 +501,7 @@ class ProductItemServiceTest {
     private ProductItem salvarProduto(Supplier supplier, CategoryProduct categoria, String marca, int estoque) {
         ProductItem p = new ProductItem();
         p.setBrand(marca);
-        p.setPriceDelivery(new BigDecimal("10.00"));
-        p.setPricePickup(new BigDecimal("10.00"));
+        p.setPrice(new BigDecimal("10.00"));
         p.setImageUrl("x");
         p.setStockQuantity(estoque);
         p.setCategoryProduct(categoria);

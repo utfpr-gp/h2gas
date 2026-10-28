@@ -83,7 +83,7 @@ describe('SupplierListComponent', () => {
 
     component.toggleView();
 
-    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledWith(0, 12, 5, undefined, 'priceDelivery,asc', undefined);
+    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledWith(0, 12, 5, undefined, 'price,asc', undefined);
   });
 
   it('deveFiltrarProdutosPelaCategoriaSelecionada', () => {
@@ -92,17 +92,17 @@ describe('SupplierListComponent', () => {
 
     component.selectCategory({ id: 2, name: 'Gás' });
 
-    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledWith(0, 12, undefined, 'Gás', 'priceDelivery,asc', undefined);
+    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledWith(0, 12, undefined, 'Gás', 'price,asc', undefined);
   });
 
   it('deveEnviarAOrdenacaoEscolhidaDeProdutos', () => {
     fixture.detectChanges();
     component.toggleView();
 
-    component.changeSort('priceDelivery,desc');
+    component.changeSort('price,desc');
 
     expect(productItemServiceSpy.getProductsFromActiveSuppliers)
-      .toHaveBeenCalledWith(0, 12, undefined, undefined, 'priceDelivery,desc', undefined);
+      .toHaveBeenCalledWith(0, 12, undefined, undefined, 'price,desc', undefined);
   });
 
   it('deveIniciarNaVisaoDeProdutosQuandoQueryParamViewForProducts', () => {
@@ -217,7 +217,7 @@ describe('SupplierListComponent', () => {
     digitar('minalba');
     tick(300);
 
-    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledOnceWith(0, 12, 5, undefined, 'priceDelivery,asc', 'minalba');
+    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledOnceWith(0, 12, 5, undefined, 'price,asc', 'minalba');
     expect(supplierServiceSpy.getAllSupplierOpenAndActive).not.toHaveBeenCalledWith(jasmine.anything(), jasmine.anything(), jasmine.anything(), 'minalba');
   }));
 
@@ -245,7 +245,7 @@ describe('SupplierListComponent', () => {
 
     component.onPageChange(2);
 
-    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledWith(2, 12, undefined, undefined, 'priceDelivery,asc', undefined);
+    expect(productItemServiceSpy.getProductsFromActiveSuppliers).toHaveBeenCalledWith(2, 12, undefined, undefined, 'price,asc', undefined);
     expect(fixture.nativeElement.textContent).toContain('30 produtos');
   });
 

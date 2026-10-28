@@ -288,8 +288,7 @@ class CategoryProductServiceTest {
     private void salvarProduto(Long categoriaId, String supplierId) {
         ProductItem p = new ProductItem();
         p.setBrand("Minalba");
-        p.setPriceDelivery(new java.math.BigDecimal("10.00"));
-        p.setPricePickup(new java.math.BigDecimal("10.00"));
+        p.setPrice(new java.math.BigDecimal("10.00"));
         p.setImageUrl("x");
         p.setStockQuantity(5);
         p.setCategoryProduct(categoryProductRepository.findById(categoriaId).orElseThrow());

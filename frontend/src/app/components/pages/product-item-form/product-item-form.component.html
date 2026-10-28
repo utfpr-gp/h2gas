@@ -41,42 +41,22 @@
 
       <!-- 2. Preços e estoque -->
       <section class="space-y-4">
-        <h2 class="text-xs font-bold tracking-wide text-primary uppercase">2. Preços e estoque</h2>
+        <h2 class="text-xs font-bold tracking-wide text-primary uppercase">2. Preço e estoque</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- HU21: um preço só; o frete da entrega vem da distância, configurado na loja (HU17) -->
           <label class="block">
             <span class="text-sm font-medium text-gray-700">Preço (R$)</span>
             <input type="number" min="0" step="0.01" formControlName="price" placeholder="0,00" data-testid="price-input"
               class="input w-full rounded-xl mt-1 border bg-white"
               [ngClass]="formProductItem.get('price')!.invalid && formProductItem.get('price')!.touched ? 'border-red-400' : 'border-gray-300'" />
+            <span class="block text-xs text-gray-500 mt-1">O mesmo na entrega e na retirada. O frete é cobrado à parte.</span>
           </label>
           <label class="block">
-            <span class="text-sm font-medium text-gray-700">Preço do frete (R$)</span>
-            <input type="number" min="0" step="0.01" formControlName="shippingFee" placeholder="0,00" data-testid="shipping-fee-input"
-              class="input w-full rounded-xl mt-1 border"
-              [readOnly]="isFreeDelivery" [attr.aria-readonly]="isFreeDelivery"
-              [ngClass]="[formProductItem.get('shippingFee')!.invalid && formProductItem.get('shippingFee')!.touched ? 'border-red-400' : 'border-gray-300', isFreeDelivery ? 'bg-gray-100 text-gray-500' : 'bg-white']" />
+            <span class="text-sm font-medium text-gray-700">Quantidade em Estoque</span>
+            <input type="number" min="0" formControlName="stockQuantity"
+              class="input w-full rounded-xl mt-1 border border-gray-300 bg-white" />
           </label>
         </div>
-        <label class="flex items-start gap-3 rounded-xl border px-3 py-3 cursor-pointer"
-          [ngClass]="isFreeDelivery ? 'border-green-300 bg-green-50' : 'border-gray-200'">
-          <input type="checkbox" data-testid="free-shipping-checkbox" class="w-5 h-5 mt-0.5 shrink-0 cursor-pointer accent-primary"
-            [checked]="isFreeDelivery" (change)="toggleFreeShipping($any($event.target).checked)" />
-          <span>
-            <span class="flex items-center gap-1 text-sm font-semibold text-gray-800">
-              <span class="material-icons text-base">local_shipping</span>Frete grátis
-            </span>
-            <span class="block text-xs text-gray-500">O Preço do frete vira R$ 0,00 e o produto ganha a etiqueta "Entrega Grátis".</span>
-          </span>
-        </label>
-        <p *ngIf="pricePreview as preview" data-testid="price-preview" class="text-sm text-gray-600">
-          <span class="inline-flex items-center gap-1 mr-4"><span class="material-icons text-base">storefront</span>Retirada: <strong>{{ preview.pickup | currency:'BRL':'symbol':'1.2-2' }}</strong></span>
-          <span class="inline-flex items-center gap-1"><span class="material-icons text-base">local_shipping</span>Entrega: <strong>{{ preview.delivery | currency:'BRL':'symbol':'1.2-2' }}</strong></span>
-        </p>
-        <label class="block md:w-1/2">
-          <span class="text-sm font-medium text-gray-700">Quantidade em Estoque</span>
-          <input type="number" min="0" formControlName="stockQuantity"
-            class="input w-full rounded-xl mt-1 border border-gray-300 bg-white" />
-        </label>
       </section>
 
       <!-- 3. Imagem -->

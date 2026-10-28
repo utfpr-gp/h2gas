@@ -92,8 +92,7 @@ class SupplierDashboardServiceTest {
         c = categoryProductRepository.save(c);
         ProductItem p = new ProductItem();
         p.setBrand(marca);
-        p.setPriceDelivery(new BigDecimal("100.00"));
-        p.setPricePickup(new BigDecimal("100.00"));
+        p.setPrice(new BigDecimal("100.00"));
         p.setStockQuantity(50);
         p.setSupplier(supplier);
         p.setCategoryProduct(c);

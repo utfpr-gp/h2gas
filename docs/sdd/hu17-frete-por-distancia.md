@@ -1,4 +1,4 @@
-# HU17 — Frete por distância e preço único do produto
+# HU17 — Frete por distância
 
 ## 1. Cabeçalho
 
@@ -7,7 +7,7 @@
 | ID | HU17 |
 | Perfil | Cliente, Visitante e Fornecedor |
 | Prioridade MoSCoW | Must have — decisão do autor em 2026-10-26: "frete por produto não é válido; podemos calcular frete por km" |
-| Dependências | F3 (Flyway), F6 (OpenAPI), HU03 (transparência de preços), HU04 (endereços do cliente), HU10 (precificação logística), HU13 (CEP do visitante), HU16 (barra de filtros) |
+| Dependências | F3 (Flyway), F6 (OpenAPI), HU04 (endereços do cliente), HU13 (CEP do visitante), HU16 (ordenação da vitrine), HU18 (horário), HU20 (preview do carrinho), **HU21 (preço único do produto, entra antes)** |
 | Referência no TCC | RN01 (cálculo no backend); revisão do modelo de preço da HU03/HU10 |
 
 ## 2. História de Usuário
@@ -46,10 +46,8 @@ preço seja honesto para os dois lados.
 - **Cenário 7 — Ordenar por distância**: Quando o cliente escolhe "Mais
   perto", Então as lojas vêm da mais próxima para a mais distante; lojas
   sem coordenada ficam no fim.
-- **Cenário 8 — Produto com um preço só**: Dado o fornecedor cadastrando
-  ou editando um produto, Então informa **um** preço; não existem mais
-  "preço de entrega" e "preço de retirada". No catálogo, o cliente vê
-  esse preço e o frete separado.
+- **Cenário 8 — Produto com um preço só**: saiu para a **HU21** (revisão
+  de 2026-10-27). Aqui o frete é somado ao preço único que ela criou.
 - **Cenário 9 — Frete no checkout**: Dado um pedido em modo entrega,
   Quando o cliente confirma, Então o resumo mostra subtotal, frete e
   total; o frete é calculado no backend no fechamento e **gravado no
@@ -95,6 +93,23 @@ preço seja honesto para os dois lados.
   `ProductItemDTO`, `CreateProductItemMapper:16-18`, `OrderService:172-173`,
   `product-card` (linhas `price-delivery` / `price-pickup`), o formulário
   de produto do fornecedor e o resumo do pedido.
+
+> **Revisão de 2026-10-27.** O autor separou o preço único na **HU21**, que
+> entra antes desta HU: migração `V18`, que já remove as colunas antigas,
+> `ProductItemDTO.price`, formulário com um preço e `unitPriceFor` sem modo.
+> Com isso:
+> - as migrações desta HU passam a ser **V19 a V21**, porque V16 e V17 foram
+>   usadas pela HU18 e pela HU19, e V18 pela HU21;
+> - saem daqui as antigas V19/V20 (preço único), os itens de `ProductItemDTO`,
+>   formulário e `product-card` e os testes 7, 8, 12 e 13;
+> - nomes reais no frontend: a ordenação da HU16 é o `catalog-sort-menu` (não
+>   existe `catalog-filter-bar`), as configurações da loja ficam em
+>   `pages/configuration` e o resumo do pedido em `pages/order-resume`;
+> - o frete também entra no preview do carrinho da HU20
+>   (`POST /api/cart/preview`), com `deliveryFee` e o total.
+>
+> Mapa das migrações: V16 → **V19** (`supplier_delivery_settings`), V17 →
+> **V20** (`address_coordinates`), V18 → **V21** (`order_delivery_fee`).
 
 ## 5. Contrato Técnico
 

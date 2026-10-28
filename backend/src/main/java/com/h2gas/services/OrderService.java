@@ -122,7 +122,7 @@ public class OrderService {
 
         for (OrderItemRequestDTO item : request.getItems()) {
             ProductItem productItem = productItemService.findEntityById(item.getProductItemRef());
-            BigDecimal unitPrice = OrderItemService.unitPriceFor(productItem, deliveryMode);
+            BigDecimal unitPrice = OrderItemService.unitPriceFor(productItem);
             BigDecimal totalPrice = OrderItemService.calculateTotalPrice(item.getQuantity(), unitPrice);
             items.add(new OrderPreviewItemDTO(item.getProductItemRef(), item.getQuantity(), unitPrice, totalPrice));
         }
@@ -148,7 +148,7 @@ public class OrderService {
         for (OrderItem item : order.getItems()) {
             ProductItem product = item.getProduct();
             if (product == null) {
-                unavailable.add(new ReorderItemDTO(null, null, null, null, null, null, 0, null, null, "PRODUTO_REMOVIDO"));
+                unavailable.add(new ReorderItemDTO(null, null, null, null, null, null, 0, null, "PRODUTO_REMOVIDO"));
             } else if (product.getStockQuantity() == null || product.getStockQuantity() <= 0) {
                 unavailable.add(toReorderItem(product, 0, "SEM_ESTOQUE"));
             } else {
@@ -169,8 +169,7 @@ public class OrderService {
                 product.getImageUrl(),
                 product.getSupplier() != null ? product.getSupplier().getId() : null,
                 quantity,
-                product.getPriceDelivery() != null ? product.getPriceDelivery().doubleValue() : null,
-                product.getPricePickup() != null ? product.getPricePickup().doubleValue() : null,
+                product.getPrice() != null ? product.getPrice().doubleValue() : null,
                 unavailableReason
         );
     }

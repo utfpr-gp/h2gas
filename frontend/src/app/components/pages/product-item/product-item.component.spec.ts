@@ -17,8 +17,8 @@ describe('ProductItemComponent', () => {
   const produto = (over: Partial<ProductItem>) =>
     ({ id: 1, brand: 'Ultragaz', category: 'Gás 13kg', type: 'Gás', stockQuantity: 50, imageUrl: 'x.jpg', ...over } as ProductItem);
   const lista = [
-    produto({ id: 1, priceDelivery: 120, pricePickup: 100, freeDelivery: false }),
-    produto({ id: 2, brand: 'Liquigás', priceDelivery: 95, pricePickup: 95, freeDelivery: true, stockQuantity: 3 }),
+    produto({ id: 1, price: 100 }),
+    produto({ id: 2, brand: 'Liquigás', price: 95, stockQuantity: 3 }),
     produto({ id: 3, brand: 'Copagaz', stockQuantity: 0 }),
   ];
   const pagina = (data: ProductItem[], extra: Partial<PaginatedResponse<ProductItem>> = {}): PaginatedResponse<ProductItem> =>
@@ -48,17 +48,15 @@ describe('ProductItemComponent', () => {
     fixture.detectChanges();
   };
 
-  it('deveExibirOsDoisPrecosEBadgeNaGestao', async () => {
+  // HU21: a gestão mostra um preço só, sem selo de frete do produto
+  it('deveExibirUmPrecoNaGestao', async () => {
     await setup();
     const el = fixture.nativeElement as HTMLElement;
-    const entrega = Array.from(el.querySelectorAll('[data-testid="manage-price-delivery"]')) as HTMLElement[];
-    const retirada = Array.from(el.querySelectorAll('[data-testid="manage-price-pickup"]')) as HTMLElement[];
-    expect(entrega.length).toBe(3);
-    expect(entrega[0].textContent).toMatch(/120[.,]00/);
-    expect(retirada[0].textContent).toMatch(/100[.,]00/);
-    const selos = el.querySelectorAll('[data-testid="manage-free-delivery"]');
-    expect(selos.length).toBe(1);
-    expect(selos[0].textContent).toContain('Entrega grátis');
+    const precos = Array.from(el.querySelectorAll('[data-testid="manage-price"]')) as HTMLElement[];
+    expect(precos.length).toBe(3);
+    expect(precos[0].textContent).toMatch(/100[.,]00/);
+    expect(el.querySelector('[data-testid="manage-price-delivery"]')).toBeNull();
+    expect(el.querySelector('[data-testid="manage-free-delivery"]')).toBeNull();
   });
 
   it('deveMostrarContadoresDoResumo', async () => {

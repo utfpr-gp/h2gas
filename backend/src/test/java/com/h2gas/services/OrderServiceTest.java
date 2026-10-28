@@ -185,8 +185,7 @@ class OrderServiceTest {
         // Criar produto
         ProductItem productItem = new ProductItem();
         productItem.setBrand("Marca Teste");
-        productItem.setPriceDelivery(new BigDecimal("89.90"));
-        productItem.setPricePickup(new BigDecimal("79.90"));
+        productItem.setPrice(new BigDecimal("79.90"));
         productItem.setStockQuantity(100);
         productItem.setImageUrl("example.com/image.jpg");
         productItem.setCategoryProduct(category);
@@ -236,7 +235,7 @@ class OrderServiceTest {
         assertNotNull(result.getId());
         assertEquals(OrderStatusEnum.PENDING.getStatus(), result.getStatus());
         assertEquals("Cartão de Crédito", result.getPaymentMethod());
-        assertEquals(new BigDecimal("179.80"), result.getTotalPrice());
+        assertEquals(new BigDecimal("159.80"), result.getTotalPrice());
         assertEquals(1, result.getOrderItems().size());
     }
 
@@ -343,7 +342,7 @@ class OrderServiceTest {
 
         Order salvo = orderRepository.findById(result.getId()).orElseThrow();
         assertEquals(DeliveryModeEnum.DELIVERY, salvo.getDeliveryMode());
-        assertEquals(new BigDecimal("89.90"), salvo.getTotalPrice());
+        assertEquals(new BigDecimal("79.90"), salvo.getTotalPrice());
     }
 
     @Test
@@ -371,21 +370,23 @@ class OrderServiceTest {
 
         OrderPreviewDTO preview = orderService.previewOrder(novoPreview("DELIVERY", 2));
 
-        assertEquals(new BigDecimal("179.80"), preview.getSubtotal());
+        assertEquals(new BigDecimal("159.80"), preview.getSubtotal());
         assertEquals(1, preview.getItems().size());
-        assertEquals(new BigDecimal("89.90"), preview.getItems().get(0).getUnitPrice());
-        assertEquals(new BigDecimal("179.80"), preview.getItems().get(0).getTotalPrice());
+        assertEquals(new BigDecimal("79.90"), preview.getItems().get(0).getUnitPrice());
+        assertEquals(new BigDecimal("159.80"), preview.getItems().get(0).getTotalPrice());
         assertEquals(pedidosAntes, orderRepository.count());
         assertEquals(100, productItemRepository.findById(validProductItemId).orElseThrow().getStockQuantity());
     }
 
     @Test
-    @DisplayName("HU03: preview reflete a modalidade informada")
-    void devePreviewRefletirModalidadeInformada() {
-        OrderPreviewDTO preview = orderService.previewOrder(novoPreview("PICKUP", 2));
+    @DisplayName("HU21: o preview usa o mesmo preço na entrega e na retirada")
+    void devePreviewUsarOMesmoPrecoNasDuasModalidades() {
+        OrderPreviewDTO retirada = orderService.previewOrder(novoPreview("PICKUP", 2));
+        OrderPreviewDTO entrega = orderService.previewOrder(novoPreview("DELIVERY", 2));
 
-        assertEquals(new BigDecimal("159.80"), preview.getSubtotal());
-        assertEquals(new BigDecimal("79.90"), preview.getItems().get(0).getUnitPrice());
+        assertEquals(new BigDecimal("159.80"), retirada.getSubtotal());
+        assertEquals(retirada.getSubtotal(), entrega.getSubtotal());
+        assertEquals(new BigDecimal("79.90"), retirada.getItems().get(0).getUnitPrice());
     }
 
     private String pedidoRealizado(int quantity) {
@@ -472,14 +473,12 @@ class OrderServiceTest {
     void deveUsarPrecoAtualDoProdutoNaoOHistorico() {
         String orderId = pedidoRealizado(1);
         alterarProduto(p -> {
-            p.setPriceDelivery(new BigDecimal("99.90"));
-            p.setPricePickup(new BigDecimal("85.00"));
+            p.setPrice(new BigDecimal("85.00"));
         });
 
         ReorderItemDTO item = orderService.buildReorderPreview(orderId, clienteLogado()).getAvailableItems().get(0);
 
-        assertEquals(99.90, item.getPriceDelivery());
-        assertEquals(85.00, item.getPricePickup());
+        assertEquals(85.00, item.getPrice());
     }
 
     @Test

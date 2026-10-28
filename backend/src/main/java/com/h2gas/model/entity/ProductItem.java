@@ -23,10 +23,9 @@ public class ProductItem {
     private Long id;
 
     private String brand;
-    @Column(precision = 10, scale = 2)
-    private BigDecimal priceDelivery;
-    @Column(precision = 10, scale = 2)
-    private BigDecimal pricePickup;
+    // HU21: um preço só, sem frete embutido (o frete vem da distância, HU17)
+    @Column(precision = 10, scale = 2, nullable = false)
+    private BigDecimal price;
     private String description;
     private String imageUrl;
     private Integer stockQuantity;

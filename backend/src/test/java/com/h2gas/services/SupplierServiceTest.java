@@ -779,8 +779,7 @@ class SupplierServiceTest {
     private void produtoNaCategoria(Supplier loja, com.h2gas.model.entity.CategoryProduct categoria, String marca, int estoque) {
         com.h2gas.model.entity.ProductItem produto = new com.h2gas.model.entity.ProductItem();
         produto.setBrand(marca);
-        produto.setPriceDelivery(new java.math.BigDecimal("100.00"));
-        produto.setPricePickup(new java.math.BigDecimal("100.00"));
+        produto.setPrice(new java.math.BigDecimal("100.00"));
         produto.setStockQuantity(estoque);
         produto.setSupplier(loja);
         produto.setCategoryProduct(categoria);

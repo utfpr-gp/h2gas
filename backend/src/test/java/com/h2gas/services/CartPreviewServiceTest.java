@@ -63,8 +63,7 @@ class CartPreviewServiceTest {
         productItem.setId(id);
         productItem.setBrand("Ultragaz");
         productItem.setImageUrl("https://img/p.png");
-        productItem.setPriceDelivery(new BigDecimal("110.00"));
-        productItem.setPricePickup(new BigDecimal("95.00"));
+        productItem.setPrice(new BigDecimal("95.00"));
         productItem.setStockQuantity(estoque);
         productItem.setSupplier(supplier);
         productItem.setCategoryProduct(new CategoryProduct(1L, "Gás 13kg", new ProductType(1L, "Gás", null), null));
@@ -81,7 +80,7 @@ class CartPreviewServiceTest {
     }
 
     @Test
-    @DisplayName("HU20: calcula o preço pelo modo (entrega ou retirada) e traz os dados do produto")
+    @DisplayName("HU21: mesmo preço na entrega e na retirada, com os dados do produto")
     void deveCalcularOPrecoPeloModo() {
         when(productItemRepository.findAllById(anyIterable())).thenReturn(List.of(produto(5L, 10, lojaAberta())));
 
@@ -89,14 +88,14 @@ class CartPreviewServiceTest {
         CartPreviewDTO retirada = service.preview(pedido("PICKUP", new CartLineDTO(5L, 2)));
 
         CartPreviewItemDTO item = unicoItem(entrega);
-        assertEquals(new BigDecimal("110.00"), item.getUnitPrice());
-        assertEquals(new BigDecimal("220.00"), item.getTotalPrice());
+        assertEquals(new BigDecimal("95.00"), item.getUnitPrice());
+        assertEquals(new BigDecimal("190.00"), item.getTotalPrice());
         assertEquals("Ultragaz", item.getBrand());
         assertEquals("Gás 13kg", item.getCategory());
         assertEquals("Gás", item.getType());
         assertTrue(item.isAvailable());
         assertNull(item.getUnavailableReason());
-        assertEquals(new BigDecimal("220.00"), entrega.getSubtotal());
+        assertEquals(new BigDecimal("190.00"), entrega.getSubtotal());
         assertEquals("loja-1", entrega.getSupplierId());
         assertEquals("Gás Centro", entrega.getSupplierName());
         assertEquals(new BigDecimal("190.00"), retirada.getSubtotal());
@@ -107,7 +106,7 @@ class CartPreviewServiceTest {
     void deveUsarEntregaSemModo() {
         when(productItemRepository.findAllById(anyIterable())).thenReturn(List.of(produto(5L, 10, lojaAberta())));
 
-        assertEquals(new BigDecimal("110.00"), unicoItem(service.preview(pedido(null, new CartLineDTO(5L, 1)))).getUnitPrice());
+        assertEquals(new BigDecimal("95.00"), unicoItem(service.preview(pedido(null, new CartLineDTO(5L, 1)))).getUnitPrice());
     }
 
     @Test
@@ -177,7 +176,7 @@ class CartPreviewServiceTest {
         CartPreviewDTO preview = service.preview(pedido("DELIVERY", new CartLineDTO(5L, 1), new CartLineDTO(6L, 1)));
 
         assertEquals(2, preview.getItems().size());
-        assertEquals(new BigDecimal("110.00"), preview.getSubtotal());
+        assertEquals(new BigDecimal("95.00"), preview.getSubtotal());
         assertEquals(6L, preview.getItems().get(1).getProductId());
         assertFalse(preview.getItems().get(1).isAvailable());
     }

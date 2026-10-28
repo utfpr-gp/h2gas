@@ -63,8 +63,7 @@ class ProductItemRepositoryTest {
     private ProductItem criarProduto(Supplier supplier, CategoryProduct categoryProduct, String brand, BigDecimal preco) {
         ProductItem productItem = new ProductItem();
         productItem.setBrand(brand);
-        productItem.setPriceDelivery(preco);
-        productItem.setPricePickup(preco);
+        productItem.setPrice(preco);
         productItem.setStockQuantity(10);
         productItem.setSupplier(supplier);
         productItem.setCategoryProduct(categoryProduct);
