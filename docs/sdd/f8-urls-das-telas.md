@@ -116,8 +116,23 @@ perfil; abrir cinco URLs antigas e conferir o redirect.
 
 ## 8. Definição de Pronto
 
-- [ ] Todas as rotas da tabela nas URLs novas, com redirect das antigas.
-- [ ] Menu, abas, guards e telas sem nenhuma URL antiga.
-- [ ] Testes da seção 6 verdes; `ng test` sem falha nova; `ng build` ok.
-- [ ] E2E registrado aqui com data.
-- [ ] Nada do "Fora de Escopo".
+- [x] Todas as rotas da tabela nas URLs novas, com redirect das antigas.
+- [x] Menu, abas, guards e telas sem nenhuma URL antiga.
+- [x] Testes da seção 6 verdes; `ng test` sem falha nova (só as 10 antigas
+      de provider); `ng build` ok.
+- [x] E2E registrado aqui com data.
+- [x] Nada do "Fora de Escopo".
+
+### Registro do teste manual (2026-10-27)
+
+- Abertas como visitante, em 390 px: `/fornecedores/seed-loja-24h/produtos`
+  foi para `/lojas/seed-loja-24h` (com o id), e a loja abriu. `/register`
+  foi para `/cadastro`, `/register-supplier` para `/cadastro/fornecedor`,
+  `/unauthorized` para `/acesso-negado` e `/email-sent` para
+  `/email-enviado`. `/dashboard` foi para `/minha-loja/painel` e dali, sem
+  login, para `/login`, pelo guard.
+- Achado no TDD: `safeReturnUrl` recusava só `/login` e `/register`. Passou
+  a recusar também `/cadastro` (a URL nova); `/register` continua recusado.
+- Os itens de menu de cada perfil logado ficaram cobertos pelos specs do
+  menu e das barras (hrefs nas URLs novas). Não foram clicados no
+  navegador.

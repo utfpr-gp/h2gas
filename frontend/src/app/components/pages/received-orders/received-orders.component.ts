@@ -232,7 +232,7 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
 
   goToDeliverers() {
     this.closeDispatch();
-    this.router.navigate(['/entregadores']);
+    this.router.navigate(['/minha-loja/entregadores']);
   }
 
   // Cenário 2: cancelar só com justificativa

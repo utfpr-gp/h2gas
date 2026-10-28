@@ -108,7 +108,7 @@ describe('ProductItemFormComponent', () => {
     expect('priceDelivery' in enviado).toBeFalse();
     expect('pricePickup' in enviado).toBeFalse();
     expect(productItemServiceSpy.createWithFile.calls.mostRecent().args[1]).toBe(arquivo);
-    expect(navigateSpy).toHaveBeenCalledWith(['/product-items']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/minha-loja/produtos']);
   });
 
   it('deveExigirImagemNoCadastro', async () => {
@@ -235,7 +235,7 @@ describe('ProductItemFormComponent', () => {
 
     (byId('cancel-product') as HTMLButtonElement).click();
 
-    expect(navigateSpy).toHaveBeenCalledWith(['/product-items']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/minha-loja/produtos']);
   });
 
   it('deveCarregarPrecoEFreteNaEdicao', async () => {
@@ -258,6 +258,6 @@ describe('ProductItemFormComponent', () => {
     expect(enviado.shippingFee).toBe(0);
     expect('priceDelivery' in enviado).toBeFalse();
     expect('pricePickup' in enviado).toBeFalse();
-    expect(navigateSpy).toHaveBeenCalledWith(['/product-items']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/minha-loja/produtos']);
   });
 });

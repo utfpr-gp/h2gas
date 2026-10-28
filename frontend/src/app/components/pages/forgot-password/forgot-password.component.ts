@@ -47,7 +47,7 @@ export class ForgotPasswordComponent {
 
       next: (response) => {
         this.loading = false;
-        this.router.navigate(['/email-sent']);       
+        this.router.navigate(['/email-enviado']);       
       },
       error: (err) => {
         this.loading = false;

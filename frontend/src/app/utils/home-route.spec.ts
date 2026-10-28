@@ -4,7 +4,7 @@ describe('homeFor', () => {
   it('deveLevarCadaPerfilAoSeuInicio', () => {
     expect(homeFor('CUSTOMER')).toBe('/inicio');
     expect(homeFor('ADMIN')).toBe('/admin');
-    expect(homeFor('SUPPLIER')).toBe('/dashboard');
+    expect(homeFor('SUPPLIER')).toBe('/minha-loja/painel');
     expect(homeFor('DELIVERER')).toBe('/entregas');
     expect(homeFor(undefined)).toBe('/inicio');
   });

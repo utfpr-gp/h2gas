@@ -46,7 +46,7 @@
 
         <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide mt-6 mb-2">Plataforma</h2>
         <section class="grid grid-cols-2 lg:grid-cols-4 gap-3" aria-label="Usuários e fornecedores">
-            <a routerLink="/supplier-approval" data-testid="kpi-pending-suppliers"
+            <a routerLink="/admin/fornecedores" data-testid="kpi-pending-suppliers"
                 class="rounded-xl shadow-md border p-4 transition hover:shadow-lg focus-visible:outline-2 focus-visible:outline-primary"
                 [ngClass]="dashboard.pendingSuppliers ? 'bg-warning/15 border-warning' : 'bg-white border-gray-200'">
                 <p class="text-xs text-gray-600 flex items-center gap-1">
@@ -60,7 +60,7 @@
                 <p class="text-xs text-gray-500">Fornecedores aprovados</p>
                 <p data-testid="kpi-active-suppliers" class="text-xl font-bold text-gray-800 mt-1">{{ dashboard.activeSuppliers }}</p>
             </div>
-            <a routerLink="/register-city" class="bg-white rounded-xl shadow-md border border-gray-200 p-4 transition hover:shadow-lg">
+            <a routerLink="/admin/cidades" class="bg-white rounded-xl shadow-md border border-gray-200 p-4 transition hover:shadow-lg">
                 <p class="text-xs text-gray-500">Cidades atendidas</p>
                 <p data-testid="kpi-cities" class="text-xl font-bold text-gray-800 mt-1">{{ dashboard.cities }}</p>
             </a>

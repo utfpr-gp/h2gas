@@ -53,10 +53,10 @@
             <a routerLink="/admin/usuarios" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
               <span class="material-icons" aria-hidden="true">group</span><span>Usuários</span>
             </a>
-            <a routerLink="/supplier-approval" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
+            <a routerLink="/admin/fornecedores" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
               <span class="material-icons" aria-hidden="true">storefront</span><span>Fornecedores</span>
             </a>
-            <a routerLink="/register-city" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
+            <a routerLink="/admin/cidades" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
               <span class="material-icons" aria-hidden="true">map</span><span>Cidades</span>
             </a>
             <a routerLink="/admin/tipos" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
@@ -76,20 +76,20 @@
 
             <ul *ngIf="productsMenuOpen" @fadeIn class="absolute bg-white rounded-xl shadow-xl border border-gray-200 py-1 mt-2 min-w-[200px] z-50">
               <li>
-                <a routerLink="/product-items" routerLinkActive="bg-gray-100 font-semibold" ariaCurrentWhenActive="page" (click)="productsMenuOpen = false"
+                <a routerLink="/minha-loja/produtos" routerLinkActive="bg-gray-100 font-semibold" ariaCurrentWhenActive="page" (click)="productsMenuOpen = false"
                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Item produtos</a>
               </li>
             </ul>
           </div>
 
           <ng-container *ngIf="isSupplier">
-            <a routerLink="/dashboard" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
+            <a routerLink="/minha-loja/painel" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
               <span class="material-icons" aria-hidden="true">insights</span><span>Dashboard</span>
             </a>
-            <a routerLink="/dashboard-fornecedor" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
+            <a routerLink="/minha-loja/pedidos" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
               <span class="material-icons" aria-hidden="true">inbox</span><span>Pedidos</span>
             </a>
-            <a routerLink="/entregadores" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
+            <a routerLink="/minha-loja/entregadores" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
               <span class="material-icons" aria-hidden="true">two_wheeler</span><span>Entregadores</span>
             </a>
           </ng-container>
@@ -312,10 +312,10 @@
           <a routerLink="/admin/usuarios" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
             <span class="material-icons" aria-hidden="true">group</span>Usuários
           </a>
-          <a routerLink="/supplier-approval" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
+          <a routerLink="/admin/fornecedores" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
             <span class="material-icons" aria-hidden="true">storefront</span>Fornecedores
           </a>
-          <a routerLink="/register-city" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
+          <a routerLink="/admin/cidades" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
             <span class="material-icons" aria-hidden="true">map</span>Cidades
           </a>
           <a routerLink="/admin/tipos" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
@@ -326,13 +326,13 @@
           </a>
         </ng-container>
         <ng-container *ngIf="isSupplier">
-          <a routerLink="/dashboard" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
+          <a routerLink="/minha-loja/painel" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
             <span class="material-icons" aria-hidden="true">insights</span>Dashboard
           </a>
-          <a routerLink="/dashboard-fornecedor" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
+          <a routerLink="/minha-loja/pedidos" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
             <span class="material-icons" aria-hidden="true">inbox</span>Pedidos
           </a>
-          <a routerLink="/entregadores" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
+          <a routerLink="/minha-loja/entregadores" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
             <span class="material-icons" aria-hidden="true">two_wheeler</span>Entregadores
           </a>
         </ng-container>
@@ -343,7 +343,7 @@
             <span class="material-icons transition-transform" [ngClass]="{ 'rotate-180': submenuOpen }" aria-hidden="true">expand_more</span>
           </button>
           <div *ngIf="submenuOpen" @expandCollapse class="flex flex-col pl-9 gap-1">
-            <a routerLink="/product-items" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="{{ t.hover }} px-3 py-2 rounded-md">Item produtos</a>
+            <a routerLink="/minha-loja/produtos" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="{{ t.hover }} px-3 py-2 rounded-md">Item produtos</a>
           </div>
         </ng-container>
 

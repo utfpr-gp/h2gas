@@ -170,8 +170,8 @@ describe('MenuComponent', () => {
     const nav = (fixture.nativeElement as HTMLElement).querySelector('nav') as HTMLElement;
 
     const hrefs = Array.from(nav.querySelectorAll('a')).map((a) => a.getAttribute('href'));
-    expect(hrefs).toContain('/dashboard');
-    expect(hrefs).toContain('/dashboard-fornecedor');
+    expect(hrefs).toContain('/minha-loja/painel');
+    expect(hrefs).toContain('/minha-loja/pedidos');
     expect(nav.textContent).toContain('Dashboard');
     expect(nav.textContent).toContain('Pedidos');
     expect(nav.textContent).toContain('Produtos');
@@ -179,7 +179,7 @@ describe('MenuComponent', () => {
 
   it('naoDeveExibirDashboardParaCliente', () => {
     const hrefs = Array.from((fixture.nativeElement as HTMLElement).querySelectorAll('a')).map((a) => a.getAttribute('href'));
-    expect(hrefs).not.toContain('/dashboard');
+    expect(hrefs).not.toContain('/minha-loja/painel');
   });
 
   it('naoDeveExibirAbasDoEntregadorParaCliente', () => {
@@ -369,20 +369,20 @@ describe('MenuComponent', () => {
 
     entrarComo(perfis.admin);
     const clique = new MouseEvent('click', { bubbles: true, cancelable: true });
-    linkPara('/register-city')!.dispatchEvent(clique);
+    linkPara('/admin/cidades')!.dispatchEvent(clique);
     await fixture.whenStable();
 
     expect(clique.defaultPrevented).toBeTrue();
-    expect(TestBed.inject(Router).url).toBe('/register-city');
+    expect(TestBed.inject(Router).url).toBe('/admin/cidades');
   });
 
   it('deveDestacarOLinkAtivo', async () => {
     entrarComo(perfis.admin);
 
-    await navegar('/register-city');
+    await navegar('/admin/cidades');
 
-    expect(linkPara('/register-city')!.classList).toContain('bg-white/15');
-    expect(linkPara('/register-city')!.getAttribute('aria-current')).toBe('page');
+    expect(linkPara('/admin/cidades')!.classList).toContain('bg-white/15');
+    expect(linkPara('/admin/cidades')!.getAttribute('aria-current')).toBe('page');
     expect(linkPara('/admin')!.classList).not.toContain('bg-white/15');
     expect(linkPara('/admin')!.getAttribute('aria-current')).toBeNull();
 
@@ -398,7 +398,7 @@ describe('MenuComponent', () => {
     entrarComo(perfis.cliente);
     expect(logo()).toBe('/inicio');
     entrarComo(perfis.fornecedor);
-    expect(logo()).toBe('/dashboard');
+    expect(logo()).toBe('/minha-loja/painel');
     entrarComo(perfis.entregador);
     expect(logo()).toBe('/entregas');
     entrarComo(perfis.admin);
@@ -416,7 +416,7 @@ describe('MenuComponent', () => {
       .map((a) => a.getAttribute('href'));
 
     for (const [onde, hrefs] of [['desktop', desktop], ['mobile', mobile]] as const) {
-      expect(hrefs).withContext(onde).toEqual(jasmine.arrayContaining(['/admin', '/admin/usuarios', '/supplier-approval', '/register-city', '/admin/tipos', '/admin/categorias']));
+      expect(hrefs).withContext(onde).toEqual(jasmine.arrayContaining(['/admin', '/admin/usuarios', '/admin/fornecedores', '/admin/cidades', '/admin/tipos', '/admin/categorias']));
       expect(hrefs).withContext(onde).not.toContain('/inicio');
       expect(hrefs).withContext(onde).not.toContain('/meus-pedidos');
     }
@@ -488,7 +488,7 @@ describe('MenuComponent', () => {
     expect(painel()).toBeTruthy();
     expect(botao().getAttribute('aria-expanded')).toBe('true');
 
-    await navegar('/dashboard-fornecedor');
+    await navegar('/minha-loja/pedidos');
     expect(painel()).withContext('ao navegar').toBeNull();
 
     botao().click();
@@ -577,12 +577,12 @@ describe('MenuComponent', () => {
   it('deveLevarOVisitanteAoLoginVoltandoParaAPaginaAtual', () => {
     comoVisitante();
     const router = TestBed.inject(Router);
-    spyOnProperty(router, 'url', 'get').and.returnValue('/fornecedores/loja-1/produtos');
+    spyOnProperty(router, 'url', 'get').and.returnValue('/lojas/loja-1');
     spyOn(router, 'navigate');
 
     (fixture.nativeElement.querySelector('[data-testid="visitor-login"]') as HTMLButtonElement).click();
 
-    expect(router.navigate).toHaveBeenCalledWith(['/login'], { queryParams: { returnUrl: '/fornecedores/loja-1/produtos' } });
+    expect(router.navigate).toHaveBeenCalledWith(['/login'], { queryParams: { returnUrl: '/lojas/loja-1' } });
   });
 
   // HU13 Cenário 12: a guarda descarta a sessão vencida; na navegação seguinte o menu já é de visitante

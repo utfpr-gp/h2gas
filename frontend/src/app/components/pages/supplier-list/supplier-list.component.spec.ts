@@ -513,6 +513,6 @@ describe('SupplierListComponent', () => {
 
     (fixture.nativeElement.querySelector('[data-testid="product-store"]') as HTMLButtonElement).click();
 
-    expect(router.navigate).toHaveBeenCalledWith(['/fornecedores', 'loja-7', 'produtos']);
+    expect(router.navigate).toHaveBeenCalledWith(['/lojas', 'loja-7']);
   });
 });

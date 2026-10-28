@@ -9,7 +9,7 @@ describe('returnUrl', () => {
   });
 
   it('deveRecusarCaminhoExternoOuDeLogin', () => {
-    for (const raw of [null, undefined, '', 'https://evil.com', '//evil.com', '/\\evil.com', 'javascript:alert(1)', '/login', '/login/senha', '/register']) {
+    for (const raw of [null, undefined, '', 'https://evil.com', '//evil.com', '/\\evil.com', 'javascript:alert(1)', '/login', '/login/senha', '/cadastro', '/cadastro/fornecedor', '/register']) {
       expect(safeReturnUrl(raw as any)).withContext(String(raw)).toBeNull();
     }
   });
@@ -36,6 +36,6 @@ describe('returnUrl', () => {
     navigateAfterLogin(router, 'https://evil.com', 'SUPPLIER');
 
     expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/resumo-pedido?modo=compra-direta');
-    expect(router.navigate).toHaveBeenCalledOnceWith(['/dashboard']);
+    expect(router.navigate).toHaveBeenCalledOnceWith(['/minha-loja/painel']);
   });
 });

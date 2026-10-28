@@ -72,7 +72,7 @@ describe('AdminDashboardComponent', () => {
 
     const card = byId('kpi-pending-suppliers') as HTMLAnchorElement;
     expect(card.textContent).toContain('2');
-    expect(card.getAttribute('href')).toBe('/supplier-approval');
+    expect(card.getAttribute('href')).toBe('/admin/fornecedores');
   });
 
   it('deveMostrarAMensagemDoBackendNoErro', async () => {

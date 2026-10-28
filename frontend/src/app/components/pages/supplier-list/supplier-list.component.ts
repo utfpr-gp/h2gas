@@ -258,7 +258,7 @@ export class SupplierListComponent implements OnInit {
 
 
   navigate(id?: string) {
-    this.router.navigate(['/fornecedores', id, 'produtos']);
+    this.router.navigate(['/lojas', id]);
   }
 
   // HU14: produto aguardando confirmação de esvaziar o carrinho de outra loja

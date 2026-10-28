@@ -155,7 +155,7 @@ export class ProductItemFormComponent implements OnInit {
   }
 
   cancel() {
-    this.navigateRoute('/product-items');
+    this.navigateRoute('/minha-loja/produtos');
   }
 
   updateProduct() {
@@ -171,7 +171,7 @@ export class ProductItemFormComponent implements OnInit {
         console.log("Atulizado com sucesso!!");
         this.isLoading = false;
         this.toastr.success('Produto atualizado.');
-        this.navigateRoute('/product-items')
+        this.navigateRoute('/minha-loja/produtos')
       },
       error: (err) => {
         console.error("Erros ao atualizar!!");
@@ -217,7 +217,7 @@ export class ProductItemFormComponent implements OnInit {
         console.log("salvo com sucesso!!");
         this.isLoading = false;
         this.toastr.success('Produto cadastrado.');
-        this.navigateRoute('/product-items')
+        this.navigateRoute('/minha-loja/produtos')
       },
       error: (err) => {
         console.error("Erros ao salvar!!");
