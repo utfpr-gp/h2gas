@@ -100,6 +100,9 @@ describe('SupplierHomeComponent', () => {
 
     expect(valor('loja')).toBe('Aberta');
     expect(card('loja')!.textContent).toContain('fecha às 18:00');
+    // o card leva às configurações e diz isso (pedido do Igor: "precisa da configuração também")
+    expect(card('loja')!.textContent).toContain('Configurações');
+    expect(card('loja')!.textContent).toContain('horário, dados, endereço e estoque');
   });
 
   it('deveMostrarTracoSeUmaFonteFalhar', async () => {

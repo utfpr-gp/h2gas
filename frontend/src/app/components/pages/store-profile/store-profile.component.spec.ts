@@ -257,7 +257,7 @@ describe('StoreProfileComponent', () => {
   it('deveRolarAteASecaoDoFragmento', async () => {
     const rolar = spyOn(Element.prototype, 'scrollIntoView');
     await setup(perfil, 'funcionamento');
-    await new Promise((r) => setTimeout(r));
+    await new Promise((r) => setTimeout(r, 100));
 
     expect(rolar).toHaveBeenCalled();
     expect((rolar.calls.mostRecent().object as HTMLElement).id).toBe('funcionamento');

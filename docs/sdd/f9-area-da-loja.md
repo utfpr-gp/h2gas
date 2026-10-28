@@ -21,13 +21,14 @@ da loja num lugar só, para não me perder entre telas.
 
 - **Cenário 1 — Hub na entrada**: Dado o fornecedor logado, Quando entra
   no app ou abre `/minha-loja`, Então vê seis cards: Pedidos, Painel,
-  Produtos, Entregadores, Loja e Histórico.
+  Produtos, Entregadores, Configurações e Histórico.
 - **Cenário 2 — Número em cada card**:
   - Pedidos mostra quantos estão pendentes;
   - Painel mostra o faturamento do mês;
   - Produtos mostra quantos estão com estoque baixo ou zerado;
   - Entregadores mostra quantos estão livres de quantos;
-  - Loja mostra se está aberta e quando fecha ou abre;
+  - Configurações mostra se a loja está aberta e quando fecha ou abre, e
+    o que se ajusta lá (horário, dados, endereço e estoque);
   - Histórico não tem número.
 - **Cenário 3 — Card leva à tela**: Quando o fornecedor toca num card,
   Então abre a tela correspondente.
@@ -87,7 +88,7 @@ Usa só endpoints que já existem, sem backend novo:
 | Painel | o mesmo dashboard → `totalRevenue` do mês | `/minha-loja/painel` |
 | Produtos | `GET /product-items/mine/summary` → `lowStock + outOfStock` | `/minha-loja/produtos` |
 | Entregadores | `GET /deliverers/mine` → ativos e não ocupados / ativos | `/minha-loja/entregadores` |
-| Loja | `GET /suppliers/{id}/open` + `GET /suppliers/mine/settings` | `/minha-loja/configuracoes` |
+| Configurações | `GET /suppliers/{id}/open` + `GET /suppliers/mine/settings` | `/minha-loja/configuracoes` |
 | Histórico | sem número | `/minha-loja/pedidos/historico` |
 
 - Cada fonte é carregada sozinha. Em caso de falha, o card mostra "—",
@@ -163,10 +164,38 @@ Usa só endpoints que já existem, sem backend novo:
 
 ## 8. Definição de Pronto
 
-- [ ] Hub em `/minha-loja` como tela inicial do fornecedor, com os seis
+- [x] Hub em `/minha-loja` como tela inicial do fornecedor, com os seis
       cards, os números e a falha isolada.
-- [ ] Uma tela de configurações com as cinco seções e salvar por seção.
-- [ ] Links com âncora e menu sem duplicatas.
-- [ ] Testes da seção 6 verdes; `ng test` sem falha nova; `ng build` ok.
-- [ ] E2E em 390 e 1280 px registrado aqui com data.
-- [ ] Nada do "Fora de Escopo".
+- [x] Uma tela de configurações com as cinco seções e salvar por seção.
+- [x] Links com âncora e menu sem duplicatas.
+- [x] Testes da seção 6 verdes; `ng test` (só as 10 falhas antigas de
+      provider) sem falha nova; `ng build` ok.
+- [x] E2E em 390 e 1280 px registrado aqui com data.
+- [x] Nada do "Fora de Escopo".
+
+### Registro do teste manual (2026-10-28)
+
+- Logado como a loja de teste "Plantão Gás e Água"
+  (`plantao@seed-teste.h2gas.local`, com senha definida só no banco
+  local), em 1280 e 390 px:
+  - `/minha-loja` abre o hub com os números reais: 0 pendentes, R$ 0,00
+    no mês, 2 com estoque baixo ou zerado (card em tom de alerta),
+    entregadores 0 de 0, e "Configurações · Aberta · fecha às 23:59";
+  - o menu do topo tem só Início, Pedidos e Produtos.
+- `/minha-loja/configuracoes#funcionamento` abre a tela já na seção:
+  ela fica a 96 px do topo, abaixo da faixa fixa de atalhos.
+- Ajustes achados no teste:
+  - **Rolagem pelo `#fragmento`**: a seção ainda não estava no DOM
+    quando a rolagem rodava; agora a tela tenta de novo por até 1 s.
+  - **Faixa de atalhos**: a barra de rolagem dela ficou escondida.
+  - **Hub no celular**: os títulos não cabiam com a seta nos cards de
+    meia largura; a seta passou a aparecer só nos cards largos.
+  - **Card da loja**: passou a se chamar "Configurações", a pedido do
+    autor ("precisa da configuração também do fornecedor").
+- Salvar por seção, no navegador, em 390 px:
+  - com a abertura editada para 09:30 sem salvar, o estoque mínimo foi
+    salvo de 8 para 9;
+  - a API devolveu o horário intacto (00:00–23:59) e o estoque 9;
+  - o campo de abertura continuou com 09:30, com o próprio "Salvar"
+    habilitado;
+  - o estoque foi voltado a 8 depois do teste.

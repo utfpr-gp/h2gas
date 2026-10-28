@@ -6,7 +6,7 @@
 
     <!-- F9: sumário das seções; rola até cada uma -->
     <nav aria-label="Seções da loja" class="sticky top-0 z-20 -mx-4 px-4 md:mx-0 md:px-0 py-2 mb-3 bg-base-200/95 backdrop-blur
-                flex gap-2 overflow-x-auto">
+                flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <button *ngFor="let sec of sections" type="button" [attr.data-testid]="'jump-' + sec.id" (click)="scrollTo(sec.id)"
             class="btn btn-sm btn-ghost rounded-full border border-gray-200 bg-white shrink-0 min-h-11 sm:min-h-8">{{ sec.label }}</button>
     </nav>

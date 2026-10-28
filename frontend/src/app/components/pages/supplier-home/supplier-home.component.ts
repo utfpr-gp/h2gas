@@ -83,6 +83,6 @@ export class SupplierHomeComponent implements OnInit {
   get storeHint(): string {
     if (this.open === true) return this.closingTime ? `fecha às ${this.closingTime}` : 'aberta agora';
     if (this.open === false) return this.openingTime ? `abre às ${this.openingTime}` : 'fora do horário';
-    return 'horário, dados e estoque';
+    return 'sem horário definido';
   }
 }

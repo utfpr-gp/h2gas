@@ -87,8 +87,8 @@ export class StoreProfileComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
   ) {}
 
-  scrollTo(id: string) {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  scrollTo(id: string, behavior: ScrollBehavior = 'smooth') {
+    document.getElementById(id)?.scrollIntoView({ behavior, block: 'start' });
   }
 
   // F9: "Ajustar horário" e "Ajustar o estoque mínimo" chegam com #funcionamento / #estoque;
@@ -106,7 +106,18 @@ export class StoreProfileComponent implements OnInit, OnDestroy {
     const fragment = this.route.snapshot.fragment;
     if (!fragment || this.fragmentHandled || !this.profileReady || !this.settingsReady) return;
     this.fragmentHandled = true;
-    setTimeout(() => this.scrollTo(fragment));
+    this.scrollWhenRendered(fragment, 20);
+  }
+
+  // a seção pode demorar alguns quadros para entrar no DOM; tenta de novo até ela existir
+  private scrollWhenRendered(id: string, triesLeft: number) {
+    setTimeout(() => {
+      if (document.getElementById(id)) {
+        this.scrollTo(id, 'auto');
+      } else if (triesLeft > 0) {
+        this.scrollWhenRendered(id, triesLeft - 1);
+      }
+    }, 50);
   }
 
   ngOnInit(): void {
