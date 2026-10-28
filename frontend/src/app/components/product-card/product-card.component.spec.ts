@@ -23,7 +23,7 @@ describe('ProductCardComponent', () => {
   });
 
   it('deveEmitirProdutoComQuantidadeUmAoClicarEmAdicionar', () => {
-    component.product = { id: 10, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as ProductItem;
+    component.product = { id: 10, brand: 'Ultragaz', price: 100 } as ProductItem;
     fixture.detectChanges();
     spyOn(component.addToCart, 'emit');
 
@@ -34,35 +34,24 @@ describe('ProductCardComponent', () => {
     );
   });
 
-  it('deveExibirBadgeDeFreteGratisQuandoFreteZero', () => {
-    component.product = { id: 10, brand: 'Ultragaz', priceDelivery: 100, pricePickup: 100, freeDelivery: true } as ProductItem;
+  // ---- HU21: um preço só, sem o selo de frete do produto ----
+  it('deveMostrarUmPrecoSo', () => {
+    component.product = { id: 10, brand: 'Ultragaz', price: 95 } as ProductItem;
     fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
 
-    const selo = fixture.nativeElement.querySelector('[data-testid="free-delivery"]') as HTMLElement;
-    expect(selo).toBeTruthy();
-    expect(selo.textContent).toContain('Entrega grátis');
-  });
-
-  it('naoDeveExibirBadgeQuandoHouverFrete', () => {
-    component.product = { id: 10, brand: 'Ultragaz', priceDelivery: 110, pricePickup: 95, freeDelivery: false } as ProductItem;
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.querySelector('[data-testid="free-delivery"]')).toBeNull();
-  });
-
-  it('deveExibirAmbosPrecosSimultaneamente', () => {
-    component.product = { id: 10, brand: 'Ultragaz', priceDelivery: 110, pricePickup: 95 } as ProductItem;
-    fixture.detectChanges();
-
-    const entrega = fixture.nativeElement.querySelector('[data-testid="price-delivery"]') as HTMLElement;
-    const retirada = fixture.nativeElement.querySelector('[data-testid="price-pickup"]') as HTMLElement;
-    expect(entrega.textContent).toMatch(/110[.,]00/);
-    expect(retirada.textContent).toMatch(/95[.,]00/);
+    const preco = el.querySelector('[data-testid="product-price"]') as HTMLElement;
+    expect(preco.textContent).toMatch(/95[.,]00/);
+    expect(preco.classList).toContain('text-lg');
+    expect(el.querySelector('[data-testid="price-delivery"]')).toBeNull();
+    expect(el.querySelector('[data-testid="price-pickup"]')).toBeNull();
+    expect(el.querySelector('[data-testid="free-delivery"]')).toBeNull();
+    expect(el.textContent).not.toContain('Retirada na loja');
   });
 
   // ---- HU15 §5.5 (revoga o F7 §5.21): Comprar agora é a ação cheia, em verde; Adicionar fica em contorno ----
   it('deveDestacarComprarAgoraEmVerde', () => {
-    component.product = { id: 1, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as any;
+    component.product = { id: 1, brand: 'Ultragaz', price: 100 } as any;
     fixture.detectChanges();
 
     const comprar = fixture.nativeElement.querySelector('[data-testid="buy-now"]') as HTMLButtonElement;
@@ -74,7 +63,7 @@ describe('ProductCardComponent', () => {
   });
 
   it('deveDeixarAsDuasAcoesLadoALado', () => {
-    component.product = { id: 1, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as any;
+    component.product = { id: 1, brand: 'Ultragaz', price: 100 } as any;
     fixture.detectChanges();
 
     const acoes = fixture.nativeElement.querySelector('[data-testid="product-actions"]') as HTMLElement;
@@ -85,7 +74,7 @@ describe('ProductCardComponent', () => {
   });
 
   it('deveExibirAFotoSemCaixaBranca', () => {
-    component.product = { id: 1, brand: 'Ultragaz', imageUrl: 'x.jpg', priceDelivery: 120, pricePickup: 100 } as any;
+    component.product = { id: 1, brand: 'Ultragaz', imageUrl: 'x.jpg', price: 100 } as any;
     fixture.detectChanges();
 
     const img = fixture.nativeElement.querySelector('[data-testid="product-image"]') as HTMLImageElement;
@@ -100,7 +89,7 @@ describe('ProductCardComponent', () => {
   });
 
   it('deveMostrarOIconeQuandoNaoHaFoto', () => {
-    component.product = { id: 1, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as any;
+    component.product = { id: 1, brand: 'Ultragaz', price: 100 } as any;
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('img')).toBeNull();
@@ -108,8 +97,8 @@ describe('ProductCardComponent', () => {
   });
 
   it('deveUsarOsIconesArredondados', () => {
-    component.product = { id: 1, brand: 'Ultragaz', supplierId: 'l', supllierName: 'Loja', freeDelivery: true,
-      priceDelivery: 100, pricePickup: 100 } as any;
+    component.product = { id: 1, brand: 'Ultragaz', supplierId: 'l', supllierName: 'Loja', 
+      price: 100 } as any;
     component.showStore = true;
     fixture.detectChanges();
 
@@ -118,19 +107,8 @@ describe('ProductCardComponent', () => {
     expect(el.querySelectorAll('.material-symbols-rounded').length).toBeGreaterThan(0);
   });
 
-  it('deveDarDestaqueAoPrecoDeEntrega', () => {
-    component.product = { id: 1, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as any;
-    fixture.detectChanges();
-
-    const entrega = fixture.nativeElement.querySelector('[data-testid="price-delivery-value"]') as HTMLElement;
-    const retirada = fixture.nativeElement.querySelector('[data-testid="price-pickup"]') as HTMLElement;
-    expect(entrega.classList).toContain('text-lg');
-    expect(retirada.classList).toContain('text-sm');
-    expect(retirada.textContent).toContain('Retirada na loja');
-  });
-
   it('deveCarregarAImagemSobDemandaComTamanhoReservado', () => {
-    component.product = { id: 1, brand: 'Ultragaz', imageUrl: 'x.jpg', priceDelivery: 120, pricePickup: 100 } as any;
+    component.product = { id: 1, brand: 'Ultragaz', imageUrl: 'x.jpg', price: 100 } as any;
     fixture.detectChanges();
 
     const img = fixture.nativeElement.querySelector('[data-testid="product-image"]') as HTMLImageElement;
@@ -140,14 +118,14 @@ describe('ProductCardComponent', () => {
   });
 
   it('deveTerAlvoDeToque44pxNoCelular', () => {
-    component.product = { id: 1, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as any;
+    component.product = { id: 1, brand: 'Ultragaz', price: 100 } as any;
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('[data-testid="add-to-cart"]').classList).toContain('min-h-11');
   });
 
   it('deveEmitirCompraDiretaComQuantidadeUm', () => {
-    component.product = { id: 10, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as ProductItem;
+    component.product = { id: 10, brand: 'Ultragaz', price: 100 } as ProductItem;
     fixture.detectChanges();
     spyOn(component.buyNow, 'emit');
     spyOn(component.addToCart, 'emit');
@@ -160,7 +138,7 @@ describe('ProductCardComponent', () => {
 
   // ---- HU18: produto de loja fechada aparece, mas não dá para comprar ----
   it('deveBloquearACompraComMotivo', () => {
-    component.product = { id: 10, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as ProductItem;
+    component.product = { id: 10, brand: 'Ultragaz', price: 100 } as ProductItem;
     component.blockedReason = 'Loja fechada · abre às 08:00';
     fixture.detectChanges();
     spyOn(component.addToCart, 'emit');
@@ -255,13 +233,5 @@ describe('ProductCardComponent', () => {
 
     expect(avatar()!.querySelector('img')).toBeNull();
     expect(avatar()!.textContent?.trim()).toBe('G');
-  });
-
-  it('deveUsarASacolaNaRetirada', () => {
-    component.product = { id: 1, brand: 'Ultragaz', priceDelivery: 120, pricePickup: 100 } as any;
-    fixture.detectChanges();
-
-    const retirada = fixture.nativeElement.querySelector('[data-testid="price-pickup"]') as HTMLElement;
-    expect(retirada.querySelector('.material-symbols-rounded')?.textContent?.trim()).toBe('shopping_bag');
   });
 });

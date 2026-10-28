@@ -28,8 +28,7 @@ export interface ReorderItem {
     imageUrl?: string;
     supplierId?: string;
     quantity: number;
-    priceDelivery?: number;
-    pricePickup?: number;
+    price?: number;
     unavailableReason?: 'PRODUTO_REMOVIDO' | 'SEM_ESTOQUE';
 }
 

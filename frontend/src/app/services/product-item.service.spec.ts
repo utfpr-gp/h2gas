@@ -26,10 +26,10 @@ describe('ProductItemService', () => {
   });
 
   it('deveMontarQueryStringComCategoriaESort', () => {
-    service.getProductsFromActiveSuppliers(0, 20, 5, 'Gás', 'priceDelivery,asc').subscribe();
+    service.getProductsFromActiveSuppliers(0, 20, 5, 'Gás', 'price,asc').subscribe();
 
     const req = httpMock.expectOne(
-      `${environment.apiUrl}/product-items/by-supplier-open?page=0&size=20&cityId=5&category=G%C3%A1s&sort=priceDelivery,asc`
+      `${environment.apiUrl}/product-items/by-supplier-open?page=0&size=20&cityId=5&category=G%C3%A1s&sort=price,asc`
     );
     expect(req.request.method).toBe('GET');
     req.flush({ data: [], page: 0, size: 20, totalElements: 0, totalPages: 0, hasNext: false, hasPrevious: false });

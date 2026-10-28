@@ -25,11 +25,11 @@ describe('OrderListComponent', () => {
 
   const botijao: ReorderItem = {
     productId: 5, productBrand: 'Ultragaz', category: 'P13', type: 'Gás', imageUrl: 'img.png',
-    supplierId: 'sup-1', quantity: 2, priceDelivery: 120, pricePickup: 100,
+    supplierId: 'sup-1', quantity: 2, price: 100,
   };
   const agua: ReorderItem = {
     productId: 7, productBrand: 'Minalba', category: '20L', type: 'Água', supplierId: 'sup-1',
-    quantity: 0, priceDelivery: 25, pricePickup: 20, unavailableReason: 'SEM_ESTOQUE',
+    quantity: 0, price: 20, unavailableReason: 'SEM_ESTOQUE',
   };
 
   function previewRetorna(preview: ReorderPreview) {

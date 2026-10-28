@@ -16,10 +16,6 @@
       class="absolute inset-0 w-full h-full object-contain product-photo-edge" />
     <span *ngIf="!product.imageUrl" class="material-symbols-rounded text-5xl text-base-300" aria-hidden="true">inventory_2</span>
 
-    <span *ngIf="product.freeDelivery" data-testid="free-delivery"
-      class="absolute top-2 left-2 inline-flex items-center gap-1 rounded-full bg-base-100 px-2 py-1 text-xs font-semibold text-base-content shadow-sm">
-      <span class="material-symbols-rounded text-base text-success" aria-hidden="true">local_shipping</span>Entrega grátis
-    </span>
   </div>
 
   <div class="p-3 sm:p-4 flex flex-col flex-grow gap-2">
@@ -41,19 +37,10 @@
       </button>
     </div>
 
-    <div class="flex flex-col gap-0.5">
-      <div data-testid="price-delivery" class="flex items-baseline gap-1.5">
-        <span data-testid="price-delivery-value" class="text-lg font-bold text-base-content tabular-nums">
-          {{ product.priceDelivery | currency:'BRL':'symbol':'1.2-2' }}
-        </span>
-        <span class="text-xs text-neutral">com entrega</span>
-      </div>
-      <div data-testid="price-pickup" class="flex items-center gap-1 text-sm text-neutral">
-        <span class="material-symbols-rounded text-base" aria-hidden="true">shopping_bag</span>
-        Retirada na loja ·
-        <span class="font-semibold text-primary tabular-nums">{{ product.pricePickup | currency:'BRL':'symbol':'1.2-2' }}</span>
-      </div>
-    </div>
+    <!-- HU21: um preço só; o frete aparece separado, pela distância (HU17) -->
+    <p data-testid="product-price" class="text-lg font-bold text-base-content tabular-nums">
+      {{ product.price | currency:'BRL':'symbol':'1.2-2' }}
+    </p>
 
     <div data-testid="product-actions" class="mt-auto pt-1 grid grid-cols-2 gap-2">
       <button

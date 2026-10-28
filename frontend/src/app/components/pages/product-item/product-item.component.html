@@ -68,9 +68,7 @@
                     <span class="text-xs text-gray-500">{{ p.type }}</span>
                 </div>
                 <p class="text-sm text-gray-700 flex flex-wrap gap-x-3 gap-y-0.5 tabular-nums">
-                    <span data-testid="manage-price-delivery">Entrega <strong>{{ p.priceDelivery | currency:'BRL':'symbol':'1.2-2' }}</strong></span>
-                    <span data-testid="manage-price-pickup">Retirada <strong>{{ p.pricePickup | currency:'BRL':'symbol':'1.2-2' }}</strong></span>
-                    <span *ngIf="p.freeDelivery" data-testid="manage-free-delivery" class="badge badge-success badge-outline badge-sm">Entrega grátis</span>
+                    <span data-testid="manage-price">Preço <strong>{{ p.price | currency:'BRL':'symbol':'1.2-2' }}</strong></span>
                 </p>
                 <p class="text-sm flex flex-wrap items-center gap-2">
                     <span [attr.data-testid]="'stock-badge-' + p.id" class="badge badge-sm"
