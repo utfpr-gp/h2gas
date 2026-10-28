@@ -7,8 +7,8 @@ import org.springframework.data.domain.Sort;
 // SHOP_RATING não vira Sort: produto não tem nota, então a consulta ordena pela média da loja.
 public enum ProductSortEnum {
     NONE(null, Sort.unsorted()),
-    PRICE_ASC("priceDelivery,asc", Sort.by(Sort.Direction.ASC, "priceDelivery")),
-    PRICE_DESC("priceDelivery,desc", Sort.by(Sort.Direction.DESC, "priceDelivery")),
+    PRICE_ASC("price,asc", Sort.by(Sort.Direction.ASC, "price")),
+    PRICE_DESC("price,desc", Sort.by(Sort.Direction.DESC, "price")),
     NAME("brand,asc", Sort.by(Sort.Direction.ASC, "brand")),
     NEWEST("createdAt,desc", Sort.by(Sort.Direction.DESC, "createdAt")),
     SHOP_RATING("rating", Sort.unsorted());

@@ -92,8 +92,7 @@ class OrderServiceTransactionTest {
     private ProductItem produto(String marca, int estoque) {
         ProductItem p = new ProductItem();
         p.setBrand(marca);
-        p.setPriceDelivery(new BigDecimal("100.00"));
-        p.setPricePickup(new BigDecimal("90.00"));
+        p.setPrice(new BigDecimal("90.00"));
         p.setStockQuantity(estoque);
         p.setCategoryProduct(category);
         p.setSupplier(supplier);

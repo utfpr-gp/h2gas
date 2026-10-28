@@ -93,7 +93,7 @@ class ProductItemControllerTest {
         mockMvc.perform(get("/api/product-items/by-supplier-open")
                         .param("cityId", "7")
                         .param("category", "Gás")
-                        .param("sort", "priceDelivery,asc"))
+                        .param("sort", "price,asc"))
                 .andExpect(status().isOk());
 
         verify(productItemService).findBySupplierActiveAndSupplierOpen(eq(7L), eq("Gás"), isNull(), eq(com.h2gas.enums.ProductSortEnum.PRICE_ASC), any());
@@ -160,43 +160,49 @@ class ProductItemControllerTest {
     void deveRejeitarCriacaoSemPreco() throws Exception {
         autenticarFornecedor();
 
-        postarProduto(produtoJson(",\"shippingFee\":20.00")).andExpect(status().isBadRequest());
+        postarProduto(produtoJson("")).andExpect(status().isBadRequest());
 
         verify(productItemService, never()).createProductItem(any(), any(), any());
     }
 
     @Test
-    void deveRejeitarCriacaoSemFrete() throws Exception {
+    void deveRejeitarCriacaoComPrecoNegativo() throws Exception {
         autenticarFornecedor();
 
-        postarProduto(produtoJson(",\"price\":100.00")).andExpect(status().isBadRequest());
+        postarProduto(produtoJson(",\"price\":-1.00")).andExpect(status().isBadRequest());
 
         verify(productItemService, never()).createProductItem(any(), any(), any());
     }
 
     @Test
-    void deveRejeitarCriacaoComFreteNegativo() throws Exception {
-        autenticarFornecedor();
-
-        postarProduto(produtoJson(",\"price\":100.00,\"shippingFee\":-1.00")).andExpect(status().isBadRequest());
-
-        verify(productItemService, never()).createProductItem(any(), any(), any());
-    }
-
-    @Test
-    void deveAceitarCriacaoComPrecoEFreteValidos() throws Exception {
+    @org.junit.jupiter.api.DisplayName("HU21: o produto é cadastrado só com o preço")
+    void deveAceitarCriacaoComPrecoUnico() throws Exception {
         autenticarFornecedor();
         ProductItemDTO criado = new ProductItemDTO();
         criado.setBrand("Ultragaz");
         when(productItemService.createProductItem(any(), any(), any())).thenReturn(criado);
 
-        postarProduto(produtoJson(",\"price\":100.00,\"shippingFee\":20.00")).andExpect(status().isOk());
+        postarProduto(produtoJson(",\"price\":100.00")).andExpect(status().isOk());
 
         verify(productItemService).createProductItem(any(), any(), any());
     }
 
     @Test
-    void deveRejeitarEdicaoSemPrecoEFrete() throws Exception {
+    @org.junit.jupiter.api.DisplayName("HU21: um frete enviado por cliente antigo é ignorado")
+    void deveIgnorarFreteEnviadoPorClienteAntigo() throws Exception {
+        autenticarFornecedor();
+        when(productItemService.createProductItem(any(), any(), any())).thenReturn(new ProductItemDTO());
+
+        postarProduto(produtoJson(",\"price\":100.00,\"shippingFee\":20.00")).andExpect(status().isOk());
+
+        org.mockito.ArgumentCaptor<com.h2gas.model.dto.CreateProductItemDTO> enviado =
+                org.mockito.ArgumentCaptor.forClass(com.h2gas.model.dto.CreateProductItemDTO.class);
+        verify(productItemService).createProductItem(enviado.capture(), any(), any());
+        org.junit.jupiter.api.Assertions.assertEquals(0, new java.math.BigDecimal("100.00").compareTo(enviado.getValue().getPrice()));
+    }
+
+    @Test
+    void deveRejeitarEdicaoSemPreco() throws Exception {
         autenticarFornecedor();
 
         mockMvc.perform(put("/api/product-items/12").contentType("application/json").content(produtoJson("")))
@@ -206,12 +212,12 @@ class ProductItemControllerTest {
     }
 
     @Test
-    void deveAceitarEdicaoComFreteZero() throws Exception {
+    void deveAceitarEdicaoComPrecoUnico() throws Exception {
         autenticarFornecedor();
         when(productItemService.updateProductItem(eq(12L), any(), any())).thenReturn(new ProductItemDTO());
 
         mockMvc.perform(put("/api/product-items/12").contentType("application/json")
-                        .content(produtoJson(",\"price\":120.00,\"shippingFee\":0")))
+                        .content(produtoJson(",\"price\":120.00")))
                 .andExpect(status().isOk());
 
         verify(productItemService).updateProductItem(eq(12L), any(), any());

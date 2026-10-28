@@ -18,71 +18,43 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ProductItemMapperTest {
 
-    @Test
-    @DisplayName("HU03: deve expor o preço de entrega e o de retirada no DTO do produto")
-    void deveExporPrecoDeEntregaEDeRetirada() {
-        ProductItemMapper mapper = new ProductItemMapper();
-        ReflectionTestUtils.setField(mapper, "modelMapper", new MapperConfig().modelMapper());
-
-        ProductItem productItem = new ProductItem();
-        productItem.setPriceDelivery(new BigDecimal("110.00"));
-        productItem.setPricePickup(new BigDecimal("95.00"));
-        productItem.setCategoryProduct(new CategoryProduct(null, "Gás azul", new ProductType(null, "Gás", null), null));
-
-        ProductItemDTO dto = mapper.toDto(productItem);
-
-        assertEquals(110.00, dto.getPriceDelivery());
-        assertEquals(95.00, dto.getPricePickup());
-    }
-
     private ProductItemMapper novoMapper() {
         ProductItemMapper mapper = new ProductItemMapper();
         ReflectionTestUtils.setField(mapper, "modelMapper", new MapperConfig().modelMapper());
         return mapper;
     }
 
-    private ProductItem produto(String entrega, String retirada) {
+    private ProductItem produto(String preco) {
         ProductItem productItem = new ProductItem();
-        productItem.setPriceDelivery(entrega == null ? null : new BigDecimal(entrega));
-        productItem.setPricePickup(retirada == null ? null : new BigDecimal(retirada));
+        productItem.setPrice(preco == null ? null : new BigDecimal(preco));
         productItem.setCategoryProduct(new CategoryProduct(77L, "Gás azul", new ProductType(1L, "Gás", null), null));
         return productItem;
     }
 
     @Test
-    @DisplayName("HU10: expõe o Preço (retirada) e o frete (entrega − retirada) derivados dos dois valores")
-    void deveExporPrecoEFreteDerivadosDosDoisPrecos() {
-        ProductItemDTO dto = novoMapper().toDto(produto("110.00", "95.00"));
+    @DisplayName("HU21: o produto tem um preço só, sem frete embutido")
+    void deveExporUmPrecoSo() {
+        ProductItemDTO dto = novoMapper().toDto(produto("95.00"));
 
         assertEquals(95.0, dto.getPrice());
-        assertEquals(15.0, dto.getShippingFee());
+        java.util.Set<String> campos = java.util.Arrays.stream(ProductItemDTO.class.getDeclaredFields())
+                .map(java.lang.reflect.Field::getName).collect(java.util.stream.Collectors.toSet());
+        assertFalse(campos.contains("priceDelivery"));
+        assertFalse(campos.contains("pricePickup"));
+        assertFalse(campos.contains("shippingFee"));
+        assertFalse(campos.contains("freeDelivery"));
     }
 
     @Test
-    @DisplayName("HU10: preços iguais (mesmo com escala diferente) sinalizam Entrega Grátis")
-    void deveSinalizarFreteGratisQuandoOFreteForZero() {
-        assertTrue(novoMapper().toDto(produto("110.00", "110.0")).isFreeDelivery());
-    }
-
-    @Test
-    @DisplayName("HU10: preços diferentes não sinalizam Entrega Grátis")
-    void naoDeveSinalizarFreteGratisQuandoHouverFrete() {
-        assertFalse(novoMapper().toDto(produto("110.00", "95.00")).isFreeDelivery());
-    }
-
-    @Test
-    @DisplayName("HU10: preço nulo não quebra o mapeamento nem sinaliza Entrega Grátis")
-    void naoDeveQuebrarQuandoAlgumPrecoForNulo() {
-        assertFalse(novoMapper().toDto(produto("110.00", null)).isFreeDelivery());
-        assertFalse(novoMapper().toDto(produto(null, null)).isFreeDelivery());
-        assertNull(novoMapper().toDto(produto("110.00", null)).getShippingFee());
-        assertNull(novoMapper().toDto(produto(null, null)).getPrice());
+    @DisplayName("HU21: preço nulo não quebra o mapeamento")
+    void naoDeveQuebrarComPrecoNulo() {
+        assertNull(novoMapper().toDto(produto(null)).getPrice());
     }
 
     @Test
     @DisplayName("HU10: categoryProductId é o id da categoria do fornecedor, não o do tipo (Gás/Água)")
     void deveExporOIdDaCategoriaDoFornecedor() {
-        ProductItemDTO dto = novoMapper().toDto(produto("110.00", "95.00"));
+        ProductItemDTO dto = novoMapper().toDto(produto("95.00"));
 
         assertEquals(77L, dto.getCategoryProductId());
         assertEquals("Gás", dto.getType());
@@ -93,7 +65,7 @@ class ProductItemMapperTest {
     @Test
     @DisplayName("HU15: o produto leva a logo da loja que vende")
     void deveLevarALogoDaLojaQueVende() {
-        ProductItem productItem = produto("110.00", "95.00");
+        ProductItem productItem = produto("95.00");
         com.h2gas.model.entity.Supplier loja = new com.h2gas.model.entity.Supplier();
         loja.setName("Gás Centro");
         loja.setLogoUrl("https://res.cloudinary.com/h2gas/logo.png");
@@ -108,7 +80,7 @@ class ProductItemMapperTest {
     @Test
     @DisplayName("HU15: loja sem logo deixa a logo do produto nula")
     void deveDeixarALogoNulaSemLogo() {
-        ProductItem productItem = produto("110.00", "95.00");
+        ProductItem productItem = produto("95.00");
         com.h2gas.model.entity.Supplier loja = new com.h2gas.model.entity.Supplier();
         loja.setName("Sem Logo");
         productItem.setSupplier(loja);

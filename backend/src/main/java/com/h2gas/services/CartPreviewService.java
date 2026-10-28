@@ -1,7 +1,6 @@
 package com.h2gas.services;
 
 import com.h2gas.enums.CartUnavailableReasonEnum;
-import com.h2gas.enums.DeliveryModeEnum;
 import com.h2gas.model.OpeningHours;
 import com.h2gas.model.dto.CartLineDTO;
 import com.h2gas.model.dto.CartPreviewDTO;
@@ -36,14 +35,13 @@ public class CartPreviewService {
 
     @Transactional(readOnly = true)
     public CartPreviewDTO preview(CartPreviewRequestDTO request) {
-        DeliveryModeEnum mode = "PICKUP".equals(request.getDeliveryMode()) ? DeliveryModeEnum.PICKUP : DeliveryModeEnum.DELIVERY;
         List<Long> ids = request.getItems().stream().map(CartLineDTO::getProductId).distinct().toList();
         Map<Long, ProductItem> products = productItemRepository.findAllById(ids).stream()
                 .collect(Collectors.toMap(ProductItem::getId, Function.identity()));
         LocalTime now = LocalTime.now(clock);
 
         List<CartPreviewItemDTO> items = request.getItems().stream()
-                .map(line -> toItem(line, products.get(line.getProductId()), mode, now))
+                .map(line -> toItem(line, products.get(line.getProductId()), now))
                 .toList();
 
         BigDecimal subtotal = items.stream()
@@ -62,14 +60,14 @@ public class CartPreviewService {
                 supplier == null ? null : supplier.getName(), items, subtotal);
     }
 
-    private CartPreviewItemDTO toItem(CartLineDTO line, ProductItem product, DeliveryModeEnum mode, LocalTime now) {
+    private CartPreviewItemDTO toItem(CartLineDTO line, ProductItem product, LocalTime now) {
         int quantity = line.getQuantity();
         if (product == null) {
             return CartPreviewItemDTO.builder().productId(line.getProductId()).quantity(quantity)
                     .available(false).unavailableReason(CartUnavailableReasonEnum.NOT_FOUND).build();
         }
         CartUnavailableReasonEnum reason = unavailableReason(product, quantity, now);
-        BigDecimal unitPrice = OrderItemService.unitPriceFor(product, mode);
+        BigDecimal unitPrice = OrderItemService.unitPriceFor(product);
         var category = product.getCategoryProduct();
         return CartPreviewItemDTO.builder()
                 .productId(product.getId())

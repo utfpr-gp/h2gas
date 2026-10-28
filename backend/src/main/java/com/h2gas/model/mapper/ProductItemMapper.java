@@ -16,18 +16,7 @@ public class ProductItemMapper {
 
     public ProductItemDTO toDto(ProductItem data) {
         ProductItemDTO productItemDTO = modelMapper.map(data, ProductItemDTO.class);
-        if (data.getPriceDelivery() != null) {
-            productItemDTO.setPriceDelivery(data.getPriceDelivery().doubleValue());
-        }
-        if (data.getPricePickup() != null) {
-            productItemDTO.setPricePickup(data.getPricePickup().doubleValue());
-        }
-        if (data.getPriceDelivery() != null && data.getPricePickup() != null) {
-            productItemDTO.setPrice(data.getPricePickup().doubleValue());
-            productItemDTO.setShippingFee(data.getPriceDelivery().subtract(data.getPricePickup()).doubleValue());
-        }
-        productItemDTO.setFreeDelivery(data.getPriceDelivery() != null && data.getPricePickup() != null
-                && data.getPriceDelivery().compareTo(data.getPricePickup()) == 0);
+        productItemDTO.setPrice(data.getPrice() != null ? data.getPrice().doubleValue() : null);
 
         if (data.getCategoryProduct().getName() != null) {
             productItemDTO.setCategory(data.getCategoryProduct().getName());
