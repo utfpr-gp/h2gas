@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { NgxMaskDirective } from 'ngx-mask';
 import { ToastrService } from 'ngx-toastr';
 import { SupplierService } from '../../../services/supplier.service';
@@ -14,15 +14,16 @@ import { backendMessage } from '../../../utils/backend-message';
 import { initials } from '../../../utils/initials';
 import { matchCityFromCep } from '../../../utils/city-match';
 import { fadeIn } from '../../../animations/checkout.animations';
+import { ConfigurationComponent } from '../configuration/configuration.component';
 
 const LOGO_ERROR = 'Envie uma imagem JPG, PNG ou WEBP de até 1 MB.';
 const BANNER_ERROR = 'Envie uma imagem JPG, PNG ou WEBP de até 2 MB.';
 
-// F7 fatia 6: "Minha loja", a tela única do fornecedor (conta e loja são o mesmo cadastro)
+// F7 fatia 6 + F9: configurações da loja numa tela só (aparência, dados, endereço, funcionamento e estoque)
 @Component({
   selector: 'app-store-profile',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, NgxMaskDirective],
+  imports: [CommonModule, ReactiveFormsModule, NgxMaskDirective, ConfigurationComponent],
   templateUrl: './store-profile.component.html',
   host: { class: 'flex-1 flex flex-col' },
   animations: [fadeIn],
@@ -68,13 +69,45 @@ export class StoreProfileComponent implements OnInit, OnDestroy {
   addressCity?: City;
   searchingCep = false;
 
+  // F9: sumário do topo; cada item rola até a sua seção
+  readonly sections = [
+    { id: 'aparencia', label: 'Aparência' },
+    { id: 'dados', label: 'Dados' },
+    { id: 'endereco', label: 'Endereço' },
+    { id: 'funcionamento', label: 'Funcionamento' },
+    { id: 'estoque', label: 'Estoque' },
+  ];
+
   constructor(
     private supplierService: SupplierService,
     private addressService: AddressService,
     private cityService: CityService,
     private userService: UserService,
     private toastr: ToastrService,
+    private route: ActivatedRoute,
   ) {}
+
+  scrollTo(id: string) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // F9: "Ajustar horário" e "Ajustar o estoque mínimo" chegam com #funcionamento / #estoque;
+  // as seções só existem depois que perfil e configurações carregam
+  private profileReady = false;
+  private settingsReady = false;
+  private fragmentHandled = false;
+
+  onSettingsLoaded() {
+    this.settingsReady = true;
+    this.scrollToFragment();
+  }
+
+  private scrollToFragment() {
+    const fragment = this.route.snapshot.fragment;
+    if (!fragment || this.fragmentHandled || !this.profileReady || !this.settingsReady) return;
+    this.fragmentHandled = true;
+    setTimeout(() => this.scrollTo(fragment));
+  }
 
   ngOnInit(): void {
     this.load();
@@ -92,6 +125,8 @@ export class StoreProfileComponent implements OnInit, OnDestroy {
       next: (profile) => {
         this.applyProfile(profile);
         this.loading = false;
+        this.profileReady = true;
+        this.scrollToFragment();
       },
       error: (err) => {
         this.loading = false;

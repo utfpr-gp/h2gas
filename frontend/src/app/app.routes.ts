@@ -245,7 +245,8 @@ export const routes: Routes = [
     {
         path: 'minha-loja/configuracoes',
         // tela só do fornecedor (o admin não tem loja): fora do bundle inicial
-        loadComponent: () => import('./components/pages/configuration/configuration.component').then((m) => m.ConfigurationComponent),
+        // F9: configurações da loja numa tela só (perfil + horário + estoque)
+        loadComponent: () => import('./components/pages/store-profile/store-profile.component').then((m) => m.StoreProfileComponent),
         canActivate: [authGuard],
         data: {roles: ['SUPPLIER']}
     },

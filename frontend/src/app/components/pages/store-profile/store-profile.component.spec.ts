@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideNgxMask } from 'ngx-mask';
 import { of, throwError } from 'rxjs';
@@ -41,8 +41,12 @@ describe('StoreProfileComponent', () => {
   };
   const salvar = () => byId('save-profile') as HTMLButtonElement;
 
-  const setup = async (p: SupplierProfile = perfil) => {
-    supplierSpy = jasmine.createSpyObj('SupplierService', ['getMyProfile', 'updateMyProfile', 'uploadMyLogo', 'removeMyLogo', 'uploadMyBanner', 'removeMyBanner']);
+  const setup = async (p: SupplierProfile = perfil, fragment: string | null = null) => {
+    supplierSpy = jasmine.createSpyObj('SupplierService', ['getMyProfile', 'updateMyProfile', 'uploadMyLogo', 'removeMyLogo', 'uploadMyBanner', 'removeMyBanner',
+      'getMySettings', 'updateMySettings']);
+    // F9: as seções de horário e estoque vêm embutidas
+    supplierSpy.getMySettings.and.returnValue(of({ openingTime: '08:00', closingTime: '18:00', averageDeliveryTime: 30, lowStockThreshold: 8 }));
+    supplierSpy.updateMySettings.and.callFake((s) => of(s));
     supplierSpy.getMyProfile.and.returnValue(of({ ...p }));
     supplierSpy.updateMyProfile.and.callFake((r) => of({ ...p, ...r }));
     supplierSpy.uploadMyLogo.and.returnValue(of({ logoUrl: 'https://cdn/logo.png' }));
@@ -68,6 +72,7 @@ describe('StoreProfileComponent', () => {
         { provide: CityService, useValue: citySpy },
         { provide: UserService, useValue: userSpy },
         { provide: ToastrService, useValue: toastrSpy },
+        { provide: ActivatedRoute, useValue: { snapshot: { fragment } } },
       ],
     }).compileComponents();
 
@@ -82,7 +87,6 @@ describe('StoreProfileComponent', () => {
     expect((byId('store-description') as HTMLTextAreaElement).value).toBe('Desde 1990');
     expect(byId('store-cnpj')?.textContent).toContain('12.345.678/0001-01');
     expect(byId('store-address')?.textContent).toContain('Rua XV de Novembro, 700 · Centro · Curitiba - PR');
-    expect(byId('hours-link')?.getAttribute('href')).toBe('/minha-loja/configuracoes');
   });
 
   it('deveSalvarSoNomeTelefoneEDescricao', async () => {
@@ -172,7 +176,7 @@ describe('StoreProfileComponent', () => {
   it('deveMostrarEmailSomenteLeitura', async () => {
     await setup();
 
-    expect(fixture.nativeElement.querySelector('h1')?.textContent).toContain('Minha loja');
+    expect(fixture.nativeElement.querySelector('h1')?.textContent).toContain('Configurações da loja');
     expect(byId('store-email')?.textContent).toContain('gascentro@h2gas.local');
     expect(byId('store-email')?.tagName).not.toBe('INPUT');
     expect(fixture.nativeElement.textContent).toContain('Para trocar o e-mail, fale com o suporte.');
@@ -221,5 +225,41 @@ describe('StoreProfileComponent', () => {
     expect(supplierSpy.removeMyBanner).toHaveBeenCalled();
     expect(byId('banner-image')).toBeNull();
     expect(byId('banner-default')).not.toBeNull();
+  });
+  // ---- F9: a loja numa tela só ----
+  it('deveEmbutirAsConfiguracoes', async () => {
+    await setup();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelector('h1')?.textContent).toContain('Configurações da loja');
+    for (const id of ['aparencia', 'dados', 'endereco', 'funcionamento', 'estoque']) {
+      expect(el.querySelector(`#${id}`)).withContext(id).not.toBeNull();
+    }
+    expect(supplierSpy.getMySettings).toHaveBeenCalled();
+  });
+
+  it('naoDeveTerOLinkParaOutraTela', async () => {
+    await setup();
+
+    expect(byId('hours-link')).toBeNull();
+  });
+
+  it('deveRolarAteASecaoPeloSumario', async () => {
+    await setup();
+    const rolar = spyOn(Element.prototype, 'scrollIntoView');
+
+    click('jump-estoque');
+
+    expect(rolar).toHaveBeenCalled();
+    expect((rolar.calls.mostRecent().object as HTMLElement).id).toBe('estoque');
+  });
+
+  it('deveRolarAteASecaoDoFragmento', async () => {
+    const rolar = spyOn(Element.prototype, 'scrollIntoView');
+    await setup(perfil, 'funcionamento');
+    await new Promise((r) => setTimeout(r));
+
+    expect(rolar).toHaveBeenCalled();
+    expect((rolar.calls.mostRecent().object as HTMLElement).id).toBe('funcionamento');
   });
 });

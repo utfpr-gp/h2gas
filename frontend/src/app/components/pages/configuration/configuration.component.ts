@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
@@ -13,13 +13,23 @@ const sameTimeValidator = (group: AbstractControl): ValidationErrors | null => {
   return openingTime && openingTime === closingTime ? { sameTime: true } : null;
 };
 
-// F7 fatia 6: configurações da loja do fornecedor logado (horário, entrega e estoque mínimo)
+type Section = 'hours' | 'stock';
+const SECTION_FIELDS: Record<Section, (keyof SupplierSettings)[]> = {
+  hours: ['openingTime', 'closingTime', 'averageDeliveryTime'],
+  stock: ['lowStockThreshold'],
+};
+const SAVED_MESSAGE: Record<Section, string> = {
+  hours: 'Horário e entrega salvos.',
+  stock: 'Estoque mínimo salvo.',
+};
+
+// F7 fatia 6 + F9: seções "Funcionamento e entrega" e "Estoque" da tela da loja; cada uma salva sozinha
 @Component({
   selector: 'app-configuration',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './configuration.component.html',
-  host: { class: 'flex-1 flex flex-col' },
+  host: { class: 'block' },
 })
 export class ConfigurationComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
@@ -30,9 +40,12 @@ export class ConfigurationComponent implements OnInit {
     lowStockThreshold: [8, [Validators.required, Validators.min(1), Validators.max(9999)]],
   }, { validators: sameTimeValidator });
 
+  // F9: a tela da loja rola até a seção do #fragmento depois que isto carrega
+  @Output() loaded = new EventEmitter<void>();
+
   loading = true;
   loadFailed = false;
-  saving = false;
+  saving: Section | null = null;
   private saved?: SupplierSettings;
 
   constructor(
@@ -51,6 +64,7 @@ export class ConfigurationComponent implements OnInit {
       next: (settings) => {
         this.applySaved(settings);
         this.loading = false;
+        this.loaded.emit();
       },
       error: (err) => {
         this.loading = false;
@@ -60,13 +74,18 @@ export class ConfigurationComponent implements OnInit {
     });
   }
 
-  get changed(): boolean {
+  changed(section: Section): boolean {
     const v = this.value();
-    return !!this.saved && (Object.keys(v) as (keyof SupplierSettings)[]).some((k) => v[k] !== this.saved![k]);
+    return !!this.saved && SECTION_FIELDS[section].some((k) => v[k] !== this.saved![k]);
   }
 
-  get canSave(): boolean {
-    return this.changed && this.form.valid && !this.saving;
+  private sectionValid(section: Section): boolean {
+    const fieldsOk = SECTION_FIELDS[section].every((k) => this.form.controls[k].valid);
+    return section === 'hours' ? fieldsOk && !this.sameTime : fieldsOk;
+  }
+
+  canSave(section: Section): boolean {
+    return this.changed(section) && this.sectionValid(section) && this.saving === null;
   }
 
   // a loja que fecha antes de abrir funciona até a madrugada
@@ -87,20 +106,24 @@ export class ConfigurationComponent implements OnInit {
     return this.form.hasError('sameTime');
   }
 
-  save() {
-    if (!this.canSave) {
-      this.form.markAllAsTouched();
+  // envia os valores salvos das outras seções e só os campos desta (F9 Cenário 6)
+  save(section: Section) {
+    if (!this.canSave(section)) {
+      SECTION_FIELDS[section].forEach((k) => this.form.controls[k].markAsTouched());
       return;
     }
-    this.saving = true;
-    this.supplierService.updateMySettings(this.value()).subscribe({
+    const current = this.value();
+    const request: SupplierSettings = { ...this.saved! };
+    for (const k of SECTION_FIELDS[section]) (request as any)[k] = current[k];
+    this.saving = section;
+    this.supplierService.updateMySettings(request).subscribe({
       next: (settings) => {
-        this.saving = false;
-        this.applySaved(settings);
-        this.toastr.success('Configurações salvas.');
+        this.saving = null;
+        this.applySaved(settings, section);
+        this.toastr.success(SAVED_MESSAGE[section]);
       },
       error: (err) => {
-        this.saving = false;
+        this.saving = null;
         this.toastr.error(`Não foi possível salvar: ${backendMessage(err)}`);
       },
     });
@@ -116,8 +139,15 @@ export class ConfigurationComponent implements OnInit {
     };
   }
 
-  private applySaved(settings: SupplierSettings) {
+  // depois de salvar uma seção, só os campos dela voltam ao valor salvo; a edição pendente da outra fica
+  private applySaved(settings: SupplierSettings, section?: Section) {
     this.saved = { ...settings, openingTime: settings.openingTime?.slice(0, 5), closingTime: settings.closingTime?.slice(0, 5) };
-    this.form.reset(this.saved);
+    if (!section) {
+      this.form.reset(this.saved);
+      return;
+    }
+    for (const k of SECTION_FIELDS[section]) {
+      this.form.controls[k].reset(this.saved[k] as never);
+    }
   }
 }

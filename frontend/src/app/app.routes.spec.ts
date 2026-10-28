@@ -59,4 +59,10 @@ describe('app.routes (F8)', () => {
   it('naoDeveMudarOLinkDoEmailDeRedefinirSenha', () => {
     expect(rota('resetar-senha')?.component).toBeDefined();
   });
+  // F9: perfil e configurações numa tela só
+  it('deveAbrirATelaUnicaDaLojaNasConfiguracoes', async () => {
+    const tela = await (rota('minha-loja/configuracoes')!.loadComponent as () => Promise<unknown>)();
+    const { StoreProfileComponent } = await import('./components/pages/store-profile/store-profile.component');
+    expect(tela).toBe(StoreProfileComponent);
+  });
 });

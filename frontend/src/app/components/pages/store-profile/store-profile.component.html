@@ -1,8 +1,15 @@
 <div class="max-w-3xl w-full mx-auto px-4 md:px-8 pt-6 pb-24 md:pb-10">
-    <header class="mb-5">
-        <h1 class="text-2xl font-bold text-gray-800">Minha loja</h1>
-        <p class="text-sm text-gray-500">Seus dados e como a loja aparece para os clientes.</p>
+    <header class="mb-4">
+        <h1 class="text-2xl font-bold text-gray-800">Configurações da loja</h1>
+        <p class="text-sm text-gray-500">Como a loja aparece para os clientes, quando abre e o estoque mínimo. Cada parte salva sozinha.</p>
     </header>
+
+    <!-- F9: sumário das seções; rola até cada uma -->
+    <nav aria-label="Seções da loja" class="sticky top-0 z-20 -mx-4 px-4 md:mx-0 md:px-0 py-2 mb-3 bg-base-200/95 backdrop-blur
+                flex gap-2 overflow-x-auto">
+        <button *ngFor="let sec of sections" type="button" [attr.data-testid]="'jump-' + sec.id" (click)="scrollTo(sec.id)"
+            class="btn btn-sm btn-ghost rounded-full border border-gray-200 bg-white shrink-0 min-h-11 sm:min-h-8">{{ sec.label }}</button>
+    </nav>
 
     <div *ngIf="loading" class="space-y-3" aria-busy="true">
         <div class="skeleton h-28 rounded-xl"></div>
@@ -16,7 +23,8 @@
     </div>
 
     <div *ngIf="!loading && !loadFailed && profile" class="space-y-4">
-        <!-- Logo -->
+        <!-- Aparência: logo e banner -->
+        <div id="aparencia" class="scroll-mt-24 space-y-4">
         <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-5" aria-labelledby="logo-title">
             <h2 id="logo-title" class="font-semibold text-gray-800 mb-3">Logo</h2>
             <div class="flex flex-wrap items-center gap-4">
@@ -81,10 +89,11 @@
                 <p *ngIf="bannerError" data-testid="banner-error" class="text-xs text-error" role="alert">{{ bannerError }}</p>
             </div>
         </section>
+        </div>
 
         <!-- Dados -->
-        <form [formGroup]="form" (ngSubmit)="save()" novalidate
-            class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-5 space-y-3" aria-labelledby="data-title">
+        <form id="dados" [formGroup]="form" (ngSubmit)="save()" novalidate
+            class="scroll-mt-24 bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-5 space-y-3" aria-labelledby="data-title">
             <h2 id="data-title" class="font-semibold text-gray-800">Informações</h2>
 
             <label class="form-control w-full" for="store-name">
@@ -133,8 +142,8 @@
             </div>
         </form>
 
-        <!-- Endereço e horário -->
-        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-5 space-y-3" aria-labelledby="address-title">
+        <!-- Endereço -->
+        <section id="endereco" class="scroll-mt-24 bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-5 space-y-3" aria-labelledby="address-title">
             <h2 id="address-title" class="font-semibold text-gray-800">Endereço</h2>
             <div class="flex flex-wrap items-center gap-3">
                 <span class="material-icons text-primary" aria-hidden="true">location_on</span>
@@ -143,15 +152,10 @@
                     <span class="material-icons text-base">edit</span> Editar endereço
                 </button>
             </div>
-            <a routerLink="/minha-loja/configuracoes" data-testid="hours-link" class="flex items-center gap-3 rounded-lg border border-gray-200 px-3 py-2 hover:border-primary/40">
-                <span class="material-icons text-primary" aria-hidden="true">schedule</span>
-                <span class="min-w-0 flex-1 text-sm">
-                    <span class="block font-medium text-gray-800">Horário e entrega</span>
-                    <span class="block text-gray-500">Abertura, fechamento, tempo de entrega e estoque mínimo</span>
-                </span>
-                <span class="material-icons text-gray-400" aria-hidden="true">chevron_right</span>
-            </a>
         </section>
+
+        <!-- F9: funcionamento e entrega + estoque, com o salvar de cada seção -->
+        <app-configuration (loaded)="onSettingsLoaded()"></app-configuration>
     </div>
 
     <!-- Remover logo -->
