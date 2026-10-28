@@ -136,12 +136,28 @@ com um preço; carrinho e resumo com o preço único. Em 390 e 1280 px.
 
 ## 8. Definição de Pronto
 
-- [ ] `V18` aplicada no MySQL local, com `price` = antigo preço de
+- [x] `V18` aplicada no MySQL local, com `price` = antigo preço de
       retirada e nenhuma linha perdida.
-- [ ] Preço único em toda a cadeia: formulário, lista do fornecedor,
+- [x] Preço único em toda a cadeia: formulário, lista do fornecedor,
       catálogo, carrinho, pedido, pedir de novo e ordenação.
-- [ ] Rotas de produto com o OpenAPI atualizado.
-- [ ] Testes da seção 6 verdes; `mvn test` e `ng test` sem falha nova;
-      `ng build` ok.
-- [ ] E2E em 390 e 1280 px registrado aqui com data.
-- [ ] Nada do "Fora de Escopo".
+- [x] Rotas de produto com o OpenAPI atualizado.
+- [x] Testes da seção 6 verdes; `mvn test` (448, só o `contextLoads` de
+      ambiente) e `ng test` (só as 10 falhas antigas de provider) sem falha
+      nova; `ng build` ok.
+- [x] E2E em 390 e 1280 px registrado aqui com data.
+- [x] Nada do "Fora de Escopo".
+
+### Registro do teste manual (2026-10-28)
+
+- Antes da V18: dump do banco no scratchpad da sessão e lista `id,
+  price_pickup` dos 29 produtos. Depois da V18 (Flyway no boot do
+  backend): os mesmos 29 ids, com `price` igual ao antigo `price_pickup`,
+  e as colunas `price_delivery` e `price_pickup` removidas.
+- Swagger: `ProductItemDTO` só com `price`; `CreateProductItemDTO` sem
+  `shippingFee`; `sort` com `price,asc` e `price,desc`.
+- Vitrine `?view=products` em 390 e 1280 px, como visitante, com as lojas
+  de teste abertas à noite: cada card mostra um preço só (por exemplo
+  Copagaz R$ 99,00 e Liquigás R$ 104,00), sem as linhas "com entrega" e
+  "Retirada na loja" e sem o selo de frete do produto.
+- O formulário de produto do fornecedor (exige login) ficou coberto pelos
+  specs. Não foi aberto no navegador.
