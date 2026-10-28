@@ -279,7 +279,7 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
   }
 
   goToStore() {
-    this.router.navigate(['/minha-loja'])
+    this.router.navigate(['/minha-loja/configuracoes'])
   }
 
   getCountByStatus(status: string): number {

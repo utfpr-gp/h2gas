@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
@@ -66,6 +66,16 @@ describe('ReceivedOrdersComponent', () => {
   it('should create', () => {
     fixture.detectChanges();
     expect(component).toBeTruthy();
+  });
+
+  // F9: "Editar loja" abre as configurações da loja (o /minha-loja agora é o hub)
+  it('deveLevarEditarLojaParaAsConfiguracoes', () => {
+    const router = TestBed.inject(Router);
+    const navegar = spyOn(router, 'navigate').and.resolveTo(true);
+
+    component.goToStore();
+
+    expect(navegar).toHaveBeenCalledWith(['/minha-loja/configuracoes']);
   });
 
   it('deveSepararPedidosPendentesNoTopoComContagem', () => {

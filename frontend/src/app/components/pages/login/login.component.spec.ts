@@ -94,7 +94,7 @@ describe('LoginComponent', () => {
 
     component.getAndSaveMe();
 
-    expect(router.navigate).toHaveBeenCalledWith(['/minha-loja/painel']);
+    expect(router.navigate).toHaveBeenCalledWith(['/minha-loja']);
   });
 
   it('deveManterInicioParaOsDemaisPerfis', () => {

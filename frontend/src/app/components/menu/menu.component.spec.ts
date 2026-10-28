@@ -398,7 +398,7 @@ describe('MenuComponent', () => {
     entrarComo(perfis.cliente);
     expect(logo()).toBe('/inicio');
     entrarComo(perfis.fornecedor);
-    expect(logo()).toBe('/minha-loja/painel');
+    expect(logo()).toBe('/minha-loja');
     entrarComo(perfis.entregador);
     expect(logo()).toBe('/entregas');
     entrarComo(perfis.admin);
