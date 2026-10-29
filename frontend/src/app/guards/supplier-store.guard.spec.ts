@@ -19,7 +19,7 @@ describe('supplierStoreGuard', () => {
     const result = executeGuard({} as any, { url: '/meus-dados' } as any);
 
     expect(result instanceof UrlTree).toBeTrue();
-    expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe('/minha-loja');
+    expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe('/minha-loja/configuracoes');
   });
 
   it('deveDeixarOutrosPerfisEmMeusDados', () => {

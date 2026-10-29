@@ -56,6 +56,6 @@ describe('StoreHoursStatusComponent', () => {
   it('deveLevarAsConfiguracoesParaAjustarOHorario', () => {
     criar(true);
     const link = fixture.nativeElement.querySelector('[data-testid="store-hours-link"]') as HTMLAnchorElement;
-    expect(link.getAttribute('href')).toBe('/minha-loja/configuracoes');
+    expect(link.getAttribute('href')).toBe('/minha-loja/configuracoes#funcionamento');
   });
 });

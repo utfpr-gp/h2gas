@@ -49,6 +49,13 @@ describe('ProductItemComponent', () => {
   };
 
   // HU21: a gestão mostra um preço só, sem selo de frete do produto
+  // F9: o link do estoque mínimo abre a tela da loja já na seção de estoque
+  it('deveLevarAoEstoqueMinimoNaSecaoCerta', async () => {
+    await setup();
+    const link = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="adjust-threshold"]') as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('/minha-loja/configuracoes#estoque');
+  });
+
   it('deveExibirUmPrecoNaGestao', async () => {
     await setup();
     const el = fixture.nativeElement as HTMLElement;

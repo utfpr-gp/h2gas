@@ -64,21 +64,9 @@ export class MenuComponent implements OnInit, OnDestroy {
   min: number = 1;
 
   mobileMenuOpen = false;
-  submenuOpen = false;
-
-  productsMenuOpen = false;
-  toggleProductsMenu() {
-    this.productsMenuOpen = !this.productsMenuOpen;
-  }
-
 
   toggleMobileMenu() {
     this.mobileMenuOpen = !this.mobileMenuOpen;
-    if (!this.mobileMenuOpen) this.submenuOpen = false;
-  }
-
-  toggleSubmenu() {
-    this.submenuOpen = !this.submenuOpen;
   }
 
   ngOnInit(): void {
@@ -117,8 +105,6 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   private closeNavMenus() {
     this.mobileMenuOpen = false;
-    this.submenuOpen = false;
-    this.productsMenuOpen = false;
   }
 
   get homeRoute(): string {
@@ -141,10 +127,9 @@ export class MenuComponent implements OnInit, OnDestroy {
         ];
       case 'SUPPLIER':
         return [
-          { id: 'minha-loja', label: 'Minha loja', icon: 'storefront', route: '/minha-loja' },
-          { id: 'dashboard', label: 'Dashboard', icon: 'insights', route: '/minha-loja/painel' },
-          { id: 'pedidos-recebidos', label: 'Pedidos recebidos', icon: 'inbox', route: '/minha-loja/pedidos' },
-          { id: 'configuracao', label: 'Configurações', icon: 'settings', route: '/minha-loja/configuracoes' },
+          // F9: painel, pedidos e o resto ficam nos cards do hub
+          { id: 'minha-loja', label: 'Minha loja', icon: 'space_dashboard', route: '/minha-loja' },
+          { id: 'configuracao', label: 'Configurações da loja', icon: 'settings', route: '/minha-loja/configuracoes' },
         ];
       case 'ADMIN':
         return [
@@ -274,7 +259,6 @@ export class MenuComponent implements OnInit, OnDestroy {
       this.closeNavMenus();
       this.host.nativeElement.querySelector<HTMLElement>('[data-testid=mobile-menu-button]')?.focus();
     }
-    this.productsMenuOpen = false;
   }
 
   navigate(route: string) {

@@ -52,12 +52,12 @@ export const routes: Routes = [
         canActivate: [authGuard],
         data: {roles: ['ADMIN', 'SUPPLIER']}
     },
-    // links antigos da tela da loja (o id da URL não é mais usado)
-    {path: 'distributor/edit/:id', redirectTo: 'minha-loja'},
+    // links antigos da tela da loja (o id da URL não é mais usado); F9: a loja se edita nas configurações
+    {path: 'distributor/edit/:id', redirectTo: 'minha-loja/configuracoes'},
     {
         path: 'minha-loja',
-        // F7 fatia 6: tela única do fornecedor (conta e loja são o mesmo cadastro)
-        loadComponent: () => import('./components/pages/store-profile/store-profile.component').then((m) => m.StoreProfileComponent),
+        // F9: hub do fornecedor — um card por área; é a tela inicial dele
+        loadComponent: () => import('./components/pages/supplier-home/supplier-home.component').then((m) => m.SupplierHomeComponent),
         canActivate: [authGuard],
         data: {roles: ['SUPPLIER']}
     },
@@ -245,7 +245,8 @@ export const routes: Routes = [
     {
         path: 'minha-loja/configuracoes',
         // tela só do fornecedor (o admin não tem loja): fora do bundle inicial
-        loadComponent: () => import('./components/pages/configuration/configuration.component').then((m) => m.ConfigurationComponent),
+        // F9: configurações da loja numa tela só (perfil + horário + estoque)
+        loadComponent: () => import('./components/pages/store-profile/store-profile.component').then((m) => m.StoreProfileComponent),
         canActivate: [authGuard],
         data: {roles: ['SUPPLIER']}
     },

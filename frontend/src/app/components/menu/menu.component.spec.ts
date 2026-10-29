@@ -163,18 +163,32 @@ describe('MenuComponent', () => {
     expect(TestBed.inject(CartService).getCart()).toEqual([]);
   });
 
-  it('deveExibirDashboardPedidosEProdutosParaFornecedor', () => {
+  // F9: o topo do fornecedor tem Início (hub), Pedidos e Produtos, sem repetir o que está no hub
+  it('deveExibirInicioPedidosEProdutosParaFornecedor', () => {
     localStorage.setItem('user', JSON.stringify({ id: 'f1', name: 'Gás Centro', userType: 'SUPPLIER' }));
     fixture = TestBed.createComponent(MenuComponent);
     fixture.detectChanges();
     const nav = (fixture.nativeElement as HTMLElement).querySelector('nav') as HTMLElement;
 
-    const hrefs = Array.from(nav.querySelectorAll('a')).map((a) => a.getAttribute('href'));
-    expect(hrefs).toContain('/minha-loja/painel');
-    expect(hrefs).toContain('/minha-loja/pedidos');
-    expect(nav.textContent).toContain('Dashboard');
-    expect(nav.textContent).toContain('Pedidos');
-    expect(nav.textContent).toContain('Produtos');
+    const links = Array.from(nav.querySelectorAll('a')).map((a) => [a.getAttribute('href'), a.querySelector('span:not(.material-icons)')?.textContent?.trim()]);
+    expect(links).toEqual([
+      ['/minha-loja', 'Início'],
+      ['/minha-loja/pedidos', 'Pedidos'],
+      ['/minha-loja/produtos', 'Produtos'],
+    ]);
+    expect(nav.querySelector('[aria-expanded]')).withContext('Produtos é link direto, sem submenu').toBeNull();
+  });
+
+  it('naoDeveRepetirLinksNoMenuDoCelularDoFornecedor', () => {
+    localStorage.setItem('user', JSON.stringify({ id: 'f1', name: 'Gás Centro', userType: 'SUPPLIER' }));
+    fixture = TestBed.createComponent(MenuComponent);
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('[data-testid="mobile-menu-button"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const menu = fixture.nativeElement.querySelector('#mobile-menu') as HTMLElement;
+    const hrefs = Array.from(menu.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+    expect(hrefs).toEqual(['/minha-loja', '/minha-loja/pedidos', '/minha-loja/produtos']);
   });
 
   it('naoDeveExibirDashboardParaCliente', () => {
@@ -249,7 +263,7 @@ describe('MenuComponent', () => {
     entrarComo({ id: 'f1', name: 'Gás Centro', email: 'gas@h2gas.local', userType: 'SUPPLIER' });
     abrirMenu();
 
-    expect(itens()).toEqual(['Minha loja', 'Dashboard', 'Pedidos recebidos', 'Configurações', 'Sair']);
+    expect(itens()).toEqual(['Minha loja', 'Configurações da loja', 'Sair']);
   });
 
   it('deveMostrarMinhaLojaNoLugarDeMeusDadosParaFornecedor', () => {
@@ -398,7 +412,7 @@ describe('MenuComponent', () => {
     entrarComo(perfis.cliente);
     expect(logo()).toBe('/inicio');
     entrarComo(perfis.fornecedor);
-    expect(logo()).toBe('/minha-loja/painel');
+    expect(logo()).toBe('/minha-loja');
     entrarComo(perfis.entregador);
     expect(logo()).toBe('/entregas');
     entrarComo(perfis.admin);

@@ -1,31 +1,29 @@
-<div class="max-w-3xl w-full mx-auto px-4 md:px-8 pt-6 pb-28 md:pb-10">
-    <header class="mb-5">
-        <h1 class="text-2xl font-bold text-gray-800">Configurações da loja</h1>
-        <p class="text-sm text-gray-500">O horário e o tempo de entrega aparecem para os clientes no catálogo.</p>
-    </header>
+<!-- F9: seções "Funcionamento e entrega" e "Estoque" da tela da loja; cada uma com o seu salvar -->
+<div *ngIf="loading" class="space-y-4" aria-busy="true">
+    <div *ngFor="let n of [1,2]" class="skeleton h-40 rounded-xl"></div>
+</div>
 
-    <div *ngIf="loading" class="space-y-3" aria-busy="true">
-        <div *ngFor="let n of [1,2,3]" class="skeleton h-32 rounded-xl"></div>
-    </div>
+<div *ngIf="!loading && loadFailed" class="text-center bg-white rounded-xl border border-gray-200 py-10 px-4">
+    <span class="material-icons text-gray-300" style="font-size: 48px">cloud_off</span>
+    <p class="text-gray-700 font-semibold mt-2">Não foi possível carregar o horário e o estoque</p>
+    <button type="button" class="btn btn-primary btn-sm rounded-xl mt-3" (click)="load()">Tentar de novo</button>
+</div>
 
-    <div *ngIf="!loading && loadFailed" class="text-center bg-white rounded-xl border border-gray-200 py-12 px-4">
-        <span class="material-icons text-gray-300" style="font-size: 56px">cloud_off</span>
-        <p class="text-gray-700 font-semibold mt-2">Não foi possível carregar as configurações</p>
-        <button type="button" class="btn btn-primary btn-sm rounded-xl mt-3" (click)="load()">Tentar de novo</button>
-    </div>
+<form *ngIf="!loading && !loadFailed" [formGroup]="form" novalidate class="space-y-4">
+    <section id="funcionamento" class="scroll-mt-24 bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-5 space-y-4"
+        aria-labelledby="hours-title">
+        <div class="flex items-center gap-2">
+            <span class="material-icons text-primary" aria-hidden="true">schedule</span>
+            <h2 id="hours-title" class="font-semibold text-gray-800">Funcionamento e entrega</h2>
+        </div>
 
-    <form *ngIf="!loading && !loadFailed" [formGroup]="form" (ngSubmit)="save()" novalidate class="space-y-4">
         <p data-testid="settings-preview" *ngIf="preview"
             class="flex items-center gap-2 text-sm font-medium text-primary bg-primary/10 rounded-xl px-4 py-3">
             <span class="material-icons text-base" aria-hidden="true">storefront</span>{{ preview }}
         </p>
 
-        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-5 space-y-3" aria-labelledby="hours-title">
-            <div class="flex items-center gap-2">
-                <span class="material-icons text-primary" aria-hidden="true">schedule</span>
-                <h2 id="hours-title" class="font-semibold text-gray-800">Horário de funcionamento</h2>
-            </div>
-            <p class="text-sm text-gray-500">Se a loja fecha depois da meia-noite, informe o fechamento normalmente (ex.: 02:00).</p>
+        <div>
+            <p class="text-sm text-gray-500 mb-2">A loja abre e fecha sozinha nesse horário. Se fecha depois da meia-noite, informe o fechamento normalmente (ex.: 02:00).</p>
             <div class="grid grid-cols-2 gap-3">
                 <label class="form-control w-full" for="opening-time">
                     <span class="label-text text-sm text-gray-700">Abertura</span>
@@ -41,50 +39,53 @@
                     <span *ngIf="sameTime" data-testid="error-closing-time" class="text-xs text-error mt-1">O fechamento precisa ser diferente da abertura.</span>
                 </label>
             </div>
-        </section>
+        </div>
 
-        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-5 space-y-3" aria-labelledby="delivery-title">
-            <div class="flex items-center gap-2">
-                <span class="material-icons text-primary" aria-hidden="true">local_shipping</span>
-                <h2 id="delivery-title" class="font-semibold text-gray-800">Entrega</h2>
-            </div>
-            <label class="form-control w-full sm:max-w-xs" for="delivery-time">
-                <span class="label-text text-sm text-gray-700">Tempo médio de entrega</span>
-                <span class="input input-bordered rounded-xl flex items-center gap-2" [class.input-error]="invalid('averageDeliveryTime')">
-                    <input id="delivery-time" data-testid="delivery-time" type="number" inputmode="numeric" min="1" max="240"
-                        formControlName="averageDeliveryTime" class="grow" />
-                    <span class="text-sm text-gray-500">min</span>
-                </span>
-                <span *ngIf="invalid('averageDeliveryTime')" data-testid="error-delivery-time" class="text-xs text-error mt-1">Entre 1 e 240 minutos.</span>
-                <span *ngIf="!invalid('averageDeliveryTime')" class="text-xs text-gray-500 mt-1">Quanto tempo o pedido leva para chegar, em média.</span>
-            </label>
-        </section>
+        <label class="form-control w-full sm:max-w-xs" for="delivery-time">
+            <span class="label-text text-sm text-gray-700">Tempo médio de entrega</span>
+            <span class="input input-bordered rounded-xl flex items-center gap-2" [class.input-error]="invalid('averageDeliveryTime')">
+                <input id="delivery-time" data-testid="delivery-time" type="number" inputmode="numeric" min="1" max="240"
+                    formControlName="averageDeliveryTime" class="grow" />
+                <span class="text-sm text-gray-500">min</span>
+            </span>
+            <span *ngIf="invalid('averageDeliveryTime')" data-testid="error-delivery-time" class="text-xs text-error mt-1">Entre 1 e 240 minutos.</span>
+            <span *ngIf="!invalid('averageDeliveryTime')" class="text-xs text-gray-500 mt-1">Quanto tempo o pedido leva para chegar, em média.</span>
+        </label>
 
-        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-5 space-y-3" aria-labelledby="stock-title">
-            <div class="flex items-center gap-2">
-                <span class="material-icons text-primary" aria-hidden="true">inventory_2</span>
-                <h2 id="stock-title" class="font-semibold text-gray-800">Estoque</h2>
-            </div>
-            <label class="form-control w-full sm:max-w-xs" for="low-stock">
-                <span class="label-text text-sm text-gray-700">Estoque mínimo</span>
-                <span class="input input-bordered rounded-xl flex items-center gap-2" [class.input-error]="invalid('lowStockThreshold')">
-                    <input id="low-stock" data-testid="low-stock" type="number" inputmode="numeric" min="1" max="9999"
-                        formControlName="lowStockThreshold" class="grow" />
-                    <span class="text-sm text-gray-500">unidades</span>
-                </span>
-                <span *ngIf="invalid('lowStockThreshold')" class="text-xs text-error mt-1">Entre 1 e 9999 unidades.</span>
-                <span *ngIf="!invalid('lowStockThreshold')" class="text-xs text-gray-500 mt-1">Com essa quantidade ou menos, o produto aparece como estoque baixo em Produtos.</span>
-            </label>
-        </section>
-
-        <!-- no celular a barra de salvar fica presa no rodapé -->
-        <div class="fixed inset-x-0 bottom-0 z-30 bg-white border-t border-gray-200 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]
-                    md:static md:bg-transparent md:border-0 md:p-0 flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-3">
-            <span data-testid="unsaved-hint" class="text-xs sm:text-sm text-gray-500 text-center" *ngIf="changed">Alterações não salvas</span>
-            <button type="submit" data-testid="save-settings" class="btn btn-primary rounded-xl w-full sm:w-auto" [disabled]="!canSave">
-                <span *ngIf="saving" class="loading loading-spinner loading-sm"></span>
-                Salvar configurações
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2">
+            <span *ngIf="changed('hours')" class="text-xs sm:text-sm text-gray-500 text-center">Alterações não salvas</span>
+            <button type="button" data-testid="save-hours" class="btn btn-primary rounded-xl w-full sm:w-auto min-h-11"
+                [disabled]="!canSave('hours')" (click)="save('hours')">
+                <span *ngIf="saving === 'hours'" class="loading loading-spinner loading-sm"></span>
+                Salvar horário e entrega
             </button>
         </div>
-    </form>
-</div>
+    </section>
+
+    <section id="estoque" class="scroll-mt-24 bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-5 space-y-4"
+        aria-labelledby="stock-title">
+        <div class="flex items-center gap-2">
+            <span class="material-icons text-primary" aria-hidden="true">inventory_2</span>
+            <h2 id="stock-title" class="font-semibold text-gray-800">Estoque</h2>
+        </div>
+        <label class="form-control w-full sm:max-w-xs" for="low-stock">
+            <span class="label-text text-sm text-gray-700">Estoque mínimo</span>
+            <span class="input input-bordered rounded-xl flex items-center gap-2" [class.input-error]="invalid('lowStockThreshold')">
+                <input id="low-stock" data-testid="low-stock" type="number" inputmode="numeric" min="1" max="9999"
+                    formControlName="lowStockThreshold" class="grow" />
+                <span class="text-sm text-gray-500">unidades</span>
+            </span>
+            <span *ngIf="invalid('lowStockThreshold')" class="text-xs text-error mt-1">Entre 1 e 9999 unidades.</span>
+            <span *ngIf="!invalid('lowStockThreshold')" class="text-xs text-gray-500 mt-1">Com essa quantidade ou menos, o produto aparece como estoque baixo em Produtos.</span>
+        </label>
+
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2">
+            <span *ngIf="changed('stock')" class="text-xs sm:text-sm text-gray-500 text-center">Alterações não salvas</span>
+            <button type="button" data-testid="save-stock" class="btn btn-primary rounded-xl w-full sm:w-auto min-h-11"
+                [disabled]="!canSave('stock')" (click)="save('stock')">
+                <span *ngIf="saving === 'stock'" class="loading loading-spinner loading-sm"></span>
+                Salvar estoque mínimo
+            </button>
+        </div>
+    </section>
+</form>

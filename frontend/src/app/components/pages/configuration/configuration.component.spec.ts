@@ -22,7 +22,9 @@ describe('ConfigurationComponent', () => {
     el.dispatchEvent(new Event('blur'));
     fixture.detectChanges();
   };
-  const salvar = () => byId('save-settings') as HTMLButtonElement;
+  // F9: cada seção salva sozinha
+  const salvarFuncionamento = () => byId('save-hours') as HTMLButtonElement;
+  const salvarEstoque = () => byId('save-stock') as HTMLButtonElement;
 
   beforeEach(async () => {
     supplierSpy = jasmine.createSpyObj('SupplierService', ['getMySettings', 'updateMySettings']);
@@ -51,38 +53,72 @@ describe('ConfigurationComponent', () => {
   });
 
   it('deveDesabilitarSalvarSemAlteracao', () => {
-    expect(salvar().disabled).toBeTrue();
+    expect(salvarFuncionamento().disabled).toBeTrue();
+    expect(salvarEstoque().disabled).toBeTrue();
 
     preencher('delivery-time', '45');
-    expect(salvar().disabled).toBeFalse();
+    expect(salvarFuncionamento().disabled).toBeFalse();
+    expect(salvarEstoque().disabled).toBeTrue();
 
     preencher('delivery-time', '30');
-    expect(salvar().disabled).toBeTrue();
+    expect(salvarFuncionamento().disabled).toBeTrue();
   });
 
   it('deveMostrarErroComFechamentoIgualAAbertura', () => {
     preencher('closing-time', '08:00');
 
     expect(byId('error-closing-time')?.textContent).toContain('O fechamento precisa ser diferente da abertura.');
-    expect(salvar().disabled).toBeTrue();
+    expect(salvarFuncionamento().disabled).toBeTrue();
 
     preencher('delivery-time', '0');
     expect(byId('error-delivery-time')?.textContent).toContain('Entre 1 e 240 minutos.');
   });
 
-  it('deveSalvarTudoNumaChamadaComUmToast', () => {
+  it('deveSalvarSoOFuncionamento', () => {
     preencher('opening-time', '18:00');
     preencher('closing-time', '02:00');
-    preencher('low-stock', '5');
 
-    salvar().click();
+    salvarFuncionamento().click();
     fixture.detectChanges();
 
     expect(supplierSpy.updateMySettings).toHaveBeenCalledOnceWith({
-      openingTime: '18:00', closingTime: '02:00', averageDeliveryTime: 30, lowStockThreshold: 5,
+      openingTime: '18:00', closingTime: '02:00', averageDeliveryTime: 30, lowStockThreshold: 8,
     });
-    expect(toastrSpy.success).toHaveBeenCalledOnceWith('Configurações salvas.');
-    expect(salvar().disabled).toBeTrue();
+    expect(toastrSpy.success).toHaveBeenCalledOnceWith('Horário e entrega salvos.');
+    expect(salvarFuncionamento().disabled).toBeTrue();
+  });
+
+  it('deveSalvarSoOEstoque', () => {
+    preencher('low-stock', '5');
+
+    salvarEstoque().click();
+    fixture.detectChanges();
+
+    expect(supplierSpy.updateMySettings).toHaveBeenCalledOnceWith({
+      openingTime: '08:00', closingTime: '18:00', averageDeliveryTime: 30, lowStockThreshold: 5,
+    });
+    expect(toastrSpy.success).toHaveBeenCalledOnceWith('Estoque mínimo salvo.');
+  });
+
+  it('deveManterAEdicaoPendenteDaOutraSecao', () => {
+    preencher('opening-time', '09:00');
+    preencher('low-stock', '5');
+
+    salvarEstoque().click();
+    fixture.detectChanges();
+
+    // o horário editado não vai junto e continua no campo, esperando o próprio salvar
+    expect(supplierSpy.updateMySettings.calls.mostRecent().args[0].openingTime).toBe('08:00');
+    expect(input('opening-time').value).toBe('09:00');
+    expect(salvarFuncionamento().disabled).toBeFalse();
+    expect(salvarEstoque().disabled).toBeTrue();
+  });
+
+  it('deveSalvarEstoqueMesmoComHorarioInvalidoPendente', () => {
+    preencher('closing-time', '08:00');
+    preencher('low-stock', '5');
+
+    expect(salvarEstoque().disabled).toBeFalse();
   });
 
   it('deveMostrarMensagemDoBackendNoErro', () => {
@@ -91,12 +127,31 @@ describe('ConfigurationComponent', () => {
     })));
     preencher('low-stock', '5');
 
-    salvar().click();
+    salvarEstoque().click();
     fixture.detectChanges();
 
     expect(toastrSpy.error).toHaveBeenCalledWith(jasmine.stringContaining('O horário de fechamento precisa ser diferente da abertura.'));
     expect(toastrSpy.success).not.toHaveBeenCalled();
-    expect(salvar().disabled).toBeFalse();
+    expect(salvarEstoque().disabled).toBeFalse();
+  });
+
+  it('deveTerAsAncorasDasSecoes', () => {
+    expect(fixture.nativeElement.querySelector('section#funcionamento')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('section#estoque')).not.toBeNull();
+  });
+
+  it('deveAvisarQuandoCarregou', () => {
+    const outro = TestBed.createComponent(ConfigurationComponent);
+    const avisos: boolean[] = [];
+    outro.componentInstance.loaded.subscribe(() => avisos.push(true));
+    outro.detectChanges();
+
+    expect(avisos.length).toBe(1);
+  });
+
+  it('naoDeveTerCabecalhoProprio', () => {
+    // F9: as seções vivem dentro da tela da loja, que tem o título
+    expect(fixture.nativeElement.querySelector('h1')).toBeNull();
   });
 
   it('deveMostrarPreviaDoHorario', () => {

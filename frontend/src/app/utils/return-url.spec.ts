@@ -36,6 +36,6 @@ describe('returnUrl', () => {
     navigateAfterLogin(router, 'https://evil.com', 'SUPPLIER');
 
     expect(router.navigateByUrl).toHaveBeenCalledOnceWith('/resumo-pedido?modo=compra-direta');
-    expect(router.navigate).toHaveBeenCalledOnceWith(['/minha-loja/painel']);
+    expect(router.navigate).toHaveBeenCalledOnceWith(['/minha-loja']);
   });
 });
