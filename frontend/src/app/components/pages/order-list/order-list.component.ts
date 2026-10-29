@@ -5,10 +5,11 @@ import { UserService } from '../../../services/user.service';
 import { CommonModule } from '@angular/common';
 import { User } from '../../../models/user';
 import { ToastrService } from 'ngx-toastr';
-import { OrderResponse } from '../../../models/order.model';
+import { OrderResponse, OrderReview } from '../../../models/order.model';
 import { CartService } from '../../../services/cart.service';
 import { OrderStatusChange, OrderTrackingService } from '../../../services/order-tracking.service';
 import { PaginationComponent } from '../../pagination/pagination.component';
+import { OrderReviewDialogComponent } from '../../order-review-dialog/order-review-dialog.component';
 import { Router } from '@angular/router';
 import { expandCollapse, staggerList } from '../../../animations/checkout.animations';
 import { backendMessage } from '../../../utils/backend-message';
@@ -18,6 +19,7 @@ import { backendMessage } from '../../../utils/backend-message';
   imports: [
     CommonModule,
     PaginationComponent,
+    OrderReviewDialogComponent,
   ],
   templateUrl: './order-list.component.html',
   animations: [staggerList, expandCollapse],
@@ -37,6 +39,9 @@ export class OrderListComponent implements OnInit, OnDestroy {
   orders?: OrderResponse[];
   expandedIndex: number | null = null;
   reorderingId: string | null = null;
+  // HU24: pedido com o diálogo de avaliação aberto
+  reviewingOrder: OrderResponse | null = null;
+  readonly stars = [1, 2, 3, 4, 5];
   // HU08: card que acabou de mudar de status (destaque curto, sem toast)
   highlightedOrderId: string | null = null;
   readonly highlightMs = 2000;
@@ -163,6 +168,20 @@ export class OrderListComponent implements OnInit, OnDestroy {
         this.toastr.error(`Não foi possível refazer este pedido: ${backendMessage(err)}`);
       },
     });
+  }
+
+  // HU24: pedido entregue que o cliente ainda não avaliou
+  canReview(order: OrderResponse): boolean {
+    return order.status === ('Entregue' as OrderResponse['status']) && !order.review;
+  }
+
+  openReview(order: OrderResponse) {
+    this.reviewingOrder = order;
+  }
+
+  onReviewSaved(review: OrderReview) {
+    if (this.reviewingOrder) this.reviewingOrder.review = review;
+    this.reviewingOrder = null;
   }
 
   navigate(route: string) {

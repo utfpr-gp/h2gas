@@ -208,4 +208,62 @@ describe('OrderListComponent', () => {
 
     expect(fixture.nativeElement.textContent).toContain('Retirada na loja');
   });
+
+  // ---- HU24 ----
+  function listaCom(...orders: Partial<OrderResponse>[]) {
+    orderServiceSpy.findByCustomerId.and.returnValue(of({
+      data: orders.map((o) => ({ orderItems: [], supplierName: 'Gás Centro', ...o })), page: 0, totalPages: 1,
+      hasNext: false, hasPrevious: false,
+    } as any));
+    component.getOrders();
+    fixture.detectChanges();
+  }
+  const q = (sel: string) => fixture.nativeElement.querySelector(sel) as HTMLElement | null;
+
+  it('deveConvidarParaAvaliarPedidoEntregue', () => {
+    listaCom({ id: 'p1', status: 'Entregue' as any, review: null });
+
+    expect(q('[data-testid="review-invite"]')!.textContent).toContain('Como foi o pedido?');
+    (q('[data-testid="review-open"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(q('app-order-review-dialog')).not.toBeNull();
+  });
+
+  it('naoDeveConvidarPedidoNaoEntregue', () => {
+    listaCom({ id: 'p1', status: 'Saiu para entrega' as any }, { id: 'p2', status: 'Cancelado' as any });
+
+    expect(q('[data-testid="review-invite"]')).toBeNull();
+  });
+
+  it('deveConvidarQuandoOStatusViraEntregueAoVivo', () => {
+    listaCom({ id: 'p1', status: 'Saiu para entrega' as any });
+    expect(q('[data-testid="review-invite"]')).toBeNull();
+
+    statusChange$.next({ orderId: 'p1', status: 'Entregue' });
+    fixture.detectChanges();
+
+    expect(q('[data-testid="review-invite"]')).not.toBeNull();
+  });
+
+  it('deveMostrarAAvaliacaoFeita', () => {
+    listaCom({ id: 'p1', status: 'Entregue' as any, review: { storeRating: 4, delivererRating: 5, comment: null } });
+
+    expect(q('[data-testid="review-invite"]')).toBeNull();
+    const dada = q('[data-testid="review-given"]')!;
+    expect(dada.getAttribute('aria-label')).toBe('Você deu 4 de 5 estrelas para a loja');
+  });
+
+  it('deveTrocarOConvitePelaAvaliacaoAoSalvar', () => {
+    listaCom({ id: 'p1', status: 'Entregue' as any, review: null });
+    component.openReview(component.orders![0]);
+    fixture.detectChanges();
+
+    component.onReviewSaved({ storeRating: 5, delivererRating: null, comment: null });
+    fixture.detectChanges();
+
+    expect(q('app-order-review-dialog')).toBeNull();
+    expect(q('[data-testid="review-invite"]')).toBeNull();
+    expect(q('[data-testid="review-given"]')).not.toBeNull();
+    expect(orderServiceSpy.findByCustomerId).toHaveBeenCalledTimes(2); // sem recarregar a lista
+  });
 });

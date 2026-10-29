@@ -74,6 +74,15 @@ export interface OrderResponse {
     deliveredAt?: string;
     lastRefusalReason?: string;
     lastRefusalBy?: string;
+    // HU24: avaliação feita pelo cliente; nula enquanto não avaliou
+    review?: OrderReview | null;
+}
+
+// HU24
+export interface OrderReview {
+    storeRating: number;
+    delivererRating?: number | null;
+    comment?: string | null;
 }
 
 export interface CancelOrderResponse {

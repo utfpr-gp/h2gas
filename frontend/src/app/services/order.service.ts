@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { AbstractService } from './abstract.service';
 import { environment } from '../../environments/environment';
-import { CancelOrderResponse, OrderPreview, OrderPreviewRequest, OrderRequest, OrderResponse, ReorderPreview } from '../models/order.model';
+import { CancelOrderResponse, OrderPreview, OrderPreviewRequest, OrderRequest, OrderResponse, OrderReview, ReorderPreview } from '../models/order.model';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { OrderHistoryFilter, OrderHistorySummary } from '../models/order-history';
 import { Observable } from 'rxjs';
@@ -80,6 +80,11 @@ export class OrderService extends AbstractService<OrderResponse> {
 
   cancelOrder(orderId: string, reason: string): Observable<CancelOrderResponse> {
     return this.http.patch<CancelOrderResponse>(`${this.baseUrl}/${orderId}/cancel`, { reason });
+  }
+
+  // HU24: o cliente avalia a loja e o entregador do pedido entregue
+  reviewOrder(orderId: string, review: OrderReview): Observable<OrderReview> {
+    return this.http.post<OrderReview>(`${this.baseUrl}/${orderId}/review`, review);
   }
 
   getReorderPreview(orderId: string): Observable<ReorderPreview> {
