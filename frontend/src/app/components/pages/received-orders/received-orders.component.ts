@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription, interval } from 'rxjs';
-import { OrderService } from '../../../services/order.service';
+import { OrderService, OrderStatusCounts } from '../../../services/order.service';
 import { UserService } from '../../../services/user.service';
 import { ToastrService } from 'ngx-toastr';
 import { Router, RouterLink } from '@angular/router';
@@ -15,6 +15,9 @@ import { Deliverer } from '../../../models/deliverer';
 import { OrderStatusTimelineComponent } from '../../order-status-timeline/order-status-timeline.component';
 import { fadeIn, staggerList } from '../../../animations/checkout.animations';
 import { backendMessage } from '../../../utils/backend-message';
+
+// HU23: com um status escolhido ou "Todos", a lista traz até 50 pedidos (os mais recentes)
+const FILTERED_PAGE_SIZE = 50;
 
 @Component({
   selector: 'app-received-orders',
@@ -132,15 +135,53 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
   }
 
   onStatusChange(status: string) {
+    if (status === this.statusFilter) return;
     this.statusFilter = status;
     this.loadOrders();
   }
 
+  // HU23: todos os status, com a contagem do backend; ALL = em andamento (padrão), EVERYTHING = todos
+  readonly statusFilters: { value: string; label: string }[] = [
+    { value: 'ALL', label: 'Em andamento' },
+    { value: 'EVERYTHING', label: 'Todos' },
+    { value: 'PENDING', label: 'Pendentes' },
+    { value: 'CONFIRMED', label: 'Confirmados' },
+    { value: 'IN_PREPARATION', label: 'Em preparo' },
+    { value: 'OUT_FOR_DELIVERY', label: 'Em rota' },
+    { value: 'DELIVERED', label: 'Entregues' },
+    { value: 'CANCELED', label: 'Cancelados' },
+  ];
+  statusCounts?: OrderStatusCounts;
+
+  countFor(value: string): number | null {
+    const c = this.statusCounts;
+    if (!c) return null;
+    if (value === 'ALL') return c.active;
+    if (value === 'EVERYTHING') return c.total;
+    return c.counts[value as keyof OrderStatusCounts['counts']] ?? 0;
+  }
+
+  get emptyMessage(): string {
+    if (this.statusFilter === 'ALL') return 'Nenhum pedido em andamento por aqui.';
+    const label = this.statusFilters.find((f) => f.value === this.statusFilter)?.label.toLowerCase() ?? 'neste filtro';
+    return this.statusFilter === 'EVERYTHING' ? 'A loja ainda não recebeu pedidos.' : `Nenhum pedido em "${label}".`;
+  }
+
+  private loadStatusCounts() {
+    this.orderService.getMyStatusCounts().subscribe({
+      next: (counts) => (this.statusCounts = counts),
+      // sem a contagem, os botões aparecem sem número; a lista segue funcionando
+      error: () => (this.statusCounts = undefined),
+    });
+  }
+
   loadOrders() {
     const supplierId = this.userLogado?.supplierId!;
+    this.loadStatusCounts();
     const request = this.statusFilter === 'ALL'
       ? this.orderService.findByExcludeStatus(supplierId, ['DELIVERED', 'CANCELED'])
-      : this.orderService.findBySupplierId(supplierId, this.statusFilter);
+      : this.orderService.findBySupplierId(supplierId,
+          this.statusFilter === 'EVERYTHING' ? undefined : this.statusFilter, 0, FILTERED_PAGE_SIZE);
     request.subscribe({
       next: (response) => this.applyOrders(response.data),
       error: (err) => this.toastr.error(`Erro ao buscar os pedidos: ${backendMessage(err)}`),

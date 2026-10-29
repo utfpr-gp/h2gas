@@ -40,20 +40,28 @@
         <!-- Lista (mestre) -->
         <section class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden md:block"
             [class.hidden]="showDetailMobile">
-            <div class="flex items-center justify-between gap-2 px-4 py-3 border-b border-gray-200">
-                <select class="select select-sm select-bordered rounded-lg" [ngModel]="statusFilter"
-                    (ngModelChange)="onStatusChange($event)" aria-label="Filtrar por status">
-                    <option value="ALL">Em andamento</option>
-                    <option value="PENDING">Pendentes</option>
-                    <option value="CONFIRMED">Confirmados</option>
-                    <option value="IN_PREPARATION">Em preparo</option>
-                    <option value="OUT_FOR_DELIVERY">Em rota</option>
-                </select>
-                <a routerLink="/minha-loja/pedidos/historico" class="text-xs text-primary font-semibold hover:underline">Histórico</a>
+            <div class="border-b border-gray-200">
+                <div class="flex items-center justify-between gap-2 px-4 pt-3">
+                    <span class="text-xs font-bold uppercase tracking-wide text-gray-500">Status</span>
+                    <a routerLink="/minha-loja/pedidos/historico" class="text-xs text-primary font-semibold hover:underline">Histórico</a>
+                </div>
+                <!-- HU23: todos os status, com a contagem do backend; a faixa rola para o lado no celular -->
+                <div role="group" aria-label="Filtrar por status"
+                    class="flex md:flex-wrap gap-2 overflow-x-auto px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                    <button *ngFor="let f of statusFilters" type="button" [attr.data-testid]="'status-filter-' + f.value"
+                        (click)="onStatusChange(f.value)" [attr.aria-pressed]="statusFilter === f.value"
+                        class="btn btn-xs rounded-full shrink-0 gap-1 min-h-11 sm:min-h-7 px-3"
+                        [ngClass]="statusFilter === f.value ? 'btn-primary' : 'btn-ghost border border-gray-200 bg-white'">
+                        {{ f.label }}
+                        <span *ngIf="countFor(f.value) !== null" data-testid="status-count"
+                            class="tabular-nums rounded-full px-1.5 text-[11px] font-bold"
+                            [ngClass]="statusFilter === f.value ? 'bg-white/20' : 'bg-base-200 text-gray-600'">{{ countFor(f.value) }}</span>
+                    </button>
+                </div>
             </div>
 
             <p *ngIf="orders && !orders.length" class="text-center text-sm text-gray-500 py-10 px-4">
-                Nenhum pedido em andamento por aqui.
+                {{ emptyMessage }}
             </p>
 
             <div *ngIf="pendingOrders.length" class="px-4 pt-3 pb-1 flex items-center gap-2">

@@ -79,10 +79,23 @@ Em 390 e 1280 px.
 
 ## 8. Definição de Pronto
 
-- [ ] Botões com os oito filtros e a contagem do backend.
-- [ ] Filtro por qualquer status, inclusive Entregues, Cancelados e Todos.
-- [ ] Rota documentada no Swagger.
-- [ ] Testes da seção 6 verdes; `mvn test` e `ng test` sem falha nova;
+- [x] Botões com os oito filtros e a contagem do backend.
+- [x] Filtro por qualquer status, inclusive Entregues, Cancelados e Todos.
+- [x] Rota documentada no Swagger.
+- [x] Testes da seção 6 verdes; `mvn test` e `ng test` sem falha nova;
       `ng build` ok.
-- [ ] E2E registrado aqui com data.
-- [ ] Nada do "Fora de Escopo".
+- [x] E2E registrado aqui com data.
+- [x] Nada do "Fora de Escopo".
+
+### Registro do E2E (2026-10-29)
+
+Feito como a loja de teste `plantao@seed-teste.h2gas.local`, em Chrome headless a 390 e 1280 px.
+- `GET /api/orders/mine/status-counts` devolveu PENDING 2, os outros status 0, active 2 e total 2,
+  o mesmo que o `GROUP BY status` no MySQL.
+- Os botões mostraram "Em andamento 2, Todos 2, Pendentes 2, Confirmados 0, Em preparo 0,
+  Em rota 0, Entregues 0, Cancelados 0".
+- Tocar em "Todos" listou os 2 pedidos.
+- A 390 px, os botões rolam de lado dentro da faixa e a página não tem rolagem horizontal
+  (`scrollWidth` 390). A 1280 px, eles quebram em linhas na coluna da lista.
+- `ng test`: 678 testes verdes, só as 10 falhas antigas. `ng build` ok.
+- `mvn test`: só falha o `contextLoads`, que precisa de MySQL.

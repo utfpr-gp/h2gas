@@ -8,6 +8,13 @@ import { Observable } from 'rxjs';
 import { PaginatedResponse } from '../models/paginated-response';
 import { DeliveryHistory } from '../models/delivery-history';
 
+// HU23: contagem por status do painel de pedidos
+export interface OrderStatusCounts {
+  counts: Record<'PENDING' | 'CONFIRMED' | 'IN_PREPARATION' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELED', number>;
+  active: number;
+  total: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -127,4 +134,9 @@ export class OrderService extends AbstractService<OrderResponse> {
     return this.http.patch(`${this.baseUrl}/${id}/update-order-status`, data);
   }
 
+
+  // HU23: quantos pedidos a loja tem em cada status (o fornecedor vem do token)
+  getMyStatusCounts(): Observable<OrderStatusCounts> {
+    return this.http.get<OrderStatusCounts>(`${this.baseUrl}/mine/status-counts`);
+  }
 }
