@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideNgxMask } from 'ngx-mask';
 import { of, throwError } from 'rxjs';
@@ -244,22 +244,66 @@ describe('StoreProfileComponent', () => {
     expect(byId('hours-link')).toBeNull();
   });
 
-  it('deveRolarAteASecaoPeloSumario', async () => {
+  // ---- F10: uma seção por vez, escolhida na barra de etapas ----
+  const visivel = (id: string) => !(fixture.nativeElement.querySelector(`#${id}`) as HTMLElement).hidden;
+  const etapa = (id: string) => fixture.nativeElement.querySelector(`[data-testid="step-${id}"]`) as HTMLElement;
+
+  it('deveMostrarSoASecaoEscolhida', async () => {
     await setup();
-    const rolar = spyOn(Element.prototype, 'scrollIntoView');
 
-    click('jump-estoque');
+    expect(visivel('aparencia')).toBeTrue();
+    expect(visivel('dados')).toBeFalse();
+    expect(etapa('aparencia').getAttribute('aria-current')).toBe('step');
 
-    expect(rolar).toHaveBeenCalled();
-    expect((rolar.calls.mostRecent().object as HTMLElement).id).toBe('estoque');
+    spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    click('step-dados');
+
+    expect(visivel('dados')).toBeTrue();
+    expect(visivel('aparencia')).toBeFalse();
+    expect(visivel('endereco')).toBeFalse();
+    expect(etapa('dados').classList).toContain('step-primary');
+    expect(etapa('aparencia').classList).not.toContain('step-primary');
   });
 
-  it('deveRolarAteASecaoDoFragmento', async () => {
-    const rolar = spyOn(Element.prototype, 'scrollIntoView');
-    await setup(perfil, 'funcionamento');
-    await new Promise((r) => setTimeout(r, 100));
+  it('deveAbrirNaSecaoDoFragmento', async () => {
+    await setup(perfil, 'estoque');
 
-    expect(rolar).toHaveBeenCalled();
-    expect((rolar.calls.mostRecent().object as HTMLElement).id).toBe('funcionamento');
+    expect(visivel('estoque')).toBeTrue();
+    expect(visivel('funcionamento')).toBeFalse();
+    expect(visivel('aparencia')).toBeFalse();
+  });
+
+  it('deveAtualizarOFragmentoAoTrocar', async () => {
+    await setup();
+    const navegar = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+
+    click('step-funcionamento');
+
+    expect(navegar).toHaveBeenCalledWith([], jasmine.objectContaining({ fragment: 'funcionamento', replaceUrl: true }));
+  });
+
+  it('deveManterAEdicaoAoTrocarDeSecao', async () => {
+    await setup();
+    spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    click('step-dados');
+    preencher('store-name', 'Gás Centro Novo');
+
+    click('step-estoque');
+    click('step-dados');
+
+    expect((byId('store-name') as HTMLInputElement).value).toBe('Gás Centro Novo');
+  });
+
+  it('deveMarcarEtapaComAlteracaoNaoSalva', async () => {
+    await setup();
+    spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    expect(etapa('dados').querySelector('[data-testid="unsaved-dot"]')).toBeNull();
+
+    click('step-dados');
+    preencher('store-name', 'Gás Centro Novo');
+    click('step-aparencia');
+
+    expect(etapa('dados').querySelector('[data-testid="unsaved-dot"]')).not.toBeNull();
+    expect(etapa('dados').getAttribute('aria-label')).toContain('alterações não salvas');
   });
 });

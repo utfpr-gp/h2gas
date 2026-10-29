@@ -1,7 +1,7 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { NgxMaskDirective } from 'ngx-mask';
 import { ToastrService } from 'ngx-toastr';
 import { SupplierService } from '../../../services/supplier.service';
@@ -15,6 +15,8 @@ import { initials } from '../../../utils/initials';
 import { matchCityFromCep } from '../../../utils/city-match';
 import { fadeIn } from '../../../animations/checkout.animations';
 import { ConfigurationComponent } from '../configuration/configuration.component';
+
+type SectionId = 'aparencia' | 'dados' | 'endereco' | 'funcionamento' | 'estoque';
 
 const LOGO_ERROR = 'Envie uma imagem JPG, PNG ou WEBP de até 1 MB.';
 const BANNER_ERROR = 'Envie uma imagem JPG, PNG ou WEBP de até 2 MB.';
@@ -69,14 +71,18 @@ export class StoreProfileComponent implements OnInit, OnDestroy {
   addressCity?: City;
   searchingCep = false;
 
-  // F9: sumário do topo; cada item rola até a sua seção
-  readonly sections = [
+  // F10: uma seção por vez, escolhida na barra de etapas (como o checkout); o # da URL acompanha
+  readonly sections: { id: SectionId; label: string }[] = [
     { id: 'aparencia', label: 'Aparência' },
     { id: 'dados', label: 'Dados' },
     { id: 'endereco', label: 'Endereço' },
-    { id: 'funcionamento', label: 'Funcionamento' },
+    { id: 'funcionamento', label: 'Horário' },
     { id: 'estoque', label: 'Estoque' },
   ];
+  activeSection: SectionId = 'aparencia';
+
+  // F10: o aviso de "não salvo" da barra lê o estado das seções de horário e estoque
+  @ViewChild(ConfigurationComponent) private settings?: ConfigurationComponent;
 
   constructor(
     private supplierService: SupplierService,
@@ -85,39 +91,25 @@ export class StoreProfileComponent implements OnInit, OnDestroy {
     private userService: UserService,
     private toastr: ToastrService,
     private route: ActivatedRoute,
-  ) {}
-
-  scrollTo(id: string, behavior: ScrollBehavior = 'smooth') {
-    document.getElementById(id)?.scrollIntoView({ behavior, block: 'start' });
-  }
-
-  // F9: "Ajustar horário" e "Ajustar o estoque mínimo" chegam com #funcionamento / #estoque;
-  // as seções só existem depois que perfil e configurações carregam
-  private profileReady = false;
-  private settingsReady = false;
-  private fragmentHandled = false;
-
-  onSettingsLoaded() {
-    this.settingsReady = true;
-    this.scrollToFragment();
-  }
-
-  private scrollToFragment() {
+    private router: Router,
+  ) {
     const fragment = this.route.snapshot.fragment;
-    if (!fragment || this.fragmentHandled || !this.profileReady || !this.settingsReady) return;
-    this.fragmentHandled = true;
-    this.scrollWhenRendered(fragment, 20);
+    if (this.sections.some((sec) => sec.id === fragment)) this.activeSection = fragment as SectionId;
   }
 
-  // a seção pode demorar alguns quadros para entrar no DOM; tenta de novo até ela existir
-  private scrollWhenRendered(id: string, triesLeft: number) {
-    setTimeout(() => {
-      if (document.getElementById(id)) {
-        this.scrollTo(id, 'auto');
-      } else if (triesLeft > 0) {
-        this.scrollWhenRendered(id, triesLeft - 1);
-      }
-    }, 50);
+  select(id: SectionId) {
+    if (id === this.activeSection) return;
+    this.activeSection = id;
+    this.router.navigate([], { relativeTo: this.route, fragment: id, replaceUrl: true, queryParamsHandling: 'preserve' });
+    // no celular a barra fica no topo; a seção nova começa logo abaixo dela
+    if (typeof window !== 'undefined' && window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  hasUnsaved(id: SectionId): boolean {
+    if (id === 'dados') return this.changed;
+    if (id === 'funcionamento') return !!this.settings?.changed('hours');
+    if (id === 'estoque') return !!this.settings?.changed('stock');
+    return false;
   }
 
   ngOnInit(): void {
@@ -136,8 +128,6 @@ export class StoreProfileComponent implements OnInit, OnDestroy {
       next: (profile) => {
         this.applyProfile(profile);
         this.loading = false;
-        this.profileReady = true;
-        this.scrollToFragment();
       },
       error: (err) => {
         this.loading = false;
