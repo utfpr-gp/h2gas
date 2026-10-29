@@ -55,6 +55,26 @@
             <ng-container *ngTemplateOutlet="filtros"></ng-container>
         </div>
 
+        <!-- HU17: filtros de entrega; tocar no chip ativo desliga -->
+        <div role="group" aria-label="Filtrar por entrega" class="flex gap-2 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 pb-1 mb-3
+                    [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <button type="button" data-testid="filter-delivers-here" (click)="toggleDeliveryMode('DELIVERY')"
+                [attr.aria-pressed]="deliveryMode === 'DELIVERY'" class="btn btn-sm rounded-full shrink-0 min-h-11 sm:min-h-8 gap-1"
+                [ngClass]="deliveryMode === 'DELIVERY' ? 'btn-primary' : 'btn-ghost border-base-300 bg-base-100'">
+                <span class="material-icons text-base" aria-hidden="true">local_shipping</span>Entregam aqui
+            </button>
+            <button type="button" data-testid="filter-pickup" (click)="toggleDeliveryMode('PICKUP')"
+                [attr.aria-pressed]="deliveryMode === 'PICKUP'" class="btn btn-sm rounded-full shrink-0 min-h-11 sm:min-h-8 gap-1"
+                [ngClass]="deliveryMode === 'PICKUP' ? 'btn-primary' : 'btn-ghost border-base-300 bg-base-100'">
+                <span class="material-icons text-base" aria-hidden="true">storefront</span>Retirada
+            </button>
+            <button type="button" data-testid="filter-free-delivery" (click)="toggleFreeDelivery()"
+                [attr.aria-pressed]="freeDeliveryOnly" class="btn btn-sm rounded-full shrink-0 min-h-11 sm:min-h-8 gap-1"
+                [ngClass]="freeDeliveryOnly ? 'btn-primary' : 'btn-ghost border-base-300 bg-base-100'">
+                <span class="material-icons text-base" aria-hidden="true">sell</span>Entrega grátis
+            </button>
+        </div>
+
         <div *ngIf="!loading && !suppliers.length" data-testid="empty-state" class="text-center bg-base-100 rounded-xl border border-base-300 py-10 px-4">
             <span class="material-icons text-base-300" style="font-size: 48px">storefront</span>
             <p class="text-base-content font-semibold mt-2">{{ query ? 'Nenhuma loja com esse nome' : 'Nenhuma loja no seu endereço' }}</p>

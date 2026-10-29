@@ -11,6 +11,13 @@ import { SupplierProfile, SupplierProfileRequest } from '../models/supplier-prof
 import { StoreReview } from '../models/store-review';
 import { Storefront } from '../models/storefront';
 
+// HU17: filtros de entrega da vitrine
+export interface StorefrontDeliveryFilter {
+  zipCode?: string;
+  deliveryMode?: 'DELIVERY' | 'PICKUP';
+  freeDelivery?: boolean;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -92,14 +99,19 @@ export class SupplierService extends AbstractService<Supplier> {
 
   // RN05: sempre com a cidade do endereço ativo; q busca no nome da loja (F7 §5.21)
   // HU15: productTypeId traz só as lojas que vendem aquele tipo (Gás, Água…)
-  // HU16: sort escolhe a ordem (name, rating, deliveryTime, openFirst)
+  // HU16: sort escolhe a ordem (name, rating, deliveryTime; HU17: distance)
+  // HU17: delivery diz de onde medir (zipCode) e filtra por modalidade e entrega grátis
   getAllSupplierOpenAndActive(page: number = 0, size: number = 10, cityId?: number, q?: string,
-                              productTypeId?: number, sort?: string): Observable<PaginatedResponse<Supplier>> {
+                              productTypeId?: number, sort?: string,
+                              delivery: StorefrontDeliveryFilter = {}): Observable<PaginatedResponse<Supplier>> {
     let params = new HttpParams().set('page', page).set('size', size);
     if (cityId != null) params = params.set('cityId', cityId);
     if (q?.trim()) params = params.set('q', q.trim());
     if (productTypeId != null) params = params.set('productTypeId', productTypeId);
     if (sort) params = params.set('sort', sort);
+    if (delivery.zipCode) params = params.set('zipCode', delivery.zipCode);
+    if (delivery.deliveryMode) params = params.set('deliveryMode', delivery.deliveryMode);
+    if (delivery.freeDelivery) params = params.set('freeDelivery', true);
     return this.http.get<PaginatedResponse<Supplier>>(`${this.baseUrl}/actives/open`, { params });
   }
 

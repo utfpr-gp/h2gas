@@ -76,17 +76,20 @@ describe('addressDefinedGuard', () => {
 
   it('deveLiberarNavegacaoSeEnderecoJaExiste', (done) => {
     addressServiceSpy.findByUserId.and.returnValue(
-      of({ cityId: 1, cityName: 'Pato Branco', streetName: 'Rua XV', number: '100' })
+      of({ id: 4, cityId: 1, cityName: 'Pato Branco', streetName: 'Rua XV', number: '100', zipCode: '85501-000' })
     );
 
     const result = executeGuard({} as any, {} as any);
 
     (result as any).subscribe((canActivate: boolean) => {
       expect(canActivate).toBeTrue();
+      // HU17: leva também o id e o CEP do endereço, para o frete
       expect(locationContextService.current()).toEqual({
+        addressId: 4,
         cityId: 1,
         cityName: 'Pato Branco',
         label: 'Rua XV, 100 · Pato Branco',
+        zipCode: '85501-000',
       });
       done();
     });

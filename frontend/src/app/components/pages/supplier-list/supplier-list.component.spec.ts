@@ -74,7 +74,7 @@ describe('SupplierListComponent', () => {
 
     fixture.detectChanges();
 
-    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, 5, undefined, undefined, 'name');
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, 5, undefined, undefined, 'name', jasmine.any(Object));
   });
 
   it('deveReenviarCityIdAoBuscarProdutosGlobais', () => {
@@ -204,7 +204,7 @@ describe('SupplierListComponent', () => {
     expect(supplierServiceSpy.getAllSupplierOpenAndActive).not.toHaveBeenCalled();
     tick(300);
 
-    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledOnceWith(0, 10, 5, 'gás', undefined, 'name');
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledOnceWith(0, 10, 5, 'gás', undefined, 'name', jasmine.any(Object));
   }));
 
   it('deveBuscarProdutosNaVisaoProdutos', fakeAsync(() => {
@@ -232,7 +232,7 @@ describe('SupplierListComponent', () => {
     fixture.detectChanges();
 
     expect((byId('catalog-search') as HTMLInputElement).value).toBe('');
-    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, undefined, 'name');
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, undefined, 'name', jasmine.any(Object));
     expect(byId('clear-search')).toBeNull();
   }));
 
@@ -338,7 +338,7 @@ describe('SupplierListComponent', () => {
 
     component.selectCategory({ id: 3, name: 'Gás' });
 
-    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, 3, 'name');
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, 3, 'name', jasmine.any(Object));
   });
 
   it('deveVoltarParaAPrimeiraPaginaAoTrocarDeTipo', () => {
@@ -348,7 +348,7 @@ describe('SupplierListComponent', () => {
 
     component.selectCategory({ id: 3, name: 'Gás' });
 
-    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, 3, 'name');
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, 3, 'name', jasmine.any(Object));
   });
 
   it('deveLimparOFiltroDeTipoEmTodas', () => {
@@ -358,7 +358,7 @@ describe('SupplierListComponent', () => {
 
     component.selectCategory(null);
 
-    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, undefined, 'name');
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, undefined, 'name', jasmine.any(Object));
   });
 
   it('deveMostrarEstadoVazioQuandoNaoHaLojaDoTipo', () => {
@@ -416,7 +416,7 @@ describe('SupplierListComponent', () => {
   it('deveOferecerAsOpcoesDeCadaVisao', () => {
     fixture.detectChanges();
     expect(component.sortOptions.map((o) => o.label))
-      .toEqual(['Nome (A-Z)', 'Melhor avaliação', 'Menor tempo de entrega']);
+      .toEqual(['Nome (A-Z)', 'Melhor avaliação', 'Menor tempo de entrega', 'Mais perto']);
 
     component.toggleView();
     expect(component.sortOptions.map((o) => o.label))
@@ -428,7 +428,7 @@ describe('SupplierListComponent', () => {
 
     component.changeSort('rating');
 
-    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, undefined, 'rating');
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, undefined, 'rating', jasmine.any(Object));
   });
 
   it('deveVoltarParaAPrimeiraPaginaAoTrocarAOrdenacao', () => {
@@ -438,7 +438,7 @@ describe('SupplierListComponent', () => {
 
     component.changeSort('deliveryTime');
 
-    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, undefined, 'deliveryTime');
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, undefined, 'deliveryTime', jasmine.any(Object));
   });
 
   it('deveRefletirOsFiltrosNaUrl', () => {
@@ -461,7 +461,7 @@ describe('SupplierListComponent', () => {
     fixture.detectChanges();
 
     expect(component.query).toBe('gás');
-    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, 'gás', 2, 'deliveryTime');
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, 'gás', 2, 'deliveryTime', jasmine.any(Object));
   });
 
   it('deveIgnorarOrdenacaoDaUrlQueNaoEDaVisao', () => {
@@ -469,7 +469,7 @@ describe('SupplierListComponent', () => {
 
     fixture.detectChanges();
 
-    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, undefined, 'name');
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledWith(0, 10, undefined, undefined, undefined, 'name', jasmine.any(Object));
   });
 
   it('deveLimparTodosOsFiltros', fakeAsync(() => {
@@ -484,7 +484,7 @@ describe('SupplierListComponent', () => {
     byId('clear-filters')!.click();
     fixture.detectChanges();
 
-    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledOnceWith(0, 10, undefined, undefined, undefined, 'name');
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive).toHaveBeenCalledOnceWith(0, 10, undefined, undefined, undefined, 'name', jasmine.any(Object));
     expect(byId('clear-filters')).toBeNull();
   }));
 
@@ -514,5 +514,51 @@ describe('SupplierListComponent', () => {
     (fixture.nativeElement.querySelector('[data-testid="product-store"]') as HTMLButtonElement).click();
 
     expect(router.navigate).toHaveBeenCalledWith(['/lojas', 'loja-7']);
+  });
+
+  // ---- HU17: distância, frete e filtros de entrega ----
+  const entregaDaUltimaBusca = () => supplierServiceSpy.getAllSupplierOpenAndActive.calls.mostRecent().args[6] as any;
+
+  it('deveMandarOCepDoEnderecoAtivo', () => {
+    locationContextService.setAddress({ cityId: 5, cityName: 'Curitiba', label: 'Batel · Curitiba', zipCode: '80420090' });
+
+    fixture.detectChanges();
+
+    expect(entregaDaUltimaBusca()).toEqual(jasmine.objectContaining({ zipCode: '80420090' }));
+  });
+
+  it('deveFiltrarPorModalidade', () => {
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('[data-testid="filter-delivers-here"]') as HTMLButtonElement).click();
+    expect(entregaDaUltimaBusca()).toEqual(jasmine.objectContaining({ deliveryMode: 'DELIVERY' }));
+
+    (fixture.nativeElement.querySelector('[data-testid="filter-pickup"]') as HTMLButtonElement).click();
+    expect(entregaDaUltimaBusca()).toEqual(jasmine.objectContaining({ deliveryMode: 'PICKUP' }));
+
+    // tocar de novo no chip ativo desliga o filtro
+    (fixture.nativeElement.querySelector('[data-testid="filter-pickup"]') as HTMLButtonElement).click();
+    expect(entregaDaUltimaBusca().deliveryMode).toBeUndefined();
+    expect(component.hasActiveFilters).toBeFalse();
+  });
+
+  it('deveFiltrarEntregaGratis', () => {
+    fixture.detectChanges();
+
+    (fixture.nativeElement.querySelector('[data-testid="filter-free-delivery"]') as HTMLButtonElement).click();
+
+    expect(entregaDaUltimaBusca()).toEqual(jasmine.objectContaining({ freeDelivery: true }));
+    expect(component.hasActiveFilters).toBeTrue();
+    component.clearFilters();
+    expect(entregaDaUltimaBusca().freeDelivery).toBeUndefined();
+  });
+
+  it('deveOrdenarPorDistancia', () => {
+    fixture.detectChanges();
+
+    expect(component.sortOptions.map((o) => o.value)).toContain('distance');
+    component.changeSort('distance');
+
+    expect(supplierServiceSpy.getAllSupplierOpenAndActive.calls.mostRecent().args[5]).toBe('distance');
   });
 });

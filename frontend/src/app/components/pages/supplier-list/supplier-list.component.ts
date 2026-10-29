@@ -4,7 +4,7 @@ import { ActivatedRoute, Params, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, debounceTime } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
-import { SupplierService } from '../../../services/supplier.service';
+import { StorefrontDeliveryFilter, SupplierService } from '../../../services/supplier.service';
 import { Supplier } from '../../../models/supplier';
 import { ProductItemService } from '../../../services/product-item.service';
 import { ProductItem } from '../../../models/product-item';
@@ -32,6 +32,8 @@ const SUPPLIER_SORT_OPTIONS: SortOption[] = [
   { value: 'name', label: 'Nome (A-Z)' },
   { value: 'rating', label: 'Melhor avaliação' },
   { value: 'deliveryTime', label: 'Menor tempo de entrega' },
+  // HU17: pela distância até o CEP do endereço ativo
+  { value: 'distance', label: 'Mais perto' },
   // HU18: "Abertas primeiro" saiu — as fechadas já vêm sempre depois das abertas
 ];
 const PRODUCT_SORT_OPTIONS: SortOption[] = [
@@ -98,6 +100,10 @@ export class SupplierListComponent implements OnInit {
     if (params.get('view') === 'products') this.viewMode = 'products';
     // HU16: busca, tipo e ordenação vêm da URL, para sobreviver ao recarregar e à volta de uma loja
     this.query = params.get('q')?.trim() ?? '';
+    // HU17: entrega=aqui|retirada e gratis=1
+    const entrega = params.get('entrega');
+    this.deliveryMode = entrega === 'aqui' ? 'DELIVERY' : entrega === 'retirada' ? 'PICKUP' : null;
+    this.freeDeliveryOnly = params.get('gratis') === '1';
     const ordem = params.get('ordem');
     if (ordem && this.sortOptions.some((o) => o.value === ordem)) this.activeSort = ordem;
     const tipoId = Number(params.get('tipo')) || null;
@@ -126,7 +132,30 @@ export class SupplierListComponent implements OnInit {
   }
 
   get hasActiveFilters(): boolean {
-    return !!this.query || this.selectedType != null || this.activeSort !== this.sortOptions[0].value;
+    return !!this.query || this.selectedType != null || this.activeSort !== this.sortOptions[0].value
+      || this.deliveryMode != null || this.freeDeliveryOnly;
+  }
+
+  // HU17: filtros de entrega das lojas ("Entregam aqui", "Retirada", "Entrega grátis")
+  deliveryMode: 'DELIVERY' | 'PICKUP' | null = null;
+  freeDeliveryOnly = false;
+
+  toggleDeliveryMode(mode: 'DELIVERY' | 'PICKUP') {
+    this.deliveryMode = this.deliveryMode === mode ? null : mode;
+    this.applyFilters();
+  }
+
+  toggleFreeDelivery() {
+    this.freeDeliveryOnly = !this.freeDeliveryOnly;
+    this.applyFilters();
+  }
+
+  private get deliveryFilter(): StorefrontDeliveryFilter {
+    return {
+      zipCode: this.locationContext.current()?.zipCode,
+      deliveryMode: this.deliveryMode ?? undefined,
+      freeDelivery: this.freeDeliveryOnly || undefined,
+    };
   }
 
   private get cityId(): number | undefined {
@@ -149,6 +178,7 @@ export class SupplierListComponent implements OnInit {
     this.loading = true;
     this.supplierService.getAllSupplierOpenAndActive(
       page, SUPPLIERS_PAGE_SIZE, this.cityId, this.query || undefined, this.selectedType?.id, this.supplierSort,
+      this.deliveryFilter,
     ).subscribe({
       next: (response) => {
         this.suppliers = response.data;
@@ -210,6 +240,8 @@ export class SupplierListComponent implements OnInit {
   clearFilters() {
     this.query = '';
     this.selectedType = null;
+    this.deliveryMode = null;
+    this.freeDeliveryOnly = false;
     this.activeSort = this.sortOptions[0].value;
     this.applyFilters();
   }
@@ -226,6 +258,8 @@ export class SupplierListComponent implements OnInit {
       q: this.query || null,
       tipo: this.selectedType?.id ?? null,
       ordem: this.activeSort !== this.sortOptions[0].value ? this.activeSort : null,
+      entrega: this.deliveryMode === 'DELIVERY' ? 'aqui' : this.deliveryMode === 'PICKUP' ? 'retirada' : null,
+      gratis: this.freeDeliveryOnly ? '1' : null,
     };
     this.router.navigate([], { relativeTo: this.route, queryParams, queryParamsHandling: 'merge', replaceUrl: true });
   }

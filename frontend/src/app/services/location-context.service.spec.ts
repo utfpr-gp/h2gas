@@ -51,13 +51,16 @@ describe('LocationContextService', () => {
       cityId: 1,
       cityName: 'Pato Branco',
       addressName: 'Casa',
+      zipCode: '85501-000',
     });
 
+    // HU17: o CEP do endereço escolhido mede o frete
     expect(service.current()).toEqual({
       addressId: 7,
       cityId: 1,
       cityName: 'Pato Branco',
       label: 'Rua XV, 100 · Pato Branco',
+      zipCode: '85501-000',
     });
   });
 

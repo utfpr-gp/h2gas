@@ -76,6 +76,7 @@ export class VisitorCepPanelComponent {
           cityId: city.id!,
           cityName: city.name!,
           label: [viaCep.bairro, city.name].filter(Boolean).join(' · '),
+          zipCode: this.form.controls.cep.value.replace(/\D/g, ''),
         });
         this.router.navigateByUrl(safeReturnUrl(this.returnUrl) ?? '/inicio');
       },
