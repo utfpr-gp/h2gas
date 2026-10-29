@@ -24,4 +24,21 @@ public class CartPreviewDTO {
 
     @Schema(description = "Soma dos itens disponíveis", example = "220.00")
     private BigDecimal subtotal;
+
+    // ---- HU17: frete por km ----
+    @Schema(description = "Frete até o CEP; 0 na retirada; nulo sem CEP ou quando a loja não entrega ali", nullable = true, example = "9.80")
+    private BigDecimal deliveryFee;
+
+    @Schema(description = "Distância em linha reta; nula sem coordenada (o frete é só a taxa fixa)", nullable = true, example = "2.4")
+    private BigDecimal distanceKm;
+
+    @Schema(description = "Se a loja entrega no CEP; nulo na retirada ou sem CEP", nullable = true, example = "true")
+    private Boolean deliversHere;
+
+    @Schema(description = "Subtotal + frete (quando há frete calculado)", example = "229.80")
+    private BigDecimal total;
+
+    public CartPreviewDTO(String supplierId, String supplierName, List<CartPreviewItemDTO> items, BigDecimal subtotal) {
+        this(supplierId, supplierName, items, subtotal, null, null, null, subtotal);
+    }
 }

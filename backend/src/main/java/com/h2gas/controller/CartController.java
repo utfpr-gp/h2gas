@@ -32,13 +32,14 @@ public class CartController {
             description = "Público (cliente e visitante). O navegador guarda só id e quantidade; esta rota devolve marca, "
                     + "foto, preço pela modalidade (RN01), estoque e se cada item pode ser comprado agora. Item "
                     + "indisponível (NOT_FOUND, STORE_INACTIVE, STORE_CLOSED, OUT_OF_STOCK) vem com o motivo e fica "
-                    + "fora do subtotal.")
+                    + "fora do subtotal. HU17: com zipCode e modalidade DELIVERY, calcula o frete por km até o CEP "
+                    + "(deliveryFee, distanceKm, deliversHere) e o total; em PICKUP o frete é 0; sem CEP, o frete fica para o checkout.")
     @io.swagger.v3.oas.annotations.parameters.RequestBody(required = true,
             content = @Content(schema = @Schema(implementation = CartPreviewRequestDTO.class)))
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Carrinho com os dados atuais",
                     content = @Content(schema = @Schema(implementation = CartPreviewDTO.class))),
-            @ApiResponse(responseCode = "400", description = "Lista vazia, mais de 50 itens, quantidade menor que 1 ou modalidade inválida",
+            @ApiResponse(responseCode = "400", description = "Lista vazia, mais de 50 itens, quantidade menor que 1, modalidade ou CEP inválidos",
                     content = @Content)
     })
     @SecurityRequirements

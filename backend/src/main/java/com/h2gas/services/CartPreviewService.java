@@ -1,5 +1,9 @@
 package com.h2gas.services;
 
+import com.h2gas.model.Coordinates;
+import com.h2gas.model.DeliveryFeeCalculator;
+import com.h2gas.model.DeliveryQuote;
+
 import com.h2gas.enums.CartUnavailableReasonEnum;
 import com.h2gas.model.OpeningHours;
 import com.h2gas.model.dto.CartLineDTO;
@@ -28,9 +32,12 @@ public class CartPreviewService {
     private final ProductItemRepository productItemRepository;
     private final Clock clock;
 
-    public CartPreviewService(ProductItemRepository productItemRepository, Clock clock) {
+    private final GeocodingService geocodingService;
+
+    public CartPreviewService(ProductItemRepository productItemRepository, Clock clock, GeocodingService geocodingService) {
         this.productItemRepository = productItemRepository;
         this.clock = clock;
+        this.geocodingService = geocodingService;
     }
 
     @Transactional(readOnly = true)
@@ -56,8 +63,30 @@ public class CartPreviewService {
                 .filter(Objects::nonNull)
                 .findFirst().orElse(null);
 
-        return new CartPreviewDTO(supplier == null ? null : supplier.getId(),
+        CartPreviewDTO preview = new CartPreviewDTO(supplier == null ? null : supplier.getId(),
                 supplier == null ? null : supplier.getName(), items, subtotal);
+        applyDelivery(preview, supplier, request);
+        return preview;
+    }
+
+    // HU17: retirada não tem frete; entrega mede do endereço da loja até o CEP informado (RN01)
+    private void applyDelivery(CartPreviewDTO preview, Supplier supplier, CartPreviewRequestDTO request) {
+        if ("PICKUP".equals(request.getDeliveryMode())) {
+            preview.setDeliveryFee(BigDecimal.ZERO);
+            return;
+        }
+        if (supplier == null || request.getZipCode() == null) {
+            return;
+        }
+        Coordinates store = supplier.getAddress() == null ? null : supplier.getAddress().coordinates();
+        Coordinates destination = geocodingService.findByZipCode(request.getZipCode()).orElse(null);
+        DeliveryQuote quote = DeliveryFeeCalculator.quote(supplier.deliveryTerms(), store, destination);
+        preview.setDeliversHere(quote.available());
+        preview.setDistanceKm(quote.distanceKm());
+        preview.setDeliveryFee(quote.fee());
+        if (quote.available()) {
+            preview.setTotal(preview.getSubtotal().add(quote.fee()));
+        }
     }
 
     private CartPreviewItemDTO toItem(CartLineDTO line, ProductItem product, LocalTime now) {
