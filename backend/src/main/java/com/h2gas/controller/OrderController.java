@@ -9,10 +9,13 @@ import com.h2gas.model.dto.CancelOrderRequestDTO;
 import com.h2gas.model.dto.DeliveryHistoryDTO;
 import com.h2gas.model.dto.CancelOrderResponseDTO;
 import com.h2gas.model.dto.OrderPreviewDTO;
+import com.h2gas.model.dto.CreateReviewDTO;
+import com.h2gas.model.dto.OrderReviewDTO;
 import com.h2gas.model.entity.Order;
 import com.h2gas.model.entity.Deliverer;
 import com.h2gas.services.DelivererService;
 import com.h2gas.services.OrderNotificationService;
+import com.h2gas.services.ReviewService;
 import com.h2gas.model.dto.OrderPreviewRequestDTO;
 import com.h2gas.model.dto.OrderRequestDTO;
 import com.h2gas.model.dto.OrderResponseDTO;
@@ -55,6 +58,9 @@ public class OrderController {
 
     @Autowired
     private DelivererService delivererService;
+
+    @Autowired
+    private ReviewService reviewService;
 
     @GetMapping("/{id}")
     @ResponseBody
@@ -286,6 +292,28 @@ public class OrderController {
             @RequestBody Map<String, String> status) {
         String novoStatus = orderService.updateOrderStatus(id, status.get("orderStatus"));
         return ResponseEntity.ok(Map.of("status", novoStatus));
+    }
+
+    @Operation(summary = "Avalia um pedido entregue (cliente)",
+            description = "HU24: o cliente dono do pedido dá de 1 a 5 estrelas para a loja e, se o pedido teve "
+                    + "entregador, de 1 a 5 para ele; comentário opcional. Só pedido entregue (RN04) e uma vez por pedido. "
+                    + "Loja e entregador vêm do pedido, não do corpo")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Avaliação gravada"),
+            @ApiResponse(responseCode = "400", description = "Nota fora de 1 a 5, comentário longo, pedido não entregue "
+                    + "ou nota de entregador em pedido sem entregador"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido, papel sem permissão ou pedido de outro cliente"),
+            @ApiResponse(responseCode = "404", description = "Pedido inexistente"),
+            @ApiResponse(responseCode = "409", description = "O pedido já foi avaliado")
+    })
+    @PostMapping("/{id}/review")
+    @RolesAllowed({"CUSTOMER"})
+    public ResponseEntity<OrderReviewDTO> reviewOrder(
+            @Parameter(description = "ID do pedido") @PathVariable String id,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Notas e comentário")
+            @Valid @RequestBody CreateReviewDTO request) {
+        OrderReviewDTO review = reviewService.reviewOrder(id, loggedUser().getId(), request);
+        return ResponseEntity.status(org.springframework.http.HttpStatus.CREATED).body(review);
     }
 
     @Operation(summary = "Cancela um pedido com justificativa (fornecedor)",

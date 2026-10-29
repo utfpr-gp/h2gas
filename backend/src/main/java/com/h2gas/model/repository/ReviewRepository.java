@@ -19,6 +19,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     boolean existsByOrderId(String orderId);
 
+    // HU24: avaliações de uma página de pedidos, numa consulta só
+    List<Review> findByOrderIdIn(Collection<String> orderIds);
+
     // F7 §5.25: média e contagem por loja, numa consulta só (sem N+1)
     @Query("SELECT r.supplier.id AS supplierId, AVG(r.rating) AS average, COUNT(r) AS total"
             + " FROM Review r WHERE r.supplier.id IN :supplierIds GROUP BY r.supplier.id")

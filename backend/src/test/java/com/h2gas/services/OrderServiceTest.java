@@ -1547,4 +1547,32 @@ class OrderServiceTest {
         assertEquals(contagem.total(), contagem.counts().values().stream().mapToLong(Long::longValue).sum());
         for (OrderStatusEnum st : OrderStatusEnum.values()) assertNotNull(contagem.counts().get(st), st.name());
     }
+
+    // ---- HU24 ----
+    @Autowired
+    private ReviewRepository reviewRepositoryHu24;
+
+    @Test
+    @DisplayName("HU24: a listagem do cliente traz a avaliação feita, e nula sem avaliação")
+    void deveTrazerAAvaliacaoNosPedidosDoCliente() {
+        Supplier loja = supplierRepository.findById(validSupplierId).orElseThrow();
+        User cliente = userRepository.findById(validCustomerId).orElseThrow();
+        Order avaliado = pedidoFinalizado(loja, cliente, OrderStatusEnum.DELIVERED, "PIX", DeliveryModeEnum.DELIVERY, "10.00", "2026-10-20");
+        Order semAvaliacao = pedidoFinalizado(loja, cliente, OrderStatusEnum.DELIVERED, "PIX", DeliveryModeEnum.DELIVERY, "10.00", "2026-10-21");
+        Review review = new Review();
+        review.setOrder(avaliado);
+        review.setSupplier(loja);
+        review.setRating(4);
+        review.setDelivererRating(5);
+        review.setComment("Bom");
+        reviewRepositoryHu24.save(review);
+
+        List<OrderResponseDTO> pedidos = orderService.findByCustomerId(validCustomerId, "DELIVERED",
+                org.springframework.data.domain.PageRequest.of(0, 50)).getContent();
+
+        OrderResponseDTO dtoAvaliado = pedidos.stream().filter(o -> o.getId().equals(avaliado.getId())).findFirst().orElseThrow();
+        OrderResponseDTO dtoSem = pedidos.stream().filter(o -> o.getId().equals(semAvaliacao.getId())).findFirst().orElseThrow();
+        assertEquals(new com.h2gas.model.dto.OrderReviewDTO(4, 5, "Bom"), dtoAvaliado.getReview());
+        assertNull(dtoSem.getReview());
+    }
 }

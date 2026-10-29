@@ -21,6 +21,7 @@ import com.h2gas.model.dto.OrderPreviewItemDTO;
 import com.h2gas.model.dto.OrderPreviewRequestDTO;
 import com.h2gas.model.dto.OrderRequestDTO;
 import com.h2gas.model.dto.OrderResponseDTO;
+import com.h2gas.model.dto.OrderReviewDTO;
 import com.h2gas.model.dto.ReorderItemDTO;
 import com.h2gas.model.dto.ReorderPreviewDTO;
 import com.h2gas.model.entity.Address;
@@ -35,6 +36,7 @@ import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.OrderMapper;
 import com.h2gas.model.repository.DeliveryRefusalRepository;
 import com.h2gas.model.repository.OrderRepository;
+import com.h2gas.model.repository.ReviewRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -48,6 +50,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -79,6 +82,9 @@ public class OrderService {
     private DelivererService delivererService;
 
     private final DeliveryRefusalRepository deliveryRefusalRepository;
+
+    @Autowired
+    private ReviewRepository reviewRepository;
 
     private final ApplicationEventPublisher eventPublisher;
 
@@ -258,7 +264,18 @@ public class OrderService {
             page = orderRepository.findByCustomerIdOrderByCreatedAtDesc(customerId, pageable);
         }
 
-        return page.map(orderMapper::toResponseDto);
+        Page<OrderResponseDTO> dtos = page.map(orderMapper::toResponseDto);
+        attachReviews(dtos.getContent());
+        return dtos;
+    }
+
+    // HU24: a avaliação de cada pedido da página, sem uma consulta por pedido
+    private void attachReviews(List<OrderResponseDTO> orders) {
+        if (orders.isEmpty()) return;
+        Map<String, OrderReviewDTO> byOrder = reviewRepository
+                .findByOrderIdIn(orders.stream().map(OrderResponseDTO::getId).toList()).stream()
+                .collect(java.util.stream.Collectors.toMap(r -> r.getOrder().getId(), ReviewService::toDto));
+        orders.forEach(o -> o.setReview(byOrder.get(o.getId())));
     }
 
 

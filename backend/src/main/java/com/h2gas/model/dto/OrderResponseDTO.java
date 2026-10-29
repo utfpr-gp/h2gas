@@ -1,6 +1,7 @@
 package com.h2gas.model.dto;
 
 import com.h2gas.enums.OrderStatusEnum;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -47,4 +48,8 @@ public class OrderResponseDTO {
     private LocalDateTime deliveredAt;
     private String lastRefusalReason;
     private String lastRefusalBy;
+
+    // HU24: preenchida na listagem do cliente
+    @Schema(description = "Avaliação que o cliente fez do pedido; nula se ainda não avaliou", nullable = true)
+    private OrderReviewDTO review;
 }
