@@ -47,7 +47,7 @@
         <textarea id="review-comment" data-testid="review-comment" rows="3" [maxLength]="maxComment"
           class="textarea textarea-bordered rounded-xl w-full mt-1" placeholder="Conte como foi a entrega e o atendimento"
           [value]="comment" (input)="setComment($any($event.target).value)"></textarea>
-        <span class="text-xs text-gray-500 mt-1 self-end tabular-nums">{{ comment.length }}/{{ maxComment }}</span>
+        <span class="block text-right text-xs text-gray-500 mt-1 tabular-nums">{{ comment.length }}/{{ maxComment }}</span>
       </label>
 
       <p *ngIf="error" data-testid="review-error" role="alert" class="text-sm text-error">{{ error }}</p>

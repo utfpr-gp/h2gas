@@ -158,12 +158,37 @@ avaliar loja e entregador; conferir o card, o banco, a segunda tentativa
 
 ## 8. Definição de Pronto
 
-- [ ] V22 aplicada no MySQL local, sem perder as avaliações existentes.
-- [ ] Cliente avalia loja e entregador; retirada só a loja.
-- [ ] RN04, dono e uma vez por pedido garantidos no backend.
-- [ ] Nota no painel e em Entregadores.
-- [ ] Rota documentada no Swagger.
-- [ ] Testes da seção 6 verdes; `mvn test` e `ng test` sem falha nova;
+- [x] V22 aplicada no MySQL local, sem perder as avaliações existentes.
+- [x] Cliente avalia loja e entregador; retirada só a loja.
+- [x] RN04, dono e uma vez por pedido garantidos no backend.
+- [x] Nota no painel e em Entregadores.
+- [x] Rota documentada no Swagger.
+- [x] Testes da seção 6 verdes; `mvn test` e `ng test` sem falha nova;
       `ng build` ok.
-- [ ] E2E registrado aqui com data.
-- [ ] Nada do "Fora de Escopo".
+- [x] E2E registrado aqui com data.
+- [x] Nada do "Fora de Escopo".
+
+### Registro do E2E (2026-10-29)
+
+Feito com a loja `gpv-centro@seed-teste.h2gas.local`, o cliente
+`gpv-cliente-centro@…` e o entregador `gpv-entregador@…` (id 11), em Chrome
+headless a 390 e 1280 px.
+- V22 aplicada no MySQL local: continuam as 20 avaliações do seed, e
+  `uk_reviews_order` foi criado. Backup em `scratchpad/reviews-antes-v22.sql`.
+- Pedido de entrega criado pela API. Avaliar com ele pendente → 400.
+  Depois de confirmar, preparar, despachar, iniciar a rota e entregar, o
+  fornecedor tentou avaliar → 403.
+- Em Meus pedidos, os pedidos entregues mostraram "Como foi o pedido?". O
+  diálogo trouxe as estrelas da loja e as do entregador ("João Entregador
+  Guará"), com o foco na primeira estrela.
+- Enviado pela tela: loja 4, entregador 5 e comentário com acento. O
+  diálogo fechou, o card passou a mostrar "Sua avaliação" com 4 estrelas e
+  a lista não foi recarregada.
+- No banco: `rating` 4, `deliverer_rating` 5, `deliverer_id` 11 e o
+  comentário em UTF-8 certo. A segunda avaliação deu 409.
+- A listagem do cliente trouxe `review` no pedido avaliado e nulo no outro.
+- No painel: "Nota da loja 4,0 · 1 avaliação · todo o histórico", igual à
+  média calculada no banco. Em Entregadores: "5,0 · 1 avaliação".
+- A 390 px não há rolagem horizontal (`scrollWidth` 390).
+- `mvn test`: 513 testes, só falha o `contextLoads`, que precisa de MySQL.
+  `ng test`: 693 verdes, só as 10 falhas antigas. `ng build` ok.
