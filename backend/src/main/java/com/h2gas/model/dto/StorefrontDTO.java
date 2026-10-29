@@ -22,6 +22,15 @@ public record StorefrontDTO(
         @Schema(description = "Média das avaliações, 1 casa; nula sem avaliações", example = "4.2", nullable = true) Double averageRating,
         @Schema(description = "Quantidade de avaliações", example = "14") Long reviewCount,
         @Schema(description = "HU15: tipos de produto que a loja vende, sem repetição e em ordem alfabética;"
-                + " vazia quando a loja ainda não cadastrou categorias") List<ProductTypeChipDTO> productTypes
+                + " vazia quando a loja ainda não cadastrou categorias") List<ProductTypeChipDTO> productTypes,
+        // ---- HU17: entrega e frete por km (calculados no backend, RN01) ----
+        @Schema(description = "A loja faz entrega") boolean offersDelivery,
+        @Schema(description = "A loja aceita retirada no local") boolean offersPickup,
+        @Schema(description = "Distância em linha reta até o CEP; nula sem CEP ou sem coordenada", example = "2.4", nullable = true)
+        java.math.BigDecimal distanceKm,
+        @Schema(description = "Frete até o CEP; nulo sem CEP ou quando a loja não entrega ali", example = "9.80", nullable = true)
+        java.math.BigDecimal deliveryFee,
+        @Schema(description = "Se a loja entrega no CEP (false = só retirada); nulo sem CEP", nullable = true) Boolean deliversHere,
+        @Schema(description = "Entrega grátis: taxa fixa e valor por km zerados") boolean freeDelivery
 ) {
 }

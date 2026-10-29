@@ -1,5 +1,11 @@
 package com.h2gas.services;
 
+import com.h2gas.model.Coordinates;
+import com.h2gas.model.DeliveryFeeCalculator;
+import com.h2gas.model.DeliveryQuote;
+import com.h2gas.model.DeliveryTerms;
+import com.h2gas.model.dto.StorefrontFilter;
+
 import com.h2gas.enums.StorefrontSortEnum;
 import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ResourceNotFoundException;
@@ -68,6 +74,10 @@ public class SupplierService {
     @Autowired
     private CityMapper cityMapper;
 
+    // HU17: coordenadas do CEP de origem da vitrine (cliente ou visitante), com cache por CEP
+    @Autowired
+    private GeocodingService geocodingService;
+
     @Autowired
     private CityService cityService;
 
@@ -123,20 +133,50 @@ public class SupplierService {
     // HU16: sort escolhe a ordem. HU18: as fechadas também aparecem, sempre depois das abertas
     public Page<StorefrontDTO> findAllSuppliersOpenAndActive(Long cityId, String q, Long productTypeId,
                                                              StorefrontSortEnum sort, Pageable pageable) {
+        return findAllSuppliersOpenAndActive(cityId, q, productTypeId, sort, StorefrontFilter.NONE, pageable);
+    }
+
+    // HU17: filter.zipCode diz de onde medir a distância e o frete; deliveryMode/freeDelivery filtram no banco
+    public Page<StorefrontDTO> findAllSuppliersOpenAndActive(Long cityId, String q, Long productTypeId,
+                                                             StorefrontSortEnum sort, StorefrontFilter filter,
+                                                             Pageable pageable) {
         String term = q == null || q.isBlank() ? null : q.trim().toLowerCase(java.util.Locale.ROOT);
-        Page<SupplierDTO> page = supplierRepository
-                .findForCatalog(cityId, term, productTypeId, true, sort.param(), now(), pageable)
-                .map(this::toDtoWithOpen);
+        Coordinates origin = filter.zipCode() == null ? null : geocodingService.findByZipCode(filter.zipCode()).orElse(null);
+        Page<Supplier> suppliers = supplierRepository.findForCatalog(cityId, term, productTypeId, true, sort.param(), now(),
+                filter.deliveryMode(), Boolean.TRUE.equals(filter.freeDelivery()), origin != null,
+                origin == null ? 0 : Math.toRadians(origin.latitude()), origin == null ? 0 : Math.toRadians(origin.longitude()),
+                pageable);
+        Map<String, StoreDelivery> deliveryById = suppliers.getContent().stream()
+                .collect(Collectors.toMap(Supplier::getId, supplier -> StoreDelivery.of(supplier, origin, filter.zipCode() != null)));
+        Page<SupplierDTO> page = suppliers.map(this::toDtoWithOpen);
         addRatings(page.getContent());
         Map<String, List<ProductTypeChipDTO>> typesBySupplier = productTypesBySupplier(
                 page.getContent().stream().map(SupplierDTO::getId).toList());
-        return page.map(dto -> toStorefront(dto, typesBySupplier.getOrDefault(dto.getId(), List.of())));
+        return page.map(dto -> toStorefront(dto, typesBySupplier.getOrDefault(dto.getId(), List.of()), deliveryById.get(dto.getId())));
+    }
+
+    // HU17: o que o card mostra da entrega. Sem CEP de origem: só as modalidades e o "grátis" (sem distância nem frete).
+    // Com CEP mas sem coordenada (da loja ou da origem): entrega com a taxa fixa e sem distância (decisão do autor).
+    private record StoreDelivery(boolean offersDelivery, boolean offersPickup, boolean freeDelivery,
+                                 java.math.BigDecimal distanceKm, java.math.BigDecimal fee, Boolean deliversHere) {
+
+        static StoreDelivery of(Supplier supplier, Coordinates origin, boolean hasZipCode) {
+            DeliveryTerms terms = supplier.deliveryTerms();
+            if (!hasZipCode) {
+                return new StoreDelivery(supplier.isOffersDelivery(), supplier.isOffersPickup(), terms.freeDelivery(), null, null, null);
+            }
+            Coordinates store = supplier.getAddress() == null ? null : supplier.getAddress().coordinates();
+            DeliveryQuote quote = DeliveryFeeCalculator.quote(terms, store, origin);
+            return new StoreDelivery(supplier.isOffersDelivery(), supplier.isOffersPickup(), terms.freeDelivery(),
+                    quote.distanceKm(), quote.fee(), quote.available());
+        }
     }
 
     // HU13: página da loja na vitrine pública
     public StorefrontDTO findStorefront(String id) {
         SupplierDTO dto = findById(id);
-        return toStorefront(dto, productTypesBySupplier(List.of(id)).getOrDefault(id, List.of()));
+        StoreDelivery delivery = StoreDelivery.of(findEntityById(id), null, false);
+        return toStorefront(dto, productTypesBySupplier(List.of(id)).getOrDefault(id, List.of()), delivery);
     }
 
     // HU15: ordem alfabética dos selos em pt-BR (acento não muda o lugar: "Água" antes de "Gás")
@@ -156,10 +196,12 @@ public class SupplierService {
                                         .toList()))));
     }
 
-    private static StorefrontDTO toStorefront(SupplierDTO d, List<ProductTypeChipDTO> productTypes) {
+    private static StorefrontDTO toStorefront(SupplierDTO d, List<ProductTypeChipDTO> productTypes, StoreDelivery delivery) {
         return new StorefrontDTO(d.getId(), d.getName(), d.getDescription(), d.getLogoUrl(), d.getBannerUrl(),
                 d.getOpeningTime(), d.getClosingTime(), d.getAverageDeliveryTime(), d.isOpen(), d.getCityId(), d.getCityName(),
-                d.getAddressNeighborhood(), d.getAverageRating(), d.getReviewCount(), productTypes);
+                d.getAddressNeighborhood(), d.getAverageRating(), d.getReviewCount(), productTypes,
+                delivery.offersDelivery(), delivery.offersPickup(), delivery.distanceKm(), delivery.fee(),
+                delivery.deliversHere(), delivery.freeDelivery());
     }
 
     // F7 §5.27: avaliações da loja com o primeiro nome do cliente; comentário em branco vira nulo

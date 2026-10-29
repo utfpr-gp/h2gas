@@ -35,25 +35,45 @@ public interface SupplierRepository extends JpaRepository<Supplier, String> {
             + " AND (:productTypeId IS NULL OR EXISTS (SELECT 1 FROM ProductItem pi WHERE pi.supplier = s"
             + " AND pi.stockQuantity > 0 AND pi.categoryProduct.productType.id = :productTypeId))";
 
+    // HU17: distância em linha reta (Haversine, km) do endereço da loja até a origem; :latR/:lngR em radianos.
+    // Mesma conta do DeliveryFeeCalculator, para filtro e ordem saírem no banco e a paginação bater.
+    String DISTANCE_KM = "(6371.0 * 2 * ASIN(SQRT(POWER(SIN((a.latitude * 0.017453292519943295 - :latR) / 2), 2)"
+            + " + COS(:latR) * COS(a.latitude * 0.017453292519943295)"
+            + " * POWER(SIN((a.longitude * 0.017453292519943295 - :lngR) / 2), 2))))";
+
+    // HU17: "Retirada" = aceita retirada; "Entregam aqui" = faz entrega e alcança a origem (sem coordenada ou sem raio,
+    // entrega — o frete vira a taxa fixa); "Entrega grátis" = faz entrega com taxa fixa e por km zeradas
+    String DELIVERY_WHERE = " AND (:mode IS NULL OR (:mode = 'PICKUP' AND s.offersPickup = true)"
+            + " OR (:mode = 'DELIVERY' AND s.offersDelivery = true AND (:hasOrigin = false OR a.latitude IS NULL"
+            + " OR s.deliveryRadiusKm IS NULL OR " + DISTANCE_KM + " <= s.deliveryRadiusKm)))"
+            + " AND (:freeDelivery = false OR (s.offersDelivery = true AND s.deliveryBaseFee = 0 AND s.deliveryFeePerKm = 0))";
+
     // HU16: a ordem vem de :sort (StorefrontSortEnum.param). Cada critério só pesa na ordenação dele e vira
     // constante nas outras; nota e tempo vazios vão para o fim, e o nome desempata sempre.
     // HU18: antes de tudo, abertas agora antes das fechadas.
-    @Query(value = "SELECT s FROM Supplier s" + CATALOG_WHERE
+    @Query(value = "SELECT s FROM Supplier s LEFT JOIN s.address a" + CATALOG_WHERE + DELIVERY_WHERE
             + " ORDER BY CASE WHEN " + OPEN_NOW + " THEN 0 ELSE 1 END,"
+            // HU17: mais perto primeiro; sem coordenada (ou sem origem) vai para o fim
+            + " CASE WHEN :sort = 'distance' AND (:hasOrigin = false OR a.latitude IS NULL) THEN 1 ELSE 0 END,"
+            + " CASE WHEN :sort = 'distance' AND :hasOrigin = true AND a.latitude IS NOT NULL THEN " + DISTANCE_KM + " END,"
             + " CASE WHEN :sort = 'rating' AND (SELECT AVG(r.rating) FROM Review r WHERE r.supplier = s) IS NULL"
             + " THEN 1 ELSE 0 END,"
             + " CASE WHEN :sort = 'rating' THEN (SELECT AVG(r2.rating) FROM Review r2 WHERE r2.supplier = s) END DESC,"
             + " CASE WHEN :sort = 'deliveryTime' AND s.averageDeliveryTime IS NULL THEN 1 ELSE 0 END,"
             + " CASE WHEN :sort = 'deliveryTime' THEN s.averageDeliveryTime END,"
             + " s.name",
-            countQuery = "SELECT COUNT(s) FROM Supplier s" + CATALOG_WHERE)
+            countQuery = "SELECT COUNT(s) FROM Supplier s LEFT JOIN s.address a" + CATALOG_WHERE + DELIVERY_WHERE)
     Page<Supplier> findForCatalog(@Param("cityId") Long cityId, @Param("q") String q,
                                   @Param("productTypeId") Long productTypeId,
                                   @Param("includeClosed") boolean includeClosed,
-                                  @Param("sort") String sort, @Param("now") LocalTime now, Pageable pageable);
+                                  @Param("sort") String sort, @Param("now") LocalTime now,
+                                  @Param("mode") String mode, @Param("freeDelivery") boolean freeDelivery,
+                                  @Param("hasOrigin") boolean hasOrigin, @Param("latR") double latR, @Param("lngR") double lngR,
+                                  Pageable pageable);
 
     default Page<Supplier> findOpenForCatalog(Long cityId, String q, Long productTypeId, LocalTime now, Pageable pageable) {
-        return findForCatalog(cityId, q, productTypeId, false, StorefrontSortEnum.NAME.param(), now, pageable);
+        return findForCatalog(cityId, q, productTypeId, false, StorefrontSortEnum.NAME.param(), now,
+                null, false, false, 0, 0, pageable);
     }
 
     // F7 fatia 6: aprovação de fornecedores — status e busca opcionais, aplicados no banco para a paginação bater

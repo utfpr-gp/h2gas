@@ -1,5 +1,7 @@
 package com.h2gas.controller;
 
+import com.h2gas.model.dto.StorefrontFilter;
+
 import com.h2gas.util.CatalogAccess;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import com.h2gas.enums.StorefrontSortEnum;
@@ -133,7 +135,8 @@ public class SupplierController {
                     + "sempre depois das abertas e com open=false (HU18)")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Lista paginada da vitrine das lojas"),
-            @ApiResponse(responseCode = "400", description = "Visitante sem cityId, ou sort fora da lista (\"Ordenação inválida.\")")
+            @ApiResponse(responseCode = "400", description = "Visitante sem cityId, sort fora da lista (\"Ordenação inválida.\") "
+                    + "ou deliveryMode fora da lista (\"Modalidade inválida.\")")
     })
     @SecurityRequirements
     @GetMapping("/actives/open")
@@ -147,14 +150,28 @@ public class SupplierController {
                     + " tipo inexistente devolve página vazia", example = "1")
             @RequestParam(value = "productTypeId", required = false) Long productTypeId,
             @Parameter(description = "HU16: ordem da lista — name (padrão), rating (melhor avaliação), deliveryTime "
-                    + "(menor tempo de entrega); as fechadas vêm sempre depois das abertas",
-                    schema = @Schema(allowableValues = {"name", "rating", "deliveryTime"}))
-            @RequestParam(value = "sort", required = false) String sort
+                    + "(menor tempo de entrega), distance (HU17: mais perto do zipCode; sem CEP cai para o nome); "
+                    + "as fechadas vêm sempre depois das abertas",
+                    schema = @Schema(allowableValues = {"name", "rating", "deliveryTime", "distance"}))
+            @RequestParam(value = "sort", required = false) String sort,
+            @Parameter(description = "HU17: CEP do cliente ou do visitante, de onde medir a distância e o frete por km",
+                    example = "80420-090")
+            @RequestParam(value = "zipCode", required = false) String zipCode,
+            @Parameter(description = "HU17: DELIVERY = só lojas que entregam no zipCode; PICKUP = só as que aceitam retirada",
+                    schema = @Schema(allowableValues = {"DELIVERY", "PICKUP"}))
+            @RequestParam(value = "deliveryMode", required = false) String deliveryMode,
+            @Parameter(description = "HU17: true = só lojas com entrega grátis") @RequestParam(value = "freeDelivery", required = false)
+            Boolean freeDelivery
     ) {
         CatalogAccess.requireCityForVisitor(cityId);
         StorefrontSortEnum order = StorefrontSortEnum.fromParam(sort);
+        if (deliveryMode != null && !deliveryMode.isBlank() && !List.of("DELIVERY", "PICKUP").contains(deliveryMode)) {
+            throw new BusinessRuleException("Modalidade inválida.");
+        }
+        StorefrontFilter filter = new StorefrontFilter(zipCode == null || zipCode.isBlank() ? null : zipCode,
+                deliveryMode == null || deliveryMode.isBlank() ? null : deliveryMode, freeDelivery);
         Pageable pageable = PaginationUtil.getPageableRequest(page, size);
-        Page<StorefrontDTO> result = supplierService.findAllSuppliersOpenAndActive(cityId, q, productTypeId, order, pageable);
+        Page<StorefrontDTO> result = supplierService.findAllSuppliersOpenAndActive(cityId, q, productTypeId, order, filter, pageable);
         PageResponse<StorefrontDTO> response = new PageResponse<>(result);
 
         return ResponseEntity.ok(response);
