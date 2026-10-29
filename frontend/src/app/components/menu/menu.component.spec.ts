@@ -259,7 +259,17 @@ describe('MenuComponent', () => {
 
     const menu = fixture.nativeElement.querySelector('#mobile-menu') as HTMLElement;
     const hrefs = Array.from(menu.querySelectorAll('a')).map((a) => a.getAttribute('href'));
-    expect(hrefs).toEqual(['/minha-loja', '/minha-loja/pedidos', '/minha-loja/produtos', ...atalhosDeConfiguracao]);
+    // F10: no celular os atalhos de Configurações começam recolhidos, para o menu não cobrir a tela
+    expect(hrefs).toEqual(['/minha-loja', '/minha-loja/pedidos', '/minha-loja/produtos']);
+
+    const grupo = menu.querySelector('[data-testid="mobile-settings-toggle"]') as HTMLButtonElement;
+    expect(grupo.getAttribute('aria-expanded')).toBe('false');
+    grupo.click();
+    fixture.detectChanges();
+
+    expect(grupo.getAttribute('aria-expanded')).toBe('true');
+    expect(Array.from(menu.querySelectorAll('a')).map((a) => a.getAttribute('href')))
+      .toEqual(['/minha-loja', '/minha-loja/pedidos', '/minha-loja/produtos', ...atalhosDeConfiguracao]);
   });
 
   it('naoDeveExibirDashboardParaCliente', () => {

@@ -23,8 +23,10 @@
 >   (Aparência, Dados da loja, Endereço, Horário e entrega, Estoque mínimo),
 >   cada um para `/minha-loja/configuracoes#<parte>`. O submenu fecha ao
 >   escolher, ao clicar fora e no Esc;
-> - no menu do celular, os mesmos atalhos ficam sob o título
->   "Configurações";
+> - no menu do celular, os mesmos atalhos ficam sob "Configurações", que
+>   começa **recolhido** e abre ao tocar. Depois de ver o menu longo, o autor
+>   disse "pra mobile tá ruim": com os cinco atalhos sempre abertos, o menu
+>   cobria a tela;
 > - a tela acompanha a troca do `#` (`route.fragment`), então o atalho
 >   funciona também com a tela já aberta.
 >
@@ -136,7 +138,8 @@ Só frontend; a API não muda.
   - o submenu "Configurações" lista as cinco partes;
   - com a tela aberta em "Aparência", "Estoque mínimo" trocou para só
     "Estoque", com `#estoque`, e fechou o submenu;
-  - no celular, os atalhos aparecem sob "Configurações" no menu.
+  - no celular, o menu fechado tem 4 itens (Início, Pedidos, Produtos e
+    Configurações); tocar em "Configurações" mostra os cinco atalhos.
 - Revisão do autor: a barra numerada virou botões em pílula. Em 390 px o
   botão ativo aparece em azul com o ponto de "não salvo"; a faixa de botões
   rola para o lado e a página não (`scrollWidth` 390).

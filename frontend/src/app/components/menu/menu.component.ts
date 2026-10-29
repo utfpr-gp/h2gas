@@ -67,6 +67,7 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   // F10: atalhos para cada parte das configurações da loja (a tela abre direto na parte pelo #)
   settingsMenuOpen = false;
+  settingsMobileOpen = false;
   readonly settingsSections = [
     { id: 'aparencia', label: 'Aparência', icon: 'palette' },
     { id: 'dados', label: 'Dados da loja', icon: 'badge' },
@@ -115,6 +116,7 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   closeNavMenus() {
     this.mobileMenuOpen = false;
+    this.settingsMobileOpen = false;
   }
 
   get homeRoute(): string {
