@@ -224,4 +224,21 @@ describe('ConfigurationComponent', () => {
   it('deveAvisarEntregaGratisSemTarifa', () => {
     expect(byId('delivery-fee-preview')?.textContent).toContain('Entrega grátis');
   });
+
+  // ---- F10: uma seção por vez ----
+  it('deveMostrarSoASecaoPedida', () => {
+    const secao = (id: string) => fixture.nativeElement.querySelector(`section#${id}`) as HTMLElement;
+    expect(secao('funcionamento').hidden).toBeFalse();
+    expect(secao('estoque').hidden).toBeFalse();
+
+    fixture.componentRef.setInput('visibleSection', 'estoque');
+    fixture.detectChanges();
+    expect(secao('funcionamento').hidden).toBeTrue();
+    expect(secao('estoque').hidden).toBeFalse();
+
+    fixture.componentRef.setInput('visibleSection', 'funcionamento');
+    fixture.detectChanges();
+    expect(secao('funcionamento').hidden).toBeFalse();
+    expect(secao('estoque').hidden).toBeTrue();
+  });
 });

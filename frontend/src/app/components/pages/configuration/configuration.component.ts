@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnInit, Output, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
@@ -55,8 +55,14 @@ export class ConfigurationComponent implements OnInit {
     deliveryFeePerKm: [0, [Validators.required, Validators.min(0)]],
   }, { validators: [sameTimeValidator, noModeValidator] });
 
-  // F9: a tela da loja rola até a seção do #fragmento depois que isto carrega
   @Output() loaded = new EventEmitter<void>();
+
+  // F10: a tela da loja mostra uma seção por vez; nulo = as duas (as seções seguem montadas, só escondidas)
+  @Input() visibleSection: string | null = null;
+
+  isHidden(id: 'funcionamento' | 'estoque'): boolean {
+    return this.visibleSection != null && this.visibleSection !== id;
+  }
 
   loading = true;
   loadFailed = false;

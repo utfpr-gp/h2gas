@@ -10,7 +10,7 @@
 </div>
 
 <form *ngIf="!loading && !loadFailed" [formGroup]="form" novalidate class="space-y-4">
-    <section id="funcionamento" class="scroll-mt-24 bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-5 space-y-4"
+    <section id="funcionamento" [hidden]="isHidden('funcionamento')" class="scroll-mt-24 bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-5 space-y-4"
         aria-labelledby="hours-title">
         <div class="flex items-center gap-2">
             <span class="material-icons text-primary" aria-hidden="true">schedule</span>
@@ -122,7 +122,7 @@
         </div>
     </section>
 
-    <section id="estoque" class="scroll-mt-24 bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-5 space-y-4"
+    <section id="estoque" [hidden]="isHidden('estoque')" class="scroll-mt-24 bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-5 space-y-4"
         aria-labelledby="stock-title">
         <div class="flex items-center gap-2">
             <span class="material-icons text-primary" aria-hidden="true">inventory_2</span>
