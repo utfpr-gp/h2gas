@@ -20,4 +20,9 @@ export class DelivererService {
   create(data: DelivererCreate): Observable<Deliverer> {
     return this.http.post<Deliverer>(this.baseUrl, data);
   }
+
+  // HU22: senha nova para um entregador da própria frota (a atual não é recuperável)
+  resetPassword(id: number, password: string): Observable<void> {
+    return this.http.put<void>(`${this.baseUrl}/${id}/password`, { password });
+  }
 }

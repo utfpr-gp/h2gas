@@ -18,8 +18,11 @@ ele esquecer o acesso.
 
 ## 3. Critérios de Aceitação (BDD)
 
-- **Cenário 1 — E-mail na lista**: Dado a tela Entregadores, Então cada
-  entregador mostra o e-mail, com um botão de copiar.
+- **Cenário 1 — Detalhes ao tocar no card**: Dado a tela Entregadores,
+  Quando toco no card de um entregador, Então abre logo abaixo o e-mail do
+  login (com botão de copiar) e o "Redefinir senha". Tocar de novo fecha, e
+  só um card fica aberto por vez. Isso foi pedido pelo autor em
+  2026-10-29: "ao clicar no card, exibir abaixo as informações".
 - **Cenário 2 — Redefinir senha**: Dado um entregador da minha frota,
   Quando defino uma senha nova (mínimo 6 caracteres, digitada duas vezes),
   Então ela passa a valer no login dele, e a antiga deixa de valer.
@@ -50,8 +53,8 @@ ele esquecer o acesso.
   `@Transactional`, grava o hash BCrypt no `User` do entregador.
 - OpenAPI com os status reais.
 - Frontend:
-  - `manage-deliverers` mostra o e-mail com botão de copiar e o botão
-    "Redefinir senha";
+  - em `manage-deliverers`, o card vira um botão (`aria-expanded`); aberto,
+    mostra o e-mail com botão de copiar e o "Redefinir senha";
   - o botão abre um formulário na própria linha com "Nova senha" e
     "Repita a senha", com validação de 6 caracteres e das duas iguais;
   - ao salvar, aparece um toast "Senha de <nome> redefinida.";
@@ -85,10 +88,25 @@ recusada. Em 390 e 1280 px.
 
 ## 8. Definição de Pronto
 
-- [ ] E-mail visível e copiável na lista da frota.
-- [ ] Senha redefinida só para a própria frota, com 400, 403 e 404.
-- [ ] Rota documentada no Swagger.
-- [ ] Testes da seção 6 verdes; `mvn test` e `ng test` sem falha nova;
+- [x] E-mail visível e copiável na lista da frota, ao tocar no card.
+- [x] Senha redefinida só para a própria frota, com 400, 403 e 404.
+- [x] Rota documentada no Swagger.
+- [x] Testes da seção 6 verdes; `mvn test` (497, só o `contextLoads` de
+      ambiente) e `ng test` (só as 10 falhas antigas) sem falha nova;
       `ng build` ok.
-- [ ] E2E registrado aqui com data.
-- [ ] Nada do "Fora de Escopo".
+- [x] E2E registrado aqui com data.
+- [x] Nada do "Fora de Escopo".
+
+### Registro do teste manual (2026-10-29)
+
+- Fornecedor `gpv-centro@seed-teste.h2gas.local` (Gás Guará Centro)
+  cadastrou o entregador "João Entregador Guará"
+  (`gpv-entregador@seed-teste.h2gas.local`).
+- Em 390 px, tocar no card abriu o login e "Redefinir senha". A senha nova
+  `NovaSenha9` foi salva com o toast "Senha de João Entregador Guará
+  redefinida.".
+- Pela API: o login com a senha nova deu 200 e com a antiga deu 401.
+- Outra loja (Água Cristal) tentou redefinir a senha desse entregador e
+  recebeu 403.
+- Depois do teste, a senha voltou a ser `Teste@123`, a mesma das outras
+  contas de teste.

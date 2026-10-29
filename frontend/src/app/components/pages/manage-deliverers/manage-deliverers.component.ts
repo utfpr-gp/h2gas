@@ -53,6 +53,63 @@ export class ManageDeliverersComponent implements OnInit {
     });
   }
 
+  // ---- HU22: e-mail copiável e senha redefinida pelo fornecedor ----
+  expandedId: number | null = null;
+  resettingId: number | null = null;
+
+  toggleDetails(deliverer: Deliverer) {
+    this.expandedId = this.expandedId === deliverer.id ? null : deliverer.id;
+    this.resettingId = null;
+    this.newPassword = this.confirmPassword = '';
+  }
+  savingPassword = false;
+  newPassword = '';
+  confirmPassword = '';
+  copiedId: number | null = null;
+
+  openReset(deliverer: Deliverer) {
+    this.resettingId = deliverer.id;
+    this.newPassword = '';
+    this.confirmPassword = '';
+  }
+
+  get passwordMismatch(): boolean {
+    return !!this.confirmPassword && this.newPassword !== this.confirmPassword;
+  }
+
+  get canSavePassword(): boolean {
+    return this.newPassword.length >= 6 && this.newPassword === this.confirmPassword && !this.savingPassword;
+  }
+
+  savePassword(deliverer: Deliverer) {
+    if (!this.canSavePassword) return;
+    this.savingPassword = true;
+    this.delivererService.resetPassword(deliverer.id, this.newPassword).subscribe({
+      next: () => {
+        this.savingPassword = false;
+        this.resettingId = null;
+        this.newPassword = this.confirmPassword = '';
+        this.toastr.success(`Senha de ${deliverer.name} redefinida.`);
+      },
+      error: (err) => {
+        this.savingPassword = false;
+        this.toastr.error(`Não foi possível redefinir a senha: ${backendMessage(err)}`);
+      },
+    });
+  }
+
+  copyEmail(deliverer: Deliverer) {
+    const done = () => {
+      this.copiedId = deliverer.id;
+      setTimeout(() => (this.copiedId = null), 1500);
+    };
+    try {
+      navigator.clipboard.writeText(deliverer.email).then(done, () => this.toastr.warning('Não foi possível copiar; selecione o e-mail.'));
+    } catch {
+      this.toastr.warning('Não foi possível copiar; selecione o e-mail.');
+    }
+  }
+
   save() {
     if (this.form.invalid || this.saving) {
       this.form.markAllAsTouched();
