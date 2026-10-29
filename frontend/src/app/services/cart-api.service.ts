@@ -12,7 +12,8 @@ export class CartApiService {
 
   constructor(private http: HttpClient) {}
 
-  preview(items: CartLine[], deliveryMode: DeliveryMode): Observable<CartPreview> {
-    return this.http.post<CartPreview>(`${this.baseUrl}/preview`, { items, deliveryMode });
+  // HU17: zipCode diz até onde calcular o frete; sem CEP, o frete fica para o checkout
+  preview(items: CartLine[], deliveryMode: DeliveryMode, zipCode?: string): Observable<CartPreview> {
+    return this.http.post<CartPreview>(`${this.baseUrl}/preview`, { items, deliveryMode, ...(zipCode ? { zipCode } : {}) });
   }
 }

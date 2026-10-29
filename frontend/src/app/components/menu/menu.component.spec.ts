@@ -126,7 +126,7 @@ describe('MenuComponent', () => {
 
     abrirCarrinho();
 
-    expect(previewSpy).toHaveBeenCalledWith([{ productId: 1, quantity: 2 }], 'DELIVERY');
+    expect(previewSpy).toHaveBeenCalledWith([{ productId: 1, quantity: 2 }], 'DELIVERY', undefined);
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('[data-testid="cart-item"]')?.textContent).toContain('Ultragaz');
     expect(el.querySelector('[data-testid="cart-item-quantity"]')?.textContent?.trim()).toBe('2');
@@ -143,7 +143,36 @@ describe('MenuComponent', () => {
     (fixture.nativeElement.querySelector('[aria-label="Aumentar quantidade"]') as HTMLButtonElement).click();
 
     expect(TestBed.inject(CartService).getCart()).toEqual([{ productId: 1, quantity: 3 }]);
-    expect(previewSpy).toHaveBeenCalledWith([{ productId: 1, quantity: 3 }], 'DELIVERY');
+    expect(previewSpy).toHaveBeenCalledWith([{ productId: 1, quantity: 3 }], 'DELIVERY', undefined);
+  });
+
+  // HU17: subtotal, frete e total no drawer, com o CEP do endereço ativo
+  it('deveMostrarSubtotalFreteETotal', () => {
+    locationContextService.setAddress({ cityId: 1, cityName: 'Curitiba', label: 'Batel · Curitiba', zipCode: '80420090' });
+    const previewSpy = spyOn(TestBed.inject(CartApiService), 'preview').and.returnValue(of({
+      ...previewCom([{ productId: 1, brand: 'Ultragaz', quantity: 1, stockQuantity: 5, unitPrice: 110, totalPrice: 110, available: true }], 110),
+      deliveryFee: 9.8, distanceKm: 2.4, deliversHere: true, total: 119.8,
+    }));
+    TestBed.inject(CartService).setCart([{ productId: 1, quantity: 1 }], 'loja-a');
+    abrirCarrinho();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(previewSpy.calls.mostRecent().args[2]).toBe('80420090');
+    expect(el.querySelector('[data-testid="cart-subtotal"]')?.textContent).toMatch(/110[.,]00/);
+    expect(el.querySelector('[data-testid="cart-fee"]')?.textContent).toMatch(/9[.,]80/);
+    expect(el.querySelector('[data-testid="cart-total"]')?.textContent).toMatch(/119[.,]80/);
+  });
+
+  it('deveAvisarQueALojaNaoEntregaNoCep', () => {
+    locationContextService.setAddress({ cityId: 1, cityName: 'Curitiba', label: 'Batel · Curitiba', zipCode: '80420090' });
+    spyOn(TestBed.inject(CartApiService), 'preview').and.returnValue(of({
+      ...previewCom([{ productId: 1, brand: 'Ultragaz', quantity: 1, stockQuantity: 5, unitPrice: 110, totalPrice: 110, available: true }], 110),
+      deliveryFee: null, distanceKm: 9.1, deliversHere: false, total: 110,
+    }));
+    TestBed.inject(CartService).setCart([{ productId: 1, quantity: 1 }], 'loja-a');
+    abrirCarrinho();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="cart-fee"]')?.textContent).toContain('só retirada');
   });
 
   it('deveMostrarItemIndisponivelComMotivo', () => {

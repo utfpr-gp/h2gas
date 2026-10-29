@@ -18,6 +18,9 @@ import { SupplierService } from '../../../services/supplier.service';
 import { Supplier } from '../../../models/supplier';
 import { backendMessage } from '../../../utils/backend-message';
 
+// HU17: a loja não alcança o endereço (fora do raio) ou só faz retirada
+const DELIVERY_BLOCKED_MESSAGE = 'Esta loja não entrega neste endereço. Escolha outro endereço ou a retirada.';
+
 @Component({
   selector: 'app-order-resume',
   imports: [
@@ -109,6 +112,10 @@ export class OrderResumeComponent implements OnInit {
     }
     if (this.step === 2 && this.deliveryMode === 'DELIVERY' && this.selectedAddressId == null) {
       this.toastr.warning('Selecione o endereço de entrega.');
+      return;
+    }
+    if (this.step === 2 && this.deliveryBlocked) {
+      this.toastr.warning(DELIVERY_BLOCKED_MESSAGE);
       return;
     }
     if (this.step < 3) {
@@ -263,7 +270,7 @@ export class OrderResumeComponent implements OnInit {
     // cliques rápidos no +/− disparam vários previews; só a resposta mais recente vale
     const requestId = ++this.previewRequestId;
     this.previewLoading = true;
-    this.cartApi.preview(this.lines, this.deliveryMode).subscribe({
+    this.cartApi.preview(this.lines, this.deliveryMode, this.previewZipCode).subscribe({
       next: (preview) => {
         if (requestId === this.previewRequestId) {
           this.preview = preview;
@@ -290,6 +297,8 @@ export class OrderResumeComponent implements OnInit {
         const activeId = this.locationContext.current()?.addressId;
         const ativo = response.find((a) => a.id === activeId) ?? response[0];
         this.selectedAddressId = ativo?.id;
+        // HU17: o frete depende do CEP do endereço de entrega
+        if (this.deliveryMode === 'DELIVERY' && ativo?.zipCode && ativo.zipCode !== this.lastPreviewZip) this.loadPreview();
       },
       error: (err) => {
         this.toastr.error(`Erro ao buscar endereços: ${backendMessage(err)}`);
@@ -300,6 +309,23 @@ export class OrderResumeComponent implements OnInit {
   selectAddress(address: Address) {
     this.selectedAddressId = address.id;
     this.locationContext.selectAddress(address);
+    this.loadPreview(); // HU17: outro endereço, outro frete
+  }
+
+  // HU17: em entrega, o frete é medido até o CEP do endereço escolhido; na retirada não há frete
+  private lastPreviewZip?: string;
+  private get previewZipCode(): string | undefined {
+    if (this.deliveryMode !== 'DELIVERY') return undefined;
+    this.lastPreviewZip = this.selectedAddress?.zipCode ?? this.locationContext.current()?.zipCode;
+    return this.lastPreviewZip;
+  }
+
+  get deliveryBlocked(): boolean {
+    return this.deliveryMode === 'DELIVERY' && this.preview?.deliversHere === false;
+  }
+
+  get orderTotal(): number | undefined {
+    return this.preview ? (this.preview.total ?? this.preview.subtotal) : undefined;
   }
 
   createOrder() {
@@ -319,6 +345,10 @@ export class OrderResumeComponent implements OnInit {
   
     if (this.hasUnavailable) {
       this.toastr.warning('Remova os itens indisponíveis para finalizar.');
+      return;
+    }
+    if (this.deliveryBlocked) {
+      this.toastr.warning(DELIVERY_BLOCKED_MESSAGE);
       return;
     }
 

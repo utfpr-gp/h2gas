@@ -210,7 +210,9 @@ export class MenuComponent implements OnInit, OnDestroy {
       return;
     }
     this.cartPreviewLoading = true;
-    this.cartApi.preview(this.cartLines, this.deliveryMode).subscribe({
+    // HU17: o frete é medido até o CEP do endereço ativo (cliente ou visitante)
+    const zipCode = this.deliveryMode === 'DELIVERY' ? this.locationContext.current()?.zipCode : undefined;
+    this.cartApi.preview(this.cartLines, this.deliveryMode, zipCode).subscribe({
       next: (preview) => {
         if (requestId !== this.cartPreviewRequestId) return; // cliques rápidos: só a resposta mais nova vale
         this.cartPreview = preview;

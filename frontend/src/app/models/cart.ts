@@ -29,6 +29,11 @@ export interface CartPreview {
   supplierName: string | null;
   items: CartPreviewItem[];
   subtotal: number;
+  // HU17: frete por km até o CEP (0 na retirada; nulo sem CEP ou quando a loja não entrega ali)
+  deliveryFee?: number | null;
+  distanceKm?: number | null;
+  deliversHere?: boolean | null;
+  total?: number;
 }
 
 export const UNAVAILABLE_REASON_LABELS: Record<CartUnavailableReason, string> = {

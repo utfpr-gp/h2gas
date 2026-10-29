@@ -34,7 +34,8 @@ describe('OrderResumeComponent', () => {
     5: { brand: 'Liquigás', category: 'Gás 13kg', type: 'Gás', delivery: 110, pickup: 95 },
     9: { brand: 'Ultragaz', category: 'Gás 13kg', type: 'Gás', delivery: 125, pickup: 110 },
   };
-  const previewFake = (lines: { productId: number; quantity: number }[], mode: string): CartPreview => {
+  // HU17: com CEP em entrega, o fake cobra R$ 9,80; o CEP 99999-999 fica fora da área
+  const previewFake = (lines: { productId: number; quantity: number }[], mode: string, zip?: string): CartPreview => {
     const items = lines.map((line) => {
       const p = catalogo[line.productId];
       const unitPrice = mode === 'PICKUP' ? p.pickup : p.delivery;
@@ -44,7 +45,11 @@ describe('OrderResumeComponent', () => {
         available: !reason, unavailableReason: reason };
     });
     const subtotal = items.filter((i) => i.available).reduce((sum, i) => sum + i.totalPrice, 0);
-    return { supplierId: lines[0]?.productId === 9 ? 'sup-2' : 'sup-1', supplierName: 'Gás Centro', items, subtotal };
+    const entrega = mode !== 'PICKUP' && !!zip;
+    const deliversHere = entrega ? zip !== '99999-999' : null;
+    const deliveryFee = mode === 'PICKUP' ? 0 : deliversHere ? 9.8 : null;
+    return { supplierId: lines[0]?.productId === 9 ? 'sup-2' : 'sup-1', supplierName: 'Gás Centro', items, subtotal,
+      deliveryFee, distanceKm: deliversHere ? 2.4 : null, deliversHere, total: subtotal + (deliveryFee ?? 0) };
   };
 
   const casa: Address = { id: 1, addressName: 'Casa', streetName: 'Rua Um', number: '10', cityId: 1, cityName: 'Pato Branco' };
@@ -72,7 +77,7 @@ describe('OrderResumeComponent', () => {
       cart = cart.filter((item) => item.productId !== id);
     });
     cartApiSpy = jasmine.createSpyObj('CartApiService', ['preview']);
-    cartApiSpy.preview.and.callFake((lines, mode) => of(previewFake(lines, mode)));
+    cartApiSpy.preview.and.callFake((lines, mode, zip) => of(previewFake(lines, mode, zip)));
     toastrSpy = jasmine.createSpyObj('ToastrService', ['success', 'warning', 'error', 'info']);
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
     supplierServiceSpy = jasmine.createSpyObj('SupplierService', ['findById']);
@@ -143,11 +148,11 @@ describe('OrderResumeComponent', () => {
   });
 
   it('deveChamarPreviewAoAlterarModalidade', () => {
-    expect(cartApiSpy.preview).toHaveBeenCalledWith([{ productId: 5, quantity: 1 }], 'DELIVERY');
+    expect(cartApiSpy.preview).toHaveBeenCalledWith([{ productId: 5, quantity: 1 }], 'DELIVERY', undefined);
 
     component.setDeliveryMode('PICKUP');
 
-    expect(cartApiSpy.preview).toHaveBeenCalledWith([{ productId: 5, quantity: 1 }], 'PICKUP');
+    expect(cartApiSpy.preview).toHaveBeenCalledWith([{ productId: 5, quantity: 1 }], 'PICKUP', undefined);
     expect(component.preview?.subtotal).toBe(95);
     expect(orderServiceSpy.previewOrder).not.toHaveBeenCalled();
   });
@@ -237,7 +242,7 @@ describe('OrderResumeComponent', () => {
 
     expect(cartServiceSpy.updateQuantity).toHaveBeenCalledWith(5, 2);
     expect(component.productsCarts[0].quantity).toBe(2);
-    expect(cartApiSpy.preview).toHaveBeenCalledWith([{ productId: 5, quantity: 2 }], 'DELIVERY');
+    expect(cartApiSpy.preview).toHaveBeenCalledWith([{ productId: 5, quantity: 2 }], 'DELIVERY', undefined);
 
     component.decreaseQuantity(component.productsCarts[0]);
 
@@ -471,5 +476,55 @@ describe('OrderResumeComponent', () => {
     expect(cartServiceSpy.updateQuantity).not.toHaveBeenCalled();
     expect(cartApiSpy.preview.calls.mostRecent().args[0]).toEqual([{ productId: 9, quantity: 2 }]);
     expect(byId('buy-now-quantity')!.textContent).toContain('2');
+  });
+
+  // ---- HU17: frete por km no resumo ----
+  const comCep = (cep: string) => ({ ...casa, zipCode: cep });
+  const ultimoCep = () => cartApiSpy.preview.calls.mostRecent().args[2];
+
+  it('deveMandarOCepDoEnderecoNoPreview', () => {
+    component.selectAddress(comCep('80420-090'));
+
+    expect(ultimoCep()).toBe('80420-090');
+
+    component.setDeliveryMode('PICKUP');
+    expect(ultimoCep()).toBeUndefined();
+  });
+
+  it('deveMostrarSubtotalFreteETotal', () => {
+    component.selectAddress(comCep('80420-090'));
+    component.formOrder.patchValue({ paymentMethod: 'PIX' });
+    irParaPagamento();
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(el.querySelector('[data-testid="summary-subtotal"]')?.textContent).toMatch(/110[.,]00/);
+    expect(el.querySelector('[data-testid="summary-fee"]')?.textContent).toMatch(/9[.,]80/);
+    expect(el.querySelector('[data-testid="summary-fee"]')?.textContent).toMatch(/2[.,]4 km/);
+    expect(el.querySelector('[data-testid="summary-total"]')?.textContent).toMatch(/119[.,]80/);
+    expect(el.querySelector('[data-testid="order-subtotal"]')?.textContent).toMatch(/119[.,]80/);
+  });
+
+  it('deveMostrarFreteZeroNaRetirada', () => {
+    component.formOrder.patchValue({ paymentMethod: 'PIX' });
+    component.nextStep();
+    component.setDeliveryMode('PICKUP');
+    component.nextStep();
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="summary-fee"]')?.textContent)
+      .toContain('Grátis (retirada)');
+  });
+
+  it('deveBloquearEnderecoForaDaArea', () => {
+    component.nextStep();
+    component.selectAddress(comCep('99999-999'));
+    fixture.detectChanges();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="delivery-blocked"]')?.textContent)
+      .toContain('Esta loja não entrega neste endereço');
+    component.nextStep();
+    expect(component.step).toBe(2);
+    expect(toastrSpy.warning).toHaveBeenCalledWith(jasmine.stringMatching('não entrega neste endereço'));
   });
 });

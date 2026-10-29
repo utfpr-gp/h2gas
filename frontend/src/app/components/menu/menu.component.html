@@ -217,12 +217,32 @@
               </div>
   
               <div *ngIf="cartLines.length" class="p-6 border-t border-gray-200">
-                <div class="flex justify-between items-center mb-4">
-                  <span class="text-lg font-medium text-gray-800">Total:</span>
-                  <span data-testid="cart-total" class="text-xl font-bold text-gray-900">
-                    {{ cartPreview ? (cartPreview.subtotal | currency:'BRL':'symbol':'1.2-2') : '—' }}
-                  </span>
-                </div>
+                <!-- HU17: subtotal, frete e total vêm do backend (RN01) -->
+                <dl class="space-y-1 mb-4 text-sm">
+                  <div class="flex justify-between" data-testid="cart-subtotal">
+                    <dt class="text-gray-500">Subtotal</dt>
+                    <dd class="tabular-nums">{{ cartPreview ? (cartPreview.subtotal | currency:'BRL':'symbol':'1.2-2') : '—' }}</dd>
+                  </div>
+                  <div class="flex justify-between gap-3" data-testid="cart-fee">
+                    <dt class="text-gray-500">Frete</dt>
+                    <dd class="text-right tabular-nums">
+                      <ng-container *ngIf="deliveryMode === 'PICKUP'">grátis (retirada)</ng-container>
+                      <ng-container *ngIf="deliveryMode === 'DELIVERY'">
+                        <ng-container *ngIf="cartPreview?.deliversHere === false">não entrega no seu endereço · só retirada</ng-container>
+                        <ng-container *ngIf="cartPreview?.deliversHere !== false && cartPreview?.deliveryFee != null">
+                          {{ cartPreview!.deliveryFee === 0 ? 'grátis' : (cartPreview!.deliveryFee | currency:'BRL':'symbol':'1.2-2') }}
+                        </ng-container>
+                        <ng-container *ngIf="cartPreview?.deliversHere !== false && cartPreview?.deliveryFee == null">calculado no checkout</ng-container>
+                      </ng-container>
+                    </dd>
+                  </div>
+                  <div class="flex justify-between items-center pt-1">
+                    <dt class="text-lg font-medium text-gray-800">Total</dt>
+                    <dd data-testid="cart-total" class="text-xl font-bold text-gray-900 tabular-nums">
+                      {{ cartPreview ? ((cartPreview.total ?? cartPreview.subtotal) | currency:'BRL':'symbol':'1.2-2') : '—' }}
+                    </dd>
+                  </div>
+                </dl>
                 <p *ngIf="cartHasUnavailable" data-testid="cart-blocked" class="text-sm text-error mb-3">
                   Remova os itens indisponíveis para finalizar.
                 </p>
