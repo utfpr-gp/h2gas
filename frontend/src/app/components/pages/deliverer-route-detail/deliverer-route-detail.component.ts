@@ -7,6 +7,7 @@ import { ToastrService } from 'ngx-toastr';
 import { OrderService } from '../../../services/order.service';
 import { OrderResponse } from '../../../models/order.model';
 import { paymentLabel } from '../../../models/payment-label';
+import { firstName, orderCode, whatsappLink } from '../../../utils/whatsapp-link';
 import { fadeIn } from '../../../animations/checkout.animations';
 import { backendMessage } from '../../../utils/backend-message';
 
@@ -77,9 +78,11 @@ export class DelivererRouteDetailComponent implements OnInit {
     return (this.order?.customerPhone || '').replace(/\D/g, '');
   }
 
+  // HU25: a mensagem já diz quem é e de qual pedido se trata
   get whatsappLink() {
-    const digits = this.phoneDigits;
-    return `https://wa.me/${digits.startsWith('55') ? digits : '55' + digits}`;
+    const o = this.order;
+    return o ? whatsappLink(o.customerPhone,
+      `Olá, ${firstName(o.customerName)}! Sou o entregador da ${o.supplierName} e estou a caminho com o seu pedido #${orderCode(o.id)}.`) : null;
   }
 
   get initials() {

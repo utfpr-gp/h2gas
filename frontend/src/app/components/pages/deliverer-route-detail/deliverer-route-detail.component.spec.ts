@@ -17,7 +17,7 @@ describe('DelivererRouteDetailComponent', () => {
   let paramMap$: BehaviorSubject<ReturnType<typeof convertToParamMap>>;
 
   const pedido = (status: string) => ({
-    id: 'r1', status, paymentMethod: 'PIX', streetName: 'Rua das Flores', number: '300', complement: 'Apto 42',
+    id: 'r1', status, supplierName: 'Gás Centro', paymentMethod: 'PIX', streetName: 'Rua das Flores', number: '300', complement: 'Apto 42',
     neighborhood: 'Centro', cityName: 'Curitiba', customerName: 'Maria Souza', customerPhone: '(41) 98888-0000',
     totalPrice: 125, orderItems: [{ quantity: 2, productBrand: 'Ultragaz', productNameCategory: 'Gás 13kg', totalPrice: 250 }],
   } as unknown as OrderResponse);
@@ -62,7 +62,8 @@ describe('DelivererRouteDetailComponent', () => {
     expect(text()).toContain('Maria Souza');
     expect(text()).toContain('2x Ultragaz Gás 13kg');
     expect((byId('call-customer') as HTMLAnchorElement).getAttribute('href')).toBe('tel:41988880000');
-    expect((byId('whatsapp-customer') as HTMLAnchorElement).getAttribute('href')).toBe('https://wa.me/5541988880000');
+    expect((byId('whatsapp-customer') as HTMLAnchorElement).getAttribute('href')).toBe('https://wa.me/5541988880000?text='
+      + encodeURIComponent('Olá, Maria! Sou o entregador da Gás Centro e estou a caminho com o seu pedido #r1.'));
   });
 
   it('deveMontarMapaELinkAbrirNoMaps', async () => {
