@@ -1516,4 +1516,35 @@ class OrderServiceTest {
                 () -> orderService.createOrder(novoPedido(validCustomerAddressId)));
         assertEquals("Esta loja não entrega no endereço escolhido.", ex.getMessage());
     }
+
+    // ---- HU23: contagem dos pedidos da loja por status ----
+    @Test
+    @DisplayName("HU23: conta os pedidos da loja por status, numa consulta, sem misturar outra loja")
+    void deveContarOsPedidosPorStatusDaLoja() {
+        Supplier loja = supplierRepository.findById(validSupplierId).orElseThrow();
+        User cliente = userRepository.findById(validCustomerId).orElseThrow();
+        // o setUp já deixa pedidos na loja: o teste compara com a contagem de antes
+        com.h2gas.model.dto.OrderStatusCountsDTO antes = orderService.countMyOrdersByStatus(validSupplierId);
+        for (OrderStatusEnum status : List.of(OrderStatusEnum.PENDING, OrderStatusEnum.PENDING, OrderStatusEnum.OUT_FOR_DELIVERY,
+                OrderStatusEnum.DELIVERED, OrderStatusEnum.DELIVERED, OrderStatusEnum.DELIVERED, OrderStatusEnum.CANCELED)) {
+            pedidoFinalizado(loja, cliente, status, "PIX", DeliveryModeEnum.DELIVERY, "10.00", "2026-10-20");
+        }
+        Supplier outra = supplierRepository.save(createSupplier("Outra Loja", "outra-hu23@teste.com", "41900000001", "00011122233",
+                "senha", "11222333000155", "x", true, true, null, testCity));
+        pedidoFinalizado(outra, cliente, OrderStatusEnum.PENDING, "PIX", DeliveryModeEnum.DELIVERY, "10.00", "2026-10-20");
+
+        com.h2gas.model.dto.OrderStatusCountsDTO contagem = orderService.countMyOrdersByStatus(validSupplierId);
+
+        java.util.function.Function<OrderStatusEnum, Long> novos = st -> contagem.counts().get(st) - antes.counts().get(st);
+        assertEquals(2L, novos.apply(OrderStatusEnum.PENDING));
+        assertEquals(0L, novos.apply(OrderStatusEnum.CONFIRMED));
+        assertEquals(0L, novos.apply(OrderStatusEnum.IN_PREPARATION));
+        assertEquals(1L, novos.apply(OrderStatusEnum.OUT_FOR_DELIVERY));
+        assertEquals(3L, novos.apply(OrderStatusEnum.DELIVERED));
+        assertEquals(1L, novos.apply(OrderStatusEnum.CANCELED));
+        assertEquals(3L, contagem.active() - antes.active());
+        assertEquals(7L, contagem.total() - antes.total());
+        assertEquals(contagem.total(), contagem.counts().values().stream().mapToLong(Long::longValue).sum());
+        for (OrderStatusEnum st : OrderStatusEnum.values()) assertNotNull(contagem.counts().get(st), st.name());
+    }
 }

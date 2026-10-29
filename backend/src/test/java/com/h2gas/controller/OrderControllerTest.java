@@ -360,4 +360,21 @@ class OrderControllerTest {
         verify(orderService, never()).findBySupplierId(any(), any());
         verify(orderService, never()).findBySupplierIdAndStatusNotDeliveryAndCanceled(any(), any(), any());
     }
+
+    // ---- HU23 ----
+    @Test
+    void deveContarOsPedidosDoFornecedorDoToken() throws Exception {
+        autenticarComo(UserTypeEnum.SUPPLIER, "fornecedor-1");
+        java.util.Map<com.h2gas.enums.OrderStatusEnum, Long> counts = new java.util.EnumMap<>(com.h2gas.enums.OrderStatusEnum.class);
+        for (com.h2gas.enums.OrderStatusEnum st : com.h2gas.enums.OrderStatusEnum.values()) counts.put(st, 0L);
+        counts.put(com.h2gas.enums.OrderStatusEnum.PENDING, 2L);
+        when(orderService.countMyOrdersByStatus("fornecedor-1")).thenReturn(new com.h2gas.model.dto.OrderStatusCountsDTO(counts, 2, 2));
+
+        mockMvc.perform(get("/api/orders/mine/status-counts"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.counts.PENDING").value(2))
+                .andExpect(jsonPath("$.counts.DELIVERED").value(0))
+                .andExpect(jsonPath("$.active").value(2))
+                .andExpect(jsonPath("$.total").value(2));
+    }
 }

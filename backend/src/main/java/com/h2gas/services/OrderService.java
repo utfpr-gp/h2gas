@@ -204,6 +204,19 @@ public class OrderService {
         return address;
     }
 
+    // HU23: contagem por status da loja para o filtro do painel; status sem pedido = 0
+    @Transactional(readOnly = true)
+    public com.h2gas.model.dto.OrderStatusCountsDTO countMyOrdersByStatus(String supplierId) {
+        java.util.Map<OrderStatusEnum, Long> counts = new java.util.EnumMap<>(OrderStatusEnum.class);
+        for (OrderStatusEnum status : OrderStatusEnum.values()) counts.put(status, 0L);
+        for (var row : orderRepository.countBySupplierGroupedByStatus(supplierId)) {
+            if (row.getStatus() != null) counts.put(row.getStatus(), row.getTotal());
+        }
+        long total = counts.values().stream().mapToLong(Long::longValue).sum();
+        long active = total - counts.get(OrderStatusEnum.DELIVERED) - counts.get(OrderStatusEnum.CANCELED);
+        return new com.h2gas.model.dto.OrderStatusCountsDTO(counts, active, total);
+    }
+
     private DeliveryQuote deliveryQuote(Order order) {
         if (order.getDeliveryMode() == DeliveryModeEnum.PICKUP) {
             return new DeliveryQuote(true, null, BigDecimal.ZERO);

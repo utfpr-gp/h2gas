@@ -204,6 +204,20 @@ public class OrderController {
         return ResponseEntity.ok(orderService.summarizeMyHistory(loggedUser().getId(), filter));
     }
 
+    @Operation(summary = "Contagem dos pedidos do fornecedor logado por status",
+            description = "HU23: quantos pedidos a loja tem em cada status (0 quando não há), mais os em andamento "
+                    + "(nem entregues nem cancelados) e o total. Uma consulta agrupada; o fornecedor vem do token")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Contagem por status"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido ou papel diferente de SUPPLIER")
+    })
+    @GetMapping("/mine/status-counts")
+    @ResponseBody
+    @RolesAllowed("SUPPLIER")
+    public ResponseEntity<com.h2gas.model.dto.OrderStatusCountsDTO> getMyStatusCounts() {
+        return ResponseEntity.ok(orderService.countMyOrdersByStatus(loggedUser().getId()));
+    }
+
     // F7 fatia 6: o fornecedor só lista os pedidos da própria loja; o admin vê qualquer uma
     private void requireOwnStore(String supplierId) {
         User actor = loggedUser();
