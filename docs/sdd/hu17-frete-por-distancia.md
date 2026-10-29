@@ -94,199 +94,226 @@ preço seja honesto para os dois lados.
   `product-card` (linhas `price-delivery` / `price-pickup`), o formulário
   de produto do fornecedor e o resumo do pedido.
 
-> **Revisão de 2026-10-27.** O autor separou o preço único na **HU21**, que
-> entra antes desta HU: migração `V18`, que já remove as colunas antigas,
-> `ProductItemDTO.price`, formulário com um preço e `unitPriceFor` sem modo.
-> Com isso:
-> - as migrações desta HU passam a ser **V19 a V21**, porque V16 e V17 foram
->   usadas pela HU18 e pela HU19, e V18 pela HU21;
-> - saem daqui as antigas V19/V20 (preço único), os itens de `ProductItemDTO`,
->   formulário e `product-card` e os testes 7, 8, 12 e 13;
-> - nomes reais no frontend: a ordenação da HU16 é o `catalog-sort-menu` (não
->   existe `catalog-filter-bar`), as configurações da loja ficam em
->   `pages/configuration` e o resumo do pedido em `pages/order-resume`;
-> - o frete também entra no preview do carrinho da HU20
->   (`POST /api/cart/preview`), com `deliveryFee` e o total.
->
-> Mapa das migrações: V16 → **V19** (`supplier_delivery_settings`), V17 →
-> **V20** (`address_coordinates`), V18 → **V21** (`order_delivery_fee`).
+> **Revisão de 2026-10-28** (substitui o contrato original e a revisão de
+> 2026-10-27). Mudanças:
+> - **HU21 entrou antes**: o produto já tem preço único (`V18`). As
+>   migrações daqui são **V19 a V21**.
+> - **F9 entrou antes**: a configuração de entrega fica na seção
+>   "Funcionamento e entrega" da tela da loja e é salva pelo mesmo
+>   `PUT /suppliers/mine/settings`. Não existe rota separada
+>   `/delivery-settings`.
+> - **Decisão do autor**: sem coordenada (CEP desconhecido ou API fora),
+>   a entrega continua possível e o frete vira **só a taxa fixa**, com o
+>   raio não checado e o aviso "distância não calculada". Isso troca o
+>   comportamento do Cenário 11.
+> - **Decisão do autor**: os endereços já cadastrados ganham coordenada
+>   por uma **rotina na subida do backend**. Isso revoga o "backfill fora
+>   de escopo".
+> - **Visitante**: o CEP é geocodificado na listagem, com cache em
+>   memória por CEP. É a única chamada fora da gravação de endereço.
+> - Nomes reais: `catalog-sort-menu` (HU16), `pages/configuration` (F9),
+>   `pages/order-resume`, `POST /api/cart/preview` (HU20).
 
 ## 5. Contrato Técnico
 
 ### 5.1 Dados (migrações)
 
-- **`V16__supplier_delivery_settings.sql`**
+- **`V19__supplier_delivery_settings.sql`**:
   ```sql
   ALTER TABLE suppliers
-    ADD COLUMN offers_delivery   BOOLEAN NOT NULL DEFAULT TRUE,
-    ADD COLUMN offers_pickup     BOOLEAN NOT NULL DEFAULT TRUE,
-    ADD COLUMN delivery_radius_km   DECIMAL(6,2) NULL,
-    ADD COLUMN delivery_base_fee    DECIMAL(10,2) NOT NULL DEFAULT 0,
-    ADD COLUMN delivery_fee_per_km  DECIMAL(10,2) NOT NULL DEFAULT 0;
+    ADD COLUMN offers_delivery     BIT(1) NOT NULL DEFAULT 1,
+    ADD COLUMN offers_pickup       BIT(1) NOT NULL DEFAULT 1,
+    ADD COLUMN delivery_radius_km  DECIMAL(6,2) NULL,
+    ADD COLUMN delivery_base_fee   DECIMAL(10,2) NOT NULL DEFAULT 0,
+    ADD COLUMN delivery_fee_per_km DECIMAL(10,2) NOT NULL DEFAULT 0;
   ```
-  Os padrões preservam o comportamento atual (toda loja faz as duas
-  coisas). `delivery_radius_km` nulo = sem limite de raio.
-- **`V17__address_coordinates.sql`**: `latitude` e `longitude`
+  Os padrões mantêm o comportamento de hoje: entrega e retirada, sem
+  raio e sem frete. Raio nulo significa sem limite.
+- **`V20__address_coordinates.sql`**: `latitude` e `longitude`
   `DECIMAL(10,7) NULL` em `addresses`.
-- **`V18__order_delivery_fee.sql`**: `delivery_fee DECIMAL(10,2) NOT NULL
-  DEFAULT 0` e `delivery_distance_km DECIMAL(6,2) NULL` em `orders`, para
-  o pedido guardar o que foi de fato cobrado.
-- **`V19__product_single_price.sql`**: `ALTER TABLE product_items ADD
-  COLUMN price DECIMAL(10,2) NULL;` + `UPDATE product_items SET price =
-  price_pickup;` + `MODIFY price ... NOT NULL`. As colunas antigas
-  **continuam** nesta versão.
-- **`V20__drop_product_double_price.sql`** (depois de o código novo estar
-  no ar): remove `price_delivery` e `price_pickup`. Separar em duas
-  migrações evita que o `validate` derrube o boot durante o deploy.
+- **`V21__order_delivery_fee.sql`**: `delivery_fee DECIMAL(10,2) NOT NULL
+  DEFAULT 0` e `delivery_distance_km DECIMAL(6,2) NULL` em `orders`.
+  Pedidos antigos ficam com frete 0.
 
 ### 5.2 Geocodificação
 
-- `GeocodingService` (pacote `services`), com interface e uma
-  implementação HTTP:
-  - fonte principal **BrasilAPI v2** —
-    `GET https://brasilapi.com.br/api/cep/v2/{cep}`, que devolve
-    `location.coordinates.latitude/longitude`;
-  - alternativa **AwesomeAPI** — `https://cep.awesomeapi.com.br/json/{cep}`
-    (campos `lat`/`lng`) — quando a primeira falha ou vem sem
-    coordenada;
-  - nenhuma das duas exige chave de API.
-- Chamado ao **gravar** endereço de cliente e de loja; o resultado é
-  persistido em `addresses.latitude/longitude`. Falha ou timeout (3 s)
-  não propaga exceção: registra log em nível `warn` e segue sem
-  coordenada (Cenário 11). Nunca é chamado durante a listagem.
-- Endereços já existentes ficam sem coordenada até serem salvos de novo;
-  o script não prevê backfill em massa (ver Fora de Escopo).
+- `GeocodingService` (pacote `services`), devolvendo
+  `Optional<Coordinates>`:
+  - fonte principal: **BrasilAPI v2**
+    (`GET https://brasilapi.com.br/api/cep/v2/{cep}`,
+    `location.coordinates.latitude/longitude`);
+  - alternativa: **AwesomeAPI** (`https://cep.awesomeapi.com.br/json/{cep}`,
+    `lat`/`lng`), quando a primeira falha ou vem sem coordenada;
+  - URLs configuráveis por property, timeout de 3 s, sem chave de API;
+  - falha, timeout ou CEP sem coordenada viram `Optional.empty()` com log
+    `warn`, nunca exceção;
+  - cache em memória por CEP, para não repetir a consulta do visitante.
+- **Ao gravar um endereço** (`AddressService.createAddress` nas duas
+  formas e `updateAddress`), as coordenadas são buscadas e gravadas.
+  Quando o CEP muda na edição, são buscadas de novo. Se falhar, o
+  endereço é salvo sem coordenada.
+- **Rotina de subida** (`AddressCoordinatesBackfill`, `ApplicationRunner`,
+  fora do profile `test`): em uma thread separada, busca as coordenadas
+  dos endereços sem latitude, um por vez com uma pausa curta, sem
+  bloquear o boot. Falha em um endereço não interrompe os outros.
 
 ### 5.3 Cálculo
 
-- `DeliveryFeeCalculator` (classe de domínio, sem Spring):
-  - `distanceKm(origem, destino)` por **Haversine** (raio 6371 km),
+- `DeliveryFeeCalculator` (classe de domínio em `model`, sem Spring):
+  - `distanceKm(origem, destino)`: Haversine (raio 6371 km),
     arredondado a 1 casa;
-  - `fee(distanciaKm, loja)` = `delivery_base_fee + delivery_fee_per_km ×
-    distanciaKm`, `RoundingMode.HALF_UP` a 2 casas;
-  - fora de `delivery_radius_km` → `Optional.empty()` (a loja não entrega
-    naquele endereço).
+  - `quote(loja, origem, destino)` devolve `DeliveryQuote { available,
+    distanceKm, fee }`:
+    - loja que não faz entrega: indisponível;
+    - falta coordenada de um dos lados: disponível, `distanceKm = null`,
+      `fee = taxa fixa`;
+    - distância acima do raio, quando o raio existe: indisponível;
+    - caso contrário: `fee = taxa fixa + valor por km × distância`,
+      `HALF_UP` a 2 casas.
 - Tudo no backend (RN01). O frontend exibe e não recalcula.
 
 ### 5.4 API
 
-- `StorefrontDTO` ganha: `offersDelivery`, `offersPickup`, `distanceKm`
-  (nulo quando falta coordenada), `deliveryFee` (nulo quando não entrega
-  ali), `freeDelivery` (derivado: taxa fixa e por km zeradas).
-- `GET /api/suppliers/actives/open` ganha:
-  - `addressId` (cliente logado) **ou** `zipCode` (visitante) para saber
-    de onde medir — sem nenhum dos dois, a resposta vem sem distância e
-    sem frete;
-  - `deliveryMode=DELIVERY|PICKUP` (filtro do Cenário 5);
-  - `freeDelivery=true` (Cenário 6);
-  - `sort=distance` somado aos valores da HU16 (Cenário 7).
-- `PUT /api/suppliers/mine/delivery-settings` → `200`, corpo
-  `DeliverySettingsDTO` (`offersDelivery`, `offersPickup`,
-  `deliveryRadiusKm`, `deliveryBaseFee`, `deliveryFeePerKm`), só
-  `SUPPLIER`. Nenhuma modalidade marcada → **400** "A loja precisa
-  oferecer entrega ou retirada."; valores negativos → 400.
-- `ProductItemDTO`: `price` passa a ser o preço único; saem
-  `priceDelivery`, `pricePickup` e `shippingFee`. `freeDelivery` deixa de
-  ser derivado do produto (passa a ser atributo da loja).
-- Pedido: `OrderService` calcula o frete no fechamento, grava
-  `delivery_fee` e `delivery_distance_km` no `Order`, e o total passa a
-  ser `soma dos itens + frete`. Modo retirada → frete zero. O resumo
-  (`OrderPreviewDTO`) ganha `deliveryFee` e `subtotal`.
-- OpenAPI atualizado em todas as rotas tocadas, com os status reais.
+- **Configurações** (`GET`/`PUT /api/suppliers/mine/settings`,
+  `SupplierSettingsDTO`): passa a ter também `offersDelivery`,
+  `offersPickup`, `deliveryRadiusKm` (nulo ou de 0,1 a 100),
+  `deliveryBaseFee` e `deliveryFeePerKm` (≥ 0). As duas modalidades
+  desmarcadas → **400** "A loja precisa oferecer entrega ou retirada.";
+  valor negativo → 400.
+- **Vitrine** (`GET /api/suppliers/actives/open`):
+  - parâmetros novos: `addressId` (cliente logado, endereço do próprio
+    usuário) **ou** `zipCode` (visitante), que dizem de onde medir;
+    `deliveryMode=DELIVERY|PICKUP`; `freeDelivery=true`;
+  - `sort=distance` entra junto dos valores da HU16;
+  - sem `addressId` nem `zipCode`, ou sem coordenada de origem: a lista
+    vem sem distância, e a ordem "distance" cai para o nome;
+  - `StorefrontDTO` ganha `offersDelivery`, `offersPickup`, `distanceKm`
+    (nulo sem coordenada), `deliveryFee` (nulo quando não entrega no
+    endereço), `deliversHere` e `freeDelivery` (taxa fixa e por km
+    zeradas);
+  - filtros e ordem vão na consulta (JPQL com a fórmula de Haversine
+    parametrizada pela origem), para a paginação continuar certa. Os
+    valores do card saem do `DeliveryFeeCalculator`.
+- **Pedido** (`POST /api/orders`): em modo entrega, o frete é calculado
+  no fechamento com o endereço de entrega e gravado em `deliveryFee` e
+  `deliveryDistanceKm`; o total passa a ser itens + frete. Loja que não
+  entrega naquele endereço → **400** "Esta loja não entrega no endereço
+  escolhido.". Em retirada, o frete é 0. `OrderResponseDTO` ganha
+  `deliveryFee`, `deliveryDistanceKm` e `subtotal`.
+- **Preview do carrinho** (`POST /api/cart/preview`): o corpo ganha
+  `addressId` ou `zipCode`, opcionais. A resposta ganha `deliveryFee`
+  (nulo em retirada, ou sem origem), `distanceKm`, `deliversHere` e
+  `total`.
+- OpenAPI atualizado em todas as rotas tocadas.
 
 ### 5.5 Frontend
 
-- "Minha loja": seção "Entrega" com os dois interruptores, raio, taxa
-  fixa e valor por km, com a validação do Cenário 1.
-- Formulário de produto: um único campo de preço.
-- `supplier-card`: linha de distância + frete, selo "Entrega grátis" e
-  selo "Só retirada" (Cenário 4), com os tokens F2.
-- `catalog-filter-bar` (HU16) ganha os chips "Entregam aqui", "Retirada",
-  "Entrega grátis" e a ordenação "Mais perto".
-- `product-card`: um preço só; some a linha dupla entrega/retirada.
-- Resumo do pedido: subtotal, frete e total como linhas distintas.
+- **Configurações** (seção `#funcionamento`):
+  - interruptores "Faço entrega" e "Aceito retirada";
+  - raio (km), taxa fixa e valor por km;
+  - prévia do frete a 3 km;
+  - aviso "distância em linha reta";
+  - as duas modalidades desmarcadas mostram erro e bloqueiam o salvar.
+- **`LocationContext`** guarda também o `zipCode` (visitante e cliente) e
+  o `addressId` do cliente. A vitrine e o carrinho mandam `addressId`, ou
+  `zipCode` quando é visitante.
+- **`supplier-card`**: a linha "2,3 km · Entrega R$ 7,90", "Entrega
+  grátis", "Só retirada" (fora do raio ou sem entrega) ou "Taxa de
+  entrega R$ 5,00 · distância não calculada".
+- **Vitrine**: chips "Entregam aqui", "Retirada" e "Entrega grátis" ao
+  lado da ordenação, que ganha "Mais perto".
+- **Drawer do carrinho e resumo do pedido**: subtotal, frete e total como
+  linhas separadas; em retirada, "Frete: grátis (retirada)".
 
 ## 6. Plano de Testes (TDD)
 
 **Backend**
-1. `DeliveryFeeCalculatorTest`: `deveCalcularADistanciaEntreDoisPontos`
-   (caso conhecido, tolerância de 0,2 km),
-   `deveSomarTaxaFixaEValorPorKm`, `deveArredondarParaDuasCasas`,
-   `naoDeveEntregarForaDoRaio`, `deveTratarRaioNuloComoSemLimite`.
-2. `GeocodingServiceTest`: `deveObterCoordenadasPeloCep`,
-   `deveUsarAFonteAlternativaQuandoAPrimeiraFalha`,
-   `naoDeveQuebrarQuandoAsDuasFalham` (devolve vazio, não lança).
-3. `AddressServiceTest`: `deveGravarAsCoordenadasAoSalvarEndereco`,
-   `deveSalvarEnderecoSemCoordenadaQuandoAApiFalha`.
-4. `SupplierServiceTest`: `deveCalcularFreteParaOEnderecoDoCliente`,
-   `deveMarcarSoRetiradaForaDoRaio`,
-   `deveFiltrarLojasQueEntregamNoEndereco`,
-   `deveFiltrarLojasComRetirada`, `deveFiltrarEntregaGratis`,
-   `deveOrdenarPelaMaisProxima`, `deveColocarLojaSemCoordenadaNoFim`,
-   `deveListarSemFreteQuandoNaoHaEnderecoNemCep`.
-5. `SupplierDeliverySettingsTest`: `deveSalvarAsConfiguracoesDeEntrega`,
-   `naoDevePermitirDesmarcarAsDuasModalidades` (400),
-   `naoDeveAceitarValoresNegativos` (400).
-6. `OrderServiceTest`: `deveSomarOFreteAoTotalDoPedido`,
-   `deveGravarOFreteEADistanciaNoPedido`,
-   `naoDeveCobrarFreteNaRetirada`,
-   `naoDeveRecalcularOFreteDePedidoJaFeito`.
-7. `ProductItemServiceTest`: `deveUsarPrecoUnico`,
-   `naoDeveAceitarPrecoDeEntregaSeparado`.
-8. Migração: `FlywayMigrationTest` (ou verificação manual registrada no
-   DoD) — `V19` preenche `price` a partir de `price_pickup` sem perder
-   linha.
+1. `DeliveryFeeCalculatorTest`:
+   - `deveCalcularADistanciaEntreDoisPontos` (Curitiba centro → Batel,
+     tolerância de 0,2 km);
+   - `deveSomarTaxaFixaEValorPorKm`, `deveArredondarParaDuasCasas`;
+   - `naoDeveEntregarForaDoRaio`, `deveTratarRaioNuloComoSemLimite`;
+   - `deveCobrarSoATaxaFixaSemCoordenada`,
+     `naoDeveEntregarQuandoALojaSoFazRetirada`.
+2. `GeocodingServiceTest` (MockRestServiceServer):
+   - `deveObterCoordenadasPeloCep`,
+     `deveUsarAFonteAlternativaQuandoAPrimeiraFalha`;
+   - `naoDeveQuebrarQuandoAsDuasFalham`, `deveUsarOCacheNoMesmoCep`.
+3. `AddressServiceTest`:
+   - `deveGravarAsCoordenadasAoSalvarEndereco`,
+     `deveSalvarEnderecoSemCoordenadaQuandoAApiFalha`;
+   - `deveBuscarDeNovoQuandoOCepMuda`.
+4. `AddressCoordinatesBackfillTest`: `devePreencherSoOsEnderecosSemCoordenada`,
+   `deveSeguirQuandoUmEnderecoFalha`.
+5. `SupplierServiceTest` (vitrine):
+   - `deveCalcularFreteParaOEnderecoDoCliente`,
+     `deveMarcarSoRetiradaForaDoRaio`;
+   - `deveFiltrarLojasQueEntregamNoEndereco`, `deveFiltrarLojasComRetirada`,
+     `deveFiltrarEntregaGratis`;
+   - `deveOrdenarPelaMaisProxima`, `deveColocarLojaSemCoordenadaNoFim`;
+   - `deveListarSemFreteQuandoNaoHaEnderecoNemCep`,
+     `deveUsarOCepDoVisitante`.
+6. `SupplierServiceTest` (configurações):
+   - `deveSalvarAsConfiguracoesDeEntrega`;
+   - `naoDevePermitirDesmarcarAsDuasModalidades` (400),
+     `naoDeveAceitarValoresNegativos` (400).
+7. `OrderServiceTest`:
+   - `deveSomarOFreteAoTotalDoPedido`, `deveGravarOFreteEADistanciaNoPedido`;
+   - `naoDeveCobrarFreteNaRetirada`, `deveRecusarEnderecoForaDoRaio`;
+   - `naoDeveRecalcularOFreteDePedidoJaFeito`.
+8. `CartPreviewServiceTest`: `deveSomarOFreteNoTotal`,
+   `naoDeveCobrarFreteNaRetirada`, `deveAvisarQueNaoEntregaNoEndereco`.
+9. Migrações V19–V21: conferidas no MySQL local e registradas no DoD.
 
 **Frontend**
-9. `supplier-card.component.spec.ts`: `deveMostrarDistanciaEFrete`,
-   `deveMostrarSoRetiradaForaDoRaio`, `deveMostrarSeloEntregaGratis`,
-   `naoDeveMostrarFreteSemCoordenada`.
-10. `catalog-filter-bar.component.spec.ts`: `deveEmitirOFiltroDeModalidade`,
-    `deveEmitirEntregaGratis`, `deveEmitirOrdenacaoPorDistancia`.
-11. `supplier-settings.component.spec.ts`: `deveSalvarAEntrega`,
-    `deveExigirAoMenosUmaModalidade`, `deveMostrarOErroDoBackend`.
-12. `product-item-form.component.spec.ts`: `deveTerUmUnicoCampoDePreco`.
-13. `product-card.component.spec.ts`: `deveMostrarUmPrecoSo` (substitui
-    os asserts de `price-delivery`/`price-pickup`).
-14. `order-summary.component.spec.ts`: `deveMostrarSubtotalFreteETotal`,
-    `deveMostrarFreteZeroNaRetirada`.
+10. `configuration.component.spec.ts`: `deveSalvarAEntregaNaSecaoDeFuncionamento`,
+    `deveExigirAoMenosUmaModalidade`, `deveMostrarAPreviaDoFrete`.
+11. `supplier-card.component.spec.ts`:
+    - `deveMostrarDistanciaEFrete`, `deveMostrarSoRetiradaForaDoRaio`;
+    - `deveMostrarSeloEntregaGratis`, `deveAvisarDistanciaNaoCalculada`.
+12. `supplier-list.component.spec.ts`:
+    - `deveFiltrarPorModalidade`, `deveFiltrarEntregaGratis`;
+    - `deveOrdenarPorDistancia`, `deveMandarOEnderecoOuOCep`.
+13. `location-context` e `visitor-cep-panel`: guardam o CEP.
+14. `order-resume` e `menu` (drawer): `deveMostrarSubtotalFreteETotal`,
+    `deveMostrarFreteZeroNaRetirada`, `deveMandarOEnderecoNoPreview`.
 
-**E2E (registrado no DoD)**: em 390 e 1280 px — configurar a entrega de
-uma loja; cadastrar produto com um preço; vitrine mostrando distância e
-frete; filtros de modalidade e entrega grátis; ordenar por "Mais perto";
-pedido em entrega com frete somado e gravado; pedido em retirada sem
-frete; endereço sem coordenada não quebrando a tela.
+**E2E (registrado no DoD)**, em 390 e 1280 px:
+- configurar a entrega de uma loja;
+- vitrine com distância e frete;
+- filtros de modalidade e entrega grátis;
+- ordenar por "Mais perto";
+- pedido em entrega com o frete somado e gravado;
+- pedido em retirada sem frete;
+- endereço sem coordenada cobrando só a taxa fixa.
 
 ## 7. Fora de Escopo
 
-- Rota real por ruas e tempo com trânsito — o cálculo é **em linha reta**
-  (Haversine), e essa limitação fica registrada na tela do fornecedor
-  ("distância em linha reta").
-- Backfill em massa das coordenadas dos endereços já cadastrados.
-- Faixas de frete por km (ex.: até 3 km R$ 5, até 6 km R$ 8), frete por
-  peso ou volume, frete grátis acima de um valor de compra, cupom de
-  frete.
+- Rota por ruas e tempo com trânsito. O cálculo é em linha reta, e a
+  tela do fornecedor avisa isso.
+- Faixas de frete por km, frete por peso ou volume, frete grátis acima de
+  um valor de compra e cupom de frete.
 - Pedido mínimo por loja.
-- Geolocalização do navegador (segue fora desde a HU13).
+- Geolocalização do navegador.
 - Repasse do frete ao entregador e acerto financeiro.
-- Histórico ou auditoria de mudança de tarifa.
+- Histórico de mudança de tarifa.
 - Converter pedidos antigos: eles ficam com `delivery_fee = 0`.
+- Mostrar o frete no histórico e no painel do fornecedor.
 
 ## 8. Definição de Pronto
 
-- [ ] Migrações `V16`–`V20` aplicadas na ordem, com o produto migrado
-      para preço único sem perda de dados.
-- [ ] Fornecedor configura modalidade, raio e tarifa; recusa de
-      configuração inválida com a mensagem do contrato.
-- [ ] Coordenadas gravadas ao salvar endereço, com as duas fontes de CEP
-      e falha tratada sem quebrar o cadastro.
-- [ ] Vitrine mostrando distância e frete calculados no backend, com os
-      filtros de modalidade e entrega grátis e a ordenação por distância.
-- [ ] Produto com preço único em toda a cadeia (formulário, catálogo,
-      carrinho, resumo).
-- [ ] Frete somado ao total e **gravado** no pedido; retirada sem frete.
+- [ ] V19–V21 aplicadas no MySQL local; endereços antigos com coordenada
+      depois da rotina de subida.
+- [ ] Fornecedor configura modalidades, raio e tarifa; configuração
+      inválida recusada com a mensagem do contrato.
+- [ ] Coordenadas gravadas ao salvar endereço, com as duas fontes, o
+      cache e a falha tratada sem quebrar o cadastro.
+- [ ] Vitrine com distância e frete do backend, filtros de modalidade e
+      entrega grátis, e ordenação por distância.
+- [ ] Frete somado e **gravado** no pedido; retirada sem frete; preview do
+      carrinho com subtotal, frete e total.
 - [ ] Rotas novas e alteradas documentadas no Swagger com os status reais.
-- [ ] Testes da seção 6 verdes; `mvn -f backend/pom.xml test` e
-      `ng test` sem falha nova; `ng build` ok.
+- [ ] Testes da seção 6 verdes; `mvn test` e `ng test` sem falha nova;
+      `ng build` ok.
 - [ ] E2E em 390 e 1280 px registrado aqui com data.
 - [ ] Nada do "Fora de Escopo".
