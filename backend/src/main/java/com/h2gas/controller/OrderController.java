@@ -86,13 +86,15 @@ public class OrderController {
     }
 
     @Operation(summary = "Cria um pedido",
-            description = "Cria o pedido com status PENDING (RN03). O preço de cada item é calculado no backend (RN01) "
-                    + "conforme a modalidade: DELIVERY usa o preço de entrega, PICKUP o de retirada; ausente = DELIVERY. "
-                    + "DELIVERY exige addressId do próprio cliente; PICKUP não tem endereço de entrega. "
+            description = "Cria o pedido com status PENDING (RN03). Preço dos itens (HU21: preço único) e frete calculados "
+                    + "no backend (RN01). DELIVERY exige addressId do próprio cliente e soma o frete por km (HU17: taxa fixa + "
+                    + "valor por km × distância em linha reta; sem coordenada, só a taxa fixa), gravado em deliveryFee e "
+                    + "deliveryDistanceKm; PICKUP não tem endereço nem frete; ausente = DELIVERY. "
                     + "Decrementa o estoque na mesma transação (RN02)")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Pedido criado"),
-            @ApiResponse(responseCode = "400", description = "Estoque insuficiente, endereço inválido ou modalidade desconhecida"),
+            @ApiResponse(responseCode = "200", description = "Pedido criado; totalPrice = subtotal + deliveryFee"),
+            @ApiResponse(responseCode = "400", description = "Estoque insuficiente, endereço inválido, modalidade desconhecida "
+                    + "ou loja que não entrega no endereço (fora do raio ou só retirada)"),
             @ApiResponse(responseCode = "403", description = "Sem token válido ou papel sem permissão"),
             @ApiResponse(responseCode = "404", description = "Cliente, fornecedor, endereço ou produto inexistente")
     })

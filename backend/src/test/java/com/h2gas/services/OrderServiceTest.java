@@ -1407,4 +1407,113 @@ class OrderServiceTest {
         assertThrows(BusinessRuleException.class, () -> filtro(null, null, null, "BOLETO", null, null));
         assertThrows(BusinessRuleException.class, () -> filtro(null, null, null, null, "DRONE", null));
     }
+
+    // ---- HU17: frete por km somado e gravado no pedido ----
+    // loja no centro de Curitiba e cliente no Batel: ~2,4 km em linha reta
+    private void comFrete(String fixa, String porKm, String raio) {
+        Supplier supplier = supplierRepository.findById(validSupplierId).orElseThrow();
+        supplier.setDeliveryBaseFee(new BigDecimal(fixa));
+        supplier.setDeliveryFeePerKm(new BigDecimal(porKm));
+        supplier.setDeliveryRadiusKm(raio == null ? null : new BigDecimal(raio));
+        supplier.getAddress().applyCoordinates(new com.h2gas.model.Coordinates(-25.4296, -49.2713));
+        addressRepository.save(supplier.getAddress());
+        supplierRepository.save(supplier);
+        Address cliente = addressRepository.findById(validCustomerAddressId).orElseThrow();
+        cliente.applyCoordinates(new com.h2gas.model.Coordinates(-25.4459, -49.2867));
+        addressRepository.save(cliente);
+    }
+
+    private BigDecimal freteEsperado(String fixa, String porKm) {
+        BigDecimal km = com.h2gas.model.DeliveryFeeCalculator.distanceKm(
+                new com.h2gas.model.Coordinates(-25.4296, -49.2713), new com.h2gas.model.Coordinates(-25.4459, -49.2867));
+        return new BigDecimal(fixa).add(new BigDecimal(porKm).multiply(km)).setScale(2, java.math.RoundingMode.HALF_UP);
+    }
+
+    @Test
+    @DisplayName("HU17: o total do pedido em entrega soma o frete por km")
+    void deveSomarOFreteAoTotalDoPedido() {
+        comFrete("5.00", "2.00", null);
+
+        OrderResponseDTO result = orderService.createOrder(novoPedido(validCustomerAddressId));
+
+        BigDecimal frete = freteEsperado("5.00", "2.00");
+        assertEquals(0, frete.compareTo(result.getDeliveryFee()));
+        assertEquals(0, new BigDecimal("79.90").compareTo(result.getSubtotal()));
+        assertEquals(0, new BigDecimal("79.90").add(frete).compareTo(result.getTotalPrice()));
+    }
+
+    @Test
+    @DisplayName("HU17: o frete e a distância ficam gravados no pedido")
+    void deveGravarOFreteEADistanciaNoPedido() {
+        comFrete("5.00", "2.00", null);
+
+        OrderResponseDTO result = orderService.createOrder(novoPedido(validCustomerAddressId));
+
+        Order salvo = orderRepository.findById(result.getId()).orElseThrow();
+        assertEquals(0, freteEsperado("5.00", "2.00").compareTo(salvo.getDeliveryFee()));
+        assertNotNull(salvo.getDeliveryDistanceKm());
+        assertEquals(2.4, salvo.getDeliveryDistanceKm().doubleValue(), 0.2);
+    }
+
+    @Test
+    @DisplayName("HU17: retirada não cobra frete")
+    void naoDeveCobrarFreteNaRetirada() {
+        comFrete("5.00", "2.00", null);
+        OrderRequestDTO request = novoPedido(null);
+        request.setDeliveryMode("PICKUP");
+
+        OrderResponseDTO result = orderService.createOrder(request);
+
+        assertEquals(0, BigDecimal.ZERO.compareTo(result.getDeliveryFee()));
+        assertEquals(0, new BigDecimal("79.90").compareTo(result.getTotalPrice()));
+        assertNull(orderRepository.findById(result.getId()).orElseThrow().getDeliveryDistanceKm());
+    }
+
+    @Test
+    @DisplayName("HU17: endereço fora do raio é recusado")
+    void deveRecusarEnderecoForaDoRaio() {
+        comFrete("5.00", "2.00", "1.0");
+
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class,
+                () -> orderService.createOrder(novoPedido(validCustomerAddressId)));
+        assertEquals("Esta loja não entrega no endereço escolhido.", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("HU17: mudar a tarifa da loja não altera pedido já feito")
+    void naoDeveRecalcularOFreteDePedidoJaFeito() {
+        comFrete("5.00", "2.00", null);
+        OrderResponseDTO result = orderService.createOrder(novoPedido(validCustomerAddressId));
+
+        comFrete("50.00", "20.00", null);
+
+        Order salvo = orderRepository.findById(result.getId()).orElseThrow();
+        assertEquals(0, freteEsperado("5.00", "2.00").compareTo(salvo.getDeliveryFee()));
+    }
+
+    @Test
+    @DisplayName("HU17: sem coordenada, cobra só a taxa fixa (decisão do autor)")
+    void deveCobrarSoATaxaFixaSemCoordenada() {
+        Supplier supplier = supplierRepository.findById(validSupplierId).orElseThrow();
+        supplier.setDeliveryBaseFee(new BigDecimal("6.00"));
+        supplier.setDeliveryFeePerKm(new BigDecimal("2.00"));
+        supplierRepository.save(supplier);
+
+        OrderResponseDTO result = orderService.createOrder(novoPedido(validCustomerAddressId));
+
+        assertEquals(0, new BigDecimal("6.00").compareTo(result.getDeliveryFee()));
+        assertNull(result.getDeliveryDistanceKm());
+    }
+
+    @Test
+    @DisplayName("HU17: loja que só faz retirada recusa pedido de entrega")
+    void deveRecusarEntregaDeLojaQueSoFazRetirada() {
+        Supplier supplier = supplierRepository.findById(validSupplierId).orElseThrow();
+        supplier.setOffersDelivery(false);
+        supplierRepository.save(supplier);
+
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class,
+                () -> orderService.createOrder(novoPedido(validCustomerAddressId)));
+        assertEquals("Esta loja não entrega no endereço escolhido.", ex.getMessage());
+    }
 }

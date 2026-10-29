@@ -38,6 +38,13 @@ public class Order {
 
     private BigDecimal totalPrice;
 
+    // HU17: frete cobrado (itens + frete = totalPrice) e distância usada; gravados no fechamento, não mudam depois
+    @Column(name = "delivery_fee", precision = 10, scale = 2, nullable = false)
+    private BigDecimal deliveryFee = BigDecimal.ZERO;
+
+    @Column(name = "delivery_distance_km", precision = 6, scale = 2)
+    private BigDecimal deliveryDistanceKm;
+
     private String paymentMethod;
 
     @Enumerated(EnumType.STRING)

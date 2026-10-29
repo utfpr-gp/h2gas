@@ -1,5 +1,9 @@
 package com.h2gas.services;
 
+import com.h2gas.model.Coordinates;
+import com.h2gas.model.DeliveryFeeCalculator;
+import com.h2gas.model.DeliveryQuote;
+
 import com.h2gas.model.dto.OrderHistorySummaryDTO;
 import com.h2gas.model.dto.OrderHistoryFilter;
 import com.h2gas.events.OrderStatusChangedEvent;
@@ -108,7 +112,11 @@ public class OrderService {
             listOrderItems.add(orderItem);
         }
 
-        order.setTotalPrice(calculateTotalPrice(listOrderItems));
+        // HU17: frete por km calculado no fechamento e gravado (RN01); retirada não cobra frete
+        DeliveryQuote quote = deliveryQuote(order);
+        order.setDeliveryFee(quote.fee());
+        order.setDeliveryDistanceKm(quote.distanceKm());
+        order.setTotalPrice(calculateTotalPrice(listOrderItems).add(quote.fee()));
         order.setItems(listOrderItems);
 
         orderRepository.save(order);
@@ -194,6 +202,19 @@ public class OrderService {
             throw new BusinessRuleException("Endereço não pertence ao cliente informado.");
         }
         return address;
+    }
+
+    private DeliveryQuote deliveryQuote(Order order) {
+        if (order.getDeliveryMode() == DeliveryModeEnum.PICKUP) {
+            return new DeliveryQuote(true, null, BigDecimal.ZERO);
+        }
+        Supplier supplier = order.getSupplier();
+        Coordinates store = supplier.getAddress() == null ? null : supplier.getAddress().coordinates();
+        DeliveryQuote quote = DeliveryFeeCalculator.quote(supplier.deliveryTerms(), store, order.getDeliveryAddress().coordinates());
+        if (!quote.available()) {
+            throw new BusinessRuleException("Esta loja não entrega no endereço escolhido.");
+        }
+        return quote;
     }
 
     private BigDecimal calculateTotalPrice(List<OrderItem> orderItems) {
