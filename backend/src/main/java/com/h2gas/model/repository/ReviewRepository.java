@@ -10,8 +10,14 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
+
+    // HU24: uma avaliação por pedido
+    Optional<Review> findByOrderId(String orderId);
+
+    boolean existsByOrderId(String orderId);
 
     // F7 §5.25: média e contagem por loja, numa consulta só (sem N+1)
     @Query("SELECT r.supplier.id AS supplierId, AVG(r.rating) AS average, COUNT(r) AS total"
