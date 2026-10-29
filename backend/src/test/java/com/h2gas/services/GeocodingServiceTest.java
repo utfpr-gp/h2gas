@@ -17,7 +17,8 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
-// HU17: coordenadas do CEP pela BrasilAPI; AwesomeAPI como alternativa; falha vira vazio, nunca exceção
+// HU17: coordenadas do CEP pela AwesomeAPI; BrasilAPI como reserva (ela devolve o centro da cidade para muitos CEPs);
+// falha vira vazio, nunca exceção
 class GeocodingServiceTest {
 
     private static final String BRASIL = "https://brasil.test/api/cep/v2";
@@ -34,11 +35,10 @@ class GeocodingServiceTest {
     }
 
     @Test
-    @DisplayName("HU17: coordenadas pelo CEP (BrasilAPI)")
+    @DisplayName("HU17: coordenadas pelo CEP (AwesomeAPI)")
     void deveObterCoordenadasPeloCep() {
-        server.expect(requestTo(BRASIL + "/80020310")).andRespond(withSuccess(
-                "{\"cep\":\"80020310\",\"location\":{\"type\":\"Point\",\"coordinates\":{\"longitude\":\"-49.2713\",\"latitude\":\"-25.4296\"}}}",
-                MediaType.APPLICATION_JSON));
+        server.expect(requestTo(AWESOME + "/80020310")).andRespond(withSuccess(
+                "{\"cep\":\"80020310\",\"lat\":\"-25.4296\",\"lng\":\"-49.2713\"}", MediaType.APPLICATION_JSON));
 
         Optional<Coordinates> c = service.findByZipCode("80020-310");
 
@@ -49,12 +49,12 @@ class GeocodingServiceTest {
     }
 
     @Test
-    @DisplayName("HU17: sem coordenada na BrasilAPI, usa a AwesomeAPI")
+    @DisplayName("HU17: AwesomeAPI fora do ar, usa a BrasilAPI")
     void deveUsarAFonteAlternativaQuandoAPrimeiraFalha() {
+        server.expect(requestTo(AWESOME + "/80420090")).andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
         server.expect(requestTo(BRASIL + "/80420090")).andRespond(withSuccess(
-                "{\"cep\":\"80420090\",\"location\":{\"type\":\"Point\",\"coordinates\":{}}}", MediaType.APPLICATION_JSON));
-        server.expect(requestTo(AWESOME + "/80420090")).andRespond(withSuccess(
-                "{\"cep\":\"80420090\",\"lat\":\"-25.4459\",\"lng\":\"-49.2867\"}", MediaType.APPLICATION_JSON));
+                "{\"cep\":\"80420090\",\"location\":{\"type\":\"Point\",\"coordinates\":{\"longitude\":\"-49.2867\",\"latitude\":\"-25.4459\"}}}",
+                MediaType.APPLICATION_JSON));
 
         Optional<Coordinates> c = service.findByZipCode("80420090");
 
@@ -65,8 +65,8 @@ class GeocodingServiceTest {
     @Test
     @DisplayName("HU17: as duas fontes falhando devolvem vazio, sem exceção")
     void naoDeveQuebrarQuandoAsDuasFalham() {
-        server.expect(requestTo(BRASIL + "/80000000")).andRespond(withStatus(HttpStatus.NOT_FOUND));
-        server.expect(requestTo(AWESOME + "/80000000")).andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
+        server.expect(requestTo(AWESOME + "/80000000")).andRespond(withStatus(HttpStatus.NOT_FOUND));
+        server.expect(requestTo(BRASIL + "/80000000")).andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
 
         assertTrue(service.findByZipCode("80000000").isEmpty());
         server.verify();
@@ -75,8 +75,8 @@ class GeocodingServiceTest {
     @Test
     @DisplayName("HU17: o mesmo CEP não é consultado duas vezes")
     void deveUsarOCacheNoMesmoCep() {
-        server.expect(ExpectedCount.once(), requestTo(BRASIL + "/80020310")).andRespond(withSuccess(
-                "{\"location\":{\"coordinates\":{\"longitude\":\"-49.2713\",\"latitude\":\"-25.4296\"}}}", MediaType.APPLICATION_JSON));
+        server.expect(ExpectedCount.once(), requestTo(AWESOME + "/80020310")).andRespond(withSuccess(
+                "{\"lat\":\"-25.4296\",\"lng\":\"-49.2713\"}", MediaType.APPLICATION_JSON));
 
         service.findByZipCode("80020-310");
         Optional<Coordinates> segunda = service.findByZipCode("80020310");

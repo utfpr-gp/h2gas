@@ -14,8 +14,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-// HU17: latitude e longitude de um CEP, para o frete por km. BrasilAPI v2 primeiro, AwesomeAPI como alternativa;
-// nenhuma exige chave. Falha, timeout ou CEP sem coordenada viram vazio (o frete cai para a taxa fixa), nunca exceção.
+// HU17: latitude e longitude de um CEP, para o frete por km. AwesomeAPI primeiro, BrasilAPI v2 como alternativa;
+// nenhuma exige chave. A BrasilAPI devolve o centro da cidade para muitos CEPs de Curitiba (achado no teste
+// manual de 2026-10-28), o que zeraria as distâncias — por isso ela fica só de reserva. Falha, timeout ou CEP sem coordenada viram vazio (o frete cai para a taxa fixa), nunca exceção.
 @Service
 public class GeocodingService {
 
@@ -57,7 +58,7 @@ public class GeocodingService {
         if (cached != null) {
             return Optional.of(cached);
         }
-        Optional<Coordinates> found = fromBrasilApi(cep).or(() -> fromAwesomeApi(cep));
+        Optional<Coordinates> found = fromAwesomeApi(cep).or(() -> fromBrasilApi(cep));
         found.ifPresentOrElse(c -> cache.put(cep, c), () -> log.warn("Sem coordenadas para o CEP {}", cep));
         return found;
     }

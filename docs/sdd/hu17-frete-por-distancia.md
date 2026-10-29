@@ -139,11 +139,15 @@ preço seja honesto para os dois lados.
 
 - `GeocodingService` (pacote `services`), devolvendo
   `Optional<Coordinates>`:
-  - fonte principal: **BrasilAPI v2**
+  - fonte principal: **AwesomeAPI** (`https://cep.awesomeapi.com.br/json/{cep}`,
+    `lat`/`lng`);
+  - alternativa: **BrasilAPI v2**
     (`GET https://brasilapi.com.br/api/cep/v2/{cep}`,
-    `location.coordinates.latitude/longitude`);
-  - alternativa: **AwesomeAPI** (`https://cep.awesomeapi.com.br/json/{cep}`,
-    `lat`/`lng`), quando a primeira falha ou vem sem coordenada;
+    `location.coordinates.latitude/longitude`), quando a primeira falha ou
+    vem sem coordenada;
+  - a ordem foi invertida no teste manual de 2026-10-28: a BrasilAPI
+    devolvia o centro de Curitiba (-25,42778, -49,27306) para CEPs de
+    bairros diferentes, o que zerava as distâncias;
   - URLs configuráveis por property, timeout de 3 s, sem chave de API;
   - falha, timeout ou CEP sem coordenada viram `Optional.empty()` com log
     `warn`, nunca exceção;
