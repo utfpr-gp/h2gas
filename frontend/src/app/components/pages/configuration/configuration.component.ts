@@ -13,9 +13,19 @@ const sameTimeValidator = (group: AbstractControl): ValidationErrors | null => {
   return openingTime && openingTime === closingTime ? { sameTime: true } : null;
 };
 
+// HU17: a loja precisa oferecer entrega ou retirada (o backend recusa as duas desmarcadas)
+const noModeValidator = (group: AbstractControl): ValidationErrors | null => {
+  const { offersDelivery, offersPickup } = group.value;
+  return !offersDelivery && !offersPickup ? { noMode: true } : null;
+};
+
+const BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+const PREVIEW_KM = 3;
+
 type Section = 'hours' | 'stock';
 const SECTION_FIELDS: Record<Section, (keyof SupplierSettings)[]> = {
-  hours: ['openingTime', 'closingTime', 'averageDeliveryTime'],
+  hours: ['openingTime', 'closingTime', 'averageDeliveryTime',
+    'offersDelivery', 'offersPickup', 'deliveryRadiusKm', 'deliveryBaseFee', 'deliveryFeePerKm'],
   stock: ['lowStockThreshold'],
 };
 const SAVED_MESSAGE: Record<Section, string> = {
@@ -38,7 +48,12 @@ export class ConfigurationComponent implements OnInit {
     closingTime: ['', [Validators.required, Validators.pattern(TIME)]],
     averageDeliveryTime: [30, [Validators.required, Validators.min(1), Validators.max(240)]],
     lowStockThreshold: [8, [Validators.required, Validators.min(1), Validators.max(9999)]],
-  }, { validators: sameTimeValidator });
+    offersDelivery: [true],
+    offersPickup: [true],
+    deliveryRadiusKm: this.fb.control<number | null>(null, [Validators.min(0.1), Validators.max(100)]),
+    deliveryBaseFee: [0, [Validators.required, Validators.min(0)]],
+    deliveryFeePerKm: [0, [Validators.required, Validators.min(0)]],
+  }, { validators: [sameTimeValidator, noModeValidator] });
 
   // F9: a tela da loja rola até a seção do #fragmento depois que isto carrega
   @Output() loaded = new EventEmitter<void>();
@@ -81,7 +96,7 @@ export class ConfigurationComponent implements OnInit {
 
   private sectionValid(section: Section): boolean {
     const fieldsOk = SECTION_FIELDS[section].every((k) => this.form.controls[k].valid);
-    return section === 'hours' ? fieldsOk && !this.sameTime : fieldsOk;
+    return section === 'hours' ? fieldsOk && !this.sameTime && !this.noMode : fieldsOk;
   }
 
   canSave(section: Section): boolean {
@@ -104,6 +119,20 @@ export class ConfigurationComponent implements OnInit {
 
   get sameTime(): boolean {
     return this.form.hasError('sameTime');
+  }
+
+  get noMode(): boolean {
+    return this.form.hasError('noMode');
+  }
+
+  // HU17: quanto o cliente paga de frete a 3 km, para o fornecedor conferir a tarifa (a conta real é no backend)
+  get feePreview(): string {
+    const { deliveryBaseFee, deliveryFeePerKm } = this.form.getRawValue();
+    if (!this.form.controls.deliveryBaseFee.valid || !this.form.controls.deliveryFeePerKm.valid) return '';
+    const base = Number(deliveryBaseFee);
+    const perKm = Number(deliveryFeePerKm);
+    if (base === 0 && perKm === 0) return 'Entrega grátis em qualquer distância do raio';
+    return `A ${PREVIEW_KM} km em linha reta, o frete fica ${BRL.format(base + perKm * PREVIEW_KM)}`;
   }
 
   // envia os valores salvos das outras seções e só os campos desta (F9 Cenário 6)
@@ -136,12 +165,24 @@ export class ConfigurationComponent implements OnInit {
       closingTime: v.closingTime,
       averageDeliveryTime: Number(v.averageDeliveryTime),
       lowStockThreshold: Number(v.lowStockThreshold),
+      offersDelivery: !!v.offersDelivery,
+      offersPickup: !!v.offersPickup,
+      deliveryRadiusKm: v.deliveryRadiusKm == null || (v.deliveryRadiusKm as unknown) === '' ? null : Number(v.deliveryRadiusKm),
+      deliveryBaseFee: Number(v.deliveryBaseFee),
+      deliveryFeePerKm: Number(v.deliveryFeePerKm),
     };
   }
 
   // depois de salvar uma seção, só os campos dela voltam ao valor salvo; a edição pendente da outra fica
   private applySaved(settings: SupplierSettings, section?: Section) {
-    this.saved = { ...settings, openingTime: settings.openingTime?.slice(0, 5), closingTime: settings.closingTime?.slice(0, 5) };
+    this.saved = {
+      ...settings,
+      openingTime: settings.openingTime?.slice(0, 5),
+      closingTime: settings.closingTime?.slice(0, 5),
+      deliveryRadiusKm: settings.deliveryRadiusKm == null ? null : Number(settings.deliveryRadiusKm),
+      deliveryBaseFee: Number(settings.deliveryBaseFee ?? 0),
+      deliveryFeePerKm: Number(settings.deliveryFeePerKm ?? 0),
+    };
     if (!section) {
       this.form.reset(this.saved);
       return;

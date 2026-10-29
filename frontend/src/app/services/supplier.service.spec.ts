@@ -44,11 +44,11 @@ describe('SupplierService', () => {
 
     const req = httpMock.expectOne(`${environment.apiUrl}/suppliers/mine/settings`);
     expect(req.request.method).toBe('GET');
-    req.flush({ openingTime: '08:00', closingTime: '18:00', averageDeliveryTime: 30, lowStockThreshold: 8 });
+    req.flush({ openingTime: '08:00', closingTime: '18:00', averageDeliveryTime: 30, lowStockThreshold: 8, offersDelivery: true, offersPickup: true, deliveryRadiusKm: null, deliveryBaseFee: 0, deliveryFeePerKm: 0 });
   });
 
   it('deveSalvarConfiguracoes', () => {
-    const settings = { openingTime: '09:00', closingTime: '02:00', averageDeliveryTime: 40, lowStockThreshold: 5 };
+    const settings = { openingTime: '09:00', closingTime: '02:00', averageDeliveryTime: 40, lowStockThreshold: 5, offersDelivery: true, offersPickup: true, deliveryRadiusKm: null, deliveryBaseFee: 0, deliveryFeePerKm: 0 };
     service.updateMySettings(settings).subscribe((c) => expect(c).toEqual(settings));
 
     const req = httpMock.expectOne(`${environment.apiUrl}/suppliers/mine/settings`);

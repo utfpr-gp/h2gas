@@ -45,7 +45,7 @@ describe('StoreProfileComponent', () => {
     supplierSpy = jasmine.createSpyObj('SupplierService', ['getMyProfile', 'updateMyProfile', 'uploadMyLogo', 'removeMyLogo', 'uploadMyBanner', 'removeMyBanner',
       'getMySettings', 'updateMySettings']);
     // F9: as seções de horário e estoque vêm embutidas
-    supplierSpy.getMySettings.and.returnValue(of({ openingTime: '08:00', closingTime: '18:00', averageDeliveryTime: 30, lowStockThreshold: 8 }));
+    supplierSpy.getMySettings.and.returnValue(of({ openingTime: '08:00', closingTime: '18:00', averageDeliveryTime: 30, lowStockThreshold: 8, offersDelivery: true, offersPickup: true, deliveryRadiusKm: null, deliveryBaseFee: 0, deliveryFeePerKm: 0 }));
     supplierSpy.updateMySettings.and.callFake((s) => of(s));
     supplierSpy.getMyProfile.and.returnValue(of({ ...p }));
     supplierSpy.updateMyProfile.and.callFake((r) => of({ ...p, ...r }));

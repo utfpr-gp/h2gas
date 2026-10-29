@@ -24,11 +24,11 @@ describe('SupplierHomeComponent', () => {
       ? throwError(() => ({ status: 500 }))
       : of({ pendingOrders: 3, outForDeliveryOrders: 1, totalRevenue: 4210.5 } as any));
     supplierSpy.getOpen.and.returnValue(of(true));
-    supplierSpy.getMySettings.and.returnValue(of({ openingTime: '08:00', closingTime: '18:00', averageDeliveryTime: 30, lowStockThreshold: 8 }));
+    supplierSpy.getMySettings.and.returnValue(of({ openingTime: '08:00', closingTime: '18:00', averageDeliveryTime: 30, lowStockThreshold: 8, offersDelivery: true, offersPickup: true, deliveryRadiusKm: null, deliveryBaseFee: 0, deliveryFeePerKm: 0 }));
     productSpy = jasmine.createSpyObj('ProductItemService', ['getStockSummary']);
     productSpy.getStockSummary.and.returnValue(falhar === 'estoque'
       ? throwError(() => ({ status: 500 }))
-      : of({ total: 10, available: 8, lowStock: 2, outOfStock: 1, lowStockThreshold: 8 }));
+      : of({ total: 10, available: 8, lowStock: 2, outOfStock: 1, lowStockThreshold: 8, offersDelivery: true, offersPickup: true, deliveryRadiusKm: null, deliveryBaseFee: 0, deliveryFeePerKm: 0 }));
     delivererSpy = jasmine.createSpyObj('DelivererService', ['listMine']);
     delivererSpy.listMine.and.returnValue(of([
       { id: 1, name: 'Ana', email: 'a@x', phoneNumber: '1', active: true, busy: false },

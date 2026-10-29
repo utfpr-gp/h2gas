@@ -16,7 +16,7 @@ describe('StoreHoursStatusComponent', () => {
   const criar = (aberta: boolean, abertura = '08:00', fechamento = '18:00') => {
     supplierService.getOpen.and.returnValue(of(aberta));
     supplierService.getMySettings.and.returnValue(of({
-      openingTime: abertura, closingTime: fechamento, averageDeliveryTime: 30, lowStockThreshold: 8,
+      openingTime: abertura, closingTime: fechamento, averageDeliveryTime: 30, lowStockThreshold: 8, offersDelivery: true, offersPickup: true, deliveryRadiusKm: null, deliveryBaseFee: 0, deliveryFeePerKm: 0,
     }));
     fixture = TestBed.createComponent(StoreHoursStatusComponent);
     fixture.detectChanges();
