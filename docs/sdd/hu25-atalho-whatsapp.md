@@ -116,10 +116,40 @@ em rota e outro entregue. Em 390 e 1280 px.
 
 ## 8. Definição de Pronto
 
-- [ ] Os campos novos estão no `OrderResponseDTO` e documentados no Swagger.
-- [ ] O telefone do entregador só vem com o pedido em rota.
-- [ ] Os atalhos com mensagem estão nas três telas.
-- [ ] Testes da seção 6 verdes; `mvn test` e `ng test` sem falha nova;
+- [x] Os campos novos estão no `OrderResponseDTO` e documentados no Swagger.
+- [x] O telefone do entregador só vem com o pedido em rota.
+- [x] Os atalhos com mensagem estão nas três telas.
+- [x] Testes da seção 6 verdes; `mvn test` e `ng test` sem falha nova;
       `ng build` ok.
-- [ ] E2E registrado aqui com data.
-- [ ] Nada do "Fora de Escopo".
+- [x] E2E registrado aqui com data.
+- [x] Nada do "Fora de Escopo".
+
+### Registro do E2E (2026-10-29)
+
+Feito com a loja `gpv-centro@seed-teste.h2gas.local`, o cliente
+`gpv-cliente-centro@…` e o entregador `gpv-entregador@…`, com um pedido
+levado pela API até "Saiu para entrega" (#94c103db). Em Chrome headless a 390
+e 1280 px.
+- Pela API: o pedido em rota trouxe `supplierPhone` 42990000001 e
+  `delivererPhone` 42990000021; o pedido entregue trouxe `delivererPhone`
+  nulo.
+- Cliente, em Meus pedidos:
+  - "Falar com a loja" →
+    `wa.me/5542990000001?text=Olá, Gás Guará Centro! Sobre o meu pedido
+    #94c103db no H2Gás: `;
+  - "Falar com o entregador" →
+    `wa.me/5542990000021?text=Olá, João! Sou o cliente do pedido #94c103db
+    da Gás Guará Centro.`;
+  - o pedido entregue não mostrou atalhos.
+- Loja, no painel: o botão WhatsApp do cliente →
+  `wa.me/5542990000011?text=Olá, Cliente! Aqui é a Gás Guará Centro, sobre o
+  seu pedido #94c103db no H2Gás.` O "Cliente" é o primeiro nome da conta de
+  teste.
+- Entregador, na rota: `wa.me/5542990000011?text=Olá, Cliente! Sou o
+  entregador da Gás Guará Centro e estou a caminho com o seu pedido
+  #94c103db.`
+- Ajuste do teste manual: os botões saíam cinza com `btn-outline`; passaram
+  a usar o token `success` (borda, texto e fundo claro).
+- A 390 px não há rolagem horizontal (`scrollWidth` 390).
+- `mvn test`: 515 testes, só falha o `contextLoads`. `ng test`: 703 verdes,
+  só as 10 falhas antigas. `ng build` ok.
