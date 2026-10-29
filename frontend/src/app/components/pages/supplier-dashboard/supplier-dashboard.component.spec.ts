@@ -165,6 +165,20 @@ describe('SupplierDashboardComponent', () => {
     expect(byId('category-pie')).toBeNull();
   });
 
+  // HU24
+  it('deveMostrarANotaDaLoja', async () => {
+    await setup(of(dashboard({ averageRating: 4.3, ratingCount: 27 })));
+
+    expect(byId('dashboard-rating')!.textContent).toContain('4,3');
+    expect(byId('dashboard-rating')!.textContent).toContain('27 avaliações');
+  });
+
+  it('deveMostrarSemAvaliacoesNaNotaDaLoja', async () => {
+    await setup(of(dashboard({ averageRating: null, ratingCount: 0 })));
+
+    expect(byId('dashboard-rating')!.textContent).toContain('Sem avaliações ainda');
+  });
+
   it('deveExibirTracoQuandoTempoMedioForNulo', async () => {
     await setup(of(dashboard({ averageDeliveryMinutes: null, averageTicket: null, revenueChangePercent: null })));
 

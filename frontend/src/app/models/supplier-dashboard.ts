@@ -63,6 +63,9 @@ export interface SupplierDashboard {
   pendingOrders: number;
   outForDeliveryOrders: number;
   averageDeliveryMinutes: number | null;
+  // HU24: nota da loja em todo o histórico
+  averageRating?: number | null;
+  ratingCount?: number;
   revenueByDay: RevenuePoint[];
   salesByProduct: ProductSales[];
   paymentBreakdown: PaymentShare[];

@@ -71,6 +71,15 @@
                         <span class="block text-xs text-gray-500 truncate">
                             {{ deliverer.vehicleInfo || 'Veículo não informado' }} · {{ deliverer.phoneNumber }}
                         </span>
+                        <!-- HU24: nota dada pelos clientes -->
+                        <span data-testid="deliverer-rating" class="flex items-center gap-1 text-xs text-gray-600 mt-0.5">
+                            <ng-container *ngIf="deliverer.averageRating != null; else semNotaEntregador">
+                                <span class="material-icons text-sm! text-warning" aria-hidden="true">star</span>
+                                <span class="font-semibold text-gray-800 tabular-nums">{{ deliverer.averageRating | number:'1.1-1' }}</span>
+                                <span>· {{ deliverer.ratingCount }} {{ deliverer.ratingCount === 1 ? 'avaliação' : 'avaliações' }}</span>
+                            </ng-container>
+                            <ng-template #semNotaEntregador>Sem avaliações</ng-template>
+                        </span>
                     </span>
                     <span data-testid="deliverer-status"
                         class="shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold"

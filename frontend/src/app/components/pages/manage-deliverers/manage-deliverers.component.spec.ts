@@ -13,7 +13,7 @@ describe('ManageDeliverersComponent', () => {
   let delivererServiceSpy: jasmine.SpyObj<DelivererService>;
   let toastrSpy: jasmine.SpyObj<ToastrService>;
 
-  const carlos: Deliverer = { id: 1, name: 'Carlos Silva', email: 'carlos@h2gas.local', phoneNumber: '41988887777', vehicleInfo: 'Moto - ABC-1234', active: true, busy: true };
+  const carlos: Deliverer = { id: 1, name: 'Carlos Silva', email: 'carlos@h2gas.local', phoneNumber: '41988887777', vehicleInfo: 'Moto - ABC-1234', active: true, busy: true, averageRating: 4.6, ratingCount: 1 };
   const ana: Deliverer = { id: 2, name: 'Ana Souza', email: 'ana@h2gas.local', phoneNumber: '41977776666', vehicleInfo: 'Carro', active: true, busy: false };
 
   const preencher = (campos: Record<string, string>) => component.form.patchValue(campos);
@@ -37,6 +37,15 @@ describe('ManageDeliverersComponent', () => {
     fixture = TestBed.createComponent(ManageDeliverersComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  });
+
+  // HU24
+  it('deveMostrarANotaDoEntregador', () => {
+    const linhas = Array.from(fixture.nativeElement.querySelectorAll('[data-testid=deliverer-row]')) as HTMLElement[];
+
+    expect(linhas[0].querySelector('[data-testid=deliverer-rating]')?.textContent).toMatch(/4[.,]6/);
+    expect(linhas[0].querySelector('[data-testid=deliverer-rating]')?.textContent).toContain('1 avaliação');
+    expect(linhas[1].querySelector('[data-testid=deliverer-rating]')?.textContent).toContain('Sem avaliações');
   });
 
   it('deveListarEntregadoresComStatus', () => {
