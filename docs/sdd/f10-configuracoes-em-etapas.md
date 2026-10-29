@@ -15,6 +15,21 @@
 > de etapa continua igual, mas a escolha é feita por botões em pílula,
 > com o da parte aberta destacado (`btn-primary`, `aria-pressed`), no
 > lugar da `ul.steps`.
+>
+> **Revisão de 2026-10-29 (2).** Pedido do autor: "coloca essas
+> configurações na navbar também, com sub-links das demais configurações
+> pra facilitar". O menu do fornecedor ganha "Configurações":
+> - no topo (desktop), é um botão que abre um submenu com os cinco atalhos
+>   (Aparência, Dados da loja, Endereço, Horário e entrega, Estoque mínimo),
+>   cada um para `/minha-loja/configuracoes#<parte>`. O submenu fecha ao
+>   escolher, ao clicar fora e no Esc;
+> - no menu do celular, os mesmos atalhos ficam sob o título
+>   "Configurações";
+> - a tela acompanha a troca do `#` (`route.fragment`), então o atalho
+>   funciona também com a tela já aberta.
+>
+> Isso revoga, da F9, só o ponto "o topo tem Início, Pedidos e Produtos":
+> as duplicatas de Painel e Pedidos continuam fora.
 
 ## 2. Objetivo
 
@@ -117,6 +132,11 @@ Só frontend; a API não muda.
   - em 1280 px, `#estoque` abre só "Estoque", com a etapa 5 ativa.
 - Ajuste visual do teste: a faixa da barra passou a usar a cor da página,
   com uma borda fina, no lugar do cinza.
+- Atalhos na navbar (revisão 2), em 1280 e 390 px:
+  - o submenu "Configurações" lista as cinco partes;
+  - com a tela aberta em "Aparência", "Estoque mínimo" trocou para só
+    "Estoque", com `#estoque`, e fechou o submenu;
+  - no celular, os atalhos aparecem sob "Configurações" no menu.
 - Revisão do autor: a barra numerada virou botões em pílula. Em 390 px o
   botão ativo aparece em azul com o ponto de "não salvo"; a faixa de botões
   rola para o lado e a página não (`scrollWidth` 390).
