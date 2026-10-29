@@ -80,6 +80,8 @@ class DeliveryFeeCalculatorTest {
 
         assertFalse(q.available());
         assertNull(q.fee());
+        // quem vai buscar na loja ainda quer saber a que distância ela está
+        assertEquals(0, DeliveryFeeCalculator.distanceKm(CENTRO, BATEL).compareTo(q.distanceKm()));
     }
 
     @Test

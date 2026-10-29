@@ -25,7 +25,8 @@ public final class DeliveryFeeCalculator {
 
     public static DeliveryQuote quote(DeliveryTerms terms, Coordinates store, Coordinates destination) {
         if (!terms.offersDelivery()) {
-            return DeliveryQuote.unavailable(null);
+            // só retirada: sem frete, mas a distância ajuda quem vai buscar
+            return DeliveryQuote.unavailable(store == null || destination == null ? null : distanceKm(store, destination));
         }
         BigDecimal baseFee = orZero(terms.baseFee());
         if (store == null || destination == null) {
