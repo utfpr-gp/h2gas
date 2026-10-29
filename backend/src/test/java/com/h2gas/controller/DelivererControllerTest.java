@@ -75,7 +75,7 @@ class DelivererControllerTest {
     @Test
     void deveRetornar200AoCadastrarEntregadorDoFornecedorLogado() throws Exception {
         when(delivererService.createDeliverer(any(DelivererCreateDTO.class), eq("fornecedor-1")))
-                .thenReturn(new DelivererDTO(7L, "Carlos Silva", "carlos@teste.com", "41988887777", "Moto - ABC-1234", true, false));
+                .thenReturn(new DelivererDTO(7L, "Carlos Silva", "carlos@teste.com", "41988887777", "Moto - ABC-1234", true, false, null, 0));
 
         mockMvc.perform(post("/api/deliverers")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -89,7 +89,7 @@ class DelivererControllerTest {
     @Test
     void deveListarFrotaDoFornecedorLogado() throws Exception {
         when(delivererService.findMine("fornecedor-1")).thenReturn(List.of(
-                new DelivererDTO(7L, "Carlos Silva", "carlos@teste.com", "41988887777", "Moto", true, true)));
+                new DelivererDTO(7L, "Carlos Silva", "carlos@teste.com", "41988887777", "Moto", true, true, null, 0)));
 
         mockMvc.perform(get("/api/deliverers/mine"))
                 .andExpect(status().isOk())

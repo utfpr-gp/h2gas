@@ -46,6 +46,13 @@ public class SupplierDashboardDTO {
     @Schema(description = "Média de deliveredAt − dispatchedAt em minutos; nulo sem entregas com os dois horários", example = "34.5")
     private Double averageDeliveryMinutes;
 
+    // HU24: reputação de todo o histórico, não só do mês
+    @Schema(description = "Nota média da loja em todo o histórico, 1 casa; nula sem avaliações", example = "4.3", nullable = true)
+    private Double averageRating;
+
+    @Schema(description = "Quantas avaliações formam a nota média da loja", example = "27")
+    private long ratingCount;
+
     @Schema(description = "Receita de cada dia do mês")
     private List<RevenuePointDTO> revenueByDay;
 

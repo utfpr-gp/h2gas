@@ -181,4 +181,45 @@ class DelivererServiceTest {
         assertThrows(com.h2gas.exceptions.ResourceNotFoundException.class,
                 () -> delivererService.resetPassword(987654L, fornecedor.getId(), "novaSenha9"));
     }
+
+    // ---- HU24 ----
+    @Autowired private ReviewRepository reviewRepository;
+
+    private void avaliarEntregador(Deliverer entregador, Integer nota) {
+        Order o = new Order();
+        o.setCustomer(cliente);
+        o.setSupplier(fornecedor);
+        o.setStatus(OrderStatusEnum.DELIVERED);
+        o.setPaymentMethod("PIX");
+        o.setTotalPrice(new BigDecimal("10.00"));
+        o.setDeliverer(entregador);
+        o = orderRepository.save(o);
+        Review r = new Review();
+        r.setOrder(o);
+        r.setSupplier(fornecedor);
+        r.setDeliverer(entregador);
+        r.setRating(5);
+        r.setDelivererRating(nota);
+        reviewRepository.save(r);
+    }
+
+    @Test
+    @DisplayName("HU24: cada entregador mostra a média e a contagem das próprias notas")
+    void deveMostrarANotaDeCadaEntregador() {
+        DelivererDTO ana = delivererService.createDeliverer(dto("Ana", "ana@teste.com"), fornecedor.getId());
+        DelivererDTO bruno = delivererService.createDeliverer(dto("Bruno", "bruno@teste.com"), fornecedor.getId());
+        Deliverer anaEntity = delivererRepository.findById(ana.getId()).orElseThrow();
+        avaliarEntregador(anaEntity, 5);
+        avaliarEntregador(anaEntity, 4);
+        avaliarEntregador(anaEntity, null); // cliente não deu nota ao entregador
+
+        List<DelivererDTO> frota = delivererService.findMine(fornecedor.getId());
+
+        DelivererDTO anaDto = frota.stream().filter(d -> d.getId().equals(ana.getId())).findFirst().orElseThrow();
+        DelivererDTO brunoDto = frota.stream().filter(d -> d.getId().equals(bruno.getId())).findFirst().orElseThrow();
+        assertEquals(4.5, anaDto.getAverageRating());
+        assertEquals(2, anaDto.getRatingCount());
+        assertNull(brunoDto.getAverageRating());
+        assertEquals(0, brunoDto.getRatingCount());
+    }
 }

@@ -34,6 +34,19 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             countQuery = "SELECT COUNT(r) FROM Review r WHERE r.supplier.id = :supplierId")
     Page<StoreReviewRow> findStoreReviews(@Param("supplierId") String supplierId, Pageable pageable);
 
+    // HU24: média e contagem das notas de cada entregador (avaliações sem nota do entregador ficam fora)
+    @Query("SELECT r.deliverer.id AS delivererId, AVG(r.delivererRating) AS average, COUNT(r) AS total"
+            + " FROM Review r WHERE r.deliverer.id IN :delivererIds AND r.delivererRating IS NOT NULL GROUP BY r.deliverer.id")
+    List<DelivererRatingSummary> summarizeByDelivererIds(@Param("delivererIds") Collection<Long> delivererIds);
+
+    interface DelivererRatingSummary {
+        Long getDelivererId();
+
+        Double getAverage();
+
+        Long getTotal();
+    }
+
     interface StoreReviewRow {
         Long getId();
 

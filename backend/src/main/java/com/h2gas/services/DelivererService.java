@@ -12,6 +12,7 @@ import com.h2gas.model.entity.Supplier;
 import com.h2gas.model.entity.User;
 import com.h2gas.model.repository.DelivererRepository;
 import com.h2gas.model.repository.OrderRepository;
+import com.h2gas.model.repository.ReviewRepository;
 import com.h2gas.model.repository.SupplierRepository;
 import com.h2gas.model.repository.UserRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -27,9 +28,12 @@ public class DelivererService {
     private final UserRepository userRepository;
     private final SupplierRepository supplierRepository;
     private final OrderRepository orderRepository;
+    private final ReviewRepository reviewRepository;
 
     public DelivererService(DelivererRepository delivererRepository, UserRepository userRepository,
-                            SupplierRepository supplierRepository, OrderRepository orderRepository) {
+                            SupplierRepository supplierRepository, OrderRepository orderRepository,
+                            ReviewRepository reviewRepository) {
+        this.reviewRepository = reviewRepository;
         this.delivererRepository = delivererRepository;
         this.userRepository = userRepository;
         this.supplierRepository = supplierRepository;
@@ -59,9 +63,23 @@ public class DelivererService {
 
     @Transactional(readOnly = true)
     public List<DelivererDTO> findMine(String supplierId) {
-        return delivererRepository.findBySupplierIdOrderByUserNameAsc(supplierId).stream()
+        List<DelivererDTO> fleet = delivererRepository.findBySupplierIdOrderByUserNameAsc(supplierId).stream()
                 .map(this::toDto)
                 .toList();
+        // HU24: a nota de toda a frota numa consulta só
+        if (!fleet.isEmpty()) {
+            java.util.Map<Long, ReviewRepository.DelivererRatingSummary> ratings = reviewRepository
+                    .summarizeByDelivererIds(fleet.stream().map(DelivererDTO::getId).toList()).stream()
+                    .collect(java.util.stream.Collectors.toMap(ReviewRepository.DelivererRatingSummary::getDelivererId, r -> r));
+            fleet.forEach(d -> {
+                ReviewRepository.DelivererRatingSummary r = ratings.get(d.getId());
+                if (r != null) {
+                    d.setAverageRating(Math.round(r.getAverage() * 10) / 10.0);
+                    d.setRatingCount(r.getTotal());
+                }
+            });
+        }
+        return fleet;
     }
 
     // HU22: o fornecedor define uma senha nova para um entregador da própria frota (a antiga não é recuperável: BCrypt)
@@ -90,6 +108,6 @@ public class DelivererService {
         boolean busy = orderRepository.existsByDelivererIdAndStatus(deliverer.getId(), OrderStatusEnum.OUT_FOR_DELIVERY);
         User user = deliverer.getUser();
         return new DelivererDTO(deliverer.getId(), user.getName(), user.getEmail(), user.getPhoneNumber(),
-                deliverer.getVehicleInfo(), deliverer.isActive(), busy);
+                deliverer.getVehicleInfo(), deliverer.isActive(), busy, null, 0);
     }
 }
