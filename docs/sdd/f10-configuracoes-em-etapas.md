@@ -92,8 +92,22 @@ Só frontend; a API não muda.
 
 ## 8. Definição de Pronto
 
-- [ ] Uma seção por vez, escolhida na barra de etapas, com o `#` na URL.
-- [ ] Edição pendente mantida ao trocar de etapa, com o aviso na barra.
-- [ ] Testes da seção 6 verdes; `ng test` sem falha nova; `ng build` ok.
-- [ ] E2E em 390 e 1280 px registrado aqui com data.
-- [ ] Nada do "Fora de Escopo".
+- [x] Uma seção por vez, escolhida na barra de etapas, com o `#` na URL.
+- [x] Edição pendente mantida ao trocar de etapa, com o aviso na barra.
+- [x] Testes da seção 6 verdes; `ng test` (só as 10 falhas antigas de
+      provider) sem falha nova; `ng build` ok.
+- [x] E2E em 390 e 1280 px registrado aqui com data.
+- [x] Nada do "Fora de Escopo".
+
+### Registro do teste manual (2026-10-29)
+
+- Logado como a loja de teste "Plantão Gás e Água":
+  - `/minha-loja/configuracoes` em 390 px abre só em "Aparência", sem
+    rolagem horizontal (`scrollWidth` 390);
+  - `#funcionamento` abre só "Funcionamento e entrega";
+  - com a abertura editada para 07:30 sem salvar, fui a "Estoque" e
+    voltei: o valor continuou 07:30, a etapa "Horário" ganhou o ponto de
+    "não salvo" e a URL ficou em `#funcionamento`;
+  - em 1280 px, `#estoque` abre só "Estoque", com a etapa 5 ativa.
+- Ajuste visual do teste: a faixa da barra passou a usar a cor da página,
+  com uma borda fina, no lugar do cinza.
