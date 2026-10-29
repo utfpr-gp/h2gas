@@ -7,6 +7,7 @@ import com.h2gas.model.dto.OrderItemResponseDTO;
 import com.h2gas.model.dto.OrderRequestDTO;
 import com.h2gas.model.dto.OrderResponseDTO;
 import com.h2gas.model.entity.*;
+import com.h2gas.enums.OrderStatusEnum;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -63,6 +64,7 @@ public class OrderMapper {
         if (data.getSupplier().getName() != null) {
             orderResponseDTO.setSupplierName(data.getSupplier().getName());
         }
+        orderResponseDTO.setSupplierPhone(data.getSupplier().getPhoneNumber());
 
         if (data.getStatus() != null) {
             orderResponseDTO.setStatus(data.getStatus().getStatus());
@@ -75,6 +77,10 @@ public class OrderMapper {
         if (data.getDeliverer() != null) {
             orderResponseDTO.setDelivererName(data.getDeliverer().getUser().getName());
         }
+        // HU25: o telefone do entregador só enquanto ele está a caminho
+        orderResponseDTO.setDelivererPhone(data.getDeliverer() != null && data.getStatus() == OrderStatusEnum.OUT_FOR_DELIVERY
+                ? data.getDeliverer().getUser().getPhoneNumber()
+                : null);
 
         if (data.getDeliveryMode() != null) {
             orderResponseDTO.setDeliveryMode(data.getDeliveryMode().name());

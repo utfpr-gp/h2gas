@@ -49,6 +49,13 @@ public class OrderResponseDTO {
     private String lastRefusalReason;
     private String lastRefusalBy;
 
+    // HU25: para o atalho de WhatsApp
+    @Schema(description = "Telefone da loja", example = "4233334444", nullable = true)
+    private String supplierPhone;
+
+    @Schema(description = "Telefone do entregador; só vem com o pedido em rota (OUT_FOR_DELIVERY)", example = "42988887777", nullable = true)
+    private String delivererPhone;
+
     // HU24: preenchida na listagem do cliente
     @Schema(description = "Avaliação que o cliente fez do pedido; nula se ainda não avaliou", nullable = true)
     private OrderReviewDTO review;
