@@ -1407,4 +1407,172 @@ class OrderServiceTest {
         assertThrows(BusinessRuleException.class, () -> filtro(null, null, null, "BOLETO", null, null));
         assertThrows(BusinessRuleException.class, () -> filtro(null, null, null, null, "DRONE", null));
     }
+
+    // ---- HU17: frete por km somado e gravado no pedido ----
+    // loja no centro de Curitiba e cliente no Batel: ~2,4 km em linha reta
+    private void comFrete(String fixa, String porKm, String raio) {
+        Supplier supplier = supplierRepository.findById(validSupplierId).orElseThrow();
+        supplier.setDeliveryBaseFee(new BigDecimal(fixa));
+        supplier.setDeliveryFeePerKm(new BigDecimal(porKm));
+        supplier.setDeliveryRadiusKm(raio == null ? null : new BigDecimal(raio));
+        supplier.getAddress().applyCoordinates(new com.h2gas.model.Coordinates(-25.4296, -49.2713));
+        addressRepository.save(supplier.getAddress());
+        supplierRepository.save(supplier);
+        Address cliente = addressRepository.findById(validCustomerAddressId).orElseThrow();
+        cliente.applyCoordinates(new com.h2gas.model.Coordinates(-25.4459, -49.2867));
+        addressRepository.save(cliente);
+    }
+
+    private BigDecimal freteEsperado(String fixa, String porKm) {
+        BigDecimal km = com.h2gas.model.DeliveryFeeCalculator.distanceKm(
+                new com.h2gas.model.Coordinates(-25.4296, -49.2713), new com.h2gas.model.Coordinates(-25.4459, -49.2867));
+        return new BigDecimal(fixa).add(new BigDecimal(porKm).multiply(km)).setScale(2, java.math.RoundingMode.HALF_UP);
+    }
+
+    @Test
+    @DisplayName("HU17: o total do pedido em entrega soma o frete por km")
+    void deveSomarOFreteAoTotalDoPedido() {
+        comFrete("5.00", "2.00", null);
+
+        OrderResponseDTO result = orderService.createOrder(novoPedido(validCustomerAddressId));
+
+        BigDecimal frete = freteEsperado("5.00", "2.00");
+        assertEquals(0, frete.compareTo(result.getDeliveryFee()));
+        assertEquals(0, new BigDecimal("79.90").compareTo(result.getSubtotal()));
+        assertEquals(0, new BigDecimal("79.90").add(frete).compareTo(result.getTotalPrice()));
+    }
+
+    @Test
+    @DisplayName("HU17: o frete e a distância ficam gravados no pedido")
+    void deveGravarOFreteEADistanciaNoPedido() {
+        comFrete("5.00", "2.00", null);
+
+        OrderResponseDTO result = orderService.createOrder(novoPedido(validCustomerAddressId));
+
+        Order salvo = orderRepository.findById(result.getId()).orElseThrow();
+        assertEquals(0, freteEsperado("5.00", "2.00").compareTo(salvo.getDeliveryFee()));
+        assertNotNull(salvo.getDeliveryDistanceKm());
+        assertEquals(2.4, salvo.getDeliveryDistanceKm().doubleValue(), 0.2);
+    }
+
+    @Test
+    @DisplayName("HU17: retirada não cobra frete")
+    void naoDeveCobrarFreteNaRetirada() {
+        comFrete("5.00", "2.00", null);
+        OrderRequestDTO request = novoPedido(null);
+        request.setDeliveryMode("PICKUP");
+
+        OrderResponseDTO result = orderService.createOrder(request);
+
+        assertEquals(0, BigDecimal.ZERO.compareTo(result.getDeliveryFee()));
+        assertEquals(0, new BigDecimal("79.90").compareTo(result.getTotalPrice()));
+        assertNull(orderRepository.findById(result.getId()).orElseThrow().getDeliveryDistanceKm());
+    }
+
+    @Test
+    @DisplayName("HU17: endereço fora do raio é recusado")
+    void deveRecusarEnderecoForaDoRaio() {
+        comFrete("5.00", "2.00", "1.0");
+
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class,
+                () -> orderService.createOrder(novoPedido(validCustomerAddressId)));
+        assertEquals("Esta loja não entrega no endereço escolhido.", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("HU17: mudar a tarifa da loja não altera pedido já feito")
+    void naoDeveRecalcularOFreteDePedidoJaFeito() {
+        comFrete("5.00", "2.00", null);
+        OrderResponseDTO result = orderService.createOrder(novoPedido(validCustomerAddressId));
+
+        comFrete("50.00", "20.00", null);
+
+        Order salvo = orderRepository.findById(result.getId()).orElseThrow();
+        assertEquals(0, freteEsperado("5.00", "2.00").compareTo(salvo.getDeliveryFee()));
+    }
+
+    @Test
+    @DisplayName("HU17: sem coordenada, cobra só a taxa fixa (decisão do autor)")
+    void deveCobrarSoATaxaFixaSemCoordenada() {
+        Supplier supplier = supplierRepository.findById(validSupplierId).orElseThrow();
+        supplier.setDeliveryBaseFee(new BigDecimal("6.00"));
+        supplier.setDeliveryFeePerKm(new BigDecimal("2.00"));
+        supplierRepository.save(supplier);
+
+        OrderResponseDTO result = orderService.createOrder(novoPedido(validCustomerAddressId));
+
+        assertEquals(0, new BigDecimal("6.00").compareTo(result.getDeliveryFee()));
+        assertNull(result.getDeliveryDistanceKm());
+    }
+
+    @Test
+    @DisplayName("HU17: loja que só faz retirada recusa pedido de entrega")
+    void deveRecusarEntregaDeLojaQueSoFazRetirada() {
+        Supplier supplier = supplierRepository.findById(validSupplierId).orElseThrow();
+        supplier.setOffersDelivery(false);
+        supplierRepository.save(supplier);
+
+        BusinessRuleException ex = assertThrows(BusinessRuleException.class,
+                () -> orderService.createOrder(novoPedido(validCustomerAddressId)));
+        assertEquals("Esta loja não entrega no endereço escolhido.", ex.getMessage());
+    }
+
+    // ---- HU23: contagem dos pedidos da loja por status ----
+    @Test
+    @DisplayName("HU23: conta os pedidos da loja por status, numa consulta, sem misturar outra loja")
+    void deveContarOsPedidosPorStatusDaLoja() {
+        Supplier loja = supplierRepository.findById(validSupplierId).orElseThrow();
+        User cliente = userRepository.findById(validCustomerId).orElseThrow();
+        // o setUp já deixa pedidos na loja: o teste compara com a contagem de antes
+        com.h2gas.model.dto.OrderStatusCountsDTO antes = orderService.countMyOrdersByStatus(validSupplierId);
+        for (OrderStatusEnum status : List.of(OrderStatusEnum.PENDING, OrderStatusEnum.PENDING, OrderStatusEnum.OUT_FOR_DELIVERY,
+                OrderStatusEnum.DELIVERED, OrderStatusEnum.DELIVERED, OrderStatusEnum.DELIVERED, OrderStatusEnum.CANCELED)) {
+            pedidoFinalizado(loja, cliente, status, "PIX", DeliveryModeEnum.DELIVERY, "10.00", "2026-10-20");
+        }
+        Supplier outra = supplierRepository.save(createSupplier("Outra Loja", "outra-hu23@teste.com", "41900000001", "00011122233",
+                "senha", "11222333000155", "x", true, true, null, testCity));
+        pedidoFinalizado(outra, cliente, OrderStatusEnum.PENDING, "PIX", DeliveryModeEnum.DELIVERY, "10.00", "2026-10-20");
+
+        com.h2gas.model.dto.OrderStatusCountsDTO contagem = orderService.countMyOrdersByStatus(validSupplierId);
+
+        java.util.function.Function<OrderStatusEnum, Long> novos = st -> contagem.counts().get(st) - antes.counts().get(st);
+        assertEquals(2L, novos.apply(OrderStatusEnum.PENDING));
+        assertEquals(0L, novos.apply(OrderStatusEnum.CONFIRMED));
+        assertEquals(0L, novos.apply(OrderStatusEnum.IN_PREPARATION));
+        assertEquals(1L, novos.apply(OrderStatusEnum.OUT_FOR_DELIVERY));
+        assertEquals(3L, novos.apply(OrderStatusEnum.DELIVERED));
+        assertEquals(1L, novos.apply(OrderStatusEnum.CANCELED));
+        assertEquals(3L, contagem.active() - antes.active());
+        assertEquals(7L, contagem.total() - antes.total());
+        assertEquals(contagem.total(), contagem.counts().values().stream().mapToLong(Long::longValue).sum());
+        for (OrderStatusEnum st : OrderStatusEnum.values()) assertNotNull(contagem.counts().get(st), st.name());
+    }
+
+    // ---- HU24 ----
+    @Autowired
+    private ReviewRepository reviewRepositoryHu24;
+
+    @Test
+    @DisplayName("HU24: a listagem do cliente traz a avaliação feita, e nula sem avaliação")
+    void deveTrazerAAvaliacaoNosPedidosDoCliente() {
+        Supplier loja = supplierRepository.findById(validSupplierId).orElseThrow();
+        User cliente = userRepository.findById(validCustomerId).orElseThrow();
+        Order avaliado = pedidoFinalizado(loja, cliente, OrderStatusEnum.DELIVERED, "PIX", DeliveryModeEnum.DELIVERY, "10.00", "2026-10-20");
+        Order semAvaliacao = pedidoFinalizado(loja, cliente, OrderStatusEnum.DELIVERED, "PIX", DeliveryModeEnum.DELIVERY, "10.00", "2026-10-21");
+        Review review = new Review();
+        review.setOrder(avaliado);
+        review.setSupplier(loja);
+        review.setRating(4);
+        review.setDelivererRating(5);
+        review.setComment("Bom");
+        reviewRepositoryHu24.save(review);
+
+        List<OrderResponseDTO> pedidos = orderService.findByCustomerId(validCustomerId, "DELIVERED",
+                org.springframework.data.domain.PageRequest.of(0, 50)).getContent();
+
+        OrderResponseDTO dtoAvaliado = pedidos.stream().filter(o -> o.getId().equals(avaliado.getId())).findFirst().orElseThrow();
+        OrderResponseDTO dtoSem = pedidos.stream().filter(o -> o.getId().equals(semAvaliacao.getId())).findFirst().orElseThrow();
+        assertEquals(new com.h2gas.model.dto.OrderReviewDTO(4, 5, "Bom"), dtoAvaliado.getReview());
+        assertNull(dtoSem.getReview());
+    }
 }

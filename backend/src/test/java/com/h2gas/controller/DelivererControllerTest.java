@@ -33,6 +33,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -74,7 +75,7 @@ class DelivererControllerTest {
     @Test
     void deveRetornar200AoCadastrarEntregadorDoFornecedorLogado() throws Exception {
         when(delivererService.createDeliverer(any(DelivererCreateDTO.class), eq("fornecedor-1")))
-                .thenReturn(new DelivererDTO(7L, "Carlos Silva", "carlos@teste.com", "41988887777", "Moto - ABC-1234", true, false));
+                .thenReturn(new DelivererDTO(7L, "Carlos Silva", "carlos@teste.com", "41988887777", "Moto - ABC-1234", true, false, null, 0));
 
         mockMvc.perform(post("/api/deliverers")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -88,11 +89,40 @@ class DelivererControllerTest {
     @Test
     void deveListarFrotaDoFornecedorLogado() throws Exception {
         when(delivererService.findMine("fornecedor-1")).thenReturn(List.of(
-                new DelivererDTO(7L, "Carlos Silva", "carlos@teste.com", "41988887777", "Moto", true, true)));
+                new DelivererDTO(7L, "Carlos Silva", "carlos@teste.com", "41988887777", "Moto", true, true, null, 0)));
 
         mockMvc.perform(get("/api/deliverers/mine"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Carlos Silva"))
                 .andExpect(jsonPath("$[0].busy").value(true));
+    }
+
+    // ---- HU22 ----
+    @Test
+    void deveRedefinirASenhaComOFornecedorDoToken() throws Exception {
+        mockMvc.perform(put("/api/deliverers/7/password").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"password\":\"novaSenha9\"}"))
+                .andExpect(status().isNoContent());
+
+        verify(delivererService).resetPassword(7L, "fornecedor-1", "novaSenha9");
+    }
+
+    @Test
+    void deveRecusarSenhaCurta() throws Exception {
+        mockMvc.perform(put("/api/deliverers/7/password").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"password\":\"123\"}"))
+                .andExpect(status().isBadRequest());
+
+        verify(delivererService, never()).resetPassword(any(), any(), any());
+    }
+
+    @Test
+    void deveRetornar403ParaEntregadorDeOutraLoja() throws Exception {
+        org.mockito.Mockito.doThrow(new com.h2gas.exceptions.ForbiddenResourceException("Entregador não pertence à sua frota."))
+                .when(delivererService).resetPassword(7L, "fornecedor-1", "novaSenha9");
+
+        mockMvc.perform(put("/api/deliverers/7/password").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"password\":\"novaSenha9\"}"))
+                .andExpect(status().isForbidden());
     }
 }

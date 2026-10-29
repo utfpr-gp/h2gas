@@ -185,6 +185,18 @@
 
                 <!-- Entrega: endereço do cliente -->
                 <div *ngIf="deliveryMode === 'DELIVERY'" @fadeIn data-testid="customer-addresses" class="space-y-3">
+                    <!-- HU17: fora do raio (ou loja só de retirada): não dá para entregar neste endereço -->
+                    <p *ngIf="deliveryBlocked" data-testid="delivery-blocked" role="alert"
+                        class="flex items-start gap-2 text-sm text-error bg-error/5 border border-error/30 rounded-xl px-3 py-2">
+                        <span class="material-icons text-base" aria-hidden="true">wrong_location</span>
+                        Esta loja não entrega neste endereço. Escolha outro endereço ou a retirada.
+                    </p>
+                    <p *ngIf="!deliveryBlocked && preview?.deliveryFee != null" data-testid="delivery-fee-hint" class="text-sm text-gray-600">
+                        Frete até este endereço:
+                        <strong>{{ preview!.deliveryFee === 0 ? 'grátis' : (preview!.deliveryFee | currency:'BRL':'symbol':'1.2-2') }}</strong>
+                        <ng-container *ngIf="preview!.distanceKm != null"> · {{ preview!.distanceKm | number:'1.1-1' }} km em linha reta</ng-container>
+                        <ng-container *ngIf="preview!.distanceKm == null"> · distância não calculada</ng-container>
+                    </p>
                     <div *ngFor="let endereco of addresses"
                         class="border-2 rounded-xl p-3 flex items-start cursor-pointer transition-all duration-200"
                         [class.border-primary]="endereco.id === selectedAddressId"
@@ -235,6 +247,30 @@
                             </span>
                         </div>
                     </div>
+
+                    <!-- HU17: subtotal, frete e total, todos do backend (RN01) -->
+                    <dl *ngIf="preview" class="mt-2 pt-2 border-t border-gray-100 text-sm space-y-1">
+                        <div class="flex justify-between gap-3" data-testid="summary-subtotal">
+                            <dt class="text-gray-500">Subtotal</dt>
+                            <dd class="tabular-nums">{{ preview.subtotal | currency:'BRL':'symbol':'1.2-2' }}</dd>
+                        </div>
+                        <div class="flex justify-between gap-3" data-testid="summary-fee">
+                            <dt class="text-gray-500">
+                                Frete<ng-container *ngIf="deliveryMode === 'DELIVERY' && preview.distanceKm != null"> · {{ preview.distanceKm | number:'1.1-1' }} km</ng-container>
+                            </dt>
+                            <dd class="tabular-nums">
+                                <ng-container *ngIf="deliveryMode === 'PICKUP'">Grátis (retirada)</ng-container>
+                                <ng-container *ngIf="deliveryMode === 'DELIVERY' && preview.deliveryFee != null">
+                                    {{ preview.deliveryFee === 0 ? 'Grátis' : (preview.deliveryFee | currency:'BRL':'symbol':'1.2-2') }}
+                                </ng-container>
+                                <ng-container *ngIf="deliveryMode === 'DELIVERY' && preview.deliveryFee == null">—</ng-container>
+                            </dd>
+                        </div>
+                        <div class="flex justify-between gap-3 font-semibold text-base" data-testid="summary-total">
+                            <dt>Total</dt>
+                            <dd class="tabular-nums">{{ orderTotal | currency:'BRL':'symbol':'1.2-2' }}</dd>
+                        </div>
+                    </dl>
 
                     <div class="mt-3 grid gap-2 text-sm">
                         <button type="button" *ngIf="deliveryMode === 'PICKUP'" (click)="goToStep(2)"
@@ -298,7 +334,7 @@
                         <span *ngIf="preview" data-testid="order-subtotal"
                             class="text-lg font-bold text-primary transition-opacity duration-200"
                             [class.opacity-50]="previewLoading">
-                            {{ preview.subtotal | currency:'BRL':'symbol':'1.2-2' }}
+                            {{ (step === 3 ? orderTotal : preview.subtotal) | currency:'BRL':'symbol':'1.2-2' }}
                         </span>
                         <span *ngIf="previewLoading && preview" data-testid="subtotal-loading"
                             class="loading loading-spinner loading-xs text-primary"></span>

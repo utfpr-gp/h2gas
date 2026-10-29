@@ -78,6 +78,24 @@
             <a routerLink="/minha-loja/produtos" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
               <span class="material-icons" aria-hidden="true">local_fire_department</span><span>Produtos</span>
             </a>
+            <!-- F10: Configurações com um atalho para cada parte da tela da loja -->
+            <div class="relative" data-settings-menu>
+              <button type="button" data-testid="settings-menu-button" (click)="settingsMenuOpen = !settingsMenuOpen"
+                [attr.aria-expanded]="settingsMenuOpen" aria-haspopup="true" aria-controls="settings-menu"
+                class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors focus:outline-none [&>.material-icons]:text-[20px]">
+                <span class="material-icons" aria-hidden="true">settings</span><span>Configurações</span>
+                <span class="material-icons text-[18px]! transition-transform" [class.rotate-180]="settingsMenuOpen" aria-hidden="true">expand_more</span>
+              </button>
+              <ul *ngIf="settingsMenuOpen" id="settings-menu" data-testid="settings-menu" @fadeIn
+                class="absolute right-0 mt-2 w-60 bg-white rounded-xl shadow-xl border border-gray-200 py-1 z-50 text-gray-800">
+                <li *ngFor="let sec of settingsSections">
+                  <a routerLink="/minha-loja/configuracoes" [fragment]="sec.id" (click)="settingsMenuOpen = false"
+                    class="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-100 min-h-11">
+                    <span class="material-icons text-[20px] text-primary" aria-hidden="true">{{ sec.icon }}</span>{{ sec.label }}
+                  </a>
+                </li>
+              </ul>
+            </div>
           </ng-container>
 
           <a *ngIf="isCustomer" routerLink="/meus-pedidos" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
@@ -217,12 +235,32 @@
               </div>
   
               <div *ngIf="cartLines.length" class="p-6 border-t border-gray-200">
-                <div class="flex justify-between items-center mb-4">
-                  <span class="text-lg font-medium text-gray-800">Total:</span>
-                  <span data-testid="cart-total" class="text-xl font-bold text-gray-900">
-                    {{ cartPreview ? (cartPreview.subtotal | currency:'BRL':'symbol':'1.2-2') : '—' }}
-                  </span>
-                </div>
+                <!-- HU17: subtotal, frete e total vêm do backend (RN01) -->
+                <dl class="space-y-1 mb-4 text-sm">
+                  <div class="flex justify-between" data-testid="cart-subtotal">
+                    <dt class="text-gray-500">Subtotal</dt>
+                    <dd class="tabular-nums">{{ cartPreview ? (cartPreview.subtotal | currency:'BRL':'symbol':'1.2-2') : '—' }}</dd>
+                  </div>
+                  <div class="flex justify-between gap-3" data-testid="cart-fee">
+                    <dt class="text-gray-500">Frete</dt>
+                    <dd class="text-right tabular-nums">
+                      <ng-container *ngIf="deliveryMode === 'PICKUP'">grátis (retirada)</ng-container>
+                      <ng-container *ngIf="deliveryMode === 'DELIVERY'">
+                        <ng-container *ngIf="cartPreview?.deliversHere === false">não entrega no seu endereço · só retirada</ng-container>
+                        <ng-container *ngIf="cartPreview?.deliversHere !== false && cartPreview?.deliveryFee != null">
+                          {{ cartPreview!.deliveryFee === 0 ? 'grátis' : (cartPreview!.deliveryFee | currency:'BRL':'symbol':'1.2-2') }}
+                        </ng-container>
+                        <ng-container *ngIf="cartPreview?.deliversHere !== false && cartPreview?.deliveryFee == null">calculado no checkout</ng-container>
+                      </ng-container>
+                    </dd>
+                  </div>
+                  <div class="flex justify-between items-center pt-1">
+                    <dt class="text-lg font-medium text-gray-800">Total</dt>
+                    <dd data-testid="cart-total" class="text-xl font-bold text-gray-900 tabular-nums">
+                      {{ cartPreview ? ((cartPreview.total ?? cartPreview.subtotal) | currency:'BRL':'symbol':'1.2-2') : '—' }}
+                    </dd>
+                  </div>
+                </dl>
                 <p *ngIf="cartHasUnavailable" data-testid="cart-blocked" class="text-sm text-error mb-3">
                   Remova os itens indisponíveis para finalizar.
                 </p>
@@ -321,6 +359,19 @@
           <a routerLink="/minha-loja/produtos" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
             <span class="material-icons" aria-hidden="true">local_fire_department</span>Produtos
           </a>
+          <!-- F10: atalhos das configurações da loja, recolhidos para o menu não cobrir a tela -->
+          <button type="button" data-testid="mobile-settings-toggle" (click)="settingsMobileOpen = !settingsMobileOpen"
+            [attr.aria-expanded]="settingsMobileOpen" aria-controls="mobile-settings"
+            class="flex items-center justify-between gap-3 px-3 py-2.5 rounded-md text-left {{ t.hover }}">
+            <span class="flex items-center gap-3"><span class="material-icons" aria-hidden="true">settings</span>Configurações</span>
+            <span class="material-icons transition-transform" [class.rotate-180]="settingsMobileOpen" aria-hidden="true">expand_more</span>
+          </button>
+          <div *ngIf="settingsMobileOpen" id="mobile-settings" @expandCollapse class="flex flex-col">
+            <a *ngFor="let sec of settingsSections" routerLink="/minha-loja/configuracoes" [fragment]="sec.id" (click)="closeNavMenus()"
+              class="flex items-center gap-3 pl-12 pr-3 py-2 rounded-md text-sm {{ t.hover }}">
+              <span class="material-icons text-[18px]" aria-hidden="true">{{ sec.icon }}</span>{{ sec.label }}
+            </a>
+          </div>
         </ng-container>
 
       </div>

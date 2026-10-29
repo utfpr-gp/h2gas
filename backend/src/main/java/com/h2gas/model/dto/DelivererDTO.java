@@ -30,4 +30,11 @@ public class DelivererDTO {
 
     @Schema(description = "Calculado: true quando há pedido em rota (OUT_FOR_DELIVERY) com este entregador; não é persistido")
     private boolean busy;
+
+    // HU24
+    @Schema(description = "Média das notas que os clientes deram ao entregador, 1 casa; nula sem avaliações", example = "4.6", nullable = true)
+    private Double averageRating;
+
+    @Schema(description = "Quantas avaliações formam a média do entregador", example = "12")
+    private long ratingCount;
 }

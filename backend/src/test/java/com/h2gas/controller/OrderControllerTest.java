@@ -83,6 +83,9 @@ class OrderControllerTest {
     @MockitoBean
     private DelivererService delivererService;
 
+    @MockitoBean
+    private com.h2gas.services.ReviewService reviewService;
+
     private User autenticarComo(UserTypeEnum tipo, String id) {
         User usuario = new User(null, "Usuário " + tipo, tipo.name().toLowerCase() + "@teste.com", "41999999999",
                 "12345678900", "senha", tipo);
@@ -359,5 +362,69 @@ class OrderControllerTest {
 
         verify(orderService, never()).findBySupplierId(any(), any());
         verify(orderService, never()).findBySupplierIdAndStatusNotDeliveryAndCanceled(any(), any(), any());
+    }
+
+    // ---- HU23 ----
+    @Test
+    void deveContarOsPedidosDoFornecedorDoToken() throws Exception {
+        autenticarComo(UserTypeEnum.SUPPLIER, "fornecedor-1");
+        java.util.Map<com.h2gas.enums.OrderStatusEnum, Long> counts = new java.util.EnumMap<>(com.h2gas.enums.OrderStatusEnum.class);
+        for (com.h2gas.enums.OrderStatusEnum st : com.h2gas.enums.OrderStatusEnum.values()) counts.put(st, 0L);
+        counts.put(com.h2gas.enums.OrderStatusEnum.PENDING, 2L);
+        when(orderService.countMyOrdersByStatus("fornecedor-1")).thenReturn(new com.h2gas.model.dto.OrderStatusCountsDTO(counts, 2, 2));
+
+        mockMvc.perform(get("/api/orders/mine/status-counts"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.counts.PENDING").value(2))
+                .andExpect(jsonPath("$.counts.DELIVERED").value(0))
+                .andExpect(jsonPath("$.active").value(2))
+                .andExpect(jsonPath("$.total").value(2));
+    }
+
+    // ---- HU24 ----
+    @Test
+    void deveAvaliarOPedidoDoClienteDoToken() throws Exception {
+        autenticarComo(UserTypeEnum.CUSTOMER, "cliente-1");
+        when(reviewService.reviewOrder(eq("pedido-1"), eq("cliente-1"), any()))
+                .thenReturn(new com.h2gas.model.dto.OrderReviewDTO(4, 5, "Chegou rápido"));
+
+        mockMvc.perform(post("/api/orders/pedido-1/review")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"storeRating\": 4, \"delivererRating\": 5, \"comment\": \"Chegou rápido\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.storeRating").value(4))
+                .andExpect(jsonPath("$.delivererRating").value(5))
+                .andExpect(jsonPath("$.comment").value("Chegou rápido"));
+
+        verify(reviewService).reviewOrder(eq("pedido-1"), eq("cliente-1"),
+                eq(new com.h2gas.model.dto.CreateReviewDTO(4, 5, "Chegou rápido")));
+    }
+
+    @Test
+    void deveRecusarNotaForaDe1a5() throws Exception {
+        autenticarComo(UserTypeEnum.CUSTOMER, "cliente-1");
+
+        mockMvc.perform(post("/api/orders/pedido-1/review")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"storeRating\": 6}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/orders/pedido-1/review")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"delivererRating\": 3}"))
+                .andExpect(status().isBadRequest());
+
+        verify(reviewService, never()).reviewOrder(any(), any(), any());
+    }
+
+    @Test
+    void deveNegarAvaliacaoAoFornecedor() throws Exception {
+        autenticarComo(UserTypeEnum.SUPPLIER, "fornecedor-1");
+
+        mockMvc.perform(post("/api/orders/pedido-1/review")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"storeRating\": 5}"))
+                .andExpect(status().isForbidden());
+
+        verify(reviewService, never()).reviewOrder(any(), any(), any());
     }
 }

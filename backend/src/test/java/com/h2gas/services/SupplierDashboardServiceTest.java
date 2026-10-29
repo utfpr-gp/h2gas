@@ -449,4 +449,34 @@ class SupplierDashboardServiceTest {
         assertThrows(BusinessRuleException.class, () -> DashboardFilter.parse(null, "DRONE", null, null, null));
         assertThrows(BusinessRuleException.class, () -> DashboardFilter.parse(null, null, "abc", null, null));
     }
+
+    // ---- HU24 ----
+    @Autowired private com.h2gas.model.repository.ReviewRepository reviewRepository;
+
+    private void avaliar(Supplier loja, int nota, LocalDateTime criadoEm) {
+        Order o = pedido(loja, OrderStatusEnum.DELIVERED, "PIX", "10.00", criadoEm, botijao, 1);
+        Review r = new Review();
+        r.setOrder(o);
+        r.setSupplier(loja);
+        r.setRating(nota);
+        reviewRepository.save(r);
+    }
+
+    @Test
+    @DisplayName("HU24: nota média da loja de todo o histórico, sem outra loja")
+    void deveMostrarANotaMediaDaLoja() {
+        SupplierDashboardDTO semAvaliacao = dashboardService.buildDashboard(fornecedor.getId(), mes);
+        assertNull(semAvaliacao.getAverageRating());
+        assertEquals(0, semAvaliacao.getRatingCount());
+
+        avaliar(fornecedor, 5, mes.atDay(1).atTime(10, 0));
+        avaliar(fornecedor, 4, mes.minusMonths(3).atDay(1).atTime(10, 0));
+        avaliar(fornecedor, 4, mes.minusMonths(3).atDay(2).atTime(10, 0));
+        avaliar(outroFornecedor, 1, mes.atDay(1).atTime(10, 0));
+
+        SupplierDashboardDTO dashboard = dashboardService.buildDashboard(fornecedor.getId(), mes);
+
+        assertEquals(4.3, dashboard.getAverageRating());
+        assertEquals(3, dashboard.getRatingCount());
+    }
 }

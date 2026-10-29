@@ -28,6 +28,13 @@ export class Supplier {
     reviewCount?: number;
     // HU15: tipos que a loja vende (selos do card); só o catálogo do cliente preenche
     productTypes?: ProductTypeChip[];
+    // HU17: entrega e frete por km, calculados no backend até o CEP do endereço ativo
+    offersDelivery?: boolean;
+    offersPickup?: boolean;
+    distanceKm?: number | null;
+    deliveryFee?: number | null;
+    deliversHere?: boolean | null;
+    freeDelivery?: boolean;
 
     constructor(
         id?: string,

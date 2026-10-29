@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideNgxMask } from 'ngx-mask';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
 import { StoreProfileComponent } from './store-profile.component';
@@ -41,11 +41,13 @@ describe('StoreProfileComponent', () => {
   };
   const salvar = () => byId('save-profile') as HTMLButtonElement;
 
+  let fragment$: BehaviorSubject<string | null>;
   const setup = async (p: SupplierProfile = perfil, fragment: string | null = null) => {
+    fragment$ = new BehaviorSubject<string | null>(fragment);
     supplierSpy = jasmine.createSpyObj('SupplierService', ['getMyProfile', 'updateMyProfile', 'uploadMyLogo', 'removeMyLogo', 'uploadMyBanner', 'removeMyBanner',
       'getMySettings', 'updateMySettings']);
     // F9: as seções de horário e estoque vêm embutidas
-    supplierSpy.getMySettings.and.returnValue(of({ openingTime: '08:00', closingTime: '18:00', averageDeliveryTime: 30, lowStockThreshold: 8 }));
+    supplierSpy.getMySettings.and.returnValue(of({ openingTime: '08:00', closingTime: '18:00', averageDeliveryTime: 30, lowStockThreshold: 8, offersDelivery: true, offersPickup: true, deliveryRadiusKm: null, deliveryBaseFee: 0, deliveryFeePerKm: 0 }));
     supplierSpy.updateMySettings.and.callFake((s) => of(s));
     supplierSpy.getMyProfile.and.returnValue(of({ ...p }));
     supplierSpy.updateMyProfile.and.callFake((r) => of({ ...p, ...r }));
@@ -72,7 +74,7 @@ describe('StoreProfileComponent', () => {
         { provide: CityService, useValue: citySpy },
         { provide: UserService, useValue: userSpy },
         { provide: ToastrService, useValue: toastrSpy },
-        { provide: ActivatedRoute, useValue: { snapshot: { fragment } } },
+        { provide: ActivatedRoute, useValue: { snapshot: { fragment }, fragment: fragment$ } },
       ],
     }).compileComponents();
 
@@ -244,22 +246,77 @@ describe('StoreProfileComponent', () => {
     expect(byId('hours-link')).toBeNull();
   });
 
-  it('deveRolarAteASecaoPeloSumario', async () => {
+  // ---- F10: uma seção por vez, escolhida pelos botões do topo ----
+  const visivel = (id: string) => !(fixture.nativeElement.querySelector(`#${id}`) as HTMLElement).hidden;
+  const etapa = (id: string) => fixture.nativeElement.querySelector(`[data-testid="section-${id}"]`) as HTMLElement;
+
+  it('deveMostrarSoASecaoEscolhida', async () => {
     await setup();
-    const rolar = spyOn(Element.prototype, 'scrollIntoView');
 
-    click('jump-estoque');
+    expect(visivel('aparencia')).toBeTrue();
+    expect(visivel('dados')).toBeFalse();
+    expect(etapa('aparencia').getAttribute('aria-pressed')).toBe('true');
 
-    expect(rolar).toHaveBeenCalled();
-    expect((rolar.calls.mostRecent().object as HTMLElement).id).toBe('estoque');
+    spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    click('section-dados');
+
+    expect(visivel('dados')).toBeTrue();
+    expect(visivel('aparencia')).toBeFalse();
+    expect(visivel('endereco')).toBeFalse();
+    expect(etapa('dados').classList).toContain('btn-primary');
+    expect(etapa('aparencia').classList).not.toContain('btn-primary');
   });
 
-  it('deveRolarAteASecaoDoFragmento', async () => {
-    const rolar = spyOn(Element.prototype, 'scrollIntoView');
-    await setup(perfil, 'funcionamento');
-    await new Promise((r) => setTimeout(r, 100));
+  it('deveAbrirNaSecaoDoFragmento', async () => {
+    await setup(perfil, 'estoque');
 
-    expect(rolar).toHaveBeenCalled();
-    expect((rolar.calls.mostRecent().object as HTMLElement).id).toBe('funcionamento');
+    expect(visivel('estoque')).toBeTrue();
+    expect(visivel('funcionamento')).toBeFalse();
+    expect(visivel('aparencia')).toBeFalse();
+  });
+
+  it('deveAtualizarOFragmentoAoTrocar', async () => {
+    await setup();
+    const navegar = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+
+    click('section-funcionamento');
+
+    expect(navegar).toHaveBeenCalledWith([], jasmine.objectContaining({ fragment: 'funcionamento', replaceUrl: true }));
+  });
+
+  it('deveManterAEdicaoAoTrocarDeSecao', async () => {
+    await setup();
+    spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    click('section-dados');
+    preencher('store-name', 'Gás Centro Novo');
+
+    click('section-estoque');
+    click('section-dados');
+
+    expect((byId('store-name') as HTMLInputElement).value).toBe('Gás Centro Novo');
+  });
+
+  it('deveMarcarEtapaComAlteracaoNaoSalva', async () => {
+    await setup();
+    spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+    expect(etapa('dados').querySelector('[data-testid="unsaved-dot"]')).toBeNull();
+
+    click('section-dados');
+    preencher('store-name', 'Gás Centro Novo');
+    click('section-aparencia');
+
+    expect(etapa('dados').querySelector('[data-testid="unsaved-dot"]')).not.toBeNull();
+    expect(etapa('dados').getAttribute('aria-label')).toContain('alterações não salvas');
+  });
+
+  // F10: os atalhos da navbar levam à mesma tela com outro #; a parte aberta acompanha
+  it('deveTrocarDeParteQuandoOFragmentoMuda', async () => {
+    await setup();
+
+    fragment$.next('estoque');
+    fixture.detectChanges();
+
+    expect(visivel('estoque')).toBeTrue();
+    expect(visivel('aparencia')).toBeFalse();
   });
 });

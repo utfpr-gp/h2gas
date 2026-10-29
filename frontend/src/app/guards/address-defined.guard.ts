@@ -36,9 +36,11 @@ export const addressDefinedGuard: CanActivateFn = (route, state) => {
   return addressService.findByUserId(user?.id).pipe(
     map((response: any) => {
       locationContext.setAddress({
+        addressId: response.id,
         cityId: response.cityId,
         cityName: response.cityName,
         label: `${response.streetName}, ${response.number} · ${response.cityName}`,
+        zipCode: response.zipCode,
       });
       return true;
     }),

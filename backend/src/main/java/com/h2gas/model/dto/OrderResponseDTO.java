@@ -1,6 +1,7 @@
 package com.h2gas.model.dto;
 
 import com.h2gas.enums.OrderStatusEnum;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,14 @@ public class OrderResponseDTO {
     private String id;
     private LocalDateTime orderDate;
     private BigDecimal totalPrice;
+    // HU17: total = subtotal (itens) + frete; distância nula = sem coordenada (frete só com a taxa fixa)
+    @io.swagger.v3.oas.annotations.media.Schema(description = "Soma dos itens", example = "79.90")
+    private BigDecimal subtotal;
+    @io.swagger.v3.oas.annotations.media.Schema(description = "Frete cobrado (0 na retirada)", example = "9.80")
+    private BigDecimal deliveryFee;
+    @io.swagger.v3.oas.annotations.media.Schema(description = "Distância em linha reta usada no frete; nula sem coordenada",
+            example = "2.4", nullable = true)
+    private BigDecimal deliveryDistanceKm;
     private String paymentMethod;
     private String note;
     private LocalDateTime deliveryDate;
@@ -39,4 +48,8 @@ public class OrderResponseDTO {
     private LocalDateTime deliveredAt;
     private String lastRefusalReason;
     private String lastRefusalBy;
+
+    // HU24: preenchida na listagem do cliente
+    @Schema(description = "Avaliação que o cliente fez do pedido; nula se ainda não avaliou", nullable = true)
+    private OrderReviewDTO review;
 }

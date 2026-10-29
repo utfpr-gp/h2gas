@@ -66,6 +66,25 @@
                 </div>
             </div>
 
+            <!-- HU24: convite para avaliar o pedido entregue; depois de avaliar, as estrelas dadas -->
+            <div *ngIf="canReview(order)" data-testid="review-invite"
+                class="mt-3 flex items-center justify-between gap-3 rounded-xl bg-warning/10 px-3 py-2">
+                <span class="flex items-center gap-2 text-sm font-medium text-gray-800">
+                    <span class="material-icons text-warning text-base" aria-hidden="true">star</span>
+                    Como foi o pedido?
+                </span>
+                <button type="button" data-testid="review-open" (click)="openReview(order)"
+                    class="btn btn-sm btn-primary rounded-lg min-h-11 sm:min-h-8">Avaliar</button>
+            </div>
+            <div *ngIf="order.review" class="mt-3 flex items-center gap-2 text-sm text-gray-600">
+                <span>Sua avaliação</span>
+                <span data-testid="review-given" class="flex" role="img"
+                    [attr.aria-label]="'Você deu ' + order.review.storeRating + ' de 5 estrelas para a loja'">
+                    <span *ngFor="let star of stars" class="material-icons text-base!" aria-hidden="true"
+                        [ngClass]="star <= order.review.storeRating ? 'text-warning' : 'text-gray-300'">{{ star <= order.review.storeRating ? 'star' : 'star_border' }}</span>
+                </span>
+            </div>
+
             <div class="flex items-center justify-between gap-2 mt-4">
                 <span class="font-bold text-gray-900">{{ order.totalPrice | currency:'BRL':'symbol':'1.2-2' }}</span>
                 <div class="flex gap-2">
@@ -84,6 +103,9 @@
             </div>
         </article>
     </div>
+
+    <app-order-review-dialog *ngIf="reviewingOrder" [order]="reviewingOrder"
+        (saved)="onReviewSaved($event)" (closed)="reviewingOrder = null"></app-order-review-dialog>
 
     <app-pagination *ngIf="totalPages > 1" [currentPage]="currentPage" [totalPages]="totalPages"
         (pageChange)="getOrders($event)"></app-pagination>

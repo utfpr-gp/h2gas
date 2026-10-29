@@ -6,6 +6,8 @@ export interface ActiveAddress {
   cityId: number;
   cityName: string;
   label: string;
+  // HU17: de onde a vitrine e o carrinho medem a distância e o frete
+  zipCode?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -25,6 +27,7 @@ export class LocationContextService {
       cityId: address.cityId!,
       cityName: address.cityName!,
       label: `${address.streetName}, ${address.number} · ${address.cityName}`,
+      zipCode: address.zipCode,
     });
   }
 

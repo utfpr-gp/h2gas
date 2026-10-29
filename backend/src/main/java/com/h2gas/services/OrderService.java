@@ -1,5 +1,9 @@
 package com.h2gas.services;
 
+import com.h2gas.model.Coordinates;
+import com.h2gas.model.DeliveryFeeCalculator;
+import com.h2gas.model.DeliveryQuote;
+
 import com.h2gas.model.dto.OrderHistorySummaryDTO;
 import com.h2gas.model.dto.OrderHistoryFilter;
 import com.h2gas.events.OrderStatusChangedEvent;
@@ -17,6 +21,7 @@ import com.h2gas.model.dto.OrderPreviewItemDTO;
 import com.h2gas.model.dto.OrderPreviewRequestDTO;
 import com.h2gas.model.dto.OrderRequestDTO;
 import com.h2gas.model.dto.OrderResponseDTO;
+import com.h2gas.model.dto.OrderReviewDTO;
 import com.h2gas.model.dto.ReorderItemDTO;
 import com.h2gas.model.dto.ReorderPreviewDTO;
 import com.h2gas.model.entity.Address;
@@ -31,6 +36,7 @@ import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.OrderMapper;
 import com.h2gas.model.repository.DeliveryRefusalRepository;
 import com.h2gas.model.repository.OrderRepository;
+import com.h2gas.model.repository.ReviewRepository;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -44,6 +50,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -75,6 +82,9 @@ public class OrderService {
     private DelivererService delivererService;
 
     private final DeliveryRefusalRepository deliveryRefusalRepository;
+
+    @Autowired
+    private ReviewRepository reviewRepository;
 
     private final ApplicationEventPublisher eventPublisher;
 
@@ -108,7 +118,11 @@ public class OrderService {
             listOrderItems.add(orderItem);
         }
 
-        order.setTotalPrice(calculateTotalPrice(listOrderItems));
+        // HU17: frete por km calculado no fechamento e gravado (RN01); retirada não cobra frete
+        DeliveryQuote quote = deliveryQuote(order);
+        order.setDeliveryFee(quote.fee());
+        order.setDeliveryDistanceKm(quote.distanceKm());
+        order.setTotalPrice(calculateTotalPrice(listOrderItems).add(quote.fee()));
         order.setItems(listOrderItems);
 
         orderRepository.save(order);
@@ -196,6 +210,32 @@ public class OrderService {
         return address;
     }
 
+    // HU23: contagem por status da loja para o filtro do painel; status sem pedido = 0
+    @Transactional(readOnly = true)
+    public com.h2gas.model.dto.OrderStatusCountsDTO countMyOrdersByStatus(String supplierId) {
+        java.util.Map<OrderStatusEnum, Long> counts = new java.util.EnumMap<>(OrderStatusEnum.class);
+        for (OrderStatusEnum status : OrderStatusEnum.values()) counts.put(status, 0L);
+        for (var row : orderRepository.countBySupplierGroupedByStatus(supplierId)) {
+            if (row.getStatus() != null) counts.put(row.getStatus(), row.getTotal());
+        }
+        long total = counts.values().stream().mapToLong(Long::longValue).sum();
+        long active = total - counts.get(OrderStatusEnum.DELIVERED) - counts.get(OrderStatusEnum.CANCELED);
+        return new com.h2gas.model.dto.OrderStatusCountsDTO(counts, active, total);
+    }
+
+    private DeliveryQuote deliveryQuote(Order order) {
+        if (order.getDeliveryMode() == DeliveryModeEnum.PICKUP) {
+            return new DeliveryQuote(true, null, BigDecimal.ZERO);
+        }
+        Supplier supplier = order.getSupplier();
+        Coordinates store = supplier.getAddress() == null ? null : supplier.getAddress().coordinates();
+        DeliveryQuote quote = DeliveryFeeCalculator.quote(supplier.deliveryTerms(), store, order.getDeliveryAddress().coordinates());
+        if (!quote.available()) {
+            throw new BusinessRuleException("Esta loja não entrega no endereço escolhido.");
+        }
+        return quote;
+    }
+
     private BigDecimal calculateTotalPrice(List<OrderItem> orderItems) {
         return orderItems.stream()
                 .map(OrderItem::getTotalPrice)
@@ -224,7 +264,18 @@ public class OrderService {
             page = orderRepository.findByCustomerIdOrderByCreatedAtDesc(customerId, pageable);
         }
 
-        return page.map(orderMapper::toResponseDto);
+        Page<OrderResponseDTO> dtos = page.map(orderMapper::toResponseDto);
+        attachReviews(dtos.getContent());
+        return dtos;
+    }
+
+    // HU24: a avaliação de cada pedido da página, sem uma consulta por pedido
+    private void attachReviews(List<OrderResponseDTO> orders) {
+        if (orders.isEmpty()) return;
+        Map<String, OrderReviewDTO> byOrder = reviewRepository
+                .findByOrderIdIn(orders.stream().map(OrderResponseDTO::getId).toList()).stream()
+                .collect(java.util.stream.Collectors.toMap(r -> r.getOrder().getId(), ReviewService::toDto));
+        orders.forEach(o -> o.setReview(byOrder.get(o.getId())));
     }
 
 

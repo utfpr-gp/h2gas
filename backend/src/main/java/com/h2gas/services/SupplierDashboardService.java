@@ -16,6 +16,7 @@ import com.h2gas.model.entity.Order;
 import com.h2gas.model.entity.OrderItem;
 import com.h2gas.model.entity.ProductItem;
 import com.h2gas.model.repository.OrderRepository;
+import com.h2gas.model.repository.ReviewRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,9 +41,11 @@ public class SupplierDashboardService {
     private static final String NO_PAYMENT = "NAO_INFORMADO";
 
     private final OrderRepository orderRepository;
+    private final ReviewRepository reviewRepository;
 
-    public SupplierDashboardService(OrderRepository orderRepository) {
+    public SupplierDashboardService(OrderRepository orderRepository, ReviewRepository reviewRepository) {
         this.orderRepository = orderRepository;
+        this.reviewRepository = reviewRepository;
     }
 
     @Transactional(readOnly = true)
@@ -74,6 +77,7 @@ public class SupplierDashboardService {
         dashboard.setPendingOrders(orderRepository.countBySupplierIdAndStatus(supplierId, OrderStatusEnum.PENDING));
         dashboard.setOutForDeliveryOrders(orderRepository.countBySupplierIdAndStatus(supplierId, OrderStatusEnum.OUT_FOR_DELIVERY));
         dashboard.setAverageDeliveryMinutes(averageDeliveryMinutes(current.orders));
+        applyRating(dashboard, supplierId);
         dashboard.setRevenueByDay(revenueByDay(current, month));
         dashboard.setSalesByProduct(salesByProduct(current));
         dashboard.setPaymentBreakdown(paymentBreakdown(current));
@@ -130,6 +134,14 @@ public class SupplierDashboardService {
         }
         return current.subtract(previous).multiply(BigDecimal.valueOf(100))
                 .divide(previous, 1, RoundingMode.HALF_UP).doubleValue();
+    }
+
+    // HU24: nota da loja em todo o histórico
+    private void applyRating(SupplierDashboardDTO dashboard, String supplierId) {
+        reviewRepository.summarizeBySupplierIds(List.of(supplierId)).stream().findFirst().ifPresent(summary -> {
+            dashboard.setAverageRating(Math.round(summary.getAverage() * 10) / 10.0);
+            dashboard.setRatingCount(summary.getTotal());
+        });
     }
 
     private Double averageDeliveryMinutes(List<Order> orders) {

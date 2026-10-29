@@ -15,4 +15,7 @@ public interface AddressRepository extends JpaRepository<Address, Long> {
     Optional<Address> findFirstByUserIdOrderByIdDesc(String id);
 
     List<Address> findAllByUserIdOrderByIdDesc(String userId);
+
+    // HU17: rotina de subida que preenche as coordenadas dos endereços antigos
+    List<Address> findByLatitudeIsNull();
 }

@@ -3,6 +3,7 @@ package com.h2gas.services;
 import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.enums.StorefrontSortEnum;
 import com.h2gas.enums.UserTypeEnum;
+import com.h2gas.model.dto.StorefrontDTO;
 import com.h2gas.model.dto.AddressDTO;
 import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
@@ -390,23 +391,66 @@ class SupplierServiceTest {
     @DisplayName("F7 fatia 6: salva horário (até depois da meia-noite), tempo de entrega e estoque mínimo")
     void deveSalvarHorarioTempoEEstoqueMinimo() {
         SupplierSettingsDTO salvo = supplierService.updateMySettings(validId,
-                new SupplierSettingsDTO("18:00", "02:00", 45, 5));
+                configuracoes("18:00", "02:00", 45, 5));
 
         Supplier supplier = supplierRepository.findById(validId).orElseThrow();
         assertEquals(LocalTime.of(18, 0), supplier.getOpeningTime());
         assertEquals(LocalTime.of(2, 0), supplier.getClosingTime());
         assertEquals(Duration.ofMinutes(45), supplier.getAverageDeliveryTime());
         assertEquals(5, supplier.getLowStockThreshold());
-        assertEquals(new SupplierSettingsDTO("18:00", "02:00", 45, 5), salvo);
+        assertEquals(configuracoes("18:00", "02:00", 45, 5), salvo);
     }
 
     @Test
     @DisplayName("F7 fatia 6: fechamento igual à abertura é 400")
     void deveRecusarFechamentoIgualAAbertura() {
         BusinessRuleException erro = assertThrows(BusinessRuleException.class,
-                () -> supplierService.updateMySettings(validId, new SupplierSettingsDTO("08:00", "08:00", 30, 8)));
+                () -> supplierService.updateMySettings(validId, configuracoes("08:00", "08:00", 30, 8)));
 
         assertEquals("O horário de fechamento precisa ser diferente da abertura.", erro.getMessage());
+    }
+
+    // HU17: as configurações trazem também a entrega; padrão = entrega e retirada, sem raio e sem frete
+    private static SupplierSettingsDTO configuracoes(String abre, String fecha, int tempo, int estoque) {
+        return new SupplierSettingsDTO(abre, fecha, tempo, estoque, true, true, null, new java.math.BigDecimal("0.00"), new java.math.BigDecimal("0.00"));
+    }
+
+    @Test
+    @DisplayName("HU17: salva modalidades, raio e tarifa de entrega")
+    void deveSalvarAsConfiguracoesDeEntrega() {
+        SupplierSettingsDTO salvo = supplierService.updateMySettings(validId, new SupplierSettingsDTO(
+                "08:00", "18:00", 30, 8, true, false, new java.math.BigDecimal("6.5"),
+                new java.math.BigDecimal("5.00"), new java.math.BigDecimal("1.50")));
+
+        Supplier supplier = supplierRepository.findById(validId).orElseThrow();
+        assertTrue(supplier.isOffersDelivery());
+        assertFalse(supplier.isOffersPickup());
+        assertEquals(0, new java.math.BigDecimal("6.5").compareTo(supplier.getDeliveryRadiusKm()));
+        assertEquals(0, new java.math.BigDecimal("5.00").compareTo(supplier.getDeliveryBaseFee()));
+        assertEquals(0, new java.math.BigDecimal("1.50").compareTo(supplier.getDeliveryFeePerKm()));
+        assertFalse(salvo.offersPickup());
+        assertEquals(0, new java.math.BigDecimal("1.50").compareTo(salvo.deliveryFeePerKm()));
+    }
+
+    @Test
+    @DisplayName("HU17: a loja precisa oferecer entrega ou retirada")
+    void naoDevePermitirDesmarcarAsDuasModalidades() {
+        BusinessRuleException erro = assertThrows(BusinessRuleException.class, () -> supplierService.updateMySettings(validId,
+                new SupplierSettingsDTO("08:00", "18:00", 30, 8, false, false, null, java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO)));
+
+        assertEquals("A loja precisa oferecer entrega ou retirada.", erro.getMessage());
+    }
+
+    @Test
+    @DisplayName("HU17: loja nova (ou de antes da HU17) entrega e aceita retirada, sem frete")
+    void deveManterOPadraoDeEntregaERetirada() {
+        SupplierSettingsDTO settings = supplierService.findMySettings(validId);
+
+        assertTrue(settings.offersDelivery());
+        assertTrue(settings.offersPickup());
+        assertNull(settings.deliveryRadiusKm());
+        assertEquals(0, settings.deliveryBaseFee().signum());
+        assertEquals(0, settings.deliveryFeePerKm().signum());
     }
 
     private Supplier salvarFornecedor(String nome, String email, String cnpj, boolean active) {
@@ -1082,5 +1126,155 @@ class SupplierServiceTest {
         assertFalse(supplierService.findStorefront(fora.getId()).open());
         assertTrue(supplierService.isOpenNow(dentro.getId()));
         assertFalse(supplierService.isOpenNow(fora.getId()));
+    }
+
+    // ---- HU17: distância, frete, filtros de modalidade e "Mais perto" na vitrine ----
+    @MockitoBean
+    private GeocodingService geocodingService;
+
+    private static final com.h2gas.model.Coordinates BATEL = new com.h2gas.model.Coordinates(-25.4459, -49.2867);
+
+    private Supplier lojaEm(String nome, City cidade, Double lat, Double lng) {
+        Supplier loja = lojaAberta(nome, cidade);
+        if (lat != null) {
+            loja.getAddress().applyCoordinates(new com.h2gas.model.Coordinates(lat, lng));
+            addressRepository.save(loja.getAddress());
+        }
+        return loja;
+    }
+
+    private Supplier tarifa(Supplier loja, String fixa, String porKm, String raio) {
+        loja.setDeliveryBaseFee(new java.math.BigDecimal(fixa));
+        loja.setDeliveryFeePerKm(new java.math.BigDecimal(porKm));
+        loja.setDeliveryRadiusKm(raio == null ? null : new java.math.BigDecimal(raio));
+        return supplierRepository.save(loja);
+    }
+
+    private List<StorefrontDTO> vitrineHu17(Long cityId, StorefrontSortEnum ordem, String cep, String modo, Boolean gratis) {
+        org.mockito.Mockito.when(geocodingService.findByZipCode("80420-090")).thenReturn(java.util.Optional.of(BATEL));
+        return supplierService.findAllSuppliersOpenAndActive(cityId, null, null, ordem,
+                new com.h2gas.model.dto.StorefrontFilter(cep, modo, gratis), PageRequest.of(0, 10)).getContent();
+    }
+
+    private static StorefrontDTO porNome(List<StorefrontDTO> lojas, String nome) {
+        return lojas.stream().filter(l -> l.name().equals(nome)).findFirst().orElseThrow();
+    }
+
+    @Test
+    @DisplayName("HU17: cada card traz a distância e o frete até o CEP do cliente")
+    void deveCalcularFreteParaOEnderecoDoCliente() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        tarifa(lojaEm("Gás Centro", curitiba, -25.4296, -49.2713), "5.00", "2.00", null);
+
+        StorefrontDTO loja = porNome(vitrineHu17(curitiba.getId(), StorefrontSortEnum.NAME, "80420-090", null, null), "Gás Centro");
+
+        java.math.BigDecimal km = com.h2gas.model.DeliveryFeeCalculator.distanceKm(new com.h2gas.model.Coordinates(-25.4296, -49.2713), BATEL);
+        assertEquals(0, km.compareTo(loja.distanceKm()));
+        assertEquals(0, new java.math.BigDecimal("5.00").add(new java.math.BigDecimal("2.00").multiply(km)).setScale(2).compareTo(loja.deliveryFee()));
+        assertTrue(loja.deliversHere());
+        assertFalse(loja.freeDelivery());
+    }
+
+    @Test
+    @DisplayName("HU17: fora do raio, o card fica como só retirada")
+    void deveMarcarSoRetiradaForaDoRaio() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        tarifa(lojaEm("Gás Centro", curitiba, -25.4296, -49.2713), "5.00", "2.00", "1.0");
+
+        StorefrontDTO loja = porNome(vitrineHu17(curitiba.getId(), StorefrontSortEnum.NAME, "80420-090", null, null), "Gás Centro");
+
+        assertFalse(loja.deliversHere());
+        assertNull(loja.deliveryFee());
+        assertTrue(loja.offersPickup());
+    }
+
+    @Test
+    @DisplayName("HU17: 'Entregam aqui' mostra só quem faz entrega e alcança o CEP")
+    void deveFiltrarLojasQueEntregamNoEndereco() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        tarifa(lojaEm("Perto", curitiba, -25.4296, -49.2713), "5.00", "1.00", null);
+        tarifa(lojaEm("Raio Curto", curitiba, -25.4296, -49.2713), "5.00", "1.00", "1.0");
+        Supplier soRetirada = lojaEm("Só Retirada", curitiba, -25.4296, -49.2713);
+        soRetirada.setOffersDelivery(false);
+        supplierRepository.save(soRetirada);
+        lojaEm("Sem Coordenada", curitiba, null, null);
+
+        List<String> nomes = vitrineHu17(curitiba.getId(), StorefrontSortEnum.NAME, "80420-090", "DELIVERY", null)
+                .stream().map(StorefrontDTO::name).toList();
+
+        // sem coordenada a entrega segue possível (só a taxa fixa) — decisão do autor
+        assertEquals(List.of("Perto", "Sem Coordenada"), nomes);
+    }
+
+    @Test
+    @DisplayName("HU17: 'Retirada' mostra só quem aceita retirada")
+    void deveFiltrarLojasComRetirada() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        lojaEm("Com Retirada", curitiba, null, null);
+        Supplier soEntrega = lojaEm("Só Entrega", curitiba, null, null);
+        soEntrega.setOffersPickup(false);
+        supplierRepository.save(soEntrega);
+
+        List<String> nomes = vitrineHu17(curitiba.getId(), StorefrontSortEnum.NAME, null, "PICKUP", null)
+                .stream().map(StorefrontDTO::name).toList();
+
+        assertEquals(List.of("Com Retirada"), nomes);
+    }
+
+    @Test
+    @DisplayName("HU17: 'Entrega grátis' mostra só lojas com taxa fixa e por km zeradas")
+    void deveFiltrarEntregaGratis() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        lojaEm("Grátis", curitiba, null, null);
+        tarifa(lojaEm("Com Frete", curitiba, null, null), "4.00", "0", null);
+
+        List<StorefrontDTO> lojas = vitrineHu17(curitiba.getId(), StorefrontSortEnum.NAME, null, null, true);
+
+        assertEquals(List.of("Grátis"), lojas.stream().map(StorefrontDTO::name).toList());
+        assertTrue(lojas.get(0).freeDelivery());
+    }
+
+    @Test
+    @DisplayName("HU17: 'Mais perto' ordena pela distância até o CEP; sem coordenada vai para o fim")
+    void deveOrdenarPelaMaisProxima() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        lojaEm("A Longe", curitiba, -25.5200, -49.3000);
+        lojaEm("B Sem Coordenada", curitiba, null, null);
+        lojaEm("C Perto", curitiba, -25.4470, -49.2870);
+        lojaEm("D Meio", curitiba, -25.4296, -49.2713);
+
+        List<String> nomes = vitrineHu17(curitiba.getId(), StorefrontSortEnum.DISTANCE, "80420-090", null, null)
+                .stream().map(StorefrontDTO::name).toList();
+
+        assertEquals(List.of("C Perto", "D Meio", "A Longe", "B Sem Coordenada"), nomes);
+    }
+
+    @Test
+    @DisplayName("HU17: sem CEP, a vitrine vem sem distância e sem frete, e 'Mais perto' cai para o nome")
+    void deveListarSemFreteQuandoNaoHaEnderecoNemCep() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        tarifa(lojaEm("B Loja", curitiba, -25.4296, -49.2713), "5.00", "2.00", null);
+        lojaEm("A Loja", curitiba, -25.5200, -49.3000);
+
+        List<StorefrontDTO> lojas = vitrineHu17(curitiba.getId(), StorefrontSortEnum.DISTANCE, null, null, null);
+
+        assertEquals(List.of("A Loja", "B Loja"), lojas.stream().map(StorefrontDTO::name).toList());
+        assertNull(lojas.get(1).distanceKm());
+        assertNull(lojas.get(1).deliveryFee());
+        assertNull(lojas.get(1).deliversHere());
+    }
+
+    @Test
+    @DisplayName("HU17: a distância do visitante vem do CEP que ele informou")
+    void deveUsarOCepDoVisitante() {
+        City curitiba = cityRepository.save(new City(null, "Curitiba", "PR"));
+        lojaEm("Gás Centro", curitiba, -25.4296, -49.2713);
+
+        StorefrontDTO loja = vitrineHu17(curitiba.getId(), StorefrontSortEnum.NAME, "80420-090", null, null).get(0);
+
+        org.mockito.Mockito.verify(geocodingService).findByZipCode("80420-090");
+        assertNotNull(loja.distanceKm());
+        assertTrue(loja.freeDelivery());
+        assertEquals(0, java.math.BigDecimal.ZERO.compareTo(loja.deliveryFee()));
     }
 }

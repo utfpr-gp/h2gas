@@ -15,6 +15,17 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import com.h2gas.model.Coordinates;
+
+import java.math.BigDecimal;
+import java.util.Optional;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 
@@ -41,6 +52,10 @@ class AddressServiceTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    // HU17: a consulta de CEP é externa; nos testes ela é falsa
+    @MockitoBean
+    private GeocodingService geocodingService;
 
     private Long validAddressId;
 
@@ -244,4 +259,66 @@ class AddressServiceTest {
 //    @Test
 //    void updateAddress() {
 //    }
+
+    // ---- HU17: coordenadas gravadas junto do endereço ----
+    private AddressDTO novoEndereco(String cep) {
+        City city = cityRepository.save(new City(null, "Curitiba", "PR"));
+        User user = userRepository.save(new User("Cliente Geo", "geo-" + System.nanoTime() + "@h2gas.test", "41999990000",
+                "12345678909", "senha", UserTypeEnum.CUSTOMER));
+        AddressDTO dto = new AddressDTO();
+        dto.setStreetName("Rua XV de Novembro");
+        dto.setNumber("700");
+        dto.setNeighborhood("Centro");
+        dto.setZipCode(cep);
+        dto.setCityId(city.getId());
+        dto.setUserId(user.getId());
+        dto.setAddressName("Casa");
+        return dto;
+    }
+
+    @Test
+    @DisplayName("HU17: grava latitude e longitude ao salvar o endereço")
+    void deveGravarAsCoordenadasAoSalvarEndereco() {
+        reset(geocodingService);
+        when(geocodingService.findByZipCode("80020-310")).thenReturn(Optional.of(new Coordinates(-25.4296, -49.2713)));
+
+        AddressDTO salvo = addressService.createAddress(novoEndereco("80020-310"));
+
+        Address gravado = addressRepository.findById(salvo.getId()).orElseThrow();
+        assertEquals(0, new BigDecimal("-25.4296").compareTo(gravado.getLatitude()));
+        assertEquals(0, new BigDecimal("-49.2713").compareTo(gravado.getLongitude()));
+    }
+
+    @Test
+    @DisplayName("HU17: a API de CEP fora do ar não impede salvar o endereço")
+    void deveSalvarEnderecoSemCoordenadaQuandoAApiFalha() {
+        reset(geocodingService);
+        when(geocodingService.findByZipCode(anyString())).thenReturn(Optional.empty());
+
+        AddressDTO salvo = addressService.createAddress(novoEndereco("80020-310"));
+
+        Address gravado = addressRepository.findById(salvo.getId()).orElseThrow();
+        assertNull(gravado.getLatitude());
+        assertNull(gravado.getLongitude());
+    }
+
+    @Test
+    @DisplayName("HU17: busca de novo quando o CEP muda na edição, e só nesse caso")
+    void deveBuscarDeNovoQuandoOCepMuda() {
+        reset(geocodingService);
+        when(geocodingService.findByZipCode("80020-310")).thenReturn(Optional.of(new Coordinates(-25.4296, -49.2713)));
+        when(geocodingService.findByZipCode("80420-090")).thenReturn(Optional.of(new Coordinates(-25.4459, -49.2867)));
+        AddressDTO salvo = addressService.createAddress(novoEndereco("80020-310"));
+
+        salvo.setNumber("701");
+        addressService.updateAddress(salvo.getId(), salvo);
+        verify(geocodingService, org.mockito.Mockito.times(1)).findByZipCode("80020-310");
+
+        salvo.setZipCode("80420-090");
+        addressService.updateAddress(salvo.getId(), salvo);
+
+        Address gravado = addressRepository.findById(salvo.getId()).orElseThrow();
+        assertEquals(0, new BigDecimal("-25.4459").compareTo(gravado.getLatitude()));
+        verify(geocodingService, never()).findByZipCode("00000-000");
+    }
 }

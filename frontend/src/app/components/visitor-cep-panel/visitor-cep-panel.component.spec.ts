@@ -54,7 +54,8 @@ describe('VisitorCepPanelComponent', () => {
     informarCep('80420-000');
 
     expect(addressSpy.buscaViaCep).toHaveBeenCalledWith('80420000');
-    expect(location.current()).toEqual(jasmine.objectContaining({ cityId: 3, cityName: 'Curitiba', label: 'Batel · Curitiba' }));
+    // HU17: o CEP fica guardado para a vitrine e o carrinho calcularem a distância e o frete
+    expect(location.current()).toEqual(jasmine.objectContaining({ cityId: 3, cityName: 'Curitiba', label: 'Batel · Curitiba', zipCode: '80420000' }));
     expect(location.current()!.addressId).toBeUndefined();
     expect(routerSpy.navigateByUrl).toHaveBeenCalledWith('/inicio');
   });

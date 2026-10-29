@@ -1,5 +1,13 @@
 package com.h2gas.controller;
 
+import org.springframework.web.bind.annotation.PutMapping;
+
+import org.springframework.web.bind.annotation.PathVariable;
+
+import io.swagger.v3.oas.annotations.Parameter;
+
+import com.h2gas.model.dto.DelivererPasswordDTO;
+
 import com.h2gas.model.dto.DelivererCreateDTO;
 import com.h2gas.model.dto.DelivererDTO;
 import com.h2gas.model.entity.User;
@@ -55,6 +63,25 @@ public class DelivererController {
     @RolesAllowed("SUPPLIER")
     public ResponseEntity<List<DelivererDTO>> listMine() {
         return ResponseEntity.ok(delivererService.findMine(loggedUser().getId()));
+    }
+
+    @Operation(summary = "Redefine a senha de um entregador da frota do fornecedor logado",
+            description = "HU22: a senha atual não é mostrada (é guardada com BCrypt); o fornecedor define uma nova, que "
+                    + "passa a valer no próximo login do entregador. Só vale para entregador da própria frota (fornecedor do token)")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Senha redefinida"),
+            @ApiResponse(responseCode = "400", description = "Senha ausente ou com menos de 6 caracteres"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido, papel diferente de SUPPLIER ou entregador de outra loja"),
+            @ApiResponse(responseCode = "404", description = "Entregador não encontrado")
+    })
+    @PutMapping("/{id}/password")
+    @RolesAllowed("SUPPLIER")
+    public ResponseEntity<Void> resetPassword(
+            @Parameter(description = "Id do entregador", example = "7") @PathVariable Long id,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Senha nova")
+            @Valid @RequestBody DelivererPasswordDTO body) {
+        delivererService.resetPassword(id, loggedUser().getId(), body.password());
+        return ResponseEntity.noContent().build();
     }
 
     private User loggedUser() {

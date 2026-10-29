@@ -10,8 +10,17 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
+
+    // HU24: uma avaliação por pedido
+    Optional<Review> findByOrderId(String orderId);
+
+    boolean existsByOrderId(String orderId);
+
+    // HU24: avaliações de uma página de pedidos, numa consulta só
+    List<Review> findByOrderIdIn(Collection<String> orderIds);
 
     // F7 §5.25: média e contagem por loja, numa consulta só (sem N+1)
     @Query("SELECT r.supplier.id AS supplierId, AVG(r.rating) AS average, COUNT(r) AS total"
@@ -24,6 +33,19 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             + " ORDER BY o.deliveredAt DESC, r.id DESC",
             countQuery = "SELECT COUNT(r) FROM Review r WHERE r.supplier.id = :supplierId")
     Page<StoreReviewRow> findStoreReviews(@Param("supplierId") String supplierId, Pageable pageable);
+
+    // HU24: média e contagem das notas de cada entregador (avaliações sem nota do entregador ficam fora)
+    @Query("SELECT r.deliverer.id AS delivererId, AVG(r.delivererRating) AS average, COUNT(r) AS total"
+            + " FROM Review r WHERE r.deliverer.id IN :delivererIds AND r.delivererRating IS NOT NULL GROUP BY r.deliverer.id")
+    List<DelivererRatingSummary> summarizeByDelivererIds(@Param("delivererIds") Collection<Long> delivererIds);
+
+    interface DelivererRatingSummary {
+        Long getDelivererId();
+
+        Double getAverage();
+
+        Long getTotal();
+    }
 
     interface StoreReviewRow {
         Long getId();

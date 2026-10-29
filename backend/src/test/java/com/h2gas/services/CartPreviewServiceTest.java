@@ -36,12 +36,15 @@ class CartPreviewServiceTest {
             .atZone(ClockConfig.BRASILIA).toInstant(), ClockConfig.BRASILIA);
 
     private ProductItemRepository productItemRepository;
+    private com.h2gas.services.GeocodingService geocodingService;
     private CartPreviewService service;
 
     @BeforeEach
     void setUp() {
         productItemRepository = mock(ProductItemRepository.class);
-        service = new CartPreviewService(productItemRepository, clock);
+        geocodingService = mock(com.h2gas.services.GeocodingService.class);
+        when(geocodingService.findByZipCode(org.mockito.ArgumentMatchers.any())).thenReturn(java.util.Optional.empty());
+        service = new CartPreviewService(productItemRepository, clock, geocodingService);
     }
 
     private Supplier loja(boolean active, LocalTime opening, LocalTime closing) {
@@ -71,7 +74,11 @@ class CartPreviewServiceTest {
     }
 
     private CartPreviewRequestDTO pedido(String modo, CartLineDTO... linhas) {
-        return new CartPreviewRequestDTO(List.of(linhas), modo);
+        return new CartPreviewRequestDTO(List.of(linhas), modo, null);
+    }
+
+    private CartPreviewRequestDTO pedidoComCep(String modo, String cep, CartLineDTO... linhas) {
+        return new CartPreviewRequestDTO(List.of(linhas), modo, cep);
     }
 
     private CartPreviewItemDTO unicoItem(CartPreviewDTO preview) {
@@ -190,5 +197,75 @@ class CartPreviewServiceTest {
         service.preview(pedido("DELIVERY", new CartLineDTO(5L, 1), new CartLineDTO(6L, 1)));
 
         verify(productItemRepository, times(1)).findAllById(anyIterable());
+    }
+
+    // ---- HU17: frete no preview do carrinho ----
+    private Supplier lojaComFrete(String raio) {
+        Supplier loja = lojaAberta();
+        loja.setDeliveryBaseFee(new BigDecimal("5.00"));
+        loja.setDeliveryFeePerKm(new BigDecimal("2.00"));
+        loja.setDeliveryRadiusKm(raio == null ? null : new BigDecimal(raio));
+        com.h2gas.model.entity.Address endereco = new com.h2gas.model.entity.Address();
+        endereco.applyCoordinates(new com.h2gas.model.Coordinates(-25.4296, -49.2713)); // centro
+        loja.setAddress(endereco);
+        return loja;
+    }
+
+    private void clienteNoBatel() {
+        when(geocodingService.findByZipCode("80420-090")).thenReturn(java.util.Optional.of(new com.h2gas.model.Coordinates(-25.4459, -49.2867)));
+    }
+
+    @Test
+    @DisplayName("HU17: o total do carrinho soma o frete até o CEP do cliente")
+    void deveSomarOFreteNoTotal() {
+        clienteNoBatel();
+        when(productItemRepository.findAllById(anyIterable())).thenReturn(List.of(produto(5L, 10, lojaComFrete(null))));
+
+        CartPreviewDTO preview = service.preview(pedidoComCep("DELIVERY", "80420-090", new CartLineDTO(5L, 1)));
+
+        BigDecimal km = com.h2gas.model.DeliveryFeeCalculator.distanceKm(
+                new com.h2gas.model.Coordinates(-25.4296, -49.2713), new com.h2gas.model.Coordinates(-25.4459, -49.2867));
+        BigDecimal frete = new BigDecimal("5.00").add(new BigDecimal("2.00").multiply(km)).setScale(2);
+        assertEquals(0, frete.compareTo(preview.getDeliveryFee()));
+        assertEquals(0, km.compareTo(preview.getDistanceKm()));
+        assertTrue(preview.getDeliversHere());
+        assertEquals(0, new BigDecimal("95.00").add(frete).compareTo(preview.getTotal()));
+    }
+
+    @Test
+    @DisplayName("HU17: retirada não cobra frete")
+    void naoDeveCobrarFreteNaRetirada() {
+        clienteNoBatel();
+        when(productItemRepository.findAllById(anyIterable())).thenReturn(List.of(produto(5L, 10, lojaComFrete(null))));
+
+        CartPreviewDTO preview = service.preview(pedidoComCep("PICKUP", "80420-090", new CartLineDTO(5L, 1)));
+
+        assertEquals(0, BigDecimal.ZERO.compareTo(preview.getDeliveryFee()));
+        assertEquals(0, new BigDecimal("95.00").compareTo(preview.getTotal()));
+    }
+
+    @Test
+    @DisplayName("HU17: avisa quando a loja não entrega no CEP (fora do raio)")
+    void deveAvisarQueNaoEntregaNoEndereco() {
+        clienteNoBatel();
+        when(productItemRepository.findAllById(anyIterable())).thenReturn(List.of(produto(5L, 10, lojaComFrete("1.0"))));
+
+        CartPreviewDTO preview = service.preview(pedidoComCep("DELIVERY", "80420-090", new CartLineDTO(5L, 1)));
+
+        assertFalse(preview.getDeliversHere());
+        assertNull(preview.getDeliveryFee());
+        assertEquals(0, new BigDecimal("95.00").compareTo(preview.getTotal()));
+    }
+
+    @Test
+    @DisplayName("HU17: sem CEP, o frete fica para o checkout")
+    void naoDeveCalcularFreteSemCep() {
+        when(productItemRepository.findAllById(anyIterable())).thenReturn(List.of(produto(5L, 10, lojaComFrete(null))));
+
+        CartPreviewDTO preview = service.preview(pedido("DELIVERY", new CartLineDTO(5L, 1)));
+
+        assertNull(preview.getDeliveryFee());
+        assertNull(preview.getDeliversHere());
+        assertEquals(0, new BigDecimal("95.00").compareTo(preview.getTotal()));
     }
 }

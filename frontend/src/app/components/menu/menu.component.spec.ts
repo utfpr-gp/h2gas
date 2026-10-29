@@ -126,7 +126,7 @@ describe('MenuComponent', () => {
 
     abrirCarrinho();
 
-    expect(previewSpy).toHaveBeenCalledWith([{ productId: 1, quantity: 2 }], 'DELIVERY');
+    expect(previewSpy).toHaveBeenCalledWith([{ productId: 1, quantity: 2 }], 'DELIVERY', undefined);
     const el = fixture.nativeElement as HTMLElement;
     expect(el.querySelector('[data-testid="cart-item"]')?.textContent).toContain('Ultragaz');
     expect(el.querySelector('[data-testid="cart-item-quantity"]')?.textContent?.trim()).toBe('2');
@@ -143,7 +143,36 @@ describe('MenuComponent', () => {
     (fixture.nativeElement.querySelector('[aria-label="Aumentar quantidade"]') as HTMLButtonElement).click();
 
     expect(TestBed.inject(CartService).getCart()).toEqual([{ productId: 1, quantity: 3 }]);
-    expect(previewSpy).toHaveBeenCalledWith([{ productId: 1, quantity: 3 }], 'DELIVERY');
+    expect(previewSpy).toHaveBeenCalledWith([{ productId: 1, quantity: 3 }], 'DELIVERY', undefined);
+  });
+
+  // HU17: subtotal, frete e total no drawer, com o CEP do endereço ativo
+  it('deveMostrarSubtotalFreteETotal', () => {
+    locationContextService.setAddress({ cityId: 1, cityName: 'Curitiba', label: 'Batel · Curitiba', zipCode: '80420090' });
+    const previewSpy = spyOn(TestBed.inject(CartApiService), 'preview').and.returnValue(of({
+      ...previewCom([{ productId: 1, brand: 'Ultragaz', quantity: 1, stockQuantity: 5, unitPrice: 110, totalPrice: 110, available: true }], 110),
+      deliveryFee: 9.8, distanceKm: 2.4, deliversHere: true, total: 119.8,
+    }));
+    TestBed.inject(CartService).setCart([{ productId: 1, quantity: 1 }], 'loja-a');
+    abrirCarrinho();
+    const el = fixture.nativeElement as HTMLElement;
+
+    expect(previewSpy.calls.mostRecent().args[2]).toBe('80420090');
+    expect(el.querySelector('[data-testid="cart-subtotal"]')?.textContent).toMatch(/110[.,]00/);
+    expect(el.querySelector('[data-testid="cart-fee"]')?.textContent).toMatch(/9[.,]80/);
+    expect(el.querySelector('[data-testid="cart-total"]')?.textContent).toMatch(/119[.,]80/);
+  });
+
+  it('deveAvisarQueALojaNaoEntregaNoCep', () => {
+    locationContextService.setAddress({ cityId: 1, cityName: 'Curitiba', label: 'Batel · Curitiba', zipCode: '80420090' });
+    spyOn(TestBed.inject(CartApiService), 'preview').and.returnValue(of({
+      ...previewCom([{ productId: 1, brand: 'Ultragaz', quantity: 1, stockQuantity: 5, unitPrice: 110, totalPrice: 110, available: true }], 110),
+      deliveryFee: null, distanceKm: 9.1, deliversHere: false, total: 110,
+    }));
+    TestBed.inject(CartService).setCart([{ productId: 1, quantity: 1 }], 'loja-a');
+    abrirCarrinho();
+
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="cart-fee"]')?.textContent).toContain('só retirada');
   });
 
   it('deveMostrarItemIndisponivelComMotivo', () => {
@@ -176,7 +205,49 @@ describe('MenuComponent', () => {
       ['/minha-loja/pedidos', 'Pedidos'],
       ['/minha-loja/produtos', 'Produtos'],
     ]);
-    expect(nav.querySelector('[aria-expanded]')).withContext('Produtos é link direto, sem submenu').toBeNull();
+    // F10: o único submenu do topo é o de Configurações
+    const botoes = Array.from(nav.querySelectorAll('[aria-expanded]')) as HTMLElement[];
+    expect(botoes.map((b) => b.getAttribute('data-testid'))).toEqual(['settings-menu-button']);
+  });
+
+  // F10: Configurações no topo, com um atalho para cada parte da tela da loja
+  const atalhosDeConfiguracao = [
+    '/minha-loja/configuracoes#aparencia', '/minha-loja/configuracoes#dados', '/minha-loja/configuracoes#endereco',
+    '/minha-loja/configuracoes#funcionamento', '/minha-loja/configuracoes#estoque',
+  ];
+
+  it('deveAbrirOsAtalhosDeConfiguracaoNaNavbar', () => {
+    localStorage.setItem('user', JSON.stringify({ id: 'f1', name: 'Gás Centro', userType: 'SUPPLIER' }));
+    fixture = TestBed.createComponent(MenuComponent);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const botao = el.querySelector('[data-testid="settings-menu-button"]') as HTMLButtonElement;
+    expect(el.querySelector('[data-testid="settings-menu"]')).toBeNull();
+
+    botao.click();
+    fixture.detectChanges();
+
+    expect(botao.getAttribute('aria-expanded')).toBe('true');
+    const menu = el.querySelector('[data-testid="settings-menu"]') as HTMLElement;
+    expect(Array.from(menu.querySelectorAll('a')).map((a) => a.getAttribute('href'))).toEqual(atalhosDeConfiguracao);
+    expect(menu.textContent).toContain('Horário e entrega');
+
+    (menu.querySelector('a') as HTMLAnchorElement).dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    fixture.detectChanges();
+    expect(el.querySelector('[data-testid="settings-menu"]')).withContext('fecha ao escolher').toBeNull();
+  });
+
+  it('deveFecharOsAtalhosAoClicarFora', () => {
+    localStorage.setItem('user', JSON.stringify({ id: 'f1', name: 'Gás Centro', userType: 'SUPPLIER' }));
+    fixture = TestBed.createComponent(MenuComponent);
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('[data-testid="settings-menu-button"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    document.body.click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="settings-menu"]')).toBeNull();
   });
 
   it('naoDeveRepetirLinksNoMenuDoCelularDoFornecedor', () => {
@@ -188,7 +259,17 @@ describe('MenuComponent', () => {
 
     const menu = fixture.nativeElement.querySelector('#mobile-menu') as HTMLElement;
     const hrefs = Array.from(menu.querySelectorAll('a')).map((a) => a.getAttribute('href'));
+    // F10: no celular os atalhos de Configurações começam recolhidos, para o menu não cobrir a tela
     expect(hrefs).toEqual(['/minha-loja', '/minha-loja/pedidos', '/minha-loja/produtos']);
+
+    const grupo = menu.querySelector('[data-testid="mobile-settings-toggle"]') as HTMLButtonElement;
+    expect(grupo.getAttribute('aria-expanded')).toBe('false');
+    grupo.click();
+    fixture.detectChanges();
+
+    expect(grupo.getAttribute('aria-expanded')).toBe('true');
+    expect(Array.from(menu.querySelectorAll('a')).map((a) => a.getAttribute('href')))
+      .toEqual(['/minha-loja', '/minha-loja/pedidos', '/minha-loja/produtos', ...atalhosDeConfiguracao]);
   });
 
   it('naoDeveExibirDashboardParaCliente', () => {

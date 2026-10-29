@@ -44,6 +44,17 @@ describe('OrderService', () => {
     req.flush({ status: 'Cancelado', customerNotified: true });
   });
 
+  it('deveAvaliarOPedido', () => {
+    service.reviewOrder('pedido-1', { storeRating: 4, delivererRating: 5, comment: 'Bom' }).subscribe((review) => {
+      expect(review.storeRating).toBe(4);
+    });
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/orders/pedido-1/review`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ storeRating: 4, delivererRating: 5, comment: 'Bom' });
+    req.flush({ storeRating: 4, delivererRating: 5, comment: 'Bom' });
+  });
+
   it('deveDespacharPedido', () => {
     service.assignDeliverer('pedido-1', 7).subscribe((pedido) => expect(pedido.delivererName).toBe('Carlos'));
 

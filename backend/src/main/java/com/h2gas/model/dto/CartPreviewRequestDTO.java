@@ -27,4 +27,9 @@ public class CartPreviewRequestDTO {
     @Schema(description = "Modalidade; sem valor, vale DELIVERY", example = "DELIVERY",
             allowableValues = {"DELIVERY", "PICKUP"}, nullable = true)
     private String deliveryMode;
+
+    // HU17: de onde medir o frete (cliente ou visitante); sem CEP, o frete fica para o checkout
+    @Pattern(regexp = "^\\d{5}-?\\d{3}$", message = "CEP inválido.")
+    @Schema(description = "CEP de entrega, para calcular o frete por km", example = "80420-090", nullable = true)
+    private String zipCode;
 }

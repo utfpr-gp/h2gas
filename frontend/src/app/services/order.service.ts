@@ -1,12 +1,19 @@
 import { Injectable } from '@angular/core';
 import { AbstractService } from './abstract.service';
 import { environment } from '../../environments/environment';
-import { CancelOrderResponse, OrderPreview, OrderPreviewRequest, OrderRequest, OrderResponse, ReorderPreview } from '../models/order.model';
+import { CancelOrderResponse, OrderPreview, OrderPreviewRequest, OrderRequest, OrderResponse, OrderReview, ReorderPreview } from '../models/order.model';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { OrderHistoryFilter, OrderHistorySummary } from '../models/order-history';
 import { Observable } from 'rxjs';
 import { PaginatedResponse } from '../models/paginated-response';
 import { DeliveryHistory } from '../models/delivery-history';
+
+// HU23: contagem por status do painel de pedidos
+export interface OrderStatusCounts {
+  counts: Record<'PENDING' | 'CONFIRMED' | 'IN_PREPARATION' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELED', number>;
+  active: number;
+  total: number;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -75,6 +82,11 @@ export class OrderService extends AbstractService<OrderResponse> {
     return this.http.patch<CancelOrderResponse>(`${this.baseUrl}/${orderId}/cancel`, { reason });
   }
 
+  // HU24: o cliente avalia a loja e o entregador do pedido entregue
+  reviewOrder(orderId: string, review: OrderReview): Observable<OrderReview> {
+    return this.http.post<OrderReview>(`${this.baseUrl}/${orderId}/review`, review);
+  }
+
   getReorderPreview(orderId: string): Observable<ReorderPreview> {
     return this.http.get<ReorderPreview>(`${this.baseUrl}/${orderId}/reorder-preview`);
   }
@@ -127,4 +139,9 @@ export class OrderService extends AbstractService<OrderResponse> {
     return this.http.patch(`${this.baseUrl}/${id}/update-order-status`, data);
   }
 
+
+  // HU23: quantos pedidos a loja tem em cada status (o fornecedor vem do token)
+  getMyStatusCounts(): Observable<OrderStatusCounts> {
+    return this.http.get<OrderStatusCounts>(`${this.baseUrl}/mine/status-counts`);
+  }
 }

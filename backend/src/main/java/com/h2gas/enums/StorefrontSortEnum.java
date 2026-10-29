@@ -7,7 +7,9 @@ public enum StorefrontSortEnum {
     NAME("name"),
     RATING("rating"),
     // HU18: "abertas primeiro" deixou de ser opção — em toda ordenação as fechadas vêm depois das abertas
-    DELIVERY_TIME("deliveryTime");
+    DELIVERY_TIME("deliveryTime"),
+    // HU17: mais perto do CEP primeiro; sem CEP, cai para o nome
+    DISTANCE("distance");
 
     private final String param;
 

@@ -58,21 +58,81 @@
 
         <ul class="space-y-3">
             <li *ngFor="let deliverer of deliverers" data-testid="deliverer-row" @fadeIn
-                class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex items-center gap-3">
-                <span class="w-10 h-10 shrink-0 rounded-full bg-primary text-primary-content flex items-center justify-center font-bold">
-                    {{ deliverer.name.charAt(0).toUpperCase() }}
-                </span>
-                <span class="min-w-0 flex-1">
-                    <span class="block font-semibold text-gray-800 truncate">{{ deliverer.name }}</span>
-                    <span class="block text-xs text-gray-500 truncate">
-                        {{ deliverer.vehicleInfo || 'Veículo não informado' }} · {{ deliverer.phoneNumber }}
+                class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3">
+                <!-- HU22: tocar no card abre, logo abaixo, o e-mail do login e a troca de senha -->
+                <button type="button" data-testid="deliverer-toggle" (click)="toggleDetails(deliverer)"
+                    [attr.aria-expanded]="expandedId === deliverer.id" [attr.aria-controls]="'deliverer-details-' + deliverer.id"
+                    class="w-full flex items-center gap-3 text-left rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+                    <span class="w-10 h-10 shrink-0 rounded-full bg-primary text-primary-content flex items-center justify-center font-bold">
+                        {{ deliverer.name.charAt(0).toUpperCase() }}
                     </span>
-                </span>
-                <span data-testid="deliverer-status"
-                    class="shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold"
-                    [ngClass]="deliverer.busy ? 'bg-warning/20 text-gray-800' : 'bg-success/15 text-success'">
-                    {{ deliverer.busy ? 'Em rota' : 'Disponível' }}
-                </span>
+                    <span class="min-w-0 flex-1">
+                        <span class="block font-semibold text-gray-800 truncate">{{ deliverer.name }}</span>
+                        <span class="block text-xs text-gray-500 truncate">
+                            {{ deliverer.vehicleInfo || 'Veículo não informado' }} · {{ deliverer.phoneNumber }}
+                        </span>
+                        <!-- HU24: nota dada pelos clientes -->
+                        <span data-testid="deliverer-rating" class="flex items-center gap-1 text-xs text-gray-600 mt-0.5">
+                            <ng-container *ngIf="deliverer.averageRating != null; else semNotaEntregador">
+                                <span class="material-icons text-sm! text-warning" aria-hidden="true">star</span>
+                                <span class="font-semibold text-gray-800 tabular-nums">{{ deliverer.averageRating | number:'1.1-1' }}</span>
+                                <span>· {{ deliverer.ratingCount }} {{ deliverer.ratingCount === 1 ? 'avaliação' : 'avaliações' }}</span>
+                            </ng-container>
+                            <ng-template #semNotaEntregador>Sem avaliações</ng-template>
+                        </span>
+                    </span>
+                    <span data-testid="deliverer-status"
+                        class="shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold"
+                        [ngClass]="deliverer.busy ? 'bg-warning/20 text-gray-800' : 'bg-success/15 text-success'">
+                        {{ deliverer.busy ? 'Em rota' : 'Disponível' }}
+                    </span>
+                    <span class="material-icons text-gray-400 transition-transform" [class.rotate-180]="expandedId === deliverer.id"
+                        aria-hidden="true">expand_more</span>
+                </button>
+
+                <div *ngIf="expandedId === deliverer.id" [id]="'deliverer-details-' + deliverer.id" data-testid="deliverer-details" @fadeIn
+                    class="border-t border-gray-100 pt-3 space-y-3">
+                    <div class="flex flex-wrap items-center gap-2 text-sm">
+                        <span class="text-xs uppercase tracking-wide text-gray-500 w-full">Login do entregador</span>
+                        <span class="material-icons text-base text-gray-400" aria-hidden="true">mail</span>
+                        <span data-testid="deliverer-email" class="text-gray-700 break-all select-all">{{ deliverer.email }}</span>
+                        <button type="button" data-testid="copy-email" (click)="copyEmail(deliverer)"
+                            class="btn btn-xs btn-ghost rounded-full text-primary min-h-11 sm:min-h-6">
+                            {{ copiedId === deliverer.id ? 'Copiado' : 'Copiar' }}
+                        </button>
+                        <button *ngIf="resettingId !== deliverer.id" type="button" data-testid="reset-password" (click)="openReset(deliverer)"
+                            class="btn btn-xs btn-outline btn-primary rounded-full sm:ml-auto min-h-11 sm:min-h-6">
+                            <span class="material-icons text-sm" aria-hidden="true">key</span>Redefinir senha
+                        </button>
+                    </div>
+
+                <form *ngIf="resettingId === deliverer.id" (submit)="$event.preventDefault(); savePassword(deliverer)" @fadeIn novalidate
+                    class="rounded-xl bg-base-200 p-3 space-y-2">
+                    <p class="text-xs text-gray-600">A senha atual não pode ser vista. Defina uma nova e repasse ao entregador; a antiga deixa de valer.</p>
+                    <div class="grid sm:grid-cols-2 gap-2">
+                        <label class="form-control">
+                            <span class="label-text text-xs text-gray-700">Nova senha</span>
+                            <input data-testid="new-password" type="password" autocomplete="new-password" name="newPassword"
+                                [value]="newPassword" (input)="newPassword = $any($event.target).value" class="input input-bordered input-sm rounded-lg w-full bg-white" />
+                        </label>
+                        <label class="form-control">
+                            <span class="label-text text-xs text-gray-700">Repita a senha</span>
+                            <input data-testid="confirm-password" type="password" autocomplete="new-password" name="confirmPassword"
+                                [value]="confirmPassword" (input)="confirmPassword = $any($event.target).value" class="input input-bordered input-sm rounded-lg w-full bg-white"
+                                [class.input-error]="passwordMismatch" />
+                        </label>
+                    </div>
+                    <p *ngIf="passwordMismatch" data-testid="password-mismatch" role="alert" class="text-xs text-error">As senhas não conferem.</p>
+                    <p *ngIf="!passwordMismatch" class="text-xs text-gray-500">Mínimo de 6 caracteres.</p>
+                    <div class="flex justify-end gap-2">
+                        <button type="button" class="btn btn-sm btn-ghost rounded-lg" (click)="resettingId = null">Cancelar</button>
+                        <button type="submit" data-testid="save-password" class="btn btn-sm btn-primary rounded-lg" [disabled]="!canSavePassword">
+                            <span *ngIf="savingPassword" class="loading loading-spinner loading-xs"></span>
+                            Salvar senha
+                        </button>
+                    </div>
+                </form>
+                </div>
             </li>
         </ul>
     </section>

@@ -30,7 +30,13 @@ describe('ReceivedOrdersComponent', () => {
 
   beforeEach(async () => {
     orderServiceSpy = jasmine.createSpyObj('OrderService',
-      ['findByExcludeStatus', 'findBySupplierId', 'updateStatusOrder', 'cancelOrder', 'assignDeliverer']);
+      ['findByExcludeStatus', 'findBySupplierId', 'updateStatusOrder', 'cancelOrder', 'assignDeliverer', 'getMyStatusCounts']);
+    // HU23: contagem por status vinda do backend
+    orderServiceSpy.getMyStatusCounts.and.returnValue(of({
+      counts: { PENDING: 2, CONFIRMED: 1, IN_PREPARATION: 0, OUT_FOR_DELIVERY: 1, DELIVERED: 7, CANCELED: 1 },
+      active: 4, total: 12,
+    }));
+    orderServiceSpy.findBySupplierId.and.returnValue(lista(pedido('e1', 'Entregue')));
     orderServiceSpy.findByExcludeStatus.and.returnValue(
       lista(pedido('c1', 'Confirmado'), pedido('p1', 'Pendente'), pedido('p2', 'Pendente')));
     orderServiceSpy.updateStatusOrder.and.returnValue(of({ status: 'Confirmado' }));
@@ -283,5 +289,47 @@ describe('ReceivedOrdersComponent', () => {
 
     expect(fixture.nativeElement.querySelector('app-store-hours-status')).not.toBeNull();
     expect(fixture.nativeElement.querySelector('[data-testid="store-toggle"]')).toBeNull();
+  });
+
+  // ---- HU23: filtro com todos os status e a contagem do backend ----
+  const filtro = (valor: string) => fixture.nativeElement.querySelector(`[data-testid="status-filter-${valor}"]`) as HTMLButtonElement;
+
+  it('deveMostrarTodosOsStatusComContagem', () => {
+    fixture.detectChanges();
+    const esperado: [string, string, string][] = [
+      ['ALL', 'Em andamento', '4'], ['EVERYTHING', 'Todos', '12'], ['PENDING', 'Pendentes', '2'],
+      ['CONFIRMED', 'Confirmados', '1'], ['IN_PREPARATION', 'Em preparo', '0'], ['OUT_FOR_DELIVERY', 'Em rota', '1'],
+      ['DELIVERED', 'Entregues', '7'], ['CANCELED', 'Cancelados', '1'],
+    ];
+    for (const [valor, rotulo, numero] of esperado) {
+      const botao = filtro(valor);
+      expect(botao).withContext(valor).not.toBeNull();
+      expect(botao.textContent).withContext(valor).toContain(rotulo);
+      expect(botao.querySelector('[data-testid="status-count"]')?.textContent?.trim()).withContext(valor).toBe(numero);
+    }
+    expect(filtro('ALL').getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('deveFiltrarPeloStatusEscolhido', () => {
+    fixture.detectChanges();
+    filtro('DELIVERED').click();
+    fixture.detectChanges();
+
+    expect(orderServiceSpy.findBySupplierId.calls.mostRecent().args.slice(1, 4)).toEqual(['DELIVERED', 0, 50]);
+    expect(filtro('DELIVERED').getAttribute('aria-pressed')).toBe('true');
+    expect(filtro('ALL').getAttribute('aria-pressed')).toBe('false');
+
+    filtro('EVERYTHING').click();
+    fixture.detectChanges();
+    expect(orderServiceSpy.findBySupplierId.calls.mostRecent().args.slice(1, 4)).toEqual([undefined, 0, 50]);
+  });
+
+  it('deveRecarregarAContagemJuntoComALista', () => {
+    fixture.detectChanges();
+    const antes = orderServiceSpy.getMyStatusCounts.calls.count();
+
+    filtro('PENDING').click();
+
+    expect(orderServiceSpy.getMyStatusCounts.calls.count()).toBe(antes + 1);
   });
 });

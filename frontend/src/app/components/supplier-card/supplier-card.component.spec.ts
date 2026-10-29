@@ -161,4 +161,58 @@ describe('SupplierCardComponent', () => {
     expect(component.viewReviews.emit).toHaveBeenCalledWith(jasmine.objectContaining({ id: '7' }));
     expect(component.viewProducts.emit).not.toHaveBeenCalled();
   });
+
+  // ---- HU17: distância e frete calculados no backend ----
+  const linhaEntrega = () => (fixture.nativeElement.querySelector('[data-testid="supplier-delivery"]') as HTMLElement | null);
+
+  it('deveMostrarDistanciaEFrete', () => {
+    component.supplier = { id: '7', name: 'Gás Centro', offersDelivery: true, offersPickup: true,
+      distanceKm: 2.4, deliveryFee: 9.8, deliversHere: true, freeDelivery: false } as Supplier;
+    fixture.detectChanges();
+
+    expect(linhaEntrega()!.textContent).toContain('2,4 km');
+    expect(linhaEntrega()!.textContent).toMatch(/Entrega\s+R\$\s*9,80/);
+  });
+
+  it('deveMostrarSoRetiradaForaDoRaio', () => {
+    component.supplier = { id: '7', name: 'Gás Centro', offersDelivery: true, offersPickup: true,
+      distanceKm: 9.1, deliveryFee: null, deliversHere: false, freeDelivery: false } as Supplier;
+    fixture.detectChanges();
+
+    expect(linhaEntrega()!.textContent).toContain('Só retirada');
+    expect(linhaEntrega()!.textContent).toContain('9,1 km');
+  });
+
+  it('deveMostrarSeloEntregaGratis', () => {
+    component.supplier = { id: '7', name: 'Gás Centro', offersDelivery: true, offersPickup: true,
+      distanceKm: 1.2, deliveryFee: 0, deliversHere: true, freeDelivery: true } as Supplier;
+    fixture.detectChanges();
+
+    expect(linhaEntrega()!.textContent).toContain('Entrega grátis');
+  });
+
+  it('deveAvisarDistanciaNaoCalculada', () => {
+    component.supplier = { id: '7', name: 'Gás Centro', offersDelivery: true, offersPickup: true,
+      distanceKm: null, deliveryFee: 5, deliversHere: true, freeDelivery: false } as Supplier;
+    fixture.detectChanges();
+
+    expect(linhaEntrega()!.textContent).toMatch(/Entrega\s+R\$\s*5,00/);
+    expect(linhaEntrega()!.textContent).toContain('distância não calculada');
+  });
+
+  it('deveMostrarSoRetiradaQuandoALojaNaoEntrega', () => {
+    component.supplier = { id: '7', name: 'Gás Centro', offersDelivery: false, offersPickup: true,
+      freeDelivery: false } as Supplier;
+    fixture.detectChanges();
+
+    expect(linhaEntrega()!.textContent).toContain('Só retirada');
+  });
+
+  it('naoDeveMostrarFreteSemCep', () => {
+    component.supplier = { id: '7', name: 'Gás Centro', offersDelivery: true, offersPickup: true,
+      distanceKm: null, deliveryFee: null, deliversHere: null, freeDelivery: false } as Supplier;
+    fixture.detectChanges();
+
+    expect(linhaEntrega()).toBeNull();
+  });
 });

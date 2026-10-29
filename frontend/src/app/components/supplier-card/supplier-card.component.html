@@ -44,7 +44,14 @@
       </span>
     </div>
 
-    <!-- HU17 acrescenta aqui a distância e a taxa de entrega -->
+    <!-- HU17: distância e frete vêm do backend (RN01); sem CEP a linha não aparece -->
+    <p *ngIf="deliveryLine as linha" data-testid="supplier-delivery"
+      class="flex flex-wrap items-center gap-x-1 text-xs text-base-content">
+      <span class="material-icons text-sm" [ngClass]="linha.iconClass" aria-hidden="true">{{ linha.icon }}</span>
+      <span *ngIf="supplier.distanceKm != null" class="tabular-nums">{{ supplier.distanceKm | number:'1.1-1' }} km ·</span>
+      <span class="font-semibold">{{ linha.text }}</span>
+      <span *ngIf="linha.hint" class="text-neutral">· {{ linha.hint }}</span>
+    </p>
     <div class="flex items-center text-neutral text-xs gap-1" *ngIf="supplier.openingTime && supplier.closingTime">
       <span>{{ supplier.openingTime }} - {{ supplier.closingTime }}</span>
       <span *ngIf="supplier.averageDeliveryTime"> · {{ supplier.averageDeliveryTime }} min</span>

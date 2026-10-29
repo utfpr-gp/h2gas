@@ -1,5 +1,7 @@
 package com.h2gas.model.mapper;
 
+import java.math.BigDecimal;
+
 import com.h2gas.model.dto.OrderItemRequestDTO;
 import com.h2gas.model.dto.OrderItemResponseDTO;
 import com.h2gas.model.dto.OrderRequestDTO;
@@ -42,6 +44,9 @@ public class OrderMapper {
 
     public OrderResponseDTO toResponseDto(Order data) {
         OrderResponseDTO orderResponseDTO = modelMapper.map(data, OrderResponseDTO.class);
+        BigDecimal fee = data.getDeliveryFee() == null ? BigDecimal.ZERO : data.getDeliveryFee();
+        orderResponseDTO.setDeliveryFee(fee);
+        orderResponseDTO.setSubtotal(data.getTotalPrice() == null ? null : data.getTotalPrice().subtract(fee));
 
         if (data.getCustomer().getId() != null) {
             orderResponseDTO.setCustomerId(data.getCustomer().getId());
