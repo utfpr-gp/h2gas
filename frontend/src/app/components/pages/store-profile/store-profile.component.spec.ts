@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideNgxMask } from 'ngx-mask';
-import { of, throwError } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
 import { StoreProfileComponent } from './store-profile.component';
@@ -41,7 +41,9 @@ describe('StoreProfileComponent', () => {
   };
   const salvar = () => byId('save-profile') as HTMLButtonElement;
 
+  let fragment$: BehaviorSubject<string | null>;
   const setup = async (p: SupplierProfile = perfil, fragment: string | null = null) => {
+    fragment$ = new BehaviorSubject<string | null>(fragment);
     supplierSpy = jasmine.createSpyObj('SupplierService', ['getMyProfile', 'updateMyProfile', 'uploadMyLogo', 'removeMyLogo', 'uploadMyBanner', 'removeMyBanner',
       'getMySettings', 'updateMySettings']);
     // F9: as seções de horário e estoque vêm embutidas
@@ -72,7 +74,7 @@ describe('StoreProfileComponent', () => {
         { provide: CityService, useValue: citySpy },
         { provide: UserService, useValue: userSpy },
         { provide: ToastrService, useValue: toastrSpy },
-        { provide: ActivatedRoute, useValue: { snapshot: { fragment } } },
+        { provide: ActivatedRoute, useValue: { snapshot: { fragment }, fragment: fragment$ } },
       ],
     }).compileComponents();
 
@@ -305,5 +307,16 @@ describe('StoreProfileComponent', () => {
 
     expect(etapa('dados').querySelector('[data-testid="unsaved-dot"]')).not.toBeNull();
     expect(etapa('dados').getAttribute('aria-label')).toContain('alterações não salvas');
+  });
+
+  // F10: os atalhos da navbar levam à mesma tela com outro #; a parte aberta acompanha
+  it('deveTrocarDeParteQuandoOFragmentoMuda', async () => {
+    await setup();
+
+    fragment$.next('estoque');
+    fixture.detectChanges();
+
+    expect(visivel('estoque')).toBeTrue();
+    expect(visivel('aparencia')).toBeFalse();
   });
 });

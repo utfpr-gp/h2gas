@@ -65,6 +65,16 @@ export class MenuComponent implements OnInit, OnDestroy {
 
   mobileMenuOpen = false;
 
+  // F10: atalhos para cada parte das configurações da loja (a tela abre direto na parte pelo #)
+  settingsMenuOpen = false;
+  readonly settingsSections = [
+    { id: 'aparencia', label: 'Aparência', icon: 'palette' },
+    { id: 'dados', label: 'Dados da loja', icon: 'badge' },
+    { id: 'endereco', label: 'Endereço', icon: 'location_on' },
+    { id: 'funcionamento', label: 'Horário e entrega', icon: 'schedule' },
+    { id: 'estoque', label: 'Estoque mínimo', icon: 'inventory_2' },
+  ];
+
   toggleMobileMenu() {
     this.mobileMenuOpen = !this.mobileMenuOpen;
   }
@@ -103,7 +113,7 @@ export class MenuComponent implements OnInit, OnDestroy {
     this.navigationSub?.unsubscribe();
   }
 
-  private closeNavMenus() {
+  closeNavMenus() {
     this.mobileMenuOpen = false;
   }
 
@@ -257,6 +267,7 @@ export class MenuComponent implements OnInit, OnDestroy {
   @HostListener('document:keydown.escape')
   onEscape() {
     if (this.userMenuOpen) this.closeUserMenu(true);
+    this.settingsMenuOpen = false;
     if (this.mobileMenuOpen) {
       this.closeNavMenus();
       this.host.nativeElement.querySelector<HTMLElement>('[data-testid=mobile-menu-button]')?.focus();
@@ -280,6 +291,9 @@ export class MenuComponent implements OnInit, OnDestroy {
     const target = event.target as HTMLElement;
     if (!target.closest('[data-user-menu]')) {
       this.userMenuOpen = false;
+    }
+    if (!target.closest('[data-settings-menu]')) {
+      this.settingsMenuOpen = false;
     }
   }
 

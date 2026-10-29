@@ -78,6 +78,24 @@
             <a routerLink="/minha-loja/produtos" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
               <span class="material-icons" aria-hidden="true">local_fire_department</span><span>Produtos</span>
             </a>
+            <!-- F10: Configurações com um atalho para cada parte da tela da loja -->
+            <div class="relative" data-settings-menu>
+              <button type="button" data-testid="settings-menu-button" (click)="settingsMenuOpen = !settingsMenuOpen"
+                [attr.aria-expanded]="settingsMenuOpen" aria-haspopup="true" aria-controls="settings-menu"
+                class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors focus:outline-none [&>.material-icons]:text-[20px]">
+                <span class="material-icons" aria-hidden="true">settings</span><span>Configurações</span>
+                <span class="material-icons text-[18px]! transition-transform" [class.rotate-180]="settingsMenuOpen" aria-hidden="true">expand_more</span>
+              </button>
+              <ul *ngIf="settingsMenuOpen" id="settings-menu" data-testid="settings-menu" @fadeIn
+                class="absolute right-0 mt-2 w-60 bg-white rounded-xl shadow-xl border border-gray-200 py-1 z-50 text-gray-800">
+                <li *ngFor="let sec of settingsSections">
+                  <a routerLink="/minha-loja/configuracoes" [fragment]="sec.id" (click)="settingsMenuOpen = false"
+                    class="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-100 min-h-11">
+                    <span class="material-icons text-[20px] text-primary" aria-hidden="true">{{ sec.icon }}</span>{{ sec.label }}
+                  </a>
+                </li>
+              </ul>
+            </div>
           </ng-container>
 
           <a *ngIf="isCustomer" routerLink="/meus-pedidos" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
@@ -340,6 +358,14 @@
           </a>
           <a routerLink="/minha-loja/produtos" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
             <span class="material-icons" aria-hidden="true">local_fire_department</span>Produtos
+          </a>
+          <!-- F10: atalhos das configurações da loja -->
+          <p class="flex items-center gap-3 px-3 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide text-white/70">
+            <span class="material-icons text-base" aria-hidden="true">settings</span>Configurações
+          </p>
+          <a *ngFor="let sec of settingsSections" routerLink="/minha-loja/configuracoes" [fragment]="sec.id" (click)="closeNavMenus()"
+            class="flex items-center gap-3 pl-9 pr-3 py-2.5 rounded-md {{ t.hover }}">
+            <span class="material-icons text-[20px]" aria-hidden="true">{{ sec.icon }}</span>{{ sec.label }}
           </a>
         </ng-container>
 

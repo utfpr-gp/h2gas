@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgxMaskDirective } from 'ngx-mask';
 import { ToastrService } from 'ngx-toastr';
 import { SupplierService } from '../../../services/supplier.service';
@@ -93,7 +94,12 @@ export class StoreProfileComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
   ) {
-    const fragment = this.route.snapshot.fragment;
+    this.applyFragment(this.route.snapshot.fragment);
+    // F10: os atalhos da navbar levam à mesma tela com outro #; a parte aberta acompanha
+    this.route.fragment.pipe(takeUntilDestroyed()).subscribe((fragment) => this.applyFragment(fragment));
+  }
+
+  private applyFragment(fragment: string | null) {
     if (this.sections.some((sec) => sec.id === fragment)) this.activeSection = fragment as SectionId;
   }
 
