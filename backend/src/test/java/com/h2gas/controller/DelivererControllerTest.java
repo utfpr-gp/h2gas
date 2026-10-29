@@ -33,6 +33,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -94,5 +95,34 @@ class DelivererControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].name").value("Carlos Silva"))
                 .andExpect(jsonPath("$[0].busy").value(true));
+    }
+
+    // ---- HU22 ----
+    @Test
+    void deveRedefinirASenhaComOFornecedorDoToken() throws Exception {
+        mockMvc.perform(put("/api/deliverers/7/password").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"password\":\"novaSenha9\"}"))
+                .andExpect(status().isNoContent());
+
+        verify(delivererService).resetPassword(7L, "fornecedor-1", "novaSenha9");
+    }
+
+    @Test
+    void deveRecusarSenhaCurta() throws Exception {
+        mockMvc.perform(put("/api/deliverers/7/password").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"password\":\"123\"}"))
+                .andExpect(status().isBadRequest());
+
+        verify(delivererService, never()).resetPassword(any(), any(), any());
+    }
+
+    @Test
+    void deveRetornar403ParaEntregadorDeOutraLoja() throws Exception {
+        org.mockito.Mockito.doThrow(new com.h2gas.exceptions.ForbiddenResourceException("Entregador não pertence à sua frota."))
+                .when(delivererService).resetPassword(7L, "fornecedor-1", "novaSenha9");
+
+        mockMvc.perform(put("/api/deliverers/7/password").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"password\":\"novaSenha9\"}"))
+                .andExpect(status().isForbidden());
     }
 }

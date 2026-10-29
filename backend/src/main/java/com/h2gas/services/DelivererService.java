@@ -3,6 +3,7 @@ package com.h2gas.services;
 import com.h2gas.enums.OrderStatusEnum;
 import com.h2gas.enums.UserTypeEnum;
 import com.h2gas.exceptions.BusinessRuleException;
+import com.h2gas.exceptions.ForbiddenResourceException;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.DelivererCreateDTO;
 import com.h2gas.model.dto.DelivererDTO;
@@ -61,6 +62,18 @@ public class DelivererService {
         return delivererRepository.findBySupplierIdOrderByUserNameAsc(supplierId).stream()
                 .map(this::toDto)
                 .toList();
+    }
+
+    // HU22: o fornecedor define uma senha nova para um entregador da própria frota (a antiga não é recuperável: BCrypt)
+    @Transactional
+    public void resetPassword(Long delivererId, String supplierId, String password) {
+        Deliverer deliverer = findEntityById(delivererId);
+        if (deliverer.getSupplier() == null || !deliverer.getSupplier().getId().equals(supplierId)) {
+            throw new ForbiddenResourceException("Entregador não pertence à sua frota.");
+        }
+        User user = deliverer.getUser();
+        user.setPassword(new BCryptPasswordEncoder().encode(password));
+        userRepository.save(user);
     }
 
     public Deliverer findEntityById(Long id) {

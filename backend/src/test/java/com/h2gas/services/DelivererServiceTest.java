@@ -146,4 +146,39 @@ class DelivererServiceTest {
         assertTrue(frota.stream().filter(d -> d.getId().equals(ocupado.getId())).findFirst().orElseThrow().isBusy());
         assertFalse(frota.stream().filter(d -> d.getId().equals(livre.getId())).findFirst().orElseThrow().isBusy());
     }
+
+    // ---- HU22: o fornecedor redefine a senha do entregador da própria frota ----
+    private final org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder bcrypt =
+            new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder();
+
+    @Test
+    @DisplayName("HU22: redefine a senha do entregador da frota; a antiga deixa de valer")
+    void deveRedefinirASenhaDoEntregadorDaFrota() {
+        DelivererDTO criado = delivererService.createDeliverer(dto("Carlos Silva", "carlos@teste.com"), fornecedor.getId());
+
+        delivererService.resetPassword(criado.getId(), fornecedor.getId(), "novaSenha9");
+
+        String hash = delivererRepository.findById(criado.getId()).orElseThrow().getUser().getPassword();
+        assertTrue(bcrypt.matches("novaSenha9", hash));
+        assertFalse(bcrypt.matches("senha123", hash));
+    }
+
+    @Test
+    @DisplayName("HU22: não redefine a senha de entregador de outra loja")
+    void naoDeveRedefinirSenhaDeEntregadorDeOutraLoja() {
+        DelivererDTO criado = delivererService.createDeliverer(dto("Carlos Silva", "carlos@teste.com"), fornecedor.getId());
+
+        assertThrows(com.h2gas.exceptions.ForbiddenResourceException.class,
+                () -> delivererService.resetPassword(criado.getId(), outroFornecedor.getId(), "novaSenha9"));
+
+        String hash = delivererRepository.findById(criado.getId()).orElseThrow().getUser().getPassword();
+        assertTrue(bcrypt.matches("senha123", hash));
+    }
+
+    @Test
+    @DisplayName("HU22: entregador inexistente é 404")
+    void deveRetornar404ParaEntregadorInexistente() {
+        assertThrows(com.h2gas.exceptions.ResourceNotFoundException.class,
+                () -> delivererService.resetPassword(987654L, fornecedor.getId(), "novaSenha9"));
+    }
 }
