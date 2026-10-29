@@ -266,4 +266,37 @@ describe('OrderListComponent', () => {
     expect(q('[data-testid="review-given"]')).not.toBeNull();
     expect(orderServiceSpy.findByCustomerId).toHaveBeenCalledTimes(2); // sem recarregar a lista
   });
+
+  // ---- HU25 ----
+  const href = (id: string) => (q(`[data-testid="${id}"]`) as HTMLAnchorElement | null)?.getAttribute('href') ?? null;
+
+  it('deveMostrarFalarComALojaNoPedidoEmAndamento', () => {
+    listaCom({ id: '4a1a4ffe-0000', status: 'Confirmado' as any, supplierName: 'Gás Centro', supplierPhone: '4233334444' });
+
+    expect(href('whatsapp-store')).toBe('https://wa.me/554233334444?text='
+      + encodeURIComponent('Olá, Gás Centro! Sobre o meu pedido #4a1a4ffe no H2Gás: '));
+    expect(q('[data-testid="whatsapp-store"]')!.getAttribute('target')).toBe('_blank');
+    expect(q('[data-testid="whatsapp-deliverer"]')).toBeNull();
+  });
+
+  it('deveMostrarFalarComOEntregadorSoEmRota', () => {
+    listaCom({ id: '4a1a4ffe-0000', status: 'Saiu para entrega' as any, supplierName: 'Gás Centro', supplierPhone: '4233334444',
+      delivererName: 'Carlos Lima', delivererPhone: '42988887777' });
+
+    expect(href('whatsapp-deliverer')).toBe('https://wa.me/5542988887777?text='
+      + encodeURIComponent('Olá, Carlos! Sou o cliente do pedido #4a1a4ffe da Gás Centro.'));
+  });
+
+  it('naoDeveMostrarAtalhosNoPedidoEncerrado', () => {
+    listaCom({ id: 'p1', status: 'Entregue' as any, supplierPhone: '4233334444' },
+      { id: 'p2', status: 'Cancelado' as any, supplierPhone: '4233334444' });
+
+    expect(q('[data-testid="whatsapp-store"]')).toBeNull();
+  });
+
+  it('naoDeveMostrarAtalhoSemTelefone', () => {
+    listaCom({ id: 'p1', status: 'Pendente' as any, supplierPhone: null });
+
+    expect(q('[data-testid="whatsapp-store"]')).toBeNull();
+  });
 });

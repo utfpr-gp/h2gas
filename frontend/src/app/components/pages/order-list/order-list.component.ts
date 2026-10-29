@@ -13,6 +13,7 @@ import { OrderReviewDialogComponent } from '../../order-review-dialog/order-revi
 import { Router } from '@angular/router';
 import { expandCollapse, staggerList } from '../../../animations/checkout.animations';
 import { backendMessage } from '../../../utils/backend-message';
+import { firstName, orderCode, whatsappLink } from '../../../utils/whatsapp-link';
 
 @Component({
   selector: 'app-order-list',
@@ -182,6 +183,18 @@ export class OrderListComponent implements OnInit, OnDestroy {
   onReviewSaved(review: OrderReview) {
     if (this.reviewingOrder) this.reviewingOrder.review = review;
     this.reviewingOrder = null;
+  }
+
+  // HU25: atalhos de WhatsApp enquanto o pedido está em andamento
+  storeWhatsapp(order: OrderResponse): string | null {
+    if (['Entregue', 'Cancelado'].includes(order.status as string)) return null;
+    return whatsappLink(order.supplierPhone, `Olá, ${order.supplierName}! Sobre o meu pedido #${orderCode(order.id)} no H2Gás: `);
+  }
+
+  delivererWhatsapp(order: OrderResponse): string | null {
+    if ((order.status as string) !== 'Saiu para entrega') return null;
+    return whatsappLink(order.delivererPhone,
+      `Olá, ${firstName(order.delivererName)}! Sou o cliente do pedido #${orderCode(order.id)} da ${order.supplierName}.`);
   }
 
   navigate(route: string) {

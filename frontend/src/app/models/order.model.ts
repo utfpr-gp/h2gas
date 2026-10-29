@@ -68,6 +68,9 @@ export interface OrderResponse {
     neighborhood:string;
     deliveryMode?: DeliveryMode;
     customerPhone?: string;
+    // HU25: atalho de WhatsApp; o do entregador só vem com o pedido em rota
+    supplierPhone?: string | null;
+    delivererPhone?: string | null;
     delivererName?: string;
     cancellationReason?: string;
     cityName?: string;
