@@ -37,6 +37,10 @@ public class AddressService {
     @Autowired
     private UserRepository userRepository;
 
+    // HU17: coordenadas do CEP gravadas junto do endereço
+    @Autowired
+    private GeocodingService geocodingService;
+
     public List<AddressDTO> findAllAddresses() {
         return addressRepository.findAll()
                 .stream()
@@ -70,6 +74,7 @@ public class AddressService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado com id: " + addressDTO.getUserId()));
         address.setCity(city);
         address.setUser(user);
+        applyCoordinates(address);
         addressRepository.save(address);
         return addressMapper.toDto(address);
     }
@@ -83,6 +88,7 @@ public class AddressService {
 
         address.setUser(user);
         address.setCity(city);
+        applyCoordinates(address);
         return addressRepository.save(address);
     }
 
@@ -97,13 +103,18 @@ public class AddressService {
                 .orElseThrow(() -> new ResourceNotFoundException("Endereço não encontrado"));
 
         City city = cityMapper.toEntity(cityService.findByIdCity(addressDTO.getCityId()));
+        // HU17: CEP novo (ou endereço ainda sem coordenada) = busca de novo
+        boolean refreshCoordinates = !java.util.Objects.equals(addressExisting.getZipCode(), addressDTO.getZipCode())
+                || addressExisting.getLatitude() == null;
         addressExisting.setStreetName(addressDTO.getStreetName());
         addressExisting.setNumber(addressDTO.getNumber());
         addressExisting.setComplement(addressDTO.getComplement());
         addressExisting.setNeighborhood(addressDTO.getNeighborhood());
         addressExisting.setZipCode(addressDTO.getZipCode());
         addressExisting.setCity(city);
-        addressRepository.save(addressExisting);
+        if (refreshCoordinates) {
+            applyCoordinates(addressExisting);
+        }
 
         Address updatedAddress = addressRepository.save(addressExisting);
         return addressMapper.toDto(updatedAddress);
@@ -129,4 +140,9 @@ public class AddressService {
     }
 
 
+
+    // HU17: falha na consulta não impede salvar; o endereço fica sem coordenada e o frete cai para a taxa fixa
+    private void applyCoordinates(Address address) {
+        address.applyCoordinates(geocodingService.findByZipCode(address.getZipCode()).orElse(null));
+    }
 }
