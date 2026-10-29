@@ -181,8 +181,10 @@ preço seja honesto para os dois lados.
   desmarcadas → **400** "A loja precisa oferecer entrega ou retirada.";
   valor negativo → 400.
 - **Vitrine** (`GET /api/suppliers/actives/open`):
-  - parâmetros novos: `addressId` (cliente logado, endereço do próprio
-    usuário) **ou** `zipCode` (visitante), que dizem de onde medir;
+  - parâmetros novos: `zipCode` (do endereço ativo do cliente ou do CEP
+    do visitante), que diz de onde medir. Isso troca o `addressId` previsto
+    antes: assim a rota pública não precisa checar o dono do endereço, e a
+    conta bate com a do pedido, que usa as coordenadas do mesmo CEP;
     `deliveryMode=DELIVERY|PICKUP`; `freeDelivery=true`;
   - `sort=distance` entra junto dos valores da HU16;
   - sem `addressId` nem `zipCode`, ou sem coordenada de origem: a lista
@@ -201,9 +203,10 @@ preço seja honesto para os dois lados.
   escolhido.". Em retirada, o frete é 0. `OrderResponseDTO` ganha
   `deliveryFee`, `deliveryDistanceKm` e `subtotal`.
 - **Preview do carrinho** (`POST /api/cart/preview`): o corpo ganha
-  `addressId` ou `zipCode`, opcionais. A resposta ganha `deliveryFee`
-  (nulo em retirada, ou sem origem), `distanceKm`, `deliversHere` e
-  `total`.
+  `zipCode`, opcional. A resposta ganha:
+  - `deliveryFee`: 0 em retirada; nulo sem CEP ou quando a loja não
+    entrega ali;
+  - `distanceKm`, `deliversHere` e `total`.
 - OpenAPI atualizado em todas as rotas tocadas.
 
 ### 5.5 Frontend
@@ -214,9 +217,8 @@ preço seja honesto para os dois lados.
   - prévia do frete a 3 km;
   - aviso "distância em linha reta";
   - as duas modalidades desmarcadas mostram erro e bloqueiam o salvar.
-- **`LocationContext`** guarda também o `zipCode` (visitante e cliente) e
-  o `addressId` do cliente. A vitrine e o carrinho mandam `addressId`, ou
-  `zipCode` quando é visitante.
+- **`LocationContext`** guarda também o `zipCode`, do visitante e do
+  cliente. A vitrine e o carrinho mandam esse CEP.
 - **`supplier-card`**: a linha "2,3 km · Entrega R$ 7,90", "Entrega
   grátis", "Só retirada" (fora do raio ou sem entrega) ou "Taxa de
   entrega R$ 5,00 · distância não calculada".
