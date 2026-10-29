@@ -163,18 +163,38 @@ class SupplierControllerTest {
     @Test
     void deveUsarOFornecedorDoToken() throws Exception {
         autenticarComoFornecedor("fornecedor-1");
-        when(supplierService.findMySettings("fornecedor-1")).thenReturn(new SupplierSettingsDTO("08:00", "18:00", 30, 8));
-        when(supplierService.updateMySettings(eq("fornecedor-1"), any())).thenReturn(new SupplierSettingsDTO("09:00", "19:00", 40, 6));
+        when(supplierService.findMySettings("fornecedor-1")).thenReturn(new SupplierSettingsDTO("08:00", "18:00", 30, 8, true, true, null, java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO));
+        when(supplierService.updateMySettings(eq("fornecedor-1"), any())).thenReturn(new SupplierSettingsDTO("09:00", "19:00", 40, 6, true, false, new java.math.BigDecimal("5"), new java.math.BigDecimal("4.00"), new java.math.BigDecimal("1.20")));
 
         mockMvc.perform(get("/api/suppliers/mine/settings"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.lowStockThreshold").value(8));
         mockMvc.perform(put("/api/suppliers/mine/settings").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"openingTime\":\"09:00\",\"closingTime\":\"19:00\",\"averageDeliveryTime\":40,\"lowStockThreshold\":6}"))
+                        .content("{\"openingTime\":\"09:00\",\"closingTime\":\"19:00\",\"averageDeliveryTime\":40,\"lowStockThreshold\":6," + ENTREGA + "}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.openingTime").value("09:00"));
 
-        verify(supplierService).updateMySettings("fornecedor-1", new SupplierSettingsDTO("09:00", "19:00", 40, 6));
+        verify(supplierService).updateMySettings("fornecedor-1", new SupplierSettingsDTO("09:00", "19:00", 40, 6, true, false, new java.math.BigDecimal("5"), new java.math.BigDecimal("4.00"), new java.math.BigDecimal("1.20")));
+    }
+
+    // HU17: entrega e retirada, raio de 5 km, R$ 4,00 + R$ 1,20/km
+    private static final String ENTREGA = "\"offersDelivery\":true,\"offersPickup\":false,\"deliveryRadiusKm\":5,"
+            + "\"deliveryBaseFee\":4.00,\"deliveryFeePerKm\":1.20";
+
+    @Test
+    void deveRetornar400ComTarifaNegativa() throws Exception {
+        autenticarComoFornecedor("fornecedor-1");
+
+        mockMvc.perform(put("/api/suppliers/mine/settings").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"openingTime\":\"09:00\",\"closingTime\":\"19:00\",\"averageDeliveryTime\":30,\"lowStockThreshold\":6,"
+                                + "\"offersDelivery\":true,\"offersPickup\":true,\"deliveryBaseFee\":-1,\"deliveryFeePerKm\":0}"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(put("/api/suppliers/mine/settings").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"openingTime\":\"09:00\",\"closingTime\":\"19:00\",\"averageDeliveryTime\":30,\"lowStockThreshold\":6,"
+                                + "\"offersDelivery\":true,\"offersPickup\":true,\"deliveryRadiusKm\":0,\"deliveryBaseFee\":0,\"deliveryFeePerKm\":0}"))
+                .andExpect(status().isBadRequest());
+
+        verify(supplierService, never()).updateMySettings(any(), any());
     }
 
     @Test
@@ -182,10 +202,10 @@ class SupplierControllerTest {
         autenticarComoFornecedor("fornecedor-1");
 
         mockMvc.perform(put("/api/suppliers/mine/settings").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"openingTime\":\"09:00\",\"closingTime\":\"19:00\",\"averageDeliveryTime\":500,\"lowStockThreshold\":6}"))
+                        .content("{\"openingTime\":\"09:00\",\"closingTime\":\"19:00\",\"averageDeliveryTime\":500,\"lowStockThreshold\":6," + ENTREGA + "}"))
                 .andExpect(status().isBadRequest());
         mockMvc.perform(put("/api/suppliers/mine/settings").contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"openingTime\":\"9h\",\"closingTime\":\"19:00\",\"averageDeliveryTime\":30,\"lowStockThreshold\":6}"))
+                        .content("{\"openingTime\":\"9h\",\"closingTime\":\"19:00\",\"averageDeliveryTime\":30,\"lowStockThreshold\":6," + ENTREGA + "}"))
                 .andExpect(status().isBadRequest());
 
         verify(supplierService, never()).updateMySettings(any(), any());

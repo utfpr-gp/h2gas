@@ -390,23 +390,66 @@ class SupplierServiceTest {
     @DisplayName("F7 fatia 6: salva horário (até depois da meia-noite), tempo de entrega e estoque mínimo")
     void deveSalvarHorarioTempoEEstoqueMinimo() {
         SupplierSettingsDTO salvo = supplierService.updateMySettings(validId,
-                new SupplierSettingsDTO("18:00", "02:00", 45, 5));
+                configuracoes("18:00", "02:00", 45, 5));
 
         Supplier supplier = supplierRepository.findById(validId).orElseThrow();
         assertEquals(LocalTime.of(18, 0), supplier.getOpeningTime());
         assertEquals(LocalTime.of(2, 0), supplier.getClosingTime());
         assertEquals(Duration.ofMinutes(45), supplier.getAverageDeliveryTime());
         assertEquals(5, supplier.getLowStockThreshold());
-        assertEquals(new SupplierSettingsDTO("18:00", "02:00", 45, 5), salvo);
+        assertEquals(configuracoes("18:00", "02:00", 45, 5), salvo);
     }
 
     @Test
     @DisplayName("F7 fatia 6: fechamento igual à abertura é 400")
     void deveRecusarFechamentoIgualAAbertura() {
         BusinessRuleException erro = assertThrows(BusinessRuleException.class,
-                () -> supplierService.updateMySettings(validId, new SupplierSettingsDTO("08:00", "08:00", 30, 8)));
+                () -> supplierService.updateMySettings(validId, configuracoes("08:00", "08:00", 30, 8)));
 
         assertEquals("O horário de fechamento precisa ser diferente da abertura.", erro.getMessage());
+    }
+
+    // HU17: as configurações trazem também a entrega; padrão = entrega e retirada, sem raio e sem frete
+    private static SupplierSettingsDTO configuracoes(String abre, String fecha, int tempo, int estoque) {
+        return new SupplierSettingsDTO(abre, fecha, tempo, estoque, true, true, null, new java.math.BigDecimal("0.00"), new java.math.BigDecimal("0.00"));
+    }
+
+    @Test
+    @DisplayName("HU17: salva modalidades, raio e tarifa de entrega")
+    void deveSalvarAsConfiguracoesDeEntrega() {
+        SupplierSettingsDTO salvo = supplierService.updateMySettings(validId, new SupplierSettingsDTO(
+                "08:00", "18:00", 30, 8, true, false, new java.math.BigDecimal("6.5"),
+                new java.math.BigDecimal("5.00"), new java.math.BigDecimal("1.50")));
+
+        Supplier supplier = supplierRepository.findById(validId).orElseThrow();
+        assertTrue(supplier.isOffersDelivery());
+        assertFalse(supplier.isOffersPickup());
+        assertEquals(0, new java.math.BigDecimal("6.5").compareTo(supplier.getDeliveryRadiusKm()));
+        assertEquals(0, new java.math.BigDecimal("5.00").compareTo(supplier.getDeliveryBaseFee()));
+        assertEquals(0, new java.math.BigDecimal("1.50").compareTo(supplier.getDeliveryFeePerKm()));
+        assertFalse(salvo.offersPickup());
+        assertEquals(0, new java.math.BigDecimal("1.50").compareTo(salvo.deliveryFeePerKm()));
+    }
+
+    @Test
+    @DisplayName("HU17: a loja precisa oferecer entrega ou retirada")
+    void naoDevePermitirDesmarcarAsDuasModalidades() {
+        BusinessRuleException erro = assertThrows(BusinessRuleException.class, () -> supplierService.updateMySettings(validId,
+                new SupplierSettingsDTO("08:00", "18:00", 30, 8, false, false, null, java.math.BigDecimal.ZERO, java.math.BigDecimal.ZERO)));
+
+        assertEquals("A loja precisa oferecer entrega ou retirada.", erro.getMessage());
+    }
+
+    @Test
+    @DisplayName("HU17: loja nova (ou de antes da HU17) entrega e aceita retirada, sem frete")
+    void deveManterOPadraoDeEntregaERetirada() {
+        SupplierSettingsDTO settings = supplierService.findMySettings(validId);
+
+        assertTrue(settings.offersDelivery());
+        assertTrue(settings.offersPickup());
+        assertNull(settings.deliveryRadiusKm());
+        assertEquals(0, settings.deliveryBaseFee().signum());
+        assertEquals(0, settings.deliveryFeePerKm().signum());
     }
 
     private Supplier salvarFornecedor(String nome, String email, String cnpj, boolean active) {

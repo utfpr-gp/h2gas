@@ -424,11 +424,19 @@ public class SupplierService {
         if (opening.equals(closing)) {
             throw new BusinessRuleException("O horário de fechamento precisa ser diferente da abertura.");
         }
+        if (!settings.offersDelivery() && !settings.offersPickup()) {
+            throw new BusinessRuleException("A loja precisa oferecer entrega ou retirada.");
+        }
         Supplier supplier = findSupplier(supplierId);
         supplier.setOpeningTime(opening);
         supplier.setClosingTime(closing);
         supplier.setAverageDeliveryTime(Duration.ofMinutes(settings.averageDeliveryTime()));
         supplier.setLowStockThreshold(settings.lowStockThreshold());
+        supplier.setOffersDelivery(settings.offersDelivery());
+        supplier.setOffersPickup(settings.offersPickup());
+        supplier.setDeliveryRadiusKm(settings.deliveryRadiusKm());
+        supplier.setDeliveryBaseFee(settings.deliveryBaseFee());
+        supplier.setDeliveryFeePerKm(settings.deliveryFeePerKm());
         return toSettings(supplierRepository.save(supplier));
     }
 
@@ -442,7 +450,12 @@ public class SupplierService {
                 supplier.getOpeningTime() == null ? null : supplier.getOpeningTime().toString(),
                 supplier.getClosingTime() == null ? null : supplier.getClosingTime().toString(),
                 supplier.getAverageDeliveryTime() == null ? null : (int) supplier.getAverageDeliveryTime().toMinutes(),
-                supplier.getLowStockThreshold());
+                supplier.getLowStockThreshold(),
+                supplier.isOffersDelivery(),
+                supplier.isOffersPickup(),
+                supplier.getDeliveryRadiusKm(),
+                supplier.getDeliveryBaseFee(),
+                supplier.getDeliveryFeePerKm());
     }
 
 //    public SupplierDTO findByUserIdSupplier(String userId) {

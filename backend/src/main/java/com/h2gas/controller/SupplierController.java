@@ -195,7 +195,8 @@ public class SupplierController {
     }
 
     @Operation(summary = "Configurações da loja do fornecedor logado",
-            description = "Horário de funcionamento, tempo médio de entrega e estoque mínimo. O fornecedor vem do token")
+            description = "Horário de funcionamento, tempo médio de entrega, estoque mínimo e, desde a HU17, como a loja "
+                    + "entrega (modalidades, raio e tarifa). O fornecedor vem do token")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Configurações atuais"),
             @ApiResponse(responseCode = "403", description = "Sem token válido ou papel diferente de SUPPLIER")
@@ -208,11 +209,13 @@ public class SupplierController {
     }
 
     @Operation(summary = "Salva as configurações da loja do fornecedor logado",
-            description = "Grava horário, tempo médio de entrega e estoque mínimo de uma vez. Fechamento antes da abertura "
-                    + "significa que a loja fecha depois da meia-noite; igual à abertura é recusado")
+            description = "Grava horário, tempo médio de entrega, estoque mínimo e a entrega (HU17: faz entrega, aceita retirada, "
+                    + "raio em km, taxa fixa e valor por km) de uma vez. Fechamento antes da abertura significa que a loja fecha "
+                    + "depois da meia-noite; igual à abertura é recusado. Desmarcar entrega e retirada é recusado")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Configurações salvas"),
-            @ApiResponse(responseCode = "400", description = "Campo ausente, fora do limite ou fechamento igual à abertura"),
+            @ApiResponse(responseCode = "400", description = "Campo ausente, fora do limite, valor negativo, fechamento igual à "
+                    + "abertura ou nenhuma modalidade marcada"),
             @ApiResponse(responseCode = "403", description = "Sem token válido ou papel diferente de SUPPLIER")
     })
     @PutMapping("/mine/settings")
