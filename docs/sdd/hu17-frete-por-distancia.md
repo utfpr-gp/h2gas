@@ -308,18 +308,53 @@ preço seja honesto para os dois lados.
 
 ## 8. Definição de Pronto
 
-- [ ] V19–V21 aplicadas no MySQL local; endereços antigos com coordenada
+- [x] V19–V21 aplicadas no MySQL local; endereços antigos com coordenada
       depois da rotina de subida.
-- [ ] Fornecedor configura modalidades, raio e tarifa; configuração
+- [x] Fornecedor configura modalidades, raio e tarifa; configuração
       inválida recusada com a mensagem do contrato.
-- [ ] Coordenadas gravadas ao salvar endereço, com as duas fontes, o
+- [x] Coordenadas gravadas ao salvar endereço, com as duas fontes, o
       cache e a falha tratada sem quebrar o cadastro.
-- [ ] Vitrine com distância e frete do backend, filtros de modalidade e
+- [x] Vitrine com distância e frete do backend, filtros de modalidade e
       entrega grátis, e ordenação por distância.
-- [ ] Frete somado e **gravado** no pedido; retirada sem frete; preview do
+- [x] Frete somado e **gravado** no pedido; retirada sem frete; preview do
       carrinho com subtotal, frete e total.
-- [ ] Rotas novas e alteradas documentadas no Swagger com os status reais.
-- [ ] Testes da seção 6 verdes; `mvn test` e `ng test` sem falha nova;
-      `ng build` ok.
-- [ ] E2E em 390 e 1280 px registrado aqui com data.
-- [ ] Nada do "Fora de Escopo".
+- [x] Rotas novas e alteradas documentadas no Swagger com os status reais.
+- [x] Testes da seção 6 verdes; `mvn test` (491, só o `contextLoads` de
+      ambiente) e `ng test` (só as 10 falhas antigas de provider) sem falha
+      nova; `ng build` ok.
+- [x] E2E em 390 e 1280 px registrado aqui com data.
+- [x] Nada do "Fora de Escopo".
+
+### Registro do teste manual (2026-10-28/29)
+
+- **Migrações**: V19, V20 e V21 aplicadas no boot, depois de um dump do
+  banco local.
+- **Rotina de subida**: preencheu 18 endereços. O CEP genérico
+  `80000-000` ficou sem coordenada, como esperado.
+- **Achado**: a BrasilAPI devolvia o centro de Curitiba para CEPs de
+  bairros diferentes. A AwesomeAPI passou a ser a fonte principal (5.2), as
+  coordenadas foram zeradas e preenchidas de novo, e cada endereço ficou
+  com a do próprio bairro.
+- **Cadastro de cliente pela API** (Bigorrilho, CEP 80730-000): o endereço
+  já nasce com coordenada.
+- **Loja de teste "Plantão Gás e Água"** (R$ 4,00 + R$ 1,50/km, raio de 5
+  km, a 4,1 km do cliente):
+  - preview do carrinho e pedido de entrega com frete **R$ 10,15**, gravado
+    em `orders.delivery_fee` e `delivery_distance_km = 4.1`, e total
+    R$ 109,15;
+  - retirada com frete 0;
+  - com raio de 3 km o pedido foi recusado com 400 "Esta loja não entrega
+    no endereço escolhido.";
+  - as duas modalidades desmarcadas deram 400.
+- **Vitrine** em 390 e 1280 px, como cliente:
+  - linha "4,1 km · Entrega R$ 10,15" no card, e "Entrega grátis" nas
+    lojas sem tarifa;
+  - chips "Entregam aqui", "Retirada" e "Entrega grátis";
+  - "Mais perto" com as abertas primeiro (HU18) e, dentro de cada grupo,
+    pela distância.
+- **Configurações** em 390 px, como fornecedor: interruptores, raio,
+  tarifas e a prévia "A 3 km, o frete fica R$ 8,50".
+- **Checkout** em 390 px:
+  - etapa 2 com "Frete até este endereço: R$ 10,15 · 4,1 km em linha
+    reta";
+  - etapa 3 com subtotal R$ 99,00, frete R$ 10,15 e total R$ 109,15.

@@ -132,7 +132,7 @@ export class ConfigurationComponent implements OnInit {
     const base = Number(deliveryBaseFee);
     const perKm = Number(deliveryFeePerKm);
     if (base === 0 && perKm === 0) return 'Entrega grátis em qualquer distância do raio';
-    return `A ${PREVIEW_KM} km em linha reta, o frete fica ${BRL.format(base + perKm * PREVIEW_KM)}`;
+    return `A ${PREVIEW_KM} km, o frete fica ${BRL.format(base + perKm * PREVIEW_KM)}`;
   }
 
   // envia os valores salvos das outras seções e só os campos desta (F9 Cenário 6)
