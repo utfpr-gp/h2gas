@@ -244,25 +244,25 @@ describe('StoreProfileComponent', () => {
     expect(byId('hours-link')).toBeNull();
   });
 
-  // ---- F10: uma seção por vez, escolhida na barra de etapas ----
+  // ---- F10: uma seção por vez, escolhida pelos botões do topo ----
   const visivel = (id: string) => !(fixture.nativeElement.querySelector(`#${id}`) as HTMLElement).hidden;
-  const etapa = (id: string) => fixture.nativeElement.querySelector(`[data-testid="step-${id}"]`) as HTMLElement;
+  const etapa = (id: string) => fixture.nativeElement.querySelector(`[data-testid="section-${id}"]`) as HTMLElement;
 
   it('deveMostrarSoASecaoEscolhida', async () => {
     await setup();
 
     expect(visivel('aparencia')).toBeTrue();
     expect(visivel('dados')).toBeFalse();
-    expect(etapa('aparencia').getAttribute('aria-current')).toBe('step');
+    expect(etapa('aparencia').getAttribute('aria-pressed')).toBe('true');
 
     spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
-    click('step-dados');
+    click('section-dados');
 
     expect(visivel('dados')).toBeTrue();
     expect(visivel('aparencia')).toBeFalse();
     expect(visivel('endereco')).toBeFalse();
-    expect(etapa('dados').classList).toContain('step-primary');
-    expect(etapa('aparencia').classList).not.toContain('step-primary');
+    expect(etapa('dados').classList).toContain('btn-primary');
+    expect(etapa('aparencia').classList).not.toContain('btn-primary');
   });
 
   it('deveAbrirNaSecaoDoFragmento', async () => {
@@ -277,7 +277,7 @@ describe('StoreProfileComponent', () => {
     await setup();
     const navegar = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
 
-    click('step-funcionamento');
+    click('section-funcionamento');
 
     expect(navegar).toHaveBeenCalledWith([], jasmine.objectContaining({ fragment: 'funcionamento', replaceUrl: true }));
   });
@@ -285,11 +285,11 @@ describe('StoreProfileComponent', () => {
   it('deveManterAEdicaoAoTrocarDeSecao', async () => {
     await setup();
     spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
-    click('step-dados');
+    click('section-dados');
     preencher('store-name', 'Gás Centro Novo');
 
-    click('step-estoque');
-    click('step-dados');
+    click('section-estoque');
+    click('section-dados');
 
     expect((byId('store-name') as HTMLInputElement).value).toBe('Gás Centro Novo');
   });
@@ -299,9 +299,9 @@ describe('StoreProfileComponent', () => {
     spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
     expect(etapa('dados').querySelector('[data-testid="unsaved-dot"]')).toBeNull();
 
-    click('step-dados');
+    click('section-dados');
     preencher('store-name', 'Gás Centro Novo');
-    click('step-aparencia');
+    click('section-aparencia');
 
     expect(etapa('dados').querySelector('[data-testid="unsaved-dot"]')).not.toBeNull();
     expect(etapa('dados').getAttribute('aria-label')).toContain('alterações não salvas');

@@ -10,6 +10,12 @@
 | Dependências | F9 (configurações numa tela só), HU17 (seção de entrega), checkout em etapas (HU05) |
 | Revoga | F9 §5.3, nos pontos de "seções empilhadas" e "sumário que rola até cada uma" |
 
+> **Revisão de 2026-10-29.** O autor viu a barra numerada do checkout e
+> disse: "não precisa ser literalmente igual, os botões servem". A troca
+> de etapa continua igual, mas a escolha é feita por botões em pílula,
+> com o da parte aberta destacado (`btn-primary`, `aria-pressed`), no
+> lugar da `ul.steps`.
+
 ## 2. Objetivo
 
 Como fornecedor, quero ver uma configuração da loja por vez, escolhida
@@ -31,7 +37,7 @@ todas as outras.
   Quando o fornecedor vai para outra etapa e volta, Então o valor digitado
   continua lá.
 - **Cenário 5 — Aviso de não salvo**: Dado uma etapa com edição pendente,
-  Então ela ganha um ponto na barra, e o rótulo acessível diz "alterações
+  Então o botão dela ganha um ponto, e o rótulo acessível diz "alterações
   não salvas".
 - **Cenário 6 — Celular**: Em 390 px, a barra fica fixa no topo, com
   rótulos curtos (Aparência, Dados, Endereço, Horário, Estoque) e sem
@@ -54,8 +60,8 @@ Só frontend; a API não muda.
   - `activeSection` (padrão `aparencia`), lido de `route.snapshot.fragment`;
   - `select(id)` troca a etapa e chama
     `router.navigate([], { fragment, replaceUrl: true, relativeTo: route })`;
-  - a barra é `ul.steps`, no visual do checkout. Só a etapa ativa recebe
-    `step-primary`, porque aqui não há progresso, e `aria-current="step"`;
+  - a escolha é feita por botões em pílula (revisão acima). O da parte
+    aberta recebe `btn-primary` e `aria-pressed="true"`;
   - as seções ficam montadas, com `[hidden]` nas que não estão ativas
     (Cenário 4);
   - sai a rolagem até a seção (`scrollWhenRendered` e os sinalizadores de
@@ -111,3 +117,6 @@ Só frontend; a API não muda.
   - em 1280 px, `#estoque` abre só "Estoque", com a etapa 5 ativa.
 - Ajuste visual do teste: a faixa da barra passou a usar a cor da página,
   com uma borda fina, no lugar do cinza.
+- Revisão do autor: a barra numerada virou botões em pílula. Em 390 px o
+  botão ativo aparece em azul com o ponto de "não salvo"; a faixa de botões
+  rola para o lado e a página não (`scrollWidth` 390).

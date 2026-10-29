@@ -71,7 +71,7 @@ export class StoreProfileComponent implements OnInit, OnDestroy {
   addressCity?: City;
   searchingCep = false;
 
-  // F10: uma seção por vez, escolhida na barra de etapas (como o checkout); o # da URL acompanha
+  // F10: uma seção por vez, escolhida pelos botões do topo; o # da URL acompanha
   readonly sections: { id: SectionId; label: string }[] = [
     { id: 'aparencia', label: 'Aparência' },
     { id: 'dados', label: 'Dados' },
@@ -81,7 +81,7 @@ export class StoreProfileComponent implements OnInit, OnDestroy {
   ];
   activeSection: SectionId = 'aparencia';
 
-  // F10: o aviso de "não salvo" da barra lê o estado das seções de horário e estoque
+  // F10: o aviso de "não salvo" dos botões lê o estado das seções de horário e estoque
   @ViewChild(ConfigurationComponent) private settings?: ConfigurationComponent;
 
   constructor(
@@ -101,7 +101,7 @@ export class StoreProfileComponent implements OnInit, OnDestroy {
     if (id === this.activeSection) return;
     this.activeSection = id;
     this.router.navigate([], { relativeTo: this.route, fragment: id, replaceUrl: true, queryParamsHandling: 'preserve' });
-    // no celular a barra fica no topo; a seção nova começa logo abaixo dela
+    // no celular os botões ficam presos no topo; a seção nova começa logo abaixo deles
     if (typeof window !== 'undefined' && window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 

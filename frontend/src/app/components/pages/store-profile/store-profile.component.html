@@ -4,24 +4,17 @@
         <p class="text-sm text-gray-500">Como a loja aparece para os clientes, quando abre e o estoque mínimo. Cada parte salva sozinha.</p>
     </header>
 
-    <!-- F10: barra de etapas como a do checkout; tocar mostra só aquela parte. Só a ativa fica colorida:
-         aqui não há progresso, cada etapa é independente e salva sozinha -->
-    <nav aria-label="Partes da configuração" class="sticky top-0 z-20 -mx-4 px-2 md:mx-0 md:px-0 pt-2 pb-1 mb-4 bg-base-100/95 backdrop-blur border-b border-base-300">
-        <ul class="steps w-full">
-            <li *ngFor="let sec of sections" role="button" tabindex="0" [attr.data-testid]="'step-' + sec.id"
-                class="step text-xs cursor-pointer transition-colors duration-200 min-h-11"
-                [class.step-primary]="activeSection === sec.id"
-                [class.font-semibold]="activeSection === sec.id"
-                [attr.aria-current]="activeSection === sec.id ? 'step' : null"
-                [attr.aria-label]="sec.label + (hasUnsaved(sec.id) ? ' (alterações não salvas)' : '')"
-                (click)="select(sec.id)" (keydown.enter)="select(sec.id)" (keydown.space)="$event.preventDefault(); select(sec.id)">
-                <span class="inline-flex items-center gap-1">
-                    {{ sec.label }}
-                    <span *ngIf="hasUnsaved(sec.id)" data-testid="unsaved-dot" aria-hidden="true"
-                        class="w-1.5 h-1.5 rounded-full bg-warning"></span>
-                </span>
-            </li>
-        </ul>
+    <!-- F10: um botão por parte; tocar mostra só aquela parte (cada uma salva sozinha) -->
+    <nav aria-label="Partes da configuração" class="sticky top-0 z-20 -mx-4 px-4 md:mx-0 md:px-0 py-2 mb-4 bg-base-100/95 backdrop-blur
+                flex gap-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <button *ngFor="let sec of sections" type="button" [attr.data-testid]="'section-' + sec.id" (click)="select(sec.id)"
+            [attr.aria-pressed]="activeSection === sec.id"
+            [attr.aria-label]="sec.label + (hasUnsaved(sec.id) ? ' (alterações não salvas)' : '')"
+            class="btn btn-sm rounded-full shrink-0 min-h-11 sm:min-h-8 gap-1"
+            [ngClass]="activeSection === sec.id ? 'btn-primary' : 'btn-ghost border border-gray-200 bg-white'">
+            {{ sec.label }}
+            <span *ngIf="hasUnsaved(sec.id)" data-testid="unsaved-dot" aria-hidden="true" class="w-1.5 h-1.5 rounded-full bg-warning"></span>
+        </button>
     </nav>
 
     <div *ngIf="loading" class="space-y-3" aria-busy="true">
