@@ -1,0 +1,43 @@
+<div class="max-w-3xl w-full mx-auto px-4 md:px-8 pt-6 pb-24 md:pb-10">
+    <header class="mb-4">
+        <h1 class="text-2xl font-bold text-gray-800">Configurações</h1>
+        <p class="text-sm text-gray-500">Mensagens automáticas de WhatsApp. Cada mensagem enviada tem custo no Twilio, por isso elas começam desligadas.</p>
+    </header>
+
+    <div *ngIf="loading" class="space-y-2" aria-busy="true">
+        <div *ngFor="let n of [1,2]" class="skeleton h-24 rounded-xl"></div>
+    </div>
+
+    <div *ngIf="!loading && loadFailed" class="text-center bg-white rounded-xl border border-gray-200 py-10 px-4">
+        <span class="material-icons text-gray-300" style="font-size: 48px" aria-hidden="true">cloud_off</span>
+        <p class="text-gray-700 font-semibold mt-2">Não foi possível carregar as configurações</p>
+        <button type="button" class="btn btn-primary btn-sm rounded-xl mt-3" (click)="load()">Tentar de novo</button>
+    </div>
+
+    <ng-container *ngIf="!loading && !loadFailed">
+        <p *ngIf="!whatsappConfigured" data-testid="twilio-missing" role="status"
+            class="flex items-start gap-2 text-sm text-gray-800 bg-warning/15 rounded-xl px-4 py-3 mb-3">
+            <span class="material-icons text-base text-warning" aria-hidden="true">warning</span>
+            <span><strong>Twilio não configurado.</strong> Preencha <code>TWILIO_ACCOUNT_SID</code>, <code>TWILIO_API_KEY_SID</code>,
+                <code>TWILIO_API_KEY_SECRET</code> e <code>TWILIO_WHATSAPP_FROM</code> no ambiente do backend para poder ligar as mensagens.</span>
+        </p>
+
+        <ul class="space-y-3">
+            <li *ngFor="let setting of settings" class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+                <label class="flex items-start gap-3" [class.cursor-pointer]="!locked(setting)" [attr.for]="'setting-' + setting.key">
+                    <span class="w-10 h-10 shrink-0 rounded-lg bg-success/10 text-success flex items-center justify-center">
+                        <span class="material-icons" aria-hidden="true">{{ labels[setting.key].icon }}</span>
+                    </span>
+                    <span class="min-w-0 flex-1">
+                        <span class="block font-semibold text-gray-800">{{ labels[setting.key].title }}</span>
+                        <span class="block text-sm text-gray-500 mt-0.5">{{ labels[setting.key].description }}</span>
+                    </span>
+                    <span *ngIf="saving === setting.key" class="loading loading-spinner loading-sm text-primary mt-1"></span>
+                    <input #toggleInput type="checkbox" class="toggle toggle-success mt-1" [id]="'setting-' + setting.key"
+                        [attr.data-testid]="'setting-' + setting.key" [checked]="setting.enabled" [disabled]="locked(setting)"
+                        (change)="toggle(setting, toggleInput)" />
+                </label>
+            </li>
+        </ul>
+    </ng-container>
+</div>

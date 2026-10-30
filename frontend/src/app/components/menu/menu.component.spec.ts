@@ -511,7 +511,7 @@ describe('MenuComponent', () => {
       .map((a) => a.getAttribute('href'));
 
     for (const [onde, hrefs] of [['desktop', desktop], ['mobile', mobile]] as const) {
-      expect(hrefs).withContext(onde).toEqual(jasmine.arrayContaining(['/admin', '/admin/usuarios', '/admin/fornecedores', '/admin/cidades', '/admin/tipos', '/admin/categorias']));
+      expect(hrefs).withContext(onde).toEqual(jasmine.arrayContaining(['/admin', '/admin/usuarios', '/admin/fornecedores', '/admin/cidades', '/admin/tipos', '/admin/categorias', '/admin/configuracoes']));
       expect(hrefs).withContext(onde).not.toContain('/inicio');
       expect(hrefs).withContext(onde).not.toContain('/meus-pedidos');
     }

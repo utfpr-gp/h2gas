@@ -62,6 +62,13 @@ export const routes: Routes = [
         data: {roles: ['SUPPLIER']}
     },
     {
+        // HU26: interruptores das mensagens de WhatsApp
+        path: 'admin/configuracoes',
+        loadComponent: () => import('./components/pages/admin-settings/admin-settings.component').then((m) => m.AdminSettingsComponent),
+        canActivate: [authGuard],
+        data: {roles: ['ADMIN']}
+    },
+    {
         // HU19: as categorias são globais — só o admin cadastra (tela fora do bundle inicial)
         path: 'admin/categorias',
         loadComponent: () => import('./components/pages/admin-categories/admin-categories.component').then((m) => m.AdminCategoriesComponent),
