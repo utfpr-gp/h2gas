@@ -37,7 +37,7 @@ class LoginTokenServiceTest {
 
     @MockitoBean private MailService mailService;
     @MockitoBean private TokenService tokenService;
-    @MockitoBean private WhatsAppSender whatsAppSender;
+    @MockitoBean private PhoneMessageSender phoneMessageSender;
     @MockitoBean private AppSettingService appSettingService;
 
     private User usuario;
@@ -198,17 +198,18 @@ class LoginTokenServiceTest {
 
     // ---- HU26 ----
     private void whatsappLigado(boolean ligado) {
-        when(appSettingService.isActive(com.h2gas.enums.AppSettingKey.WHATSAPP_LOGIN_CODE)).thenReturn(ligado);
+        when(appSettingService.isActive(com.h2gas.enums.AppSettingKey.PHONE_LOGIN_CODE)).thenReturn(ligado);
+        when(appSettingService.phoneChannel()).thenReturn(com.h2gas.enums.PhoneChannel.SMS);
     }
 
     @Test
     void deveMandarPeloWhatsappQuandoLigado() {
         whatsappLigado(true);
 
-        loginTokenService.requestToken(usuario.getEmail(), com.h2gas.enums.LoginChannelEnum.WHATSAPP);
+        loginTokenService.requestToken(usuario.getEmail(), com.h2gas.enums.LoginChannelEnum.PHONE);
 
         String codigo = tokenSalvo().getCode();
-        org.mockito.Mockito.verify(whatsAppSender).send("41999999999",
+        org.mockito.Mockito.verify(phoneMessageSender).send(com.h2gas.enums.PhoneChannel.SMS, "41999999999",
                 "Seu código de acesso H2Gás é " + codigo + ". Válido por 5 minutos.");
         org.mockito.Mockito.verify(mailService, org.mockito.Mockito.never()).sendMail(any(), any(), any());
     }
@@ -217,9 +218,9 @@ class LoginTokenServiceTest {
     void deveUsarEmailQuandoDesligado() {
         whatsappLigado(false);
 
-        loginTokenService.requestToken(usuario.getEmail(), com.h2gas.enums.LoginChannelEnum.WHATSAPP);
+        loginTokenService.requestToken(usuario.getEmail(), com.h2gas.enums.LoginChannelEnum.PHONE);
 
-        org.mockito.Mockito.verify(whatsAppSender, org.mockito.Mockito.never()).send(any(), any());
+        org.mockito.Mockito.verify(phoneMessageSender, org.mockito.Mockito.never()).send(any(), any(), any());
         org.mockito.Mockito.verify(mailService).sendMail(org.mockito.ArgumentMatchers.eq(usuario.getEmail()), any(), any());
     }
 
@@ -229,18 +230,18 @@ class LoginTokenServiceTest {
         usuario.setPhoneNumber("123");
         userRepository.save(usuario);
 
-        loginTokenService.requestToken(usuario.getEmail(), com.h2gas.enums.LoginChannelEnum.WHATSAPP);
+        loginTokenService.requestToken(usuario.getEmail(), com.h2gas.enums.LoginChannelEnum.PHONE);
 
-        org.mockito.Mockito.verify(whatsAppSender, org.mockito.Mockito.never()).send(any(), any());
+        org.mockito.Mockito.verify(phoneMessageSender, org.mockito.Mockito.never()).send(any(), any(), any());
         org.mockito.Mockito.verify(mailService).sendMail(org.mockito.ArgumentMatchers.eq(usuario.getEmail()), any(), any());
     }
 
     @Test
     void deveUsarEmailSeOWhatsappFalhar() {
         whatsappLigado(true);
-        org.mockito.Mockito.doThrow(new RuntimeException("Twilio fora")).when(whatsAppSender).send(any(), any());
+        org.mockito.Mockito.doThrow(new RuntimeException("Twilio fora")).when(phoneMessageSender).send(any(), any(), any());
 
-        assertDoesNotThrow(() -> loginTokenService.requestToken(usuario.getEmail(), com.h2gas.enums.LoginChannelEnum.WHATSAPP));
+        assertDoesNotThrow(() -> loginTokenService.requestToken(usuario.getEmail(), com.h2gas.enums.LoginChannelEnum.PHONE));
 
         org.mockito.Mockito.verify(mailService).sendMail(org.mockito.ArgumentMatchers.eq(usuario.getEmail()), any(), any());
     }
@@ -251,6 +252,6 @@ class LoginTokenServiceTest {
 
         loginTokenService.requestToken(usuario.getEmail(), com.h2gas.enums.LoginChannelEnum.EMAIL);
 
-        org.mockito.Mockito.verify(whatsAppSender, org.mockito.Mockito.never()).send(any(), any());
+        org.mockito.Mockito.verify(phoneMessageSender, org.mockito.Mockito.never()).send(any(), any(), any());
     }
 }

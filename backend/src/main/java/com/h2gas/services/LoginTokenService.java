@@ -30,14 +30,14 @@ public class LoginTokenService {
     private final MailService mailService;
     private final TokenService tokenService;
     private final Environment environment;
-    private final WhatsAppSender whatsAppSender;
+    private final PhoneMessageSender phoneMessageSender;
     private final AppSettingService appSettingService;
     private final SecureRandom random = new SecureRandom();
 
     public LoginTokenService(LoginTokenRepository loginTokenRepository, UserRepository userRepository,
                              MailService mailService, TokenService tokenService, Environment environment,
-                             WhatsAppSender whatsAppSender, AppSettingService appSettingService) {
-        this.whatsAppSender = whatsAppSender;
+                             PhoneMessageSender phoneMessageSender, AppSettingService appSettingService) {
+        this.phoneMessageSender = phoneMessageSender;
         this.appSettingService = appSettingService;
         this.loginTokenRepository = loginTokenRepository;
         this.userRepository = userRepository;
@@ -104,7 +104,7 @@ public class LoginTokenService {
         if (!environment.matchesProfiles("prod")) {
             log.info("HU11 (ambiente de desenvolvimento): código de acesso de {} é {}", user.getEmail(), code);
         }
-        if (channel == LoginChannelEnum.WHATSAPP && sendByWhatsApp(user, code)) {
+        if (channel == LoginChannelEnum.PHONE && sendByPhone(user, code)) {
             return;
         }
         try {
@@ -115,18 +115,18 @@ public class LoginTokenService {
         }
     }
 
-    // HU26: falso quando o admin desligou, o Twilio não está configurado, não há celular ou o envio falhou;
+    // HU26: falso quando o admin desligou, o canal não está configurado, não há celular ou o envio falhou;
     // nesses casos o código segue pelo e-mail
-    private boolean sendByWhatsApp(User user, String code) {
+    private boolean sendByPhone(User user, String code) {
         String digits = user.getPhoneNumber() == null ? "" : user.getPhoneNumber().replaceAll("\\D", "");
-        if (!appSettingService.isActive(AppSettingKey.WHATSAPP_LOGIN_CODE) || digits.length() < 10) {
+        if (!appSettingService.isActive(AppSettingKey.PHONE_LOGIN_CODE) || digits.length() < 10) {
             return false;
         }
         try {
-            whatsAppSender.send(user.getPhoneNumber(), "Seu código de acesso H2Gás é " + code + ". Válido por 5 minutos.");
+            phoneMessageSender.send(appSettingService.phoneChannel(), user.getPhoneNumber(), "Seu código de acesso H2Gás é " + code + ". Válido por 5 minutos.");
             return true;
         } catch (Exception e) {
-            log.error("Não foi possível enviar o código pelo WhatsApp; vai por e-mail", e);
+            log.error("Não foi possível enviar o código ao celular; vai por e-mail", e);
             return false;
         }
     }

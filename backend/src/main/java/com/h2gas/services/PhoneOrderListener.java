@@ -11,19 +11,19 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-// HU26: avisa o cliente pelo WhatsApp que o pedido saiu para entrega; só depois do commit do status
+// HU26: avisa o cliente no celular (WhatsApp ou SMS) que o pedido saiu para entrega; só depois do commit do status
 @Component
-public class WhatsAppOrderListener {
+public class PhoneOrderListener {
 
-    private static final Logger log = LoggerFactory.getLogger(WhatsAppOrderListener.class);
+    private static final Logger log = LoggerFactory.getLogger(PhoneOrderListener.class);
 
-    private final WhatsAppSender whatsAppSender;
+    private final PhoneMessageSender phoneMessageSender;
     private final AppSettingService appSettingService;
     private final OrderRepository orderRepository;
 
-    public WhatsAppOrderListener(WhatsAppSender whatsAppSender, AppSettingService appSettingService,
+    public PhoneOrderListener(PhoneMessageSender phoneMessageSender, AppSettingService appSettingService,
                                  OrderRepository orderRepository) {
-        this.whatsAppSender = whatsAppSender;
+        this.phoneMessageSender = phoneMessageSender;
         this.appSettingService = appSettingService;
         this.orderRepository = orderRepository;
     }
@@ -31,15 +31,15 @@ public class WhatsAppOrderListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void onOrderStatusChanged(OrderStatusChangedEvent event) {
         if (!OrderStatusEnum.OUT_FOR_DELIVERY.getStatus().equals(event.status())
-                || !appSettingService.isActive(AppSettingKey.WHATSAPP_ORDER_OUT_FOR_DELIVERY)) {
+                || !appSettingService.isActive(AppSettingKey.PHONE_ORDER_OUT_FOR_DELIVERY)) {
             return;
         }
         // a rota já começou e foi gravada: falha aqui fica só no log, de propósito
         try {
             orderRepository.findById(event.orderId()).ifPresent(order ->
-                    whatsAppSender.send(order.getCustomer().getPhoneNumber(), message(order)));
+                    phoneMessageSender.send(appSettingService.phoneChannel(), order.getCustomer().getPhoneNumber(), message(order)));
         } catch (Exception e) {
-            log.error("Não foi possível avisar pelo WhatsApp que o pedido {} saiu para entrega", event.orderId(), e);
+            log.error("Não foi possível avisar no celular que o pedido {} saiu para entrega", event.orderId(), e);
         }
     }
 

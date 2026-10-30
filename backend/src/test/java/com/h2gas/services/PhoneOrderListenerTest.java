@@ -17,13 +17,13 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-// HU26: aviso de saiu para entrega ao cliente, depois do commit
-class WhatsAppOrderListenerTest {
+// HU26: aviso de saiu para entrega ao celular do cliente, depois do commit
+class PhoneOrderListenerTest {
 
-    private final WhatsAppSender sender = mock(WhatsAppSender.class);
+    private final PhoneMessageSender sender = mock(PhoneMessageSender.class);
     private final AppSettingService settings = mock(AppSettingService.class);
     private final OrderRepository orders = mock(OrderRepository.class);
-    private final WhatsAppOrderListener listener = new WhatsAppOrderListener(sender, settings, orders);
+    private final PhoneOrderListener listener = new PhoneOrderListener(sender, settings, orders);
 
     @BeforeEach
     void setUp() {
@@ -40,7 +40,8 @@ class WhatsAppOrderListenerTest {
     }
 
     private void ligado(boolean ligado) {
-        when(settings.isActive(AppSettingKey.WHATSAPP_ORDER_OUT_FOR_DELIVERY)).thenReturn(ligado);
+        when(settings.isActive(AppSettingKey.PHONE_ORDER_OUT_FOR_DELIVERY)).thenReturn(ligado);
+        when(settings.phoneChannel()).thenReturn(com.h2gas.enums.PhoneChannel.SMS);
     }
 
     @Test
@@ -49,7 +50,7 @@ class WhatsAppOrderListenerTest {
 
         listener.onOrderStatusChanged(new OrderStatusChangedEvent("94c103db-8f0c", "c1", "Saiu para entrega"));
 
-        verify(sender).send("42990000011",
+        verify(sender).send(com.h2gas.enums.PhoneChannel.SMS, "42990000011",
                 "Seu pedido #94c103db da Gás Guará Centro saiu para entrega com João. Acompanhe no H2Gás.");
     }
 
@@ -75,7 +76,7 @@ class WhatsAppOrderListenerTest {
     @Test
     void naoDeveQuebrarSeOEnvioFalhar() {
         ligado(true);
-        doThrow(new RuntimeException("Twilio fora")).when(sender).send(any(), any());
+        doThrow(new RuntimeException("Twilio fora")).when(sender).send(any(), any(), any());
 
         assertDoesNotThrow(() -> listener.onOrderStatusChanged(
                 new OrderStatusChangedEvent("94c103db-8f0c", "c1", "Saiu para entrega")));

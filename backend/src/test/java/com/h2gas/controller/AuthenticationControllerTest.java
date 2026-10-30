@@ -294,18 +294,20 @@ class AuthenticationControllerTest {
     void deveAceitarCanalNoPedidoDeCodigo() throws Exception {
         mockMvc.perform(post("/api/auth/login/token/request")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"email\":\"qualquer@teste.com\", \"channel\":\"WHATSAPP\"}"))
+                        .content("{\"email\":\"qualquer@teste.com\", \"channel\":\"PHONE\"}"))
                 .andExpect(status().isOk());
 
-        verify(loginTokenService).requestToken("qualquer@teste.com", com.h2gas.enums.LoginChannelEnum.WHATSAPP);
+        verify(loginTokenService).requestToken("qualquer@teste.com", com.h2gas.enums.LoginChannelEnum.PHONE);
     }
 
     @Test
     void deveInformarOsCanais() throws Exception {
-        org.mockito.Mockito.when(appSettingService.isActive(com.h2gas.enums.AppSettingKey.WHATSAPP_LOGIN_CODE)).thenReturn(true);
+        org.mockito.Mockito.when(appSettingService.isActive(com.h2gas.enums.AppSettingKey.PHONE_LOGIN_CODE)).thenReturn(true);
+        org.mockito.Mockito.when(appSettingService.phoneChannel()).thenReturn(com.h2gas.enums.PhoneChannel.SMS);
 
         mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/auth/login/channels"))
                 .andExpect(status().isOk())
-                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.whatsapp").value(true));
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.phone").value(true))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.phoneChannel").value("SMS"));
     }
 }

@@ -59,14 +59,15 @@ class AdminSettingsControllerTest {
     @Test
     void deveListarParaAdmin() throws Exception {
         autenticarComo(UserTypeEnum.ADMIN);
-        when(appSettingService.list()).thenReturn(new AppSettingsDTO(true, List.of(
-                new AppSettingDTO(AppSettingKey.WHATSAPP_LOGIN_CODE, false),
-                new AppSettingDTO(AppSettingKey.WHATSAPP_ORDER_OUT_FOR_DELIVERY, true))));
+        when(appSettingService.list()).thenReturn(new AppSettingsDTO(true, false, List.of(
+                new AppSettingDTO(AppSettingKey.PHONE_LOGIN_CODE, false),
+                new AppSettingDTO(AppSettingKey.PHONE_ORDER_OUT_FOR_DELIVERY, true))));
 
         mockMvc.perform(get("/api/admin/settings"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.whatsappConfigured").value(true))
-                .andExpect(jsonPath("$.settings[0].key").value("WHATSAPP_LOGIN_CODE"))
+                .andExpect(jsonPath("$.smsConfigured").value(false))
+                .andExpect(jsonPath("$.settings[0].key").value("PHONE_LOGIN_CODE"))
                 .andExpect(jsonPath("$.settings[1].enabled").value(true));
     }
 
@@ -75,7 +76,7 @@ class AdminSettingsControllerTest {
         autenticarComo(UserTypeEnum.CUSTOMER);
 
         mockMvc.perform(get("/api/admin/settings")).andExpect(status().isForbidden());
-        mockMvc.perform(put("/api/admin/settings/WHATSAPP_LOGIN_CODE").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(put("/api/admin/settings/PHONE_LOGIN_CODE").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"enabled\": true}")).andExpect(status().isForbidden());
         verify(appSettingService, never()).update(any(), anyBoolean());
     }
@@ -83,10 +84,10 @@ class AdminSettingsControllerTest {
     @Test
     void deveAtualizar() throws Exception {
         autenticarComo(UserTypeEnum.ADMIN);
-        when(appSettingService.update(AppSettingKey.WHATSAPP_LOGIN_CODE, true))
-                .thenReturn(new AppSettingDTO(AppSettingKey.WHATSAPP_LOGIN_CODE, true));
+        when(appSettingService.update(AppSettingKey.PHONE_LOGIN_CODE, true))
+                .thenReturn(new AppSettingDTO(AppSettingKey.PHONE_LOGIN_CODE, true));
 
-        mockMvc.perform(put("/api/admin/settings/WHATSAPP_LOGIN_CODE").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(put("/api/admin/settings/PHONE_LOGIN_CODE").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"enabled\": true}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.enabled").value(true));
@@ -98,7 +99,7 @@ class AdminSettingsControllerTest {
 
         mockMvc.perform(put("/api/admin/settings/NAO_EXISTE").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"enabled\": true}")).andExpect(status().isNotFound());
-        mockMvc.perform(put("/api/admin/settings/WHATSAPP_LOGIN_CODE").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(put("/api/admin/settings/PHONE_LOGIN_CODE").contentType(MediaType.APPLICATION_JSON)
                 .content("{}")).andExpect(status().isBadRequest());
         verify(appSettingService, never()).update(any(), anyBoolean());
     }

@@ -18,7 +18,7 @@ public class RequestLoginTokenDTO {
     private String email;
 
     // HU26: nulo = e-mail
-    @Schema(description = "Por onde enviar o código; WHATSAPP vai para o celular cadastrado e volta para o e-mail quando não dá",
+    @Schema(description = "Por onde enviar o código; PHONE vai para o celular cadastrado (WhatsApp ou SMS, conforme o admin) e volta para o e-mail quando não dá",
             example = "EMAIL", defaultValue = "EMAIL", nullable = true)
     private com.h2gas.enums.LoginChannelEnum channel;
 }
