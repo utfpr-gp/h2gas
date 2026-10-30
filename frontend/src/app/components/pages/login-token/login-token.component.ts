@@ -1,9 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { AuthService } from '../../../services/auth.service';
+import { AuthService, LoginChannel } from '../../../services/auth.service';
 import { UserService } from '../../../services/user.service';
 import { LocationContextService } from '../../../services/location-context.service';
 import { backendMessage } from '../../../utils/backend-message';
@@ -16,12 +16,27 @@ import { isCheckoutReturn, navigateAfterLogin, navigateKeepingReturnUrl } from '
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './login-token.component.html',
 })
-export class LoginTokenComponent {
+export class LoginTokenComponent implements OnInit {
   emailForm: FormGroup;
   codeForm: FormGroup;
   step: 'email' | 'code' = 'email';
   sending = false;
   validating = false;
+  // HU26: o WhatsApp só aparece disponível quando o admin liga
+  channel: LoginChannel = 'EMAIL';
+  whatsappAvailable = false;
+
+  ngOnInit(): void {
+    this.authService.getLoginChannels().subscribe({
+      next: (channels) => (this.whatsappAvailable = channels.whatsapp),
+      error: () => (this.whatsappAvailable = false),
+    });
+  }
+
+  selectChannel(channel: LoginChannel) {
+    if (channel === 'WHATSAPP' && !this.whatsappAvailable) return;
+    this.channel = channel;
+  }
 
   // HU13: para onde voltar depois de entrar (ex.: o checkout do visitante)
   get returnUrl(): string | null {
@@ -60,14 +75,14 @@ export class LoginTokenComponent {
     }
     this.sending = true;
     // avança em qualquer resposta: a tela não revela se o e-mail está cadastrado
-    this.authService.requestLoginToken(this.email).subscribe({
+    this.authService.requestLoginToken(this.email, this.channel).subscribe({
       next: () => this.goToCodeStep(),
       error: () => this.goToCodeStep(),
     });
   }
 
   resendCode() {
-    this.authService.requestLoginToken(this.email).subscribe({
+    this.authService.requestLoginToken(this.email, this.channel).subscribe({
       next: () => this.toastr.success('Enviamos um novo código.'),
       error: () => this.toastr.success('Enviamos um novo código.'),
     });

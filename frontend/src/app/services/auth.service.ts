@@ -6,6 +6,8 @@ import {jwtDecode} from 'jwt-decode';
 import { LocationContextService } from './location-context.service';
 import { CartService } from './cart.service';
 
+export type LoginChannel = 'EMAIL' | 'WHATSAPP';
+
 interface JwtPayload {
   exp: number;
   [key: string]: any;
@@ -52,8 +54,13 @@ export class AuthService {
   }
 
   // HU11: login por código de 6 dígitos enviado por e-mail
-  requestLoginToken(email: string): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/login/token/request`, { email });
+  // HU26: o canal só muda por onde o código vai (WhatsApp volta para o e-mail quando não dá)
+  requestLoginToken(email: string, channel: LoginChannel = 'EMAIL'): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/login/token/request`, { email, channel });
+  }
+
+  getLoginChannels(): Observable<{ whatsapp: boolean }> {
+    return this.http.get<{ whatsapp: boolean }>(`${this.baseUrl}/login/channels`);
   }
 
   validateLoginToken(email: string, code: string): Observable<{ token: string }> {

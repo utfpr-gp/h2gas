@@ -36,7 +36,8 @@ describe('LoginTokenComponent', () => {
   beforeEach(async () => {
     localStorage.clear();
     queryParams = {};
-    authServiceSpy = jasmine.createSpyObj('AuthService', ['requestLoginToken', 'validateLoginToken']);
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['requestLoginToken', 'validateLoginToken', 'getLoginChannels']);
+    authServiceSpy.getLoginChannels.and.returnValue(of({ whatsapp: false }));
     authServiceSpy.requestLoginToken.and.returnValue(of(undefined as void));
     authServiceSpy.validateLoginToken.and.returnValue(of({ token: 'jwt-do-codigo' }));
     userServiceSpy = jasmine.createSpyObj('UserService', ['getMe']);
@@ -67,11 +68,38 @@ describe('LoginTokenComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('deveManterOCanalCelularDesabilitado', () => {
-    const celular = byId('channel-sms') as HTMLButtonElement;
-    expect(celular.disabled).toBeTrue();
-    expect(celular.textContent).toContain('Em breve');
+  // HU26: o WhatsApp só fica disponível quando o admin liga
+  it('deveManterOWhatsappDesabilitadoQuandoDesligado', () => {
+    const whatsapp = byId('channel-whatsapp') as HTMLButtonElement;
+    expect(whatsapp.disabled).toBeTrue();
+    expect(whatsapp.textContent).toContain('Em breve');
     expect((byId('channel-email') as HTMLButtonElement).disabled).toBeFalse();
+  });
+
+  it('deveMandarOCodigoPeloWhatsappQuandoLigado', () => {
+    authServiceSpy.getLoginChannels.and.returnValue(of({ whatsapp: true }));
+    component.ngOnInit();
+    fixture.detectChanges();
+    const whatsapp = byId('channel-whatsapp') as HTMLButtonElement;
+    expect(whatsapp.disabled).toBeFalse();
+    expect(whatsapp.textContent).not.toContain('Em breve');
+
+    whatsapp.click();
+    fixture.detectChanges();
+    expect(whatsapp.getAttribute('aria-pressed')).toBe('true');
+    enviarEmail();
+
+    expect(authServiceSpy.requestLoginToken).toHaveBeenCalledOnceWith('cliente@h2gas.local', 'WHATSAPP');
+    expect(el().textContent).toContain('WhatsApp cadastrado');
+  });
+
+  it('deveFicarNoEmailSeOsCanaisFalharem', () => {
+    authServiceSpy.getLoginChannels.and.returnValue(throwError(() => ({ status: 0 })));
+    component.ngOnInit();
+    fixture.detectChanges();
+
+    expect((byId('channel-whatsapp') as HTMLButtonElement).disabled).toBeTrue();
+    expect(component.channel).toBe('EMAIL');
   });
 
   it('deveAvancarParaEtapaDeCodigoAposEnviarEmail', () => {
@@ -79,7 +107,7 @@ describe('LoginTokenComponent', () => {
 
     enviarEmail();
 
-    expect(authServiceSpy.requestLoginToken).toHaveBeenCalledOnceWith('cliente@h2gas.local');
+    expect(authServiceSpy.requestLoginToken).toHaveBeenCalledOnceWith('cliente@h2gas.local', 'EMAIL');
     expect(byId('code-input')).toBeTruthy();
     expect(el().textContent).toContain('cliente@h2gas.local');
   });
