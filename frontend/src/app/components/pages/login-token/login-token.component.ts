@@ -22,19 +22,23 @@ export class LoginTokenComponent implements OnInit {
   step: 'email' | 'code' = 'email';
   sending = false;
   validating = false;
-  // HU26: o WhatsApp só aparece disponível quando o admin liga
+  // HU26: o celular só aparece disponível quando o admin liga; o canal (WhatsApp ou SMS) também vem dele
   channel: LoginChannel = 'EMAIL';
-  whatsappAvailable = false;
+  phoneAvailable = false;
+  phoneLabel = 'SMS';
 
   ngOnInit(): void {
     this.authService.getLoginChannels().subscribe({
-      next: (channels) => (this.whatsappAvailable = channels.whatsapp),
-      error: () => (this.whatsappAvailable = false),
+      next: (channels) => {
+        this.phoneAvailable = channels.phone;
+        this.phoneLabel = channels.phoneChannel === 'WHATSAPP' ? 'WhatsApp' : 'SMS';
+      },
+      error: () => (this.phoneAvailable = false),
     });
   }
 
   selectChannel(channel: LoginChannel) {
-    if (channel === 'WHATSAPP' && !this.whatsappAvailable) return;
+    if (channel === 'PHONE' && !this.phoneAvailable) return;
     this.channel = channel;
   }
 

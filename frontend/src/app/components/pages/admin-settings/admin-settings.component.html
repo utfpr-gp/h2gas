@@ -1,7 +1,7 @@
 <div class="max-w-3xl w-full mx-auto px-4 md:px-8 pt-6 pb-24 md:pb-10">
     <header class="mb-4">
         <h1 class="text-2xl font-bold text-gray-800">Configurações</h1>
-        <p class="text-sm text-gray-500">Mensagens automáticas de WhatsApp. Cada mensagem enviada tem custo no Twilio, por isso elas começam desligadas.</p>
+        <p class="text-sm text-gray-500">Mensagens automáticas ao celular, por WhatsApp ou SMS. Cada mensagem enviada tem custo no Twilio, por isso elas começam desligadas.</p>
     </header>
 
     <div *ngIf="loading" class="space-y-2" aria-busy="true">
@@ -15,11 +15,17 @@
     </div>
 
     <ng-container *ngIf="!loading && !loadFailed">
-        <p *ngIf="!whatsappConfigured" data-testid="twilio-missing" role="status"
+        <p *ngIf="nothingConfigured" data-testid="twilio-missing" role="status"
             class="flex items-start gap-2 text-sm text-gray-800 bg-warning/15 rounded-xl px-4 py-3 mb-3">
             <span class="material-icons text-base text-warning" aria-hidden="true">warning</span>
             <span><strong>Twilio não configurado.</strong> Preencha <code>TWILIO_ACCOUNT_SID</code>, <code>TWILIO_API_KEY_SID</code>,
-                <code>TWILIO_API_KEY_SECRET</code> e <code>TWILIO_WHATSAPP_FROM</code> no ambiente do backend para poder ligar as mensagens.</span>
+                <code>TWILIO_API_KEY_SECRET</code> e <code>TWILIO_WHATSAPP_FROM</code> ou <code>TWILIO_SMS_FROM</code> no ambiente do backend para poder ligar as mensagens.</span>
+        </p>
+
+        <p *ngIf="!nothingConfigured" data-testid="phone-channel" class="text-sm text-gray-600 mb-3">
+            As mensagens vão por <strong class="text-gray-800">{{ channelLabel }}</strong>.
+            <span *ngIf="!whatsappConfigured">WhatsApp não configurado.</span>
+            <span *ngIf="!smsConfigured">SMS não configurado.</span>
         </p>
 
         <ul class="space-y-3">

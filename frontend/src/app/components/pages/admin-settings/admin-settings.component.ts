@@ -5,19 +5,24 @@ import { AdminSettingsService, AppSetting, AppSettingKey } from '../../../servic
 import { backendMessage } from '../../../utils/backend-message';
 
 const LABELS: Record<AppSettingKey, { title: string; description: string; icon: string }> = {
-  WHATSAPP_LOGIN_CODE: {
-    title: 'Código de login por WhatsApp',
+  PHONE_LOGIN_CODE: {
+    title: 'Código de login pelo celular',
     description: 'O usuário pode escolher receber o código de acesso no celular cadastrado. Sem celular, ou se o envio falhar, o código vai por e-mail.',
     icon: 'password',
   },
-  WHATSAPP_ORDER_OUT_FOR_DELIVERY: {
+  PHONE_ORDER_OUT_FOR_DELIVERY: {
     title: 'Aviso de saiu para entrega',
     description: 'O cliente recebe uma mensagem quando o entregador inicia a rota do pedido.',
     icon: 'local_shipping',
   },
+  PHONE_USE_SMS: {
+    title: 'Enviar por SMS em vez do WhatsApp',
+    description: 'Desligado, as mensagens vão pelo WhatsApp. Ligado, vão por SMS.',
+    icon: 'sms',
+  },
 };
 
-// HU26: o admin liga e desliga as mensagens de WhatsApp (cada envio tem custo no Twilio)
+// HU26: o admin liga e desliga as mensagens ao celular (cada envio tem custo no Twilio) e escolhe o canal
 @Component({
   selector: 'app-admin-settings',
   standalone: true,
@@ -31,6 +36,7 @@ export class AdminSettingsComponent implements OnInit {
   readonly labels = LABELS;
   settings: AppSetting[] = [];
   whatsappConfigured = false;
+  smsConfigured = false;
   loading = true;
   loadFailed = false;
   saving: AppSettingKey | null = null;
@@ -46,6 +52,7 @@ export class AdminSettingsComponent implements OnInit {
       next: (config) => {
         this.settings = config.settings;
         this.whatsappConfigured = config.whatsappConfigured;
+        this.smsConfigured = config.smsConfigured;
         this.loading = false;
       },
       error: (err) => {
@@ -56,9 +63,26 @@ export class AdminSettingsComponent implements OnInit {
     });
   }
 
-  // sem Twilio só dá para desligar o que ficou ligado
+  get nothingConfigured(): boolean {
+    return !this.whatsappConfigured && !this.smsConfigured;
+  }
+
+  get useSms(): boolean {
+    return this.settings.find((s) => s.key === 'PHONE_USE_SMS')?.enabled ?? false;
+  }
+
+  get channelLabel(): string {
+    return this.useSms ? 'SMS' : 'WhatsApp';
+  }
+
+  // o mesmo que o backend aceita: desligar sempre pode; ligar ou trocar de canal exige o canal configurado
   locked(setting: AppSetting): boolean {
-    return this.saving !== null || (!this.whatsappConfigured && !setting.enabled);
+    if (this.saving !== null) return true;
+    if (setting.key === 'PHONE_USE_SMS') {
+      return setting.enabled ? !this.whatsappConfigured : !this.smsConfigured;
+    }
+    const configured = this.useSms ? this.smsConfigured : this.whatsappConfigured;
+    return !configured && !setting.enabled;
   }
 
   toggle(setting: AppSetting, input: HTMLInputElement) {

@@ -37,7 +37,7 @@ describe('LoginTokenComponent', () => {
     localStorage.clear();
     queryParams = {};
     authServiceSpy = jasmine.createSpyObj('AuthService', ['requestLoginToken', 'validateLoginToken', 'getLoginChannels']);
-    authServiceSpy.getLoginChannels.and.returnValue(of({ whatsapp: false }));
+    authServiceSpy.getLoginChannels.and.returnValue(of({ phone: false, phoneChannel: 'SMS' }));
     authServiceSpy.requestLoginToken.and.returnValue(of(undefined as void));
     authServiceSpy.validateLoginToken.and.returnValue(of({ token: 'jwt-do-codigo' }));
     userServiceSpy = jasmine.createSpyObj('UserService', ['getMe']);
@@ -68,29 +68,30 @@ describe('LoginTokenComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  // HU26: o WhatsApp só fica disponível quando o admin liga
-  it('deveManterOWhatsappDesabilitadoQuandoDesligado', () => {
-    const whatsapp = byId('channel-whatsapp') as HTMLButtonElement;
+  // HU26: o celular só fica disponível quando o admin liga
+  it('deveManterOCelularDesabilitadoQuandoDesligado', () => {
+    const whatsapp = byId('channel-phone') as HTMLButtonElement;
     expect(whatsapp.disabled).toBeTrue();
     expect(whatsapp.textContent).toContain('Em breve');
     expect((byId('channel-email') as HTMLButtonElement).disabled).toBeFalse();
   });
 
-  it('deveMandarOCodigoPeloWhatsappQuandoLigado', () => {
-    authServiceSpy.getLoginChannels.and.returnValue(of({ whatsapp: true }));
+  it('deveMandarOCodigoPorSmsQuandoLigado', () => {
+    authServiceSpy.getLoginChannels.and.returnValue(of({ phone: true, phoneChannel: 'SMS' }));
     component.ngOnInit();
     fixture.detectChanges();
-    const whatsapp = byId('channel-whatsapp') as HTMLButtonElement;
+    const whatsapp = byId('channel-phone') as HTMLButtonElement;
     expect(whatsapp.disabled).toBeFalse();
     expect(whatsapp.textContent).not.toContain('Em breve');
+    expect(whatsapp.textContent).toContain('Por SMS');
 
     whatsapp.click();
     fixture.detectChanges();
     expect(whatsapp.getAttribute('aria-pressed')).toBe('true');
     enviarEmail();
 
-    expect(authServiceSpy.requestLoginToken).toHaveBeenCalledOnceWith('cliente@h2gas.local', 'WHATSAPP');
-    expect(el().textContent).toContain('WhatsApp cadastrado');
+    expect(authServiceSpy.requestLoginToken).toHaveBeenCalledOnceWith('cliente@h2gas.local', 'PHONE');
+    expect(el().textContent).toContain('por SMS para o seu celular cadastrado');
   });
 
   it('deveFicarNoEmailSeOsCanaisFalharem', () => {
@@ -98,7 +99,7 @@ describe('LoginTokenComponent', () => {
     component.ngOnInit();
     fixture.detectChanges();
 
-    expect((byId('channel-whatsapp') as HTMLButtonElement).disabled).toBeTrue();
+    expect((byId('channel-phone') as HTMLButtonElement).disabled).toBeTrue();
     expect(component.channel).toBe('EMAIL');
   });
 

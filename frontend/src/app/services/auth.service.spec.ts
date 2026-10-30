@@ -48,14 +48,14 @@ describe('AuthService', () => {
   });
 
   // HU26
-  it('deveSolicitarCodigoPeloWhatsappEConsultarOsCanais', () => {
-    service.requestLoginToken('cliente@h2gas.local', 'WHATSAPP').subscribe();
+  it('deveSolicitarCodigoPeloCelularEConsultarOsCanais', () => {
+    service.requestLoginToken('cliente@h2gas.local', 'PHONE').subscribe();
     const req = httpMock.expectOne(`${environment.apiUrl}/auth/login/token/request`);
-    expect(req.request.body).toEqual({ email: 'cliente@h2gas.local', channel: 'WHATSAPP' });
+    expect(req.request.body).toEqual({ email: 'cliente@h2gas.local', channel: 'PHONE' });
     req.flush(null);
 
-    service.getLoginChannels().subscribe((c) => expect(c.whatsapp).toBeTrue());
-    httpMock.expectOne(`${environment.apiUrl}/auth/login/channels`).flush({ whatsapp: true });
+    service.getLoginChannels().subscribe((c) => expect(c.phoneChannel).toBe('SMS'));
+    httpMock.expectOne(`${environment.apiUrl}/auth/login/channels`).flush({ phone: true, phoneChannel: 'SMS' });
   });
 
   it('deveValidarCodigoEReceberToken', () => {

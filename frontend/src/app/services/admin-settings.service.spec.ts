@@ -19,12 +19,12 @@ describe('AdminSettingsService', () => {
 
   it('deveListarEAtualizarAsConfiguracoes', () => {
     service.list().subscribe((s) => expect(s.whatsappConfigured).toBeTrue());
-    httpMock.expectOne(`${environment.apiUrl}/admin/settings`).flush({ whatsappConfigured: true, settings: [] });
+    httpMock.expectOne(`${environment.apiUrl}/admin/settings`).flush({ whatsappConfigured: true, smsConfigured: true, settings: [] });
 
-    service.update('WHATSAPP_LOGIN_CODE', true).subscribe((s) => expect(s.enabled).toBeTrue());
-    const req = httpMock.expectOne(`${environment.apiUrl}/admin/settings/WHATSAPP_LOGIN_CODE`);
+    service.update('PHONE_LOGIN_CODE', true).subscribe((s) => expect(s.enabled).toBeTrue());
+    const req = httpMock.expectOne(`${environment.apiUrl}/admin/settings/PHONE_LOGIN_CODE`);
     expect(req.request.method).toBe('PUT');
     expect(req.request.body).toEqual({ enabled: true });
-    req.flush({ key: 'WHATSAPP_LOGIN_CODE', enabled: true });
+    req.flush({ key: 'PHONE_LOGIN_CODE', enabled: true });
   });
 });

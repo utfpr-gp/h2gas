@@ -3,8 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 
-// HU26: interruptores do admin (mensagens de WhatsApp pelo Twilio)
-export type AppSettingKey = 'WHATSAPP_LOGIN_CODE' | 'WHATSAPP_ORDER_OUT_FOR_DELIVERY';
+// HU26: interruptores do admin (mensagens ao celular pelo Twilio, por WhatsApp ou SMS)
+export type AppSettingKey = 'PHONE_LOGIN_CODE' | 'PHONE_ORDER_OUT_FOR_DELIVERY' | 'PHONE_USE_SMS';
 
 export interface AppSetting {
   key: AppSettingKey;
@@ -13,6 +13,7 @@ export interface AppSetting {
 
 export interface AppSettings {
   whatsappConfigured: boolean;
+  smsConfigured: boolean;
   settings: AppSetting[];
 }
 

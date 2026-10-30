@@ -25,22 +25,22 @@
 
       <!-- Passo 1: canal e e-mail -->
       <form *ngIf="step === 'email'" [formGroup]="emailForm" (ngSubmit)="sendCode()" class="mt-5 space-y-3">
-        <!-- HU26: WhatsApp (ligado pelo admin) ou e-mail; nos dois casos a conta é achada pelo e-mail -->
+        <!-- HU26: celular (SMS ou WhatsApp, ligado pelo admin) ou e-mail; nos dois casos a conta é achada pelo e-mail -->
         <div class="grid gap-2" role="group" aria-label="Como receber o código">
-          <button type="button" data-testid="channel-whatsapp" [disabled]="!whatsappAvailable" (click)="selectChannel('WHATSAPP')"
-            [attr.aria-pressed]="channel === 'WHATSAPP'"
+          <button type="button" data-testid="channel-phone" [disabled]="!phoneAvailable" (click)="selectChannel('PHONE')"
+            [attr.aria-pressed]="channel === 'PHONE'"
             class="w-full flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-            [ngClass]="channel === 'WHATSAPP' ? 'border-primary bg-primary/5' : 'border-gray-200 bg-white'">
+            [ngClass]="channel === 'PHONE' ? 'border-primary bg-primary/5' : 'border-gray-200 bg-white'">
             <span class="w-9 h-9 rounded-lg flex items-center justify-center"
-              [ngClass]="whatsappAvailable ? 'bg-success/10 text-success' : 'bg-gray-100 text-gray-400'">
-              <span class="material-icons text-base" aria-hidden="true">chat</span>
+              [ngClass]="phoneAvailable ? 'bg-success/10 text-success' : 'bg-gray-100 text-gray-400'">
+              <span class="material-icons text-base" aria-hidden="true">smartphone</span>
             </span>
             <span class="flex-1">
-              <span class="block font-semibold text-gray-800">WhatsApp</span>
-              <span class="block text-xs text-gray-500">No celular cadastrado</span>
+              <span class="block font-semibold text-gray-800">Celular</span>
+              <span class="block text-xs text-gray-500">Por {{ phoneLabel }}, no número cadastrado</span>
             </span>
-            <span *ngIf="!whatsappAvailable" class="text-[11px] font-bold text-gray-500 bg-gray-200 rounded-full px-2 py-0.5">Em breve</span>
-            <span *ngIf="channel === 'WHATSAPP'" class="material-icons text-primary" aria-hidden="true">check_circle</span>
+            <span *ngIf="!phoneAvailable" class="text-[11px] font-bold text-gray-500 bg-gray-200 rounded-full px-2 py-0.5">Em breve</span>
+            <span *ngIf="channel === 'PHONE'" class="material-icons text-primary" aria-hidden="true">check_circle</span>
           </button>
 
           <button type="button" data-testid="channel-email" (click)="selectChannel('EMAIL')"
@@ -75,8 +75,8 @@
       <!-- Passo 2: código -->
       <form *ngIf="step === 'code'" [formGroup]="codeForm" (ngSubmit)="validateCode()" class="mt-5 space-y-3">
         <p class="text-sm text-gray-600 text-center">
-          <ng-container *ngIf="channel === 'WHATSAPP'; else porEmail">
-            Enviamos um código de 6 dígitos para o seu <strong class="text-gray-800">WhatsApp cadastrado</strong>
+          <ng-container *ngIf="channel === 'PHONE'; else porEmail">
+            Enviamos um código de 6 dígitos por {{ phoneLabel }} para o seu <strong class="text-gray-800">celular cadastrado</strong>
             (ou para <strong class="text-gray-800">{{ email }}</strong>, se a conta não tiver celular).
           </ng-container>
           <ng-template #porEmail>Enviamos um código de 6 dígitos para <strong class="text-gray-800">{{ email }}</strong>.</ng-template>
