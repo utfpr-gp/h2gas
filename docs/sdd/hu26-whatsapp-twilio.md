@@ -199,7 +199,7 @@ chega direto em número verificado. O autor pediu o SMS, com o remetente em
 - [x] Rotas documentadas no Swagger.
 - [x] Testes da seção 6 verdes; `mvn test` e `ng test` sem falha nova;
       `ng build` ok.
-- [ ] E2E registrado aqui com data.
+- [x] E2E registrado aqui com data (entrega real comprovada com o modelo do trial; o texto próprio depende do upgrade).
 - [x] Nada do "Fora de Escopo".
 
 ### Registro do E2E (2026-10-29), com tudo desligado
@@ -250,7 +250,16 @@ número. Por economia, as duas mensagens ficam desligadas até ele pedir.
    WhatsApp sem o `TWILIO_WHATSAPP_FROM` configurado é recusado (400), pela
    regra 5.5. Com as mensagens desligadas, nada é enviado.
 
-**Pendente**: a entrega real depende de uma destas opções:
+4. **Prova de entrega (2026-10-29)**:
+   - SMS com o modelo pronto do trial (`Body=sms_2fa`) para +55 42
+     99158-3814;
+   - enviado com a mesma API Key e o mesmo `TWILIO_SMS_FROM` do H2Gás;
+   - o Twilio aceitou (`queued`), e o autor confirmou que **chegou** no
+     celular;
+   - na conta de teste, o status desses envios não pode ser consultado
+     (403) e eles não aparecem nos Logs.
+
+**Pendente**: o texto do H2Gás (código real e "saiu para entrega") depende de uma destas opções:
 - tirar a conta do trial (upgrade), para o SMS aceitar texto livre;
 - usar o WhatsApp do sandbox depois do `join` do celular, com o
   `TWILIO_WHATSAPP_FROM` de volta no `.env`.
