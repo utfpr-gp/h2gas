@@ -112,6 +112,35 @@
   `whatsapp: true`; o canal vai no pedido do código; o passo do código diz
   por onde ele foi enviado.
 
+### 5.5 Revisão: SMS como canal (2026-10-29)
+
+No teste real, o WhatsApp do sandbox exige o `join`. O SMS da conta de teste
+chega direto em número verificado. O autor pediu o SMS, com o remetente em
+`TWILIO_SMS_FROM`. O que muda:
+
+- **Nomes de canal neutro**, porque a mensagem pode ir por WhatsApp ou SMS:
+  - `PhoneMessageSender` com `isConfigured(canal)` e `send(canal, phone,
+    text)`;
+  - canal `PhoneChannel { WHATSAPP, SMS }`;
+  - implementação `TwilioPhoneMessageSender`;
+  - no SMS, `From` = `TWILIO_SMS_FROM` e `To` = `+55{dígitos}`, sem o
+    prefixo `whatsapp:`.
+- **`V24__app_settings_phone_channel.sql`**:
+  - renomeia as chaves para `PHONE_LOGIN_CODE` e
+    `PHONE_ORDER_OUT_FOR_DELIVERY`;
+  - cria `PHONE_USE_SMS` (desligado = WhatsApp, ligado = SMS).
+- **Admin**:
+  - `GET /api/admin/settings` → `{ whatsappConfigured, smsConfigured,
+    settings }`;
+  - ligar uma mensagem exige o canal escolhido configurado;
+  - ligar `PHONE_USE_SMS` exige o SMS configurado;
+  - na tela: "Enviar por SMS em vez do WhatsApp".
+- **Login**:
+  - o canal do pedido de código passa a ser `EMAIL` ou `PHONE`;
+  - `GET /api/auth/login/channels` → `{ phone, phoneChannel }`;
+  - o card da tela mostra "SMS" ou "WhatsApp" conforme o canal.
+- As mensagens não mudam. O resto do contrato segue igual.
+
 ## 6. Plano de Testes (TDD)
 
 1. `TwilioWhatsAppSenderTest` (`MockRestServiceServer`):
