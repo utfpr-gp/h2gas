@@ -229,3 +229,28 @@ chega direto em número verificado. O autor pediu o SMS, com o remetente em
 **Pendente**: o envio real, uma mensagem de cada no sandbox. Depende do
 celular do autor ter mandado o `join` e de uma conta de teste com esse
 número. Por economia, as duas mensagens ficam desligadas até ele pedir.
+
+### Tentativas de envio real (2026-10-29)
+
+1. **WhatsApp** para 55 99158-3814: o número foi digitado sem o DDD 42.
+   O Twilio recusou com o erro 572002 (destino não autorizado na conta de
+   teste). O código foi por e-mail, como no Cenário 5.
+2. **SMS** (revisão 5.5) para +55 42 99158-3814:
+   - V24 aplicada;
+   - `smsConfigured=true` e `whatsappConfigured=false` (o
+     `TWILIO_WHATSAPP_FROM` saiu do `.env`);
+   - com o canal em SMS e o código ligado, `/login/channels` →
+     `{phone: true, phoneChannel: "SMS"}`;
+   - o Twilio recusou com o erro 572006: "Trial accounts can only use
+     predefined SMS templates". Na conta de teste, o SMS só aceita os
+     modelos prontos do Twilio, não texto livre. O código foi por e-mail
+     (Cenário 5).
+3. No fim, as duas mensagens foram desligadas de novo e o celular da conta
+   de teste voltou ao original. O canal ficou em SMS: voltar para o
+   WhatsApp sem o `TWILIO_WHATSAPP_FROM` configurado é recusado (400), pela
+   regra 5.5. Com as mensagens desligadas, nada é enviado.
+
+**Pendente**: a entrega real depende de uma destas opções:
+- tirar a conta do trial (upgrade), para o SMS aceitar texto livre;
+- usar o WhatsApp do sandbox depois do `join` do celular, com o
+  `TWILIO_WHATSAPP_FROM` de volta no `.env`.
