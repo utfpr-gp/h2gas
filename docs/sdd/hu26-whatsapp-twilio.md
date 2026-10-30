@@ -163,12 +163,40 @@
 
 ## 8. Definição de Pronto
 
-- [ ] V23 aplicada, as duas mensagens desligadas.
-- [ ] Interruptores do admin funcionando e travados sem Twilio.
-- [ ] Código de login por WhatsApp, voltando para o e-mail quando não dá.
-- [ ] Aviso de saiu para entrega depois do commit, sem quebrar a rota.
-- [ ] Rotas documentadas no Swagger.
-- [ ] Testes da seção 6 verdes; `mvn test` e `ng test` sem falha nova;
+- [x] V23 aplicada, as duas mensagens desligadas.
+- [x] Interruptores do admin funcionando e travados sem Twilio.
+- [x] Código de login por WhatsApp, voltando para o e-mail quando não dá.
+- [x] Aviso de saiu para entrega depois do commit, sem quebrar a rota.
+- [x] Rotas documentadas no Swagger.
+- [x] Testes da seção 6 verdes; `mvn test` e `ng test` sem falha nova;
       `ng build` ok.
 - [ ] E2E registrado aqui com data.
-- [ ] Nada do "Fora de Escopo".
+- [x] Nada do "Fora de Escopo".
+
+### Registro do E2E (2026-10-29), com tudo desligado
+
+- **Variáveis**:
+  - o container recebe `TWILIO_ACCOUNT_SID` (`AC…`, 34),
+    `TWILIO_API_KEY_SID` (`SK…`, 34), `TWILIO_API_KEY_SECRET` (32) e
+    `TWILIO_WHATSAPP_FROM` (`whatsapp:…`, 21);
+  - `GET /Accounts/{AC}.json` com a API Key respondeu 200;
+  - no `.env` há uma linha antiga `TWILIO_ACCOUNT_SID=KEY` antes da real.
+    Hoje vence a última, mas o autor deve apagar a antiga.
+- **Banco**: V23 aplicada no MySQL local, com `WHATSAPP_LOGIN_CODE` e
+  `WHATSAPP_ORDER_OUT_FOR_DELIVERY` desligados.
+- **Rotas**:
+  - `GET /api/auth/login/channels` → `{"whatsapp":false}`;
+  - Swagger com `/api/admin/settings`, `/api/admin/settings/{key}` e
+    `/api/auth/login/channels`.
+- **Pedido de código com `channel=WHATSAPP`**: 200, e o código foi pelo
+  e-mail; nenhuma chamada ao Twilio no log.
+- **Telas**:
+  - admin em `/admin/configuracoes`: dois interruptores desligados e liberados
+    (Twilio configurado), sem rolagem horizontal a 390 px;
+  - login: WhatsApp desabilitado com "Em breve", E-mail escolhido.
+- **Testes**: `mvn test` com 537 testes, só falha o `contextLoads`.
+  `ng test` com 702 verdes, só as 10 falhas antigas. `ng build` ok.
+
+**Pendente**: o envio real, uma mensagem de cada no sandbox. Depende do
+celular do autor ter mandado o `join` e de uma conta de teste com esse
+número. Por economia, as duas mensagens ficam desligadas até ele pedir.
