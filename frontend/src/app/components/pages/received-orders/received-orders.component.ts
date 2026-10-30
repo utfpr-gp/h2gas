@@ -15,6 +15,7 @@ import { Deliverer } from '../../../models/deliverer';
 import { OrderStatusTimelineComponent } from '../../order-status-timeline/order-status-timeline.component';
 import { fadeIn, staggerList } from '../../../animations/checkout.animations';
 import { backendMessage } from '../../../utils/backend-message';
+import { firstName, orderCode, whatsappLink } from '../../../utils/whatsapp-link';
 
 // HU23: com um status escolhido ou "Todos", a lista traz até 50 pedidos (os mais recentes)
 const FILTERED_PAGE_SIZE = 50;
@@ -132,6 +133,13 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
       if (action.action === 'DELIVERED') return 'Marcar como retirado';
     }
     return action.label;
+  }
+
+  // HU25: a loja chama o cliente no WhatsApp enquanto o pedido está em andamento
+  customerWhatsapp(order: OrderResponse): string | null {
+    if (['Entregue', 'Cancelado'].includes(order.status as string)) return null;
+    return whatsappLink(order.customerPhone,
+      `Olá, ${firstName(order.customerName)}! Aqui é a ${order.supplierName}, sobre o seu pedido #${orderCode(order.id)} no H2Gás.`);
   }
 
   onStatusChange(status: string) {

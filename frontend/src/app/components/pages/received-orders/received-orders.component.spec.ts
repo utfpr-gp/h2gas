@@ -332,4 +332,26 @@ describe('ReceivedOrdersComponent', () => {
 
     expect(orderServiceSpy.getMyStatusCounts.calls.count()).toBe(antes + 1);
   });
+
+  // ---- HU25 ----
+  it('deveAbrirOWhatsappDoClienteComMensagem', () => {
+    orderServiceSpy.findByExcludeStatus.and.returnValue(lista(
+      pedido('4a1a4ffe-p1', 'Pendente', 'DELIVERY', { customerName: 'Maria Souza', customerPhone: '(42) 99999-0000' })));
+    fixture.detectChanges();
+
+    const link = fixture.nativeElement.querySelector('[data-testid="whatsapp-customer"]') as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('https://wa.me/5542999990000?text='
+      + encodeURIComponent('Olá, Maria! Aqui é a Gás Centro, sobre o seu pedido #4a1a4ffe no H2Gás.'));
+    expect(link.getAttribute('rel')).toContain('noopener');
+  });
+
+  it('naoDeveMostrarWhatsappDoClienteNoPedidoEncerrado', () => {
+    orderServiceSpy.findBySupplierId.and.returnValue(lista(
+      pedido('e1', 'Entregue', 'DELIVERY', { customerPhone: '(42) 99999-0000' })));
+    fixture.detectChanges();
+    component.onStatusChange('EVERYTHING');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="whatsapp-customer"]')).toBeNull();
+  });
 });
