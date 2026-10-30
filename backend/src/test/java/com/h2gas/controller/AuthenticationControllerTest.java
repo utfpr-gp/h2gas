@@ -59,6 +59,9 @@ class AuthenticationControllerTest {
     @MockitoBean
     private LoginTokenService loginTokenService;
 
+    @MockitoBean
+    private com.h2gas.services.AppSettingService appSettingService;
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -249,7 +252,7 @@ class AuthenticationControllerTest {
                         .content("{\"email\":\"qualquer@teste.com\"}"))
                 .andExpect(status().isOk());
 
-        verify(loginTokenService).requestToken("qualquer@teste.com");
+        verify(loginTokenService).requestToken("qualquer@teste.com", com.h2gas.enums.LoginChannelEnum.EMAIL);
     }
 
     @Test
@@ -260,7 +263,7 @@ class AuthenticationControllerTest {
                         .content("{\"email\":\"sem-arroba\"}"))
                 .andExpect(status().isBadRequest());
 
-        verify(loginTokenService, never()).requestToken(anyString());
+        verify(loginTokenService, never()).requestToken(anyString(), org.mockito.ArgumentMatchers.any());
     }
 
     @Test
@@ -284,5 +287,25 @@ class AuthenticationControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(loginTokenService, never()).validateAndLogin(anyString(), anyString());
+    }
+
+    // ---- HU26 ----
+    @Test
+    void deveAceitarCanalNoPedidoDeCodigo() throws Exception {
+        mockMvc.perform(post("/api/auth/login/token/request")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"qualquer@teste.com\", \"channel\":\"WHATSAPP\"}"))
+                .andExpect(status().isOk());
+
+        verify(loginTokenService).requestToken("qualquer@teste.com", com.h2gas.enums.LoginChannelEnum.WHATSAPP);
+    }
+
+    @Test
+    void deveInformarOsCanais() throws Exception {
+        org.mockito.Mockito.when(appSettingService.isActive(com.h2gas.enums.AppSettingKey.WHATSAPP_LOGIN_CODE)).thenReturn(true);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/auth/login/channels"))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.whatsapp").value(true));
     }
 }

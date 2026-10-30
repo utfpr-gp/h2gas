@@ -37,6 +37,8 @@ class LoginTokenServiceTest {
 
     @MockitoBean private MailService mailService;
     @MockitoBean private TokenService tokenService;
+    @MockitoBean private WhatsAppSender whatsAppSender;
+    @MockitoBean private AppSettingService appSettingService;
 
     private User usuario;
 
@@ -192,5 +194,63 @@ class LoginTokenServiceTest {
         BusinessRuleException semCodigo = assertThrows(BusinessRuleException.class,
                 () -> loginTokenService.validateAndLogin(usuario.getEmail(), "123456"));
         assertEquals("Código inválido.", semCodigo.getMessage());
+    }
+
+    // ---- HU26 ----
+    private void whatsappLigado(boolean ligado) {
+        when(appSettingService.isActive(com.h2gas.enums.AppSettingKey.WHATSAPP_LOGIN_CODE)).thenReturn(ligado);
+    }
+
+    @Test
+    void deveMandarPeloWhatsappQuandoLigado() {
+        whatsappLigado(true);
+
+        loginTokenService.requestToken(usuario.getEmail(), com.h2gas.enums.LoginChannelEnum.WHATSAPP);
+
+        String codigo = tokenSalvo().getCode();
+        org.mockito.Mockito.verify(whatsAppSender).send("41999999999",
+                "Seu código de acesso H2Gás é " + codigo + ". Válido por 5 minutos.");
+        org.mockito.Mockito.verify(mailService, org.mockito.Mockito.never()).sendMail(any(), any(), any());
+    }
+
+    @Test
+    void deveUsarEmailQuandoDesligado() {
+        whatsappLigado(false);
+
+        loginTokenService.requestToken(usuario.getEmail(), com.h2gas.enums.LoginChannelEnum.WHATSAPP);
+
+        org.mockito.Mockito.verify(whatsAppSender, org.mockito.Mockito.never()).send(any(), any());
+        org.mockito.Mockito.verify(mailService).sendMail(org.mockito.ArgumentMatchers.eq(usuario.getEmail()), any(), any());
+    }
+
+    @Test
+    void deveUsarEmailSemCelular() {
+        whatsappLigado(true);
+        usuario.setPhoneNumber("123");
+        userRepository.save(usuario);
+
+        loginTokenService.requestToken(usuario.getEmail(), com.h2gas.enums.LoginChannelEnum.WHATSAPP);
+
+        org.mockito.Mockito.verify(whatsAppSender, org.mockito.Mockito.never()).send(any(), any());
+        org.mockito.Mockito.verify(mailService).sendMail(org.mockito.ArgumentMatchers.eq(usuario.getEmail()), any(), any());
+    }
+
+    @Test
+    void deveUsarEmailSeOWhatsappFalhar() {
+        whatsappLigado(true);
+        org.mockito.Mockito.doThrow(new RuntimeException("Twilio fora")).when(whatsAppSender).send(any(), any());
+
+        assertDoesNotThrow(() -> loginTokenService.requestToken(usuario.getEmail(), com.h2gas.enums.LoginChannelEnum.WHATSAPP));
+
+        org.mockito.Mockito.verify(mailService).sendMail(org.mockito.ArgumentMatchers.eq(usuario.getEmail()), any(), any());
+    }
+
+    @Test
+    void deveUsarEmailNoCanalEmailMesmoLigado() {
+        whatsappLigado(true);
+
+        loginTokenService.requestToken(usuario.getEmail(), com.h2gas.enums.LoginChannelEnum.EMAIL);
+
+        org.mockito.Mockito.verify(whatsAppSender, org.mockito.Mockito.never()).send(any(), any());
     }
 }
