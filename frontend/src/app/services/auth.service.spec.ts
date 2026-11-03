@@ -1,3 +1,4 @@
+import { PushService } from './push.service';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -93,5 +94,15 @@ describe('AuthService', () => {
     expect(localStorage.getItem('user')).toBeNull();
     expect(JSON.parse(localStorage.getItem('cart-product')!).length).toBe(1);
     expect(locationContextService.current()).not.toBeNull();
+  });
+
+  // HU27
+  it('deveDesativarOPushAoSair', () => {
+    const push = TestBed.inject(PushService);
+    const disable = spyOn(push, 'disable').and.resolveTo();
+
+    service.logout();
+
+    expect(disable).toHaveBeenCalled();
   });
 });

@@ -9,12 +9,13 @@ import { OrderResponse } from '../../../models/order.model';
 import { paymentLabel } from '../../../models/payment-label';
 import { listItem } from '../../../animations/checkout.animations';
 import { backendMessage } from '../../../utils/backend-message';
+import { PushOptInComponent } from '../../push-opt-in/push-opt-in.component';
 
 // HU07 (Figura 17a): central de despacho do entregador, só com as rotas dele
 @Component({
   selector: 'app-deliverer-routes',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, PushOptInComponent],
   templateUrl: './deliverer-routes.component.html',
   animations: [listItem],
 })

@@ -20,6 +20,7 @@ import { OrderStatusTimelineComponent } from '../../order-status-timeline/order-
 import { fadeIn, staggerList } from '../../../animations/checkout.animations';
 import { backendMessage } from '../../../utils/backend-message';
 import { firstName, orderCode, whatsappLink } from '../../../utils/whatsapp-link';
+import { PushOptInComponent } from '../../push-opt-in/push-opt-in.component';
 
 // HU23: com um status escolhido ou "Todos", a lista traz até 50 pedidos (os mais recentes)
 const FILTERED_PAGE_SIZE = 50;
@@ -31,6 +32,7 @@ const FILTERED_PAGE_SIZE = 50;
     FormsModule,
     ReactiveFormsModule,
     OrderStatusTimelineComponent,
+    PushOptInComponent,
     RouterLink,
     StoreHoursStatusComponent,
   ],

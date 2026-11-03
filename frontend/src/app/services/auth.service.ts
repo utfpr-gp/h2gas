@@ -1,10 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { environment } from '../../environments/environment';
 import {jwtDecode} from 'jwt-decode';
 import { LocationContextService } from './location-context.service';
 import { CartService } from './cart.service';
+import { PushService } from './push.service';
 
 export type LoginChannel = 'EMAIL' | 'PHONE';
 export interface LoginChannels { phone: boolean; phoneChannel: 'WHATSAPP' | 'SMS'; }
@@ -19,6 +20,7 @@ interface JwtPayload {
 })
 export class AuthService {
   baseUrl: string = `${environment.apiUrl}/auth`
+  private readonly pushService = inject(PushService);
 
 
   constructor(
@@ -69,6 +71,8 @@ export class AuthService {
   }
 
   logout() {
+    // HU27: a assinatura deste aparelho sai junto (o token é lido antes de ser apagado)
+    void this.pushService.disable();
     localStorage.removeItem('access_token');
     localStorage.removeItem('user');
     this.locationContext.clear();
