@@ -1603,4 +1603,29 @@ class OrderServiceTest {
         assertEquals(new com.h2gas.model.dto.OrderReviewDTO(4, 5, "Bom"), dtoAvaliado.getReview());
         assertNull(dtoSem.getReview());
     }
+
+    // ---- HU27 ----
+    @Test
+    @DisplayName("HU27: pedido novo publica OrderPlacedEvent para avisar a loja")
+    void devePublicarPedidoNovo() {
+        applicationEvents.clear();
+
+        OrderResponseDTO criado = orderService.createOrder(novoPedido(validCustomerAddressId));
+
+        assertEquals(List.of(criado.getId()), applicationEvents.stream(com.h2gas.events.OrderPlacedEvent.class)
+                .map(com.h2gas.events.OrderPlacedEvent::orderId).toList());
+    }
+
+    @Test
+    @DisplayName("HU27: despachar publica DelivererAssignedEvent para avisar o entregador")
+    void devePublicarEntregadorAtribuido() {
+        String orderId = pedidoEmPreparo("DELIVERY");
+        Long entregadorId = entregadorDe(validSupplierId, "carlos.hu27@teste.com");
+        applicationEvents.clear();
+
+        orderService.assignDeliverer(orderId, entregadorId, fornecedorDoPedido());
+
+        assertEquals(List.of(orderId), applicationEvents.stream(com.h2gas.events.DelivererAssignedEvent.class)
+                .map(com.h2gas.events.DelivererAssignedEvent::orderId).toList());
+    }
 }

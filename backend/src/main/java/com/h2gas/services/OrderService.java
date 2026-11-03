@@ -6,6 +6,8 @@ import com.h2gas.model.DeliveryQuote;
 
 import com.h2gas.model.dto.OrderHistorySummaryDTO;
 import com.h2gas.model.dto.OrderHistoryFilter;
+import com.h2gas.events.DelivererAssignedEvent;
+import com.h2gas.events.OrderPlacedEvent;
 import com.h2gas.events.OrderStatusChangedEvent;
 import com.h2gas.enums.DeliveryModeEnum;
 import com.h2gas.enums.OrderStatusEnum;
@@ -126,6 +128,8 @@ public class OrderService {
         order.setItems(listOrderItems);
 
         orderRepository.save(order);
+        // HU27: a loja é avisada por push depois do commit
+        eventPublisher.publishEvent(new OrderPlacedEvent(order.getId()));
 
         return orderMapper.toResponseDto(order);
     }
@@ -382,7 +386,10 @@ public class OrderService {
         }
 
         order.setDeliverer(deliverer);
-        return orderMapper.toResponseDto(orderRepository.save(order));
+        Order saved = orderRepository.save(order);
+        // HU27: o entregador é avisado por push depois do commit (o status não muda, por isso não é OrderStatusChangedEvent)
+        eventPublisher.publishEvent(new DelivererAssignedEvent(saved.getId()));
+        return orderMapper.toResponseDto(saved);
     }
 
     // HU07: o entregador toca "Iniciar Entrega"; é aqui que o pedido sai em rota
