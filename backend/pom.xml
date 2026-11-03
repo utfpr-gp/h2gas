@@ -98,6 +98,30 @@
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 			<version>2.8.14</version>
 		</dependency>
+		<!-- HU27: Web Push (VAPID + criptografia aes128gcm do payload) -->
+		<dependency>
+			<groupId>nl.martijndwars</groupId>
+			<artifactId>web-push</artifactId>
+			<version>5.1.2</version>
+		</dependency>
+		<!-- criptografia do payload; a web-push não traz o BouncyCastle na árvore -->
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk18on</artifactId>
+			<version>1.78.1</version>
+		</dependency>
+		<!-- assinatura VAPID (JWT); a web-push traz a 0.7.9 como runtime, com falhas conhecidas -->
+		<dependency>
+			<groupId>org.bitbucket.b_c</groupId>
+			<artifactId>jose4j</artifactId>
+			<version>0.9.6</version>
+		</dependency>
+		<!-- a web-push declara o cliente HTTP como runtime, mas a resposta dele é usada no código -->
+		<dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpasyncclient</artifactId>
+			<version>4.1.5</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.security</groupId>
