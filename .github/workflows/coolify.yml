@@ -1,0 +1,87 @@
+name: Deploy no Coolify
+
+# A cada push na develop: gera as imagens do backend e do frontend,
+# publica no GitHub Container Registry (ghcr.io) e pede ao Coolify um novo deploy.
+# Também pode ser disparado à mão em Actions -> "Deploy no Coolify" -> Run workflow.
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+# um push novo cancela o deploy anterior que ainda estiver rodando
+concurrency:
+  group: coolify-deploy
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  BACKEND_IMAGE: ghcr.io/utfpr-gp/h2gas-backend
+  FRONTEND_IMAGE: ghcr.io/utfpr-gp/h2gas-frontend
+  SOURCE_LABEL: org.opencontainers.image.source=https://github.com/utfpr-gp/h2gas
+
+jobs:
+  build-and-push:
+    name: Gera e publica as imagens
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Login no GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Imagem do backend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:develop
+            ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+          labels: ${{ env.SOURCE_LABEL }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+      # Só nesta máquina do Actions: troca o nginx.conf da AWS (443 + Let's Encrypt)
+      # pelo do Coolify (porta 80, HTTPS feito pelo Coolify). Nada é commitado.
+      - name: Usa o nginx do Coolify no frontend
+        run: cp frontend/nginx.coolify.conf frontend/nginx.conf
+
+      - name: Imagem do frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:develop
+            ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+          labels: ${{ env.SOURCE_LABEL }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+  deploy:
+    name: Pede o deploy ao Coolify
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Chama o webhook de deploy
+        env:
+          COOLIFY_WEBHOOK: ${{ secrets.COOLIFY_WEBHOOK }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+        run: |
+          if [ -z "$COOLIFY_WEBHOOK" ] || [ -z "$COOLIFY_TOKEN" ]; then
+            echo "::error::Cadastre os secrets COOLIFY_WEBHOOK e COOLIFY_TOKEN em Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          curl --fail-with-body --silent --show-error \
+            --max-time 60 \
+            -H "Authorization: Bearer $COOLIFY_TOKEN" \
+            "$COOLIFY_WEBHOOK"
