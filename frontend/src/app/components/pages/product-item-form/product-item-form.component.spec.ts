@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 
 import { ProductItemFormComponent } from './product-item-form.component';
@@ -27,7 +27,8 @@ describe('ProductItemFormComponent', () => {
       price: 100, stockQuantity: 10, ...over,
     });
 
-  beforeEach(() => { productEdicao = {}; });
+  let erroAoBuscar: unknown = null;
+  beforeEach(() => { productEdicao = {}; erroAoBuscar = null; });
 
   const setup = async (id: string | null = null) => {
     productItemServiceSpy = jasmine.createSpyObj('ProductItemService', ['createWithFile', 'update', 'findById']);
@@ -37,6 +38,7 @@ describe('ProductItemFormComponent', () => {
       id: 5, brand: 'Liquigás', categoryProductId: 3, description: 'Edição',
       price: 80, stockQuantity: 4, imageUrl: 'http://img/x.jpg', ...productEdicao,
     } as any));
+    if (erroAoBuscar) productItemServiceSpy.findById.and.returnValue(throwError(() => erroAoBuscar));
     const categoryServiceSpy = jasmine.createSpyObj('CategoryProductService', ['findAll']);
     categoryServiceSpy.findAll.and.returnValue(of([{ id: 3, name: 'Gás 13kg', type: 'Gás' }] as any));
     const userServiceSpy = jasmine.createSpyObj('UserService', ['getUserLocalStorage']);
@@ -63,6 +65,15 @@ describe('ProductItemFormComponent', () => {
   };
 
   afterEach(() => fixture.destroy());
+
+  // F12 Cenário 1: produto de outra loja não abre; avisa e volta para a lista
+  it('deveVoltarParaAListaComProdutoDeOutraLoja', async () => {
+    erroAoBuscar = { status: 403, error: { message: 'Este produto não é da sua loja.' } };
+    await setup('1');
+
+    expect(toastrSpy.error).toHaveBeenCalledWith('Este produto não é da sua loja.');
+    expect(navigateSpy).toHaveBeenCalledWith(['/minha-loja/produtos']);
+  });
 
   it('should create', async () => {
     await setup();

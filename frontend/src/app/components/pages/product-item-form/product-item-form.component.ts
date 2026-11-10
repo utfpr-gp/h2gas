@@ -79,7 +79,12 @@ export class ProductItemFormComponent implements OnInit {
         this.selectedImage = response.imageUrl!
       },
       error: (err) => {
-        console.error('Erro ao buscar:', err.error.message);
+        // F12: produto de outra loja (403) ou inexistente (404) não abre; volta para a lista
+        if (err?.status === 403 || err?.status === 404) {
+          this.toastr.error(err.status === 403 ? 'Este produto não é da sua loja.' : 'Produto não encontrado.');
+          this.router.navigate(['/minha-loja/produtos']);
+          return;
+        }
         this.toastr.error(`Erro ao carregar o produto: ${backendMessage(err)}`)
       },
     })
