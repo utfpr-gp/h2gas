@@ -182,6 +182,66 @@ class DelivererServiceTest {
                 () -> delivererService.resetPassword(987654L, fornecedor.getId(), "novaSenha9"));
     }
 
+    // ---- HU29: desativar e reativar entregador ----
+    private Order pedidoEmRota(Long delivererId) {
+        Order pedido = new Order();
+        pedido.setCustomer(cliente);
+        pedido.setSupplier(fornecedor);
+        pedido.setStatus(OrderStatusEnum.OUT_FOR_DELIVERY);
+        pedido.setPaymentMethod("PIX");
+        pedido.setTotalPrice(new BigDecimal("125.00"));
+        pedido.setDeliverer(delivererRepository.findById(delivererId).orElseThrow());
+        return orderRepository.save(pedido);
+    }
+
+    @Test
+    @DisplayName("HU29: desativar tira do despacho e bloqueia o login, sem apagar nada")
+    void deveDesativarEBloquearOLogin() {
+        DelivererDTO criado = delivererService.createDeliverer(dto("Carlos Silva", "carlos@teste.com"), fornecedor.getId());
+
+        DelivererDTO desativado = delivererService.setActive(criado.getId(), fornecedor.getId(), false);
+
+        assertFalse(desativado.isActive());
+        Deliverer salvo = delivererRepository.findById(criado.getId()).orElseThrow();
+        assertFalse(salvo.isActive());
+        assertFalse(salvo.getUser().isEnabled());
+    }
+
+    @Test
+    @DisplayName("HU29: reativar devolve o despacho e o login")
+    void deveReativarELiberarOLogin() {
+        DelivererDTO criado = delivererService.createDeliverer(dto("Carlos Silva", "carlos@teste.com"), fornecedor.getId());
+        delivererService.setActive(criado.getId(), fornecedor.getId(), false);
+
+        DelivererDTO reativado = delivererService.setActive(criado.getId(), fornecedor.getId(), true);
+
+        assertTrue(reativado.isActive());
+        assertTrue(delivererRepository.findById(criado.getId()).orElseThrow().getUser().isEnabled());
+    }
+
+    @Test
+    @DisplayName("HU29: entregador com entrega em rota não é desativado (409)")
+    void deveRecusarDesativarComEntregaEmRota() {
+        DelivererDTO criado = delivererService.createDeliverer(dto("Carlos Silva", "carlos@teste.com"), fornecedor.getId());
+        pedidoEmRota(criado.getId());
+
+        org.springframework.web.server.ResponseStatusException ex = assertThrows(
+                org.springframework.web.server.ResponseStatusException.class,
+                () -> delivererService.setActive(criado.getId(), fornecedor.getId(), false));
+        assertEquals(org.springframework.http.HttpStatus.CONFLICT, ex.getStatusCode());
+        assertTrue(delivererRepository.findById(criado.getId()).orElseThrow().isActive());
+    }
+
+    @Test
+    @DisplayName("HU29: outra loja não desativa entregador da frota")
+    void deveNegarDesativarEntregadorDeOutraFrota() {
+        DelivererDTO criado = delivererService.createDeliverer(dto("Carlos Silva", "carlos@teste.com"), fornecedor.getId());
+
+        assertThrows(com.h2gas.exceptions.ForbiddenResourceException.class,
+                () -> delivererService.setActive(criado.getId(), outroFornecedor.getId(), false));
+        assertTrue(delivererRepository.findById(criado.getId()).orElseThrow().isActive());
+    }
+
     // ---- HU24 ----
     @Autowired private ReviewRepository reviewRepository;
 

@@ -94,6 +94,23 @@ public class DelivererService {
         userRepository.save(user);
     }
 
+    // HU29: desativar tira do despacho e bloqueia o login (User.enabled); reativar devolve os dois. Nada é apagado.
+    @Transactional
+    public DelivererDTO setActive(Long delivererId, String supplierId, boolean active) {
+        Deliverer deliverer = findEntityById(delivererId);
+        if (deliverer.getSupplier() == null || !deliverer.getSupplier().getId().equals(supplierId)) {
+            throw new ForbiddenResourceException("Entregador não pertence à sua frota.");
+        }
+        if (!active && orderRepository.existsByDelivererIdAndStatus(deliverer.getId(), OrderStatusEnum.OUT_FOR_DELIVERY)) {
+            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.CONFLICT,
+                    "Conclua ou reatribua a entrega em rota antes de desativar.");
+        }
+        deliverer.setActive(active);
+        deliverer.getUser().setEnabled(active);
+        userRepository.save(deliverer.getUser());
+        return toDto(delivererRepository.save(deliverer));
+    }
+
     public Deliverer findEntityById(Long id) {
         return delivererRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Entregador não encontrado com id: " + id));
