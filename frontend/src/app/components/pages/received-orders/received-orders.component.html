@@ -200,6 +200,8 @@
                     <span class="font-semibold shrink-0">{{ item.totalPrice | currency:'BRL':'symbol':'1.2-2' }}</span>
                 </div>
             </div>
+            <!-- HU28: subtotal e frete antes do total -->
+            <app-order-fee-lines [order]="order" class="block border-t border-gray-100 pt-2"></app-order-fee-lines>
             <div class="flex justify-between items-center border-t border-gray-200 pt-3 mt-1">
                 <span class="font-semibold text-gray-800">Total</span>
                 <span class="text-xl font-bold text-primary">{{ order.totalPrice | currency:'BRL':'symbol':'1.2-2' }}</span>

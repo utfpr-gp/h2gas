@@ -173,6 +173,14 @@ describe('ReceivedOrdersComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('[data-testid=order-row]').length).toBe(3);
   });
 
+  // HU28 Cenário 4: o detalhe mostra subtotal e frete
+  it('deveMostrarOFreteNoDetalhe', () => {
+    fixture.detectChanges();
+
+    expect(component.selectedOrder?.deliveryMode).toBe('DELIVERY');
+    expect(fixture.nativeElement.querySelector('[data-testid="order-fee"]')).not.toBeNull();
+  });
+
   // HU28 Cenário 2: "A receber" vem do backend (pedidos em andamento), não da lista filtrada
   it('deveMostrarAReceberDoBackend', () => {
     fixture.detectChanges();

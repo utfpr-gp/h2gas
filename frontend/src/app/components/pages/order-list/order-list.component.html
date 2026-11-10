@@ -64,6 +64,8 @@
                         {{ item.quantity }} × {{ item.unitPrice | currency:'BRL':'symbol':'1.2-2' }}
                     </span>
                 </div>
+                <!-- HU28: subtotal e frete (o total fica no rodapé do card) -->
+                <app-order-fee-lines [order]="order" class="block px-2 pt-1"></app-order-fee-lines>
             </div>
 
             <!-- HU25: falar com a loja ou com o entregador, com a mensagem pronta -->

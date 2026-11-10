@@ -153,6 +153,8 @@ describe('OrderHistoryComponent', () => {
     expect(detalhes.textContent).toContain('Rua XV, 700 · Centro · Curitiba');
     expect(detalhes.textContent).toContain('Carlos');
     expect(byId('toggle-' + entregue.id)?.getAttribute('aria-expanded')).toBe('true');
+    // HU28 Cenário 4: o frete aparece entre os itens e o total
+    expect(detalhes.querySelector('[data-testid="order-fee"]')).not.toBeNull();
   });
 
   it('deveMostrarMotivoDoCancelamento', async () => {

@@ -1,3 +1,4 @@
+import { OrderFeeLinesComponent } from '../../order-fee-lines/order-fee-lines.component';
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -21,7 +22,7 @@ const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart
 @Component({
   selector: 'app-order-history',
   standalone: true,
-  imports: [CommonModule, StoreHoursStatusComponent],
+  imports: [OrderFeeLinesComponent, CommonModule, StoreHoursStatusComponent],
   templateUrl: './order-history.component.html',
   host: { class: 'flex-1 flex flex-col' },
   animations: [fadeIn],

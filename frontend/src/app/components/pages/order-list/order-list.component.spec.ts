@@ -299,4 +299,12 @@ describe('OrderListComponent', () => {
 
     expect(q('[data-testid="whatsapp-store"]')).toBeNull();
   });
+
+  // HU28 Cenário 4: os detalhes do pedido mostram o frete
+  it('deveMostrarOFreteNosDetalhes', () => {
+    component.toggleAccordion(0);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid="order-fee"]')).not.toBeNull();
+  });
 });

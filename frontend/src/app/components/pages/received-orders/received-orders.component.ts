@@ -1,3 +1,4 @@
+import { OrderFeeLinesComponent } from '../../order-fee-lines/order-fee-lines.component';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription, interval } from 'rxjs';
 import { OrderService, OrderStatusCounts } from '../../../services/order.service';
@@ -22,7 +23,7 @@ const FILTERED_PAGE_SIZE = 50;
 
 @Component({
   selector: 'app-received-orders',
-  imports: [
+  imports: [OrderFeeLinesComponent, 
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
