@@ -25,4 +25,9 @@ export class DelivererService {
   resetPassword(id: number, password: string): Observable<void> {
     return this.http.put<void>(`${this.baseUrl}/${id}/password`, { password });
   }
+
+  // HU29: desativa (sai do despacho e perde o login) ou reativa um entregador da própria frota
+  setActive(id: number, active: boolean): Observable<Deliverer> {
+    return this.http.patch<Deliverer>(`${this.baseUrl}/${id}/active`, { active });
+  }
 }

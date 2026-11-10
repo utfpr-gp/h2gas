@@ -83,8 +83,8 @@
                     </span>
                     <span data-testid="deliverer-status"
                         class="shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold"
-                        [ngClass]="deliverer.busy ? 'bg-warning/20 text-gray-800' : 'bg-success/15 text-success'">
-                        {{ deliverer.busy ? 'Em rota' : 'Disponível' }}
+                        [ngClass]="!deliverer.active ? 'bg-base-300 text-gray-600' : deliverer.busy ? 'bg-warning/20 text-gray-800' : 'bg-success/15 text-success'">
+                        {{ !deliverer.active ? 'Desativado' : deliverer.busy ? 'Em rota' : 'Disponível' }}
                     </span>
                     <span class="material-icons text-gray-400 transition-transform" [class.rotate-180]="expandedId === deliverer.id"
                         aria-hidden="true">expand_more</span>
@@ -132,6 +132,38 @@
                         </button>
                     </div>
                 </form>
+
+                <!-- HU29: desativar (com confirmação) ou reativar; o histórico do entregador continua -->
+                <div class="flex flex-wrap items-center justify-end gap-2 border-t border-gray-100 pt-3">
+                    <ng-container *ngIf="deliverer.active; else reativar">
+                        <button *ngIf="confirmingDeactivateId !== deliverer.id" type="button" data-testid="deactivate"
+                            (click)="confirmingDeactivateId = deliverer.id"
+                            class="btn btn-sm btn-ghost text-error rounded-lg min-h-11 sm:min-h-8">
+                            <span class="material-icons text-base" aria-hidden="true">person_off</span>Desativar entregador
+                        </button>
+                        <div *ngIf="confirmingDeactivateId === deliverer.id" role="alertdialog" aria-live="polite"
+                            class="w-full rounded-xl bg-error/10 p-3 space-y-2">
+                            <p class="text-sm text-gray-800">
+                                Desativar {{ deliverer.name }}? Ele sai do despacho e não consegue mais entrar no app.
+                                As entregas e avaliações dele ficam guardadas, e você pode reativá-lo depois.
+                            </p>
+                            <div class="flex justify-end gap-2">
+                                <button type="button" class="btn btn-sm btn-ghost rounded-lg" (click)="confirmingDeactivateId = null">Cancelar</button>
+                                <button type="button" data-testid="confirm-deactivate" class="btn btn-sm btn-error rounded-lg"
+                                    [disabled]="changingActiveId === deliverer.id" (click)="setActive(deliverer, false)">
+                                    <span *ngIf="changingActiveId === deliverer.id" class="loading loading-spinner loading-xs"></span>
+                                    Desativar
+                                </button>
+                            </div>
+                        </div>
+                    </ng-container>
+                    <ng-template #reativar>
+                        <button type="button" data-testid="reactivate" class="btn btn-sm btn-outline btn-primary rounded-lg min-h-11 sm:min-h-8"
+                            [disabled]="changingActiveId === deliverer.id" (click)="setActive(deliverer, true)">
+                            <span class="material-icons text-base" aria-hidden="true">person_add</span>Reativar entregador
+                        </button>
+                    </ng-template>
+                </div>
                 </div>
             </li>
         </ul>
