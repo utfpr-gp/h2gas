@@ -49,6 +49,7 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.POST, "/api/cart/preview").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login/token/request").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/login/channels").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login/token/validate").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/reset-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/reset-password/confirm").permitAll()

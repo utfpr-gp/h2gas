@@ -18,6 +18,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import jakarta.validation.Valid;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -47,8 +48,21 @@ public class AuthenticationController {
     @Autowired
     private LoginTokenService loginTokenService;
 
-    @Operation(summary = "Pede um código de acesso por e-mail (público)",
-            description = "Gera um código numérico de 6 dígitos, válido por 5 minutos, e envia por e-mail. "
+    @Autowired
+    private com.h2gas.services.AppSettingService appSettingService;
+
+    @Operation(summary = "Canais para receber o código de login (público)",
+            description = "HU26: diz se o código pode ir ao celular (ligado pelo admin e Twilio configurado) e se vai por WhatsApp ou SMS")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Canais disponíveis")})
+    @GetMapping("/login/channels")
+    public ResponseEntity<com.h2gas.model.dto.LoginChannelsDTO> loginChannels() {
+        return ResponseEntity.ok(new com.h2gas.model.dto.LoginChannelsDTO(
+                appSettingService.isActive(com.h2gas.enums.AppSettingKey.PHONE_LOGIN_CODE), appSettingService.phoneChannel()));
+    }
+
+    @Operation(summary = "Pede um código de acesso por e-mail ou celular (público)",
+            description = "Gera um código numérico de 6 dígitos, válido por 5 minutos, e envia por e-mail ou, com channel=PHONE "
+                    + "e a mensagem ligada pelo admin, para o celular cadastrado (WhatsApp ou SMS) (sem celular ou com falha, vai por e-mail). "
                     + "Responde 200 mesmo quando o e-mail não está cadastrado, para não revelar a existência da conta; "
                     + "pedir de novo substitui o código anterior")
     @ApiResponses({
@@ -57,7 +71,8 @@ public class AuthenticationController {
     })
     @PostMapping("/login/token/request")
     public ResponseEntity<Void> requestLoginToken(@RequestBody @Valid RequestLoginTokenDTO data) {
-        loginTokenService.requestToken(data.getEmail());
+        loginTokenService.requestToken(data.getEmail(),
+                data.getChannel() == null ? com.h2gas.enums.LoginChannelEnum.EMAIL : data.getChannel());
         return ResponseEntity.ok().build();
     }
 

@@ -65,6 +65,9 @@
             <a routerLink="/admin/categorias" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
               <span class="material-icons" aria-hidden="true">label</span><span>Categorias</span>
             </a>
+            <a routerLink="/admin/configuracoes" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
+              <span class="material-icons" aria-hidden="true">settings</span><span>Configurações</span>
+            </a>
           </ng-container>
 
           <!-- F9: fornecedor — Início (hub), Pedidos e Produtos; o resto se abre pelos cards do hub -->
@@ -347,6 +350,9 @@
           </a>
           <a routerLink="/admin/categorias" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
             <span class="material-icons" aria-hidden="true">label</span>Categorias
+          </a>
+          <a routerLink="/admin/configuracoes" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
+            <span class="material-icons" aria-hidden="true">settings</span>Configurações
           </a>
         </ng-container>
         <ng-container *ngIf="isSupplier">

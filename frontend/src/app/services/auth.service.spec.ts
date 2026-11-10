@@ -43,8 +43,19 @@ describe('AuthService', () => {
 
     const req = httpMock.expectOne(`${environment.apiUrl}/auth/login/token/request`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ email: 'cliente@h2gas.local' });
+    expect(req.request.body).toEqual({ email: 'cliente@h2gas.local', channel: 'EMAIL' });
     req.flush(null);
+  });
+
+  // HU26
+  it('deveSolicitarCodigoPeloCelularEConsultarOsCanais', () => {
+    service.requestLoginToken('cliente@h2gas.local', 'PHONE').subscribe();
+    const req = httpMock.expectOne(`${environment.apiUrl}/auth/login/token/request`);
+    expect(req.request.body).toEqual({ email: 'cliente@h2gas.local', channel: 'PHONE' });
+    req.flush(null);
+
+    service.getLoginChannels().subscribe((c) => expect(c.phoneChannel).toBe('SMS'));
+    httpMock.expectOne(`${environment.apiUrl}/auth/login/channels`).flush({ phone: true, phoneChannel: 'SMS' });
   });
 
   it('deveValidarCodigoEReceberToken', () => {

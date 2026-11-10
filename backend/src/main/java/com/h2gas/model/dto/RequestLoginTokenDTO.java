@@ -16,4 +16,9 @@ public class RequestLoginTokenDTO {
     @Email(message = "E-mail inválido")
     @Schema(description = "E-mail cadastrado", example = "cliente@h2gas.local", requiredMode = Schema.RequiredMode.REQUIRED)
     private String email;
+
+    // HU26: nulo = e-mail
+    @Schema(description = "Por onde enviar o código; PHONE vai para o celular cadastrado (WhatsApp ou SMS, conforme o admin) e volta para o e-mail quando não dá",
+            example = "EMAIL", defaultValue = "EMAIL", nullable = true)
+    private com.h2gas.enums.LoginChannelEnum channel;
 }

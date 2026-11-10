@@ -36,7 +36,8 @@ describe('LoginTokenComponent', () => {
   beforeEach(async () => {
     localStorage.clear();
     queryParams = {};
-    authServiceSpy = jasmine.createSpyObj('AuthService', ['requestLoginToken', 'validateLoginToken']);
+    authServiceSpy = jasmine.createSpyObj('AuthService', ['requestLoginToken', 'validateLoginToken', 'getLoginChannels']);
+    authServiceSpy.getLoginChannels.and.returnValue(of({ phone: false, phoneChannel: 'SMS' }));
     authServiceSpy.requestLoginToken.and.returnValue(of(undefined as void));
     authServiceSpy.validateLoginToken.and.returnValue(of({ token: 'jwt-do-codigo' }));
     userServiceSpy = jasmine.createSpyObj('UserService', ['getMe']);
@@ -67,11 +68,39 @@ describe('LoginTokenComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('deveManterOCanalCelularDesabilitado', () => {
-    const celular = byId('channel-sms') as HTMLButtonElement;
-    expect(celular.disabled).toBeTrue();
-    expect(celular.textContent).toContain('Em breve');
+  // HU26: o celular só fica disponível quando o admin liga
+  it('deveManterOCelularDesabilitadoQuandoDesligado', () => {
+    const whatsapp = byId('channel-phone') as HTMLButtonElement;
+    expect(whatsapp.disabled).toBeTrue();
+    expect(whatsapp.textContent).toContain('Em breve');
     expect((byId('channel-email') as HTMLButtonElement).disabled).toBeFalse();
+  });
+
+  it('deveMandarOCodigoPorSmsQuandoLigado', () => {
+    authServiceSpy.getLoginChannels.and.returnValue(of({ phone: true, phoneChannel: 'SMS' }));
+    component.ngOnInit();
+    fixture.detectChanges();
+    const whatsapp = byId('channel-phone') as HTMLButtonElement;
+    expect(whatsapp.disabled).toBeFalse();
+    expect(whatsapp.textContent).not.toContain('Em breve');
+    expect(whatsapp.textContent).toContain('Por SMS');
+
+    whatsapp.click();
+    fixture.detectChanges();
+    expect(whatsapp.getAttribute('aria-pressed')).toBe('true');
+    enviarEmail();
+
+    expect(authServiceSpy.requestLoginToken).toHaveBeenCalledOnceWith('cliente@h2gas.local', 'PHONE');
+    expect(el().textContent).toContain('por SMS para o seu celular cadastrado');
+  });
+
+  it('deveFicarNoEmailSeOsCanaisFalharem', () => {
+    authServiceSpy.getLoginChannels.and.returnValue(throwError(() => ({ status: 0 })));
+    component.ngOnInit();
+    fixture.detectChanges();
+
+    expect((byId('channel-phone') as HTMLButtonElement).disabled).toBeTrue();
+    expect(component.channel).toBe('EMAIL');
   });
 
   it('deveAvancarParaEtapaDeCodigoAposEnviarEmail', () => {
@@ -79,7 +108,7 @@ describe('LoginTokenComponent', () => {
 
     enviarEmail();
 
-    expect(authServiceSpy.requestLoginToken).toHaveBeenCalledOnceWith('cliente@h2gas.local');
+    expect(authServiceSpy.requestLoginToken).toHaveBeenCalledOnceWith('cliente@h2gas.local', 'EMAIL');
     expect(byId('code-input')).toBeTruthy();
     expect(el().textContent).toContain('cliente@h2gas.local');
   });
