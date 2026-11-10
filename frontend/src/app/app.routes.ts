@@ -89,7 +89,7 @@ export const routes: Routes = [
         data: {roles: ['SUPPLIER']}
     },
     {
-        path: 'minha-loja/produtos/:id/editar', 
+        path: 'minha-loja/produtos/:code/editar', 
         component: ProductItemFormComponent,
         canActivate: [authGuard],
         data: {roles: ['SUPPLIER']}
@@ -265,7 +265,8 @@ export const routes: Routes = [
     {path: 'distributor/new', redirectTo: 'admin/fornecedores/novo', pathMatch: 'full'},
     {path: 'product-items', redirectTo: 'minha-loja/produtos', pathMatch: 'full'},
     {path: 'product-items/new', redirectTo: 'minha-loja/produtos/novo', pathMatch: 'full'},
-    {path: 'product-items/edit/:id', redirectTo: 'minha-loja/produtos/:id/editar', pathMatch: 'full'},
+    // F12: o link antigo traz o id sequencial, que não abre mais a edição; vai para a lista
+    {path: 'product-items/edit/:id', redirectTo: 'minha-loja/produtos', pathMatch: 'full'},
     {path: 'register-city', redirectTo: 'admin/cidades', pathMatch: 'full'},
     {path: 'supplier-approval', redirectTo: 'admin/fornecedores', pathMatch: 'full'},
     {path: 'fornecedores/:id/produtos', redirectTo: 'lojas/:id', pathMatch: 'full'},

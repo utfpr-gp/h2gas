@@ -61,20 +61,21 @@ export class ProductItemFormComponent implements OnInit {
 
 
   ngOnInit(): void {
-    this.idEdit = parseInt(this.routeActive.snapshot.paramMap.get('id') || '', 10);
-    if (this.idEdit) {
+    // F12: a URL traz o código público; o id (para salvar) vem do produto carregado
+    const code = this.routeActive.snapshot.paramMap.get('code');
+    if (code) {
       this.isEdit = true;
-      this.finProductId(this.idEdit);
-    } 
+      this.findProductByCode(code);
+    }
     this.user = this.userService.getUserLocalStorage();
     this.findAllCategoryProducts();
   }
 
 
-  finProductId(idEdit: number) {
-    this.productItemService.findById(idEdit).subscribe({
+  findProductByCode(code: string) {
+    this.productItemService.findByCode(code).subscribe({
       next: (response) => {
-        console.log('Produto buscado com sucesso!', response);
+        this.idEdit = response.id!;
         this.formProductItem.patchValue(response);
         this.selectedImage = response.imageUrl!
       },

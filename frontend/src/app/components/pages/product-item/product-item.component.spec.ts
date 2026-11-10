@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { of, throwError } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
@@ -54,6 +54,16 @@ describe('ProductItemComponent', () => {
     await setup();
     const link = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="adjust-threshold"]') as HTMLAnchorElement;
     expect(link.getAttribute('href')).toBe('/minha-loja/configuracoes#estoque');
+  });
+
+  // F12 Cenário 1b: a edição abre pelo código público, não pelo id sequencial
+  it('deveEditarPeloCodigoDoProduto', async () => {
+    await setup();
+    const navigate = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
+
+    fixture.componentInstance.edit(produto({ id: 7, publicId: 'k3f9x2ab01' }));
+
+    expect(navigate).toHaveBeenCalledWith(['/minha-loja/produtos', 'k3f9x2ab01', 'editar']);
   });
 
   it('deveExibirUmPrecoNaGestao', async () => {

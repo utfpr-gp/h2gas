@@ -31,14 +31,14 @@ describe('ProductItemFormComponent', () => {
   beforeEach(() => { productEdicao = {}; erroAoBuscar = null; });
 
   const setup = async (id: string | null = null) => {
-    productItemServiceSpy = jasmine.createSpyObj('ProductItemService', ['createWithFile', 'update', 'findById']);
+    productItemServiceSpy = jasmine.createSpyObj('ProductItemService', ['createWithFile', 'update', 'findByCode']);
     productItemServiceSpy.createWithFile.and.returnValue(of({} as any));
     productItemServiceSpy.update.and.returnValue(of({} as any));
-    productItemServiceSpy.findById.and.returnValue(of({
-      id: 5, brand: 'Liquigás', categoryProductId: 3, description: 'Edição',
+    productItemServiceSpy.findByCode.and.returnValue(of({
+      id: 5, publicId: 'k3f9x2ab01', brand: 'Liquigás', categoryProductId: 3, description: 'Edição',
       price: 80, stockQuantity: 4, imageUrl: 'http://img/x.jpg', ...productEdicao,
     } as any));
-    if (erroAoBuscar) productItemServiceSpy.findById.and.returnValue(throwError(() => erroAoBuscar));
+    if (erroAoBuscar) productItemServiceSpy.findByCode.and.returnValue(throwError(() => erroAoBuscar));
     const categoryServiceSpy = jasmine.createSpyObj('CategoryProductService', ['findAll']);
     categoryServiceSpy.findAll.and.returnValue(of([{ id: 3, name: 'Gás 13kg', type: 'Gás' }] as any));
     const userServiceSpy = jasmine.createSpyObj('UserService', ['getUserLocalStorage']);
@@ -54,7 +54,7 @@ describe('ProductItemFormComponent', () => {
         { provide: UserService, useValue: userServiceSpy },
         { provide: ToastrService, useValue: toastrSpy },
         provideRouter([]),
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap(id ? { id } : {}) } } },
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap(id ? { code: id } : {}) } } },
       ],
     }).compileComponents();
 
@@ -69,7 +69,7 @@ describe('ProductItemFormComponent', () => {
   // F12 Cenário 1: produto de outra loja não abre; avisa e volta para a lista
   it('deveVoltarParaAListaComProdutoDeOutraLoja', async () => {
     erroAoBuscar = { status: 403, error: { message: 'Este produto não é da sua loja.' } };
-    await setup('1');
+    await setup('outraloja1');
 
     expect(toastrSpy.error).toHaveBeenCalledWith('Este produto não é da sua loja.');
     expect(navigateSpy).toHaveBeenCalledWith(['/minha-loja/produtos']);
@@ -168,15 +168,26 @@ describe('ProductItemFormComponent', () => {
     expect(navigateSpy).toHaveBeenCalledWith(['/minha-loja/produtos']);
   });
 
+  // F12 Cenário 1b: a URL traz o código; o PUT segue pelo id que vem do produto
+  it('deveCarregarPeloCodigoESalvarPeloId', async () => {
+    await setup('k3f9x2ab01');
+    expect(productItemServiceSpy.findByCode).toHaveBeenCalledWith('k3f9x2ab01');
+
+    preencher({ price: 90 });
+    component.updateProduct();
+
+    expect(productItemServiceSpy.update.calls.mostRecent().args[0]).toBe(5);
+  });
+
   it('deveCarregarOPrecoNaEdicao', async () => {
-    await setup('5');
+    await setup('k3f9x2ab01');
 
     expect(component.formProductItem.value.price).toBe(80);
     expect(component.formProductItem.value.categoryProductId).toBe(3);
   });
 
   it('deveSalvarAEdicaoSemExigirNovaImagem', async () => {
-    await setup('5');
+    await setup('k3f9x2ab01');
     preencher({ price: 90 });
 
     component.updateProduct();
