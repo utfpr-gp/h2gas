@@ -44,7 +44,7 @@
                     {{ u.name }}
                     <span *ngIf="u.id === myId" class="text-xs font-normal text-gray-400">(você)</span>
                 </p>
-                <p class="text-sm text-gray-500 truncate">{{ u.email }}<span *ngIf="u.phoneNumber"> · {{ u.phoneNumber }}</span></p>
+                <p class="text-sm text-gray-500 truncate">{{ u.email }}<span *ngIf="u.phoneNumber"> · {{ u.phoneNumber | phone }}</span></p>
             </div>
             <span class="badge badge-ghost">{{ typeLabel[u.userType] }}</span>
             <span [attr.data-testid]="'status-' + u.id" class="badge"

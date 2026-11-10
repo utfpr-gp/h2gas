@@ -53,6 +53,7 @@ describe('SupplierApprovalComponent', () => {
     expect(card.textContent).toContain('Gás Nova Era');
     expect(card.textContent).toContain('11222333000144');
     expect(card.textContent).toContain('Pato Branco');
+    expect(card.textContent).toContain('(46) 99999-0000'); // HU28 Cenário 5
     expect(byId('status-s-1')?.textContent).toContain('Aguardando aprovação');
   });
 

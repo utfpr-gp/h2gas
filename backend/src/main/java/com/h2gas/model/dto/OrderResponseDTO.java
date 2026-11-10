@@ -59,4 +59,11 @@ public class OrderResponseDTO {
     // HU24: preenchida na listagem do cliente
     @Schema(description = "Avaliação que o cliente fez do pedido; nula se ainda não avaliou", nullable = true)
     private OrderReviewDTO review;
+
+    // HU28: pedido parado por etapa (pendente > 15 min, confirmado/em preparo > 1 h, em rota > 2 h, ou de outro dia)
+    @Schema(description = "Pedido em aberto parado na etapa atual", example = "true")
+    private boolean stalled;
+
+    @Schema(description = "Minutos na etapa atual quando o pedido está parado; nulo quando não está", example = "8640", nullable = true)
+    private Long stalledMinutes;
 }

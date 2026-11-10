@@ -79,6 +79,13 @@ export interface OrderResponse {
     lastRefusalBy?: string;
     // HU24: avaliação feita pelo cliente; nula enquanto não avaliou
     review?: OrderReview | null;
+    // HU28: o backend já calcula (RN01); total = subtotal + frete
+    subtotal?: number;
+    deliveryFee?: number;
+    deliveryDistanceKm?: number | null;
+    // HU28: parado por etapa, calculado no backend no horário de Brasília
+    stalled?: boolean;
+    stalledMinutes?: number | null;
 }
 
 // HU24

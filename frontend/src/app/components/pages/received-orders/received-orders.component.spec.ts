@@ -34,7 +34,7 @@ describe('ReceivedOrdersComponent', () => {
     // HU23: contagem por status vinda do backend
     orderServiceSpy.getMyStatusCounts.and.returnValue(of({
       counts: { PENDING: 2, CONFIRMED: 1, IN_PREPARATION: 0, OUT_FOR_DELIVERY: 1, DELIVERED: 7, CANCELED: 1 },
-      active: 4, total: 12,
+      active: 4, total: 12, receivable: 335.88,
     }));
     orderServiceSpy.findBySupplierId.and.returnValue(lista(pedido('e1', 'Entregue')));
     orderServiceSpy.findByExcludeStatus.and.returnValue(
@@ -171,6 +171,22 @@ describe('ReceivedOrdersComponent', () => {
     const badge = fixture.nativeElement.querySelector('[data-testid=pending-count]') as HTMLElement;
     expect(badge.textContent?.trim()).toBe('2');
     expect(fixture.nativeElement.querySelectorAll('[data-testid=order-row]').length).toBe(3);
+  });
+
+  // HU28 Cenário 4: o detalhe mostra subtotal e frete
+  it('deveMostrarOFreteNoDetalhe', () => {
+    fixture.detectChanges();
+
+    expect(component.selectedOrder?.deliveryMode).toBe('DELIVERY');
+    expect(fixture.nativeElement.querySelector('[data-testid="order-fee"]')).not.toBeNull();
+  });
+
+  // HU28 Cenário 2: "A receber" vem do backend (pedidos em andamento), não da lista filtrada
+  it('deveMostrarAReceberDoBackend', () => {
+    fixture.detectChanges();
+
+    const card = fixture.nativeElement.querySelector('[data-testid=receivable]') as HTMLElement;
+    expect(card.textContent).toMatch(/335[.,]88/);
   });
 
   it('deveAbrirModalDeJustificativaComBotaoTravado', () => {
@@ -343,6 +359,18 @@ describe('ReceivedOrdersComponent', () => {
     expect(link.getAttribute('href')).toBe('https://wa.me/5542999990000?text='
       + encodeURIComponent('Olá, Maria! Aqui é a Gás Centro, sobre o seu pedido #4a1a4ffe no H2Gás.'));
     expect(link.getAttribute('rel')).toContain('noopener');
+    expect(link.querySelector('app-whatsapp-icon svg')).not.toBeNull(); // logo do WhatsApp no botão
+  });
+
+  // HU28 Cenário 5: telefone legível; o tel: segue com os dígitos
+  it('deveFormatarOTelefoneDoCliente', () => {
+    orderServiceSpy.findByExcludeStatus.and.returnValue(lista(
+      pedido('p1', 'Pendente', 'DELIVERY', { customerPhone: '42990000011' })));
+    fixture.detectChanges();
+
+    const tel = fixture.nativeElement.querySelector('[data-testid="customer-phone"]') as HTMLAnchorElement;
+    expect(tel.textContent?.trim()).toBe('(42) 99000-0011');
+    expect(tel.getAttribute('href')).toBe('tel:42990000011');
   });
 
   it('naoDeveMostrarWhatsappDoClienteNoPedidoEncerrado', () => {
@@ -353,5 +381,40 @@ describe('ReceivedOrdersComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('[data-testid="whatsapp-customer"]')).toBeNull();
+  });
+
+  // ---- HU28 Cenário 6 e 7: data e pedido parado ----
+  it('deveMostrarADataQuandoOPedidoNaoEDeHoje', () => {
+    const hoje = new Date();
+    const antigo = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - 6, 19, 32);
+    orderServiceSpy.findByExcludeStatus.and.returnValue(lista(
+      pedido('antigo', 'Em rota', 'DELIVERY', { orderDate: antigo }),
+      pedido('hoje', 'Pendente', 'DELIVERY', { orderDate: new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 8, 5) })));
+    fixture.detectChanges();
+
+    const horas = Array.from(fixture.nativeElement.querySelectorAll('[data-testid=order-time]')) as HTMLElement[];
+    const textos = horas.map(h => h.textContent?.trim());
+    const dd = String(antigo.getDate()).padStart(2, '0'), mm = String(antigo.getMonth() + 1).padStart(2, '0');
+    expect(textos).toContain(`${dd}/${mm} 19:32`);
+    expect(textos).toContain('08:05');
+  });
+
+  it('deveDestacarPedidoParadoEAvisarNoTopo', () => {
+    orderServiceSpy.findByExcludeStatus.and.returnValue(lista(
+      pedido('parado', 'Em rota', 'DELIVERY', { stalled: true, stalledMinutes: 6 * 1440 }),
+      pedido('ok', 'Pendente', 'DELIVERY', { stalled: false })));
+    fixture.detectChanges();
+
+    const badges = Array.from(fixture.nativeElement.querySelectorAll('[data-testid=stalled-badge]')) as HTMLElement[];
+    expect(badges.length).toBe(1);
+    expect(badges[0].textContent?.trim()).toBe('parado há 6 dias');
+    expect(badges[0].closest('[data-testid=order-row]')!.classList).toContain('border-l-error');
+    expect(fixture.nativeElement.querySelector('[data-testid=stalled-alert]')?.textContent).toContain('1 pedido parado');
+  });
+
+  it('naoDeveAvisarSemPedidoParado', () => {
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid=stalled-alert]')).toBeNull();
   });
 });

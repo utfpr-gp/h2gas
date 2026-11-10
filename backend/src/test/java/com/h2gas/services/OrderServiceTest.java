@@ -1332,6 +1332,32 @@ class OrderServiceTest {
         return o;
     }
 
+    // HU28: pedidos em aberto por ordem de chegada (o mais antigo primeiro); encerrados do mais novo para o mais antigo
+    @Test
+    void deveListarPedidosEmAbertoPorOrdemDeChegada() {
+        Supplier loja = supplierRepository.save(createSupplier("Loja Fila", "fila@teste.com", "41933334444", "99988877766",
+                "senha", "11222333000166", "fila", true, true, null, testCity));
+        User cliente = userRepository.findById(validCustomerId).orElseThrow();
+        Order segundo = pedidoFinalizado(loja, cliente, OrderStatusEnum.PENDING, "PIX", DeliveryModeEnum.DELIVERY, "10.00", "2026-10-21");
+        Order primeiro = pedidoFinalizado(loja, cliente, OrderStatusEnum.CONFIRMED, "PIX", DeliveryModeEnum.DELIVERY, "10.00", "2026-10-20");
+        Order terceiro = pedidoFinalizado(loja, cliente, OrderStatusEnum.PENDING, "PIX", DeliveryModeEnum.DELIVERY, "10.00", "2026-10-22");
+        Order entregueAntigo = pedidoFinalizado(loja, cliente, OrderStatusEnum.DELIVERED, "PIX", DeliveryModeEnum.DELIVERY, "10.00", "2026-10-01");
+        Order entregueNovo = pedidoFinalizado(loja, cliente, OrderStatusEnum.DELIVERED, "PIX", DeliveryModeEnum.DELIVERY, "10.00", "2026-10-15");
+        entityManager.clear();
+        Pageable pagina = PageRequest.of(0, 10);
+
+        List<String> emAberto = orderService.findBySupplierIdAndStatusNotDeliveryAndCanceled(loja.getId(), pagina,
+                List.of(OrderStatusEnum.DELIVERED, OrderStatusEnum.CANCELED)).map(OrderResponseDTO::getId).getContent();
+        List<String> pendentes = orderService.findBySupplierIdAndStatus(loja.getId(), OrderStatusEnum.PENDING, pagina)
+                .map(OrderResponseDTO::getId).getContent();
+        List<String> entregues = orderService.findBySupplierIdAndStatus(loja.getId(), OrderStatusEnum.DELIVERED, pagina)
+                .map(OrderResponseDTO::getId).getContent();
+
+        assertEquals(List.of(primeiro.getId(), segundo.getId(), terceiro.getId()), emAberto);
+        assertEquals(List.of(segundo.getId(), terceiro.getId()), pendentes);
+        assertEquals(List.of(entregueNovo.getId(), entregueAntigo.getId()), entregues);
+    }
+
     private void criarHistorico() {
         Supplier supplier = supplierRepository.findById(validSupplierId).orElseThrow();
         User cliente = userRepository.findById(validCustomerId).orElseThrow();
@@ -1543,6 +1569,8 @@ class OrderServiceTest {
         assertEquals(3L, novos.apply(OrderStatusEnum.DELIVERED));
         assertEquals(1L, novos.apply(OrderStatusEnum.CANCELED));
         assertEquals(3L, contagem.active() - antes.active());
+        // HU28 Cenário 2: a receber = soma dos pedidos em andamento (2 pendentes + 1 em rota de R$ 10)
+        assertEquals(0, new BigDecimal("30.00").compareTo(contagem.receivable().subtract(antes.receivable())));
         assertEquals(7L, contagem.total() - antes.total());
         assertEquals(contagem.total(), contagem.counts().values().stream().mapToLong(Long::longValue).sum());
         for (OrderStatusEnum st : OrderStatusEnum.values()) assertNotNull(contagem.counts().get(st), st.name());

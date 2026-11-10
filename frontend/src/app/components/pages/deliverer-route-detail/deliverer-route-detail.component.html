@@ -54,7 +54,7 @@
                 <a data-testid="call-customer" [href]="'tel:' + phoneDigits" aria-label="Ligar para o cliente"
                     class="btn btn-outline btn-primary btn-circle btn-sm"><span class="material-icons text-base">call</span></a>
                 <a *ngIf="whatsappLink" data-testid="whatsapp-customer" [href]="whatsappLink" target="_blank" rel="noopener" aria-label="Chamar o cliente no WhatsApp"
-                    class="btn btn-outline btn-primary btn-circle btn-sm"><span class="material-icons text-base">chat</span></a>
+                    class="btn btn-outline btn-primary btn-circle btn-sm"><app-whatsapp-icon class="text-base"></app-whatsapp-icon></a>
             </div>
         </section>
 

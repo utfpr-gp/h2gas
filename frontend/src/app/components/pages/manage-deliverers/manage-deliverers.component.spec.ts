@@ -55,6 +55,8 @@ describe('ManageDeliverersComponent', () => {
     expect(linhas[0].textContent).toContain('Carlos Silva');
     expect(linhas[0].querySelector('[data-testid=deliverer-status]')?.textContent?.trim()).toBe('Em rota');
     expect(linhas[1].querySelector('[data-testid=deliverer-status]')?.textContent?.trim()).toBe('Disponível');
+    // HU28 Cenário 5: telefone legível
+    expect(linhas[0].textContent).toContain('(41) 98888-7777');
   });
 
   it('naoDeveCadastrarComDadosInvalidos', () => {

@@ -371,14 +371,15 @@ class OrderControllerTest {
         java.util.Map<com.h2gas.enums.OrderStatusEnum, Long> counts = new java.util.EnumMap<>(com.h2gas.enums.OrderStatusEnum.class);
         for (com.h2gas.enums.OrderStatusEnum st : com.h2gas.enums.OrderStatusEnum.values()) counts.put(st, 0L);
         counts.put(com.h2gas.enums.OrderStatusEnum.PENDING, 2L);
-        when(orderService.countMyOrdersByStatus("fornecedor-1")).thenReturn(new com.h2gas.model.dto.OrderStatusCountsDTO(counts, 2, 2));
+        when(orderService.countMyOrdersByStatus("fornecedor-1")).thenReturn(new com.h2gas.model.dto.OrderStatusCountsDTO(counts, 2, 2, new java.math.BigDecimal("150.00")));
 
         mockMvc.perform(get("/api/orders/mine/status-counts"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.counts.PENDING").value(2))
                 .andExpect(jsonPath("$.counts.DELIVERED").value(0))
                 .andExpect(jsonPath("$.active").value(2))
-                .andExpect(jsonPath("$.total").value(2));
+                .andExpect(jsonPath("$.total").value(2))
+                .andExpect(jsonPath("$.receivable").value(150.00));
     }
 
     // ---- HU24 ----

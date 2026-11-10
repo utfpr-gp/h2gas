@@ -1,3 +1,7 @@
+import { stallLabel } from '../../../utils/stall-label';
+import { WhatsappIconComponent } from '../../whatsapp-icon/whatsapp-icon.component';
+import { PhonePipe } from '../../../utils/phone.pipe';
+import { OrderFeeLinesComponent } from '../../order-fee-lines/order-fee-lines.component';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription, interval } from 'rxjs';
 import { OrderService, OrderStatusCounts } from '../../../services/order.service';
@@ -22,7 +26,7 @@ const FILTERED_PAGE_SIZE = 50;
 
 @Component({
   selector: 'app-received-orders',
-  imports: [
+  imports: [WhatsappIconComponent, PhonePipe, OrderFeeLinesComponent, 
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
@@ -160,6 +164,27 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
     { value: 'CANCELED', label: 'Cancelados' },
   ];
   statusCounts?: OrderStatusCounts;
+
+  // HU28: pedidos parados na lista carregada (o backend marca por etapa)
+  get stalledCount(): number {
+    return (this.orders ?? []).filter(o => o.stalled).length;
+  }
+
+  stallText(minutes: number): string {
+    return stallLabel(minutes);
+  }
+
+  // HU28: pedido de outro dia mostra a data, não só a hora
+  isToday(date: Date | string | null | undefined): boolean {
+    if (!date) return true;
+    const d = new Date(date), now = new Date();
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+  }
+
+  // HU28: o link de ligar usa só os dígitos; a tela mostra o telefone formatado
+  phoneDigits(phone: string): string {
+    return phone.replace(/\D/g, '');
+  }
 
   countFor(value: string): number | null {
     const c = this.statusCounts;
@@ -335,10 +360,5 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
     return this.orders?.filter(order => order.status === status).length || 0;
   }
 
-  getTotalRevenue(): number {
-    return this.orders
-      ?.filter(order => order.status !== 'Entregue')
-      .reduce((sum, order) => sum + order.totalPrice, 0) || 0;
-  }
 
 }

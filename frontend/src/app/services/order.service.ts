@@ -13,6 +13,7 @@ export interface OrderStatusCounts {
   counts: Record<'PENDING' | 'CONFIRMED' | 'IN_PREPARATION' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELED', number>;
   active: number;
   total: number;
+  receivable: number; // HU28: soma dos pedidos em andamento (nem entregues nem cancelados)
 }
 
 @Injectable({

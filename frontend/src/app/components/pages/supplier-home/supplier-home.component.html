@@ -34,7 +34,7 @@
         <a routerLink="/minha-loja/painel" data-testid="home-card-painel" class="home-card bg-base-100 text-base-content border-base-300">
             <ng-container *ngTemplateOutlet="cabecalho; context: { $implicit: 'insights', title: 'Painel', iconClass: 'text-accent' }"></ng-container>
             <ng-container *ngTemplateOutlet="numero; context: { $implicit: monthRevenue, text: (monthRevenue | currency:'BRL':'symbol':'1.2-2') }"></ng-container>
-            <span class="text-sm text-neutral">vendido no mês</span>
+            <span class="text-sm text-neutral">recebido no mês</span>
         </a>
 
         <!-- Produtos: tom de alerta só quando há o que repor -->

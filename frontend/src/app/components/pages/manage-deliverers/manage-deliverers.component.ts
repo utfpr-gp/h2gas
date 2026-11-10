@@ -1,3 +1,4 @@
+import { PhonePipe } from '../../../utils/phone.pipe';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -11,7 +12,7 @@ import { backendMessage } from '../../../utils/backend-message';
 @Component({
   selector: 'app-manage-deliverers',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [PhonePipe, CommonModule, ReactiveFormsModule],
   templateUrl: './manage-deliverers.component.html',
   animations: [fadeIn],
 })

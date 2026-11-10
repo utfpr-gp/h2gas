@@ -16,10 +16,10 @@ public class SupplierDashboardDTO {
     @Schema(description = "Mês dos indicadores (YYYY-MM)", example = "2026-10")
     private String month;
 
-    @Schema(description = "Soma do total dos pedidos contados", example = "4523.00")
+    @Schema(description = "HU28: soma do total dos pedidos entregues do mês (o pagamento é na entrega)", example = "4523.00")
     private BigDecimal totalRevenue;
 
-    @Schema(description = "Variação % da receita sobre o mês anterior; nulo se o mês anterior não teve receita", example = "12.5")
+    @Schema(description = "Variação % da receita (entregues) sobre o mês anterior; nulo se o mês anterior não teve receita", example = "12.5")
     private Double revenueChangePercent;
 
     @Schema(description = "Pedidos contados no mês", example = "84")
@@ -28,7 +28,7 @@ public class SupplierDashboardDTO {
     @Schema(description = "Variação % dos pedidos sobre o mês anterior; nulo se o mês anterior não teve pedidos", example = "14.2")
     private Double ordersChangePercent;
 
-    @Schema(description = "Receita ÷ pedidos; nulo sem pedidos", example = "53.85")
+    @Schema(description = "HU28: receita ÷ pedidos entregues; nulo sem entregas", example = "53.85")
     private BigDecimal averageTicket;
 
     @Schema(description = "Receita dos pedidos contados ainda não entregues", example = "820.00")
@@ -53,7 +53,7 @@ public class SupplierDashboardDTO {
     @Schema(description = "Quantas avaliações formam a nota média da loja", example = "27")
     private long ratingCount;
 
-    @Schema(description = "Receita de cada dia do mês")
+    @Schema(description = "HU28: receita (pedidos entregues) de cada dia do mês, pelo dia do pedido")
     private List<RevenuePointDTO> revenueByDay;
 
     @Schema(description = "Top 5 produtos por unidades vendidas")

@@ -72,6 +72,10 @@ class ProductItemServiceTest {
     @Autowired
     private ProductItemService productItemService;
 
+    // HU28: o upload vai para o Cloudinary; no teste a resposta é simulada
+    @org.springframework.test.context.bean.override.mockito.MockitoBean
+    private CloudinaryService cloudinaryService;
+
     private String validIdSupplier;
 
     private Long validIdItemProduct;
@@ -285,6 +289,25 @@ class ProductItemServiceTest {
         ProductItemDTO criado = productItemService.createProductItem(dto, null, "Fornecedor Categoria Global");
 
         assertEquals(global.getId(), criado.getCategoryProductId());
+    }
+
+    @Test
+    @DisplayName("HU28 Cenário 8: a foto do produto é gravada com a URL https do Cloudinary")
+    void deveGravarAUrlHttpsDaImagem() throws Exception {
+        Supplier logado = createSupplierForTest(1);
+        logado.setName("Fornecedor Foto Https");
+        supplierRepository.save(logado);
+        CreateProductItemDTO dto = new CreateProductItemDTO();
+        dto.setBrand("Ultragaz");
+        dto.setCategoryProductId(createCategoryForTest("13kg").getId());
+        dto.setPrice(new BigDecimal("100.00"));
+        org.mockito.Mockito.when(cloudinaryService.upload(org.mockito.ArgumentMatchers.any())).thenReturn(java.util.Map.of(
+                "secure_url", "https://res.cloudinary.com/h2gas/p13.jpg", "url", "http://res.cloudinary.com/h2gas/p13.jpg"));
+        var foto = new org.springframework.mock.web.MockMultipartFile("file", "p13.jpg", "image/jpeg", new byte[]{1});
+
+        ProductItemDTO criado = productItemService.createProductItem(dto, foto, "Fornecedor Foto Https");
+
+        assertEquals("https://res.cloudinary.com/h2gas/p13.jpg", criado.getImageUrl());
     }
 
     @Test

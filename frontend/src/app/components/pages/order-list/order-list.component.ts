@@ -1,3 +1,5 @@
+import { WhatsappIconComponent } from '../../whatsapp-icon/whatsapp-icon.component';
+import { OrderFeeLinesComponent } from '../../order-fee-lines/order-fee-lines.component';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { OrderService } from '../../../services/order.service';
@@ -17,7 +19,7 @@ import { firstName, orderCode, whatsappLink } from '../../../utils/whatsapp-link
 
 @Component({
   selector: 'app-order-list',
-  imports: [
+  imports: [WhatsappIconComponent, OrderFeeLinesComponent, 
     CommonModule,
     PaginationComponent,
     OrderReviewDialogComponent,

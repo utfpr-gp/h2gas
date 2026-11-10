@@ -61,8 +61,10 @@ public class SupplierDashboardService {
         Counted current = countedOrders(supplierId, month, filter);
         Counted previous = countedOrders(supplierId, month.minusMonths(1), filter);
 
-        BigDecimal revenue = current.sum(current.orders);
-        BigDecimal previousRevenue = previous.sum(previous.orders);
+        // HU28: receita = só o que foi entregue (o pagamento é na entrega); "a receber" fica com o resto
+        List<Order> delivered = current.delivered();
+        BigDecimal revenue = current.sum(delivered);
+        BigDecimal previousRevenue = previous.sum(previous.delivered());
         int total = current.orders.size();
 
         SupplierDashboardDTO dashboard = new SupplierDashboardDTO();
@@ -71,9 +73,9 @@ public class SupplierDashboardService {
         dashboard.setRevenueChangePercent(changePercent(revenue, previousRevenue));
         dashboard.setTotalOrders(total);
         dashboard.setOrdersChangePercent(changePercent(BigDecimal.valueOf(total), BigDecimal.valueOf(previous.orders.size())));
-        dashboard.setAverageTicket(total == 0 ? null : revenue.divide(BigDecimal.valueOf(total), 2, RoundingMode.HALF_UP));
+        dashboard.setAverageTicket(delivered.isEmpty() ? null : revenue.divide(BigDecimal.valueOf(delivered.size()), 2, RoundingMode.HALF_UP));
         dashboard.setReceivable(current.sum(current.orders.stream().filter(o -> o.getStatus() != OrderStatusEnum.DELIVERED).toList()));
-        dashboard.setDeliveredOrders(current.orders.stream().filter(o -> o.getStatus() == OrderStatusEnum.DELIVERED).count());
+        dashboard.setDeliveredOrders(delivered.size());
         dashboard.setPendingOrders(orderRepository.countBySupplierIdAndStatus(supplierId, OrderStatusEnum.PENDING));
         dashboard.setOutForDeliveryOrders(orderRepository.countBySupplierIdAndStatus(supplierId, OrderStatusEnum.OUT_FOR_DELIVERY));
         dashboard.setAverageDeliveryMinutes(averageDeliveryMinutes(current.orders));
@@ -106,6 +108,10 @@ public class SupplierDashboardService {
 
         BigDecimal sum(List<Order> list) {
             return list.stream().map(this::value).reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+
+        List<Order> delivered() {
+            return orders.stream().filter(o -> o.getStatus() == OrderStatusEnum.DELIVERED).toList();
         }
     }
 
@@ -158,7 +164,7 @@ public class SupplierDashboardService {
     }
 
     private List<RevenuePointDTO> revenueByDay(Counted counted, YearMonth month) {
-        Map<LocalDate, BigDecimal> byDay = counted.orders.stream().collect(Collectors.groupingBy(
+        Map<LocalDate, BigDecimal> byDay = counted.delivered().stream().collect(Collectors.groupingBy(
                 o -> o.getCreatedAt().toLocalDate(),
                 Collectors.reducing(BigDecimal.ZERO, counted::value, BigDecimal::add)));
         return IntStream.rangeClosed(1, month.lengthOfMonth())

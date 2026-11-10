@@ -20,6 +20,9 @@ public class OrderMapper {
     @Autowired
     private ModelMapper modelMapper;
 
+    @Autowired
+    private com.h2gas.services.OrderStallPolicy stallPolicy;
+
     public OrderRequestDTO toRequestDto(Order data) {
         OrderRequestDTO orderRequestDTO = modelMapper.map(data, OrderRequestDTO.class);
         if (data.getCustomer().getId() != null) {
@@ -48,6 +51,10 @@ public class OrderMapper {
         BigDecimal fee = data.getDeliveryFee() == null ? BigDecimal.ZERO : data.getDeliveryFee();
         orderResponseDTO.setDeliveryFee(fee);
         orderResponseDTO.setSubtotal(data.getTotalPrice() == null ? null : data.getTotalPrice().subtract(fee));
+        stallPolicy.stalledMinutes(data).ifPresent(minutes -> {
+            orderResponseDTO.setStalled(true);
+            orderResponseDTO.setStalledMinutes(minutes);
+        });
 
         if (data.getCustomer().getId() != null) {
             orderResponseDTO.setCustomerId(data.getCustomer().getId());

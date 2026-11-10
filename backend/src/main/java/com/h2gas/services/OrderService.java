@@ -215,12 +215,18 @@ public class OrderService {
     public com.h2gas.model.dto.OrderStatusCountsDTO countMyOrdersByStatus(String supplierId) {
         java.util.Map<OrderStatusEnum, Long> counts = new java.util.EnumMap<>(OrderStatusEnum.class);
         for (OrderStatusEnum status : OrderStatusEnum.values()) counts.put(status, 0L);
+        BigDecimal receivable = BigDecimal.ZERO;
         for (var row : orderRepository.countBySupplierGroupedByStatus(supplierId)) {
-            if (row.getStatus() != null) counts.put(row.getStatus(), row.getTotal());
+            if (row.getStatus() == null) continue;
+            counts.put(row.getStatus(), row.getTotal());
+            // HU28: a receber = pedidos em andamento (o pagamento é na entrega)
+            if (row.getStatus() != OrderStatusEnum.DELIVERED && row.getStatus() != OrderStatusEnum.CANCELED && row.getAmount() != null) {
+                receivable = receivable.add(row.getAmount());
+            }
         }
         long total = counts.values().stream().mapToLong(Long::longValue).sum();
         long active = total - counts.get(OrderStatusEnum.DELIVERED) - counts.get(OrderStatusEnum.CANCELED);
-        return new com.h2gas.model.dto.OrderStatusCountsDTO(counts, active, total);
+        return new com.h2gas.model.dto.OrderStatusCountsDTO(counts, active, total, receivable);
     }
 
     private DeliveryQuote deliveryQuote(Order order) {
@@ -307,9 +313,13 @@ public class OrderService {
                 .map(orderMapper::toResponseDto);
     }
 
+    // HU28: em aberto por ordem de chegada (atender primeiro quem espera há mais tempo); encerrados como histórico
     public Page<OrderResponseDTO> findBySupplierIdAndStatus(String id, OrderStatusEnum status, Pageable pageable) {
-        return orderRepository.findBySupplierIdAndStatusOrderByCreatedAtDesc(id, status, pageable)
-                .map(orderMapper::toResponseDto);
+        boolean closed = status == OrderStatusEnum.DELIVERED || status == OrderStatusEnum.CANCELED;
+        Page<Order> page = closed
+                ? orderRepository.findBySupplierIdAndStatusOrderByCreatedAtDesc(id, status, pageable)
+                : orderRepository.findBySupplierIdAndStatusOrderByCreatedAtAsc(id, status, pageable);
+        return page.map(orderMapper::toResponseDto);
     }
 
     public Page<OrderResponseDTO> findByStatus(OrderStatusEnum status, Pageable pageable) {
@@ -514,7 +524,7 @@ public class OrderService {
 
     public Page<OrderResponseDTO> findBySupplierIdAndStatusNotDeliveryAndCanceled(String id, Pageable pageable, List<OrderStatusEnum> excludeStatuses) {
 //        List<OrderStatusEnum> excludedStatuses = List.of(OrderStatusEnum.DELIVERED, OrderStatusEnum.CANCELED);
-        return orderRepository.findBySupplierIdAndStatusNotInOrderByCreatedAtDesc(id, excludeStatuses, pageable)
+        return orderRepository.findBySupplierIdAndStatusNotInOrderByCreatedAtAsc(id, excludeStatuses, pageable)
                 .map(orderMapper::toResponseDto);
     }
 
