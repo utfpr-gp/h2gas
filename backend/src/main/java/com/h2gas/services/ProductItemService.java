@@ -180,7 +180,7 @@ public class ProductItemService {
         if (file != null) {
             try {
                 Map cloudnaryResponse = cloudinaryService.upload(file);
-                productItem.setImageUrl(cloudnaryResponse.get("url").toString());
+                productItem.setImageUrl(CloudinaryService.secureUrl(cloudnaryResponse));
             } catch (IOException e) {
                 throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Não foi possível enviar a imagem. Tente novamente.", e);
             }

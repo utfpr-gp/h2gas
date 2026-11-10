@@ -124,7 +124,13 @@ destaque, para não perder venda nem me enganar com números.
 
 ### 5.5 (e) Imagens
 
-- Detalhado no início do item.
+- `CloudinaryService.secureUrl(Map)`: `secure_url` (fallback `url`), usado no
+  cadastro de produto e no upload de logo/banner (que já seguia a regra).
+- Dados (fora do código): as 7 fotos de `frontend/public/dev-fixtures` foram
+  enviadas ao Cloudinary (`h2gas/produtos-teste/…`) e um `UPDATE` troca
+  `/dev-fixtures/<arquivo>` pela URL `https` e qualquer `http://res.cloudinary.com`
+  por `https`. Aplicado no MySQL local em 2026-11-10; em produção pelo script
+  `aplicar-fotos-coolify.sh` (SSH do autor).
 
 ## 6. Plano de Testes (TDD)
 
@@ -143,7 +149,7 @@ Entregadores e Aprovação; `whatsapp-icon.component.spec.ts`.
 `OrderMapperTest.deveMarcarPedidoParado`,
 `OrderServiceTest.deveListarPedidosEmAbertoPorOrdemDeChegada`,
 `stall-label.spec.ts` e received-orders (data, destaque e aviso).
-(e) definido no início do item.
+(e) `ProductItemServiceTest.deveGravarAUrlHttpsDaImagem`.
 
 ## 7. Fora de Escopo
 
@@ -154,7 +160,8 @@ Entregadores e Aprovação; `whatsapp-icon.component.spec.ts`.
 
 ## 8. Definição de Pronto
 
-- [ ] Itens (a)–(e) com testes verdes e validados pelo autor.
-- [ ] Rotas/DTOs alterados documentados no Swagger.
-- [ ] `mvn test` só com o `contextLoads`; `ng test` sem falha; `ng build` ok.
-- [ ] Nada do "Fora de Escopo".
+- [x] Itens (a)–(e) com testes verdes e validados pelo autor (2026-11-10).
+- [x] DTOs alterados documentados no Swagger (`OrderStatusCountsDTO.receivable`,
+      `OrderResponseDTO.stalled`/`stalledMinutes`, receita do painel).
+- [x] `mvn test` só com o `contextLoads`; `ng test` sem falha; `ng build` ok.
+- [x] Nada do "Fora de Escopo".
