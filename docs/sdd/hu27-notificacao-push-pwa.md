@@ -70,7 +70,7 @@ precisar ficar olhando a tela para saber do meu pedido.
   - variáveis `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` e `VAPID_SUBJECT`
     (`mailto:`);
   - sem elas, o push fica "não configurado" e nada é enviado.
-- **Migração `V25__push_subscriptions.sql`**: tabela `push_subscriptions` com
+- **Migração `V27__push_subscriptions.sql`** (era V25; renumerada no rebase sobre a F12, porque a V26 já estava em produção e o Flyway recusa versão fora de ordem): tabela `push_subscriptions` com
   - `id`;
   - `user_id` (FK `users`);
   - `endpoint` (`VARCHAR(500)`, único);
@@ -175,7 +175,8 @@ precisar ficar olhando a tela para saber do meu pedido.
 
 ## 8. Definição de Pronto
 
-- [ ] V25 aplicada; chaves VAPID no ambiente.
+- [x] V27 aplicada no MySQL local (2026-11-10); chaves VAPID no ambiente.
+- [ ] Notificação vista no celular Android (teste do autor pendente).
 - [ ] Ativar, desativar e sair funcionando, só com as próprias assinaturas.
 - [ ] Notificações do cliente, da loja e do entregador depois do commit.
 - [ ] Assinatura vencida apagada.
