@@ -53,7 +53,9 @@ public interface OrderRepository extends JpaRepository<Order, String> {
     List<Order> findByDelivererIdAndStatusOrderByCreatedAtAsc(Long delivererId, OrderStatusEnum status);
     List<Order> findByDelivererIdAndStatusOrderByDeliveredAtDesc(Long delivererId, OrderStatusEnum status);
     Page<Order> findBySupplierIdAndStatusOrderByCreatedAtDesc(String supplierId, OrderStatusEnum status, Pageable pageable);
-    Page<Order> findBySupplierIdAndStatusNotInOrderByCreatedAtDesc(String supplierId,
+    // HU28: pedidos em aberto por ordem de chegada (o mais antigo primeiro)
+    Page<Order> findBySupplierIdAndStatusOrderByCreatedAtAsc(String supplierId, OrderStatusEnum status, Pageable pageable);
+    Page<Order> findBySupplierIdAndStatusNotInOrderByCreatedAtAsc(String supplierId,
                                                                    List<OrderStatusEnum> statuses,
                                                                    Pageable pageable);
     Page<Order> findByCustomerIdOrderByCreatedAtDesc(String customerId, Pageable pageable);

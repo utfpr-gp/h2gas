@@ -91,12 +91,40 @@ destaque, para não perder venda nem me enganar com números.
   `getTotalRevenue()`. Hub: "recebido no mês". Painel: o card "Receita"
   ganha "pedidos entregues" e o gráfico vira "Receita por dia".
 
-### 5.2 a 5.5 — (b) a (e)
+### 5.2 (b) Frete
 
-Detalhados no início de cada item, a partir do plano aprovado: campos de
-frete no modelo do front; pipe `phone` em `utils/`; `OrderResponseDTO.stalled`
-calculado no backend com o `Clock`; `secure_url` no cadastro e envio das 7
-fotos ao Cloudinary com `UPDATE` no banco.
+- `OrderResponse` (front) ganha `subtotal`, `deliveryFee`, `deliveryDistanceKm`
+  (o backend já envia). Componente `order-fee-lines`: Subtotal e "Frete (0,8
+  km)"; frete 0 = "Grátis"; retirada sem as linhas. Usado em Pedidos recebidos,
+  Histórico e Meus pedidos.
+
+### 5.3 (c) Telefone
+
+- Pipe `phone` (`utils/phone.pipe.ts`): 11 dígitos = celular, 10 = fixo; o 55
+  só é DDI com mais de 11 dígitos; outro formato volta como veio. Aplicado em
+  Pedidos recebidos, Entregadores, Aprovação de fornecedores e Usuários. O
+  `tel:` usa só os dígitos.
+- Pedido do autor na validação: os atalhos de WhatsApp usam o logo
+  (componente `whatsapp-icon`, SVG na cor do botão) no lugar do balão genérico.
+
+### 5.4 (d) Data, pedido parado e ordem de chegada
+
+- `OrderStallPolicy` (backend, com o `Clock` de Brasília): minutos na etapa
+  atual quando o pedido está parado. Etapa: pendente desde `createdAt`;
+  confirmado/em preparo desde `updatedAt`; em rota desde `dispatchedAt`.
+  Limites 15 min, 1 h e 2 h; pedido em aberto de outro dia sempre conta.
+- `OrderResponseDTO.stalled` e `stalledMinutes` (`@Schema`), preenchidos no
+  `OrderMapper`.
+- Pedidos recebidos: hora (`HH:mm`) para pedido de hoje e `dd/MM HH:mm` para os
+  outros; linha parada com borda/fundo `error` e "parado há 6 dias"; faixa
+  "N pedidos parados" no topo.
+- Pedido do autor na validação: pedidos em aberto por ordem de chegada (o mais
+  antigo primeiro) em "Em andamento" e nos filtros de status em aberto;
+  entregues e cancelados seguem do mais novo para o mais antigo.
+
+### 5.5 (e) Imagens
+
+- Detalhado no início do item.
 
 ## 6. Plano de Testes (TDD)
 
@@ -107,7 +135,15 @@ fotos ao Cloudinary com `UPDATE` no banco.
 3. `received-orders.component.spec.ts`: `deveMostrarAReceberDoBackend`.
 4. `supplier-home.component.spec.ts`: texto "recebido no mês".
 
-(b) a (e): listados no início de cada item.
+(b) `order-fee-lines.component.spec.ts` (subtotal e frete, "Grátis",
+retirada sem frete) e o frete nas três telas.
+(c) `phone.pipe.spec.ts`; telefone formatado em Pedidos recebidos,
+Entregadores e Aprovação; `whatsapp-icon.component.spec.ts`.
+(d) `OrderStallPolicyTest` (cada etapa, outro dia, encerrados),
+`OrderMapperTest.deveMarcarPedidoParado`,
+`OrderServiceTest.deveListarPedidosEmAbertoPorOrdemDeChegada`,
+`stall-label.spec.ts` e received-orders (data, destaque e aviso).
+(e) definido no início do item.
 
 ## 7. Fora de Escopo
 

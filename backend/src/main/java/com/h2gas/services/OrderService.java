@@ -313,9 +313,13 @@ public class OrderService {
                 .map(orderMapper::toResponseDto);
     }
 
+    // HU28: em aberto por ordem de chegada (atender primeiro quem espera há mais tempo); encerrados como histórico
     public Page<OrderResponseDTO> findBySupplierIdAndStatus(String id, OrderStatusEnum status, Pageable pageable) {
-        return orderRepository.findBySupplierIdAndStatusOrderByCreatedAtDesc(id, status, pageable)
-                .map(orderMapper::toResponseDto);
+        boolean closed = status == OrderStatusEnum.DELIVERED || status == OrderStatusEnum.CANCELED;
+        Page<Order> page = closed
+                ? orderRepository.findBySupplierIdAndStatusOrderByCreatedAtDesc(id, status, pageable)
+                : orderRepository.findBySupplierIdAndStatusOrderByCreatedAtAsc(id, status, pageable);
+        return page.map(orderMapper::toResponseDto);
     }
 
     public Page<OrderResponseDTO> findByStatus(OrderStatusEnum status, Pageable pageable) {
@@ -520,7 +524,7 @@ public class OrderService {
 
     public Page<OrderResponseDTO> findBySupplierIdAndStatusNotDeliveryAndCanceled(String id, Pageable pageable, List<OrderStatusEnum> excludeStatuses) {
 //        List<OrderStatusEnum> excludedStatuses = List.of(OrderStatusEnum.DELIVERED, OrderStatusEnum.CANCELED);
-        return orderRepository.findBySupplierIdAndStatusNotInOrderByCreatedAtDesc(id, excludeStatuses, pageable)
+        return orderRepository.findBySupplierIdAndStatusNotInOrderByCreatedAtAsc(id, excludeStatuses, pageable)
                 .map(orderMapper::toResponseDto);
     }
 

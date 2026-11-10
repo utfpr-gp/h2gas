@@ -21,6 +21,9 @@ class OrderMapperTest {
     private OrderMapper novoMapper() {
         OrderMapper mapper = new OrderMapper();
         ReflectionTestUtils.setField(mapper, "modelMapper", new MapperConfig().modelMapper());
+        ReflectionTestUtils.setField(mapper, "stallPolicy", new com.h2gas.services.OrderStallPolicy(java.time.Clock.fixed(
+                java.time.LocalDateTime.of(2026, 11, 9, 15, 0).atZone(com.h2gas.configuration.ClockConfig.BRASILIA).toInstant(),
+                com.h2gas.configuration.ClockConfig.BRASILIA)));
         return mapper;
     }
 
@@ -57,5 +60,22 @@ class OrderMapperTest {
         for (OrderStatusEnum status : new OrderStatusEnum[]{OrderStatusEnum.IN_PREPARATION, OrderStatusEnum.DELIVERED, OrderStatusEnum.CANCELED}) {
             assertNull(novoMapper().toResponseDto(pedido(status)).getDelivererPhone(), status.name());
         }
+    }
+
+    // HU28 Cenário 7: o pedido parado sai marcado, com os minutos na etapa
+    @Test
+    void deveMarcarPedidoParado() {
+        Order parado = pedido(OrderStatusEnum.PENDING);
+        parado.setCreatedAt(java.time.LocalDateTime.of(2026, 11, 9, 14, 0));
+        Order recente = pedido(OrderStatusEnum.PENDING);
+        recente.setCreatedAt(java.time.LocalDateTime.of(2026, 11, 9, 14, 55));
+
+        var dtoParado = novoMapper().toResponseDto(parado);
+        var dtoRecente = novoMapper().toResponseDto(recente);
+
+        assertTrue(dtoParado.isStalled());
+        assertEquals(60L, dtoParado.getStalledMinutes());
+        assertFalse(dtoRecente.isStalled());
+        assertNull(dtoRecente.getStalledMinutes());
     }
 }
