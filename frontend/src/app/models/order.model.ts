@@ -83,6 +83,9 @@ export interface OrderResponse {
     subtotal?: number;
     deliveryFee?: number;
     deliveryDistanceKm?: number | null;
+    // HU28: parado por etapa, calculado no backend no horário de Brasília
+    stalled?: boolean;
+    stalledMinutes?: number | null;
 }
 
 // HU24

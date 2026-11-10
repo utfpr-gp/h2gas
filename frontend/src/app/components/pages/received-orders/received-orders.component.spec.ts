@@ -382,4 +382,39 @@ describe('ReceivedOrdersComponent', () => {
 
     expect(fixture.nativeElement.querySelector('[data-testid="whatsapp-customer"]')).toBeNull();
   });
+
+  // ---- HU28 Cenário 6 e 7: data e pedido parado ----
+  it('deveMostrarADataQuandoOPedidoNaoEDeHoje', () => {
+    const hoje = new Date();
+    const antigo = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() - 6, 19, 32);
+    orderServiceSpy.findByExcludeStatus.and.returnValue(lista(
+      pedido('antigo', 'Em rota', 'DELIVERY', { orderDate: antigo }),
+      pedido('hoje', 'Pendente', 'DELIVERY', { orderDate: new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate(), 8, 5) })));
+    fixture.detectChanges();
+
+    const horas = Array.from(fixture.nativeElement.querySelectorAll('[data-testid=order-time]')) as HTMLElement[];
+    const textos = horas.map(h => h.textContent?.trim());
+    const dd = String(antigo.getDate()).padStart(2, '0'), mm = String(antigo.getMonth() + 1).padStart(2, '0');
+    expect(textos).toContain(`${dd}/${mm} 19:32`);
+    expect(textos).toContain('08:05');
+  });
+
+  it('deveDestacarPedidoParadoEAvisarNoTopo', () => {
+    orderServiceSpy.findByExcludeStatus.and.returnValue(lista(
+      pedido('parado', 'Em rota', 'DELIVERY', { stalled: true, stalledMinutes: 6 * 1440 }),
+      pedido('ok', 'Pendente', 'DELIVERY', { stalled: false })));
+    fixture.detectChanges();
+
+    const badges = Array.from(fixture.nativeElement.querySelectorAll('[data-testid=stalled-badge]')) as HTMLElement[];
+    expect(badges.length).toBe(1);
+    expect(badges[0].textContent?.trim()).toBe('parado há 6 dias');
+    expect(badges[0].closest('[data-testid=order-row]')!.classList).toContain('border-l-error');
+    expect(fixture.nativeElement.querySelector('[data-testid=stalled-alert]')?.textContent).toContain('1 pedido parado');
+  });
+
+  it('naoDeveAvisarSemPedidoParado', () => {
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid=stalled-alert]')).toBeNull();
+  });
 });
