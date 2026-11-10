@@ -141,6 +141,16 @@ public class ProductItemService {
                 -> new ResourceNotFoundException("Produto não encontrado com esse id: " + id));
     }
 
+    // F12: o formulário de edição só abre produto da própria loja
+    public ProductItemDTO findOwnById(Long id, User actor) {
+        ProductItem productItem = productItemRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado com esse id: " + id));
+        if (productItem.getSupplier() == null || !productItem.getSupplier().getId().equals(actor.getId())) {
+            throw new ForbiddenResourceException("Este produto não é da sua loja.");
+        }
+        return productItemMapper.toDto(productItem);
+    }
+
     public ProductItem findEntityById(Long id) {
         return productItemRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado com esse id: " + id));

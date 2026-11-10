@@ -32,8 +32,14 @@ public class AddressController {
     @Autowired
     private AddressMapper addressMapper;
 
+    @Operation(summary = "Lista todos os endereços", description = "F12: só o admin")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Todos os endereços"),
+            @ApiResponse(responseCode = "403", description = "Papel diferente de admin")
+    })
     @GetMapping
     @ResponseBody
+    @RolesAllowed("ADMIN")
     public ResponseEntity<List<AddressDTO>> getAllAddresses() {
         List<AddressDTO> cityDTO = addressService.findAllAddresses();
         return ResponseEntity.ok(cityDTO);
@@ -51,10 +57,20 @@ public class AddressController {
         return ResponseEntity.ok(created);
     }
 
+    @Operation(summary = "Busca o endereço mais recente de um usuário",
+            description = "F12: só o próprio usuário ou o admin")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Endereço encontrado"),
+            @ApiResponse(responseCode = "403", description = "O usuário logado não é o dono do endereço"),
+            @ApiResponse(responseCode = "404", description = "Usuário sem endereço")
+    })
     @GetMapping("/by-user/{userId}")
     @ResponseBody
-    public ResponseEntity<AddressDTO> getAddressByUserId(@PathVariable String userId) {
-        AddressDTO addressDTO = addressService.findByUserIdAddress(userId);
+    @RolesAllowed({"ADMIN", "SUPPLIER", "CUSTOMER", "DELIVERER"})
+    public ResponseEntity<AddressDTO> getAddressByUserId(
+            @Parameter(description = "ID do usuário dono do endereço") @PathVariable String userId) {
+        User usuarioLogado = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AddressDTO addressDTO = addressService.findByUserIdAddress(userId, usuarioLogado);
         return ResponseEntity.ok(addressDTO);
     }
 
@@ -77,11 +93,19 @@ public class AddressController {
         return ResponseEntity.ok(addressService.findAllByUserIdAddress(userId));
     }
 
+    @Operation(summary = "Edita um endereço", description = "F12: só o dono do endereço ou o admin")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Endereço atualizado"),
+            @ApiResponse(responseCode = "403", description = "O usuário logado não é o dono do endereço"),
+            @ApiResponse(responseCode = "404", description = "Endereço ou cidade inexistente")
+    })
     @PutMapping("/{id}")
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER", "CUSTOMER"})
-    public ResponseEntity<AddressDTO> updateAddress(@PathVariable Long id, @RequestBody AddressDTO dto) {
-        AddressDTO updated = addressService.updateAddress(id, dto);
+    public ResponseEntity<AddressDTO> updateAddress(@Parameter(description = "ID do endereço") @PathVariable Long id,
+                                                    @RequestBody AddressDTO dto) {
+        User usuarioLogado = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        AddressDTO updated = addressService.updateAddress(id, dto, usuarioLogado);
         return ResponseEntity.ok(updated);
     }
 

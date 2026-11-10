@@ -427,4 +427,15 @@ class OrderControllerTest {
 
         verify(reviewService, never()).reviewOrder(any(), any(), any());
     }
+
+    // F12 Cenário 4: cliente não lista os pedidos de outro cliente
+    @Test
+    void deveNegarPedidosDeOutroCliente() throws Exception {
+        autenticarComo(UserTypeEnum.CUSTOMER, "cliente-1");
+
+        mockMvc.perform(get("/api/orders/by-customer/cliente-2"))
+                .andExpect(status().isForbidden());
+
+        verify(orderService, never()).findByCustomerId(any(), any(), any());
+    }
 }

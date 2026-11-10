@@ -62,10 +62,18 @@ public class OrderController {
     @Autowired
     private ReviewService reviewService;
 
+    @Operation(summary = "Busca um pedido pelo id",
+            description = "F12: só o cliente do pedido, a loja, o entregador atribuído ou o admin")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Pedido encontrado"),
+            @ApiResponse(responseCode = "403", description = "O usuário logado não participa do pedido"),
+            @ApiResponse(responseCode = "404", description = "Pedido inexistente")
+    })
     @GetMapping("/{id}")
     @ResponseBody
-    public ResponseEntity<OrderResponseDTO> getProductById(@PathVariable String id) {
-        OrderResponseDTO orderResponseDTO = orderService.findByIdOrder(id);
+    @RolesAllowed({"ADMIN", "CUSTOMER", "SUPPLIER", "DELIVERER"})
+    public ResponseEntity<OrderResponseDTO> getProductById(@Parameter(description = "ID do pedido") @PathVariable String id) {
+        OrderResponseDTO orderResponseDTO = orderService.findByIdOrder(id, loggedUser());
         return ResponseEntity.ok(orderResponseDTO);
     }
 
@@ -146,15 +154,25 @@ public class OrderController {
         return ResponseEntity.ok(orderService.buildReorderPreview(id, usuarioLogado));
     }
 
+    @Operation(summary = "Lista os pedidos de um cliente",
+            description = "Usada por Meus pedidos. F12: o cliente só lista os próprios pedidos; o admin lista de qualquer um")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Página de pedidos"),
+            @ApiResponse(responseCode = "403", description = "Cliente consultando pedidos de outro cliente")
+    })
     @GetMapping("/by-customer/{customerId}")
     @ResponseBody
     @RolesAllowed({"ADMIN", "CUSTOMER"})
     public ResponseEntity<PageResponse<OrderResponseDTO>> listAllOrderItems(
-            @PathVariable String customerId,
+            @Parameter(description = "ID do cliente") @PathVariable String customerId,
             @RequestParam(value = "status", required = false) String status,
             @RequestParam(value = "page", required = false) Integer page,
             @RequestParam(value = "size", required = false) Integer size
     ) {
+        User actor = loggedUser();
+        if (actor.getUserType() != com.h2gas.enums.UserTypeEnum.ADMIN && !actor.getId().equals(customerId)) {
+            throw new com.h2gas.exceptions.ForbiddenResourceException("Você só pode ver os seus próprios pedidos.");
+        }
         Pageable pageable = PaginationUtil.getPageableRequest(page, size);
         Page<OrderResponseDTO> result = orderService.findByCustomerId(customerId, status, pageable);
         PageResponse<OrderResponseDTO> response = new PageResponse<>(result);
@@ -284,13 +302,22 @@ public class OrderController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Muda o status de um pedido da loja",
+            description = "Corpo {\"orderStatus\": \"CONFIRMED\"}. F12: só a loja do pedido ou o admin. "
+                    + "Pedido de entrega só sai para entrega pelo despacho com entregador")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Status alterado; devolve o rótulo em português"),
+            @ApiResponse(responseCode = "400", description = "Pedido de entrega sem despacho"),
+            @ApiResponse(responseCode = "403", description = "Pedido de outra loja ou papel sem permissão"),
+            @ApiResponse(responseCode = "404", description = "Pedido inexistente")
+    })
     @PatchMapping("/{id}/update-order-status")
     @ResponseBody
     @RolesAllowed({"ADMIN", "SUPPLIER"})
     public ResponseEntity<Map<String, String>> updateOrderStatus(
-            @PathVariable String id,
+            @Parameter(description = "ID do pedido") @PathVariable String id,
             @RequestBody Map<String, String> status) {
-        String novoStatus = orderService.updateOrderStatus(id, status.get("orderStatus"));
+        String novoStatus = orderService.updateOrderStatus(id, status.get("orderStatus"), loggedUser());
         return ResponseEntity.ok(Map.of("status", novoStatus));
     }
 
