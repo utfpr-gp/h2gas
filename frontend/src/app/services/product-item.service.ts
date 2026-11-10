@@ -82,4 +82,9 @@ export class ProductItemService extends AbstractService<ProductItem> {
     formData.append('file', file);
     return this.http.post<ProductItem>(`${this.baseUrl}`, formData);
   }
+
+  // F12: a edição abre o produto pelo código público da URL
+  findByCode(code: string) {
+    return this.http.get<ProductItem>(`${this.baseUrl}/code/${code}`);
+  }
 }

@@ -46,4 +46,22 @@ public class ProductItem {
     @ManyToOne
     @JoinColumn(name = "supplier_id")
     private Supplier supplier;
+
+    // F12: código aleatório usado na URL da edição, no lugar do id sequencial
+    @Column(name = "public_id", nullable = false, unique = true, length = 12)
+    private String publicId;
+
+    private static final String PUBLIC_ID_CHARS = "abcdefghijklmnopqrstuvwxyz0123456789";
+    private static final java.security.SecureRandom RANDOM = new java.security.SecureRandom();
+
+    @PrePersist
+    void generatePublicId() {
+        if (publicId == null) {
+            StringBuilder code = new StringBuilder(10);
+            for (int i = 0; i < 10; i++) {
+                code.append(PUBLIC_ID_CHARS.charAt(RANDOM.nextInt(PUBLIC_ID_CHARS.length())));
+            }
+            publicId = code.toString();
+        }
+    }
 }

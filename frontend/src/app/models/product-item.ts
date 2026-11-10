@@ -2,6 +2,7 @@ import { Supplier } from "./supplier";
 
 export class ProductItem {
     id?: number;
+    publicId?: string; // F12: código usado na URL da edição
     brand?: string;
     // HU21: preço único do produto; o frete vem da distância (HU17)
     price?: number;

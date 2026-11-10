@@ -12,7 +12,7 @@ const TABELA: [antiga: string, nova: string][] = [
   ['distributor/new', 'admin/fornecedores/novo'],
   ['product-items', 'minha-loja/produtos'],
   ['product-items/new', 'minha-loja/produtos/novo'],
-  ['product-items/edit/:id', 'minha-loja/produtos/:id/editar'],
+  ['product-items/edit/:id', 'minha-loja/produtos'],
   ['dashboard', 'minha-loja/painel'],
   ['dashboard-fornecedor', 'minha-loja/pedidos'],
   ['historico-pedidos', 'minha-loja/pedidos/historico'],
@@ -47,7 +47,7 @@ describe('app.routes (F8)', () => {
     expect(papeis('admin/cidades')).toEqual(['ADMIN']);
     expect(papeis('admin/fornecedores')).toEqual(['ADMIN']);
     expect(papeis('admin/fornecedores/novo')).toEqual(['ADMIN', 'SUPPLIER']);
-    for (const path of ['minha-loja/produtos', 'minha-loja/produtos/novo', 'minha-loja/produtos/:id/editar',
+    for (const path of ['minha-loja/produtos', 'minha-loja/produtos/novo', 'minha-loja/produtos/:code/editar',
       'minha-loja/painel', 'minha-loja/pedidos/historico', 'minha-loja/entregadores', 'minha-loja/configuracoes']) {
       expect(papeis(path)).withContext(path).toEqual(['SUPPLIER']);
     }

@@ -118,4 +118,13 @@ class AddressControllerTest {
 
         verify(addressService, never()).findAllByUserIdAddress(any());
     }
+
+    // F12 Cenário 5: a lista de todos os endereços é só do admin
+    @Test
+    void deveNegarListaGeralDeEnderecosParaCliente() throws Exception {
+        mockMvc.perform(get("/api/addresses"))
+                .andExpect(status().isForbidden());
+
+        verify(addressService, never()).findAllAddresses();
+    }
 }

@@ -77,18 +77,37 @@ public class ProductItemController {
         return ResponseEntity.ok(productItemCreate);
     }
 
-    @Operation(summary = "Busca um produto para edição", description = "Usado pelo formulário de edição do fornecedor")
+    @Operation(summary = "Busca um produto da loja logada para edição",
+            description = "Usado pelo formulário de edição do fornecedor. F12: só abre produto da própria loja")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Produto encontrado"),
-            @ApiResponse(responseCode = "403", description = "Sem token válido ou papel diferente de fornecedor (admin incluso)"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido, papel diferente de fornecedor (admin incluso) ou produto de outra loja"),
             @ApiResponse(responseCode = "404", description = "Produto inexistente")
     })
     @GetMapping("/{id}")
     @ResponseBody
     @RolesAllowed("SUPPLIER")
     public ResponseEntity<ProductItemDTO> getProductById(@Parameter(description = "ID do produto") @PathVariable Long id) {
-        ProductItemDTO productItem = productItemService.findById(id);
+        User actor = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        ProductItemDTO productItem = productItemService.findOwnById(id, actor);
         return ResponseEntity.ok(productItem);
+    }
+
+    @Operation(summary = "Busca um produto da loja logada pelo código público",
+            description = "F12: usado pela URL do formulário de edição (/minha-loja/produtos/{código}/editar), "
+                    + "no lugar do id sequencial. Só abre produto da própria loja")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Produto encontrado"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido, papel diferente de fornecedor ou produto de outra loja"),
+            @ApiResponse(responseCode = "404", description = "Código inexistente")
+    })
+    @GetMapping("/code/{publicId}")
+    @ResponseBody
+    @RolesAllowed("SUPPLIER")
+    public ResponseEntity<ProductItemDTO> getProductByPublicId(
+            @Parameter(description = "Código público do produto", example = "k3f9x2ab01") @PathVariable String publicId) {
+        User actor = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return ResponseEntity.ok(productItemService.findOwnByPublicId(publicId, actor));
     }
 
     @Operation(summary = "Remove um produto do fornecedor logado",

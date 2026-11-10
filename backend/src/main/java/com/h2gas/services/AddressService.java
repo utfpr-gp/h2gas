@@ -4,6 +4,8 @@ import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.AddressDTO;
 import com.h2gas.model.entity.Address;
 import com.h2gas.model.entity.City;
+import com.h2gas.enums.UserTypeEnum;
+import com.h2gas.exceptions.ForbiddenResourceException;
 import com.h2gas.model.entity.User;
 import com.h2gas.model.mapper.AddressMapper;
 import com.h2gas.model.mapper.CityMapper;
@@ -96,6 +98,25 @@ public class AddressService {
         Optional<Address> addressOptional = addressRepository.findByStreetName(streetName);
         return addressOptional.map(addressMapper::toDto).orElseThrow(()
                 -> new ResourceNotFoundException("Endereço não encontrada com esse nome de rua: " + streetName));
+    }
+
+    // F12: só o dono do endereço (ou o admin) edita
+    public AddressDTO updateAddress(Long id, AddressDTO addressDTO, User actor) {
+        Address address = addressRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Endereço não encontrado"));
+        requireOwnerOrAdmin(address.getUser() == null ? null : address.getUser().getId(), actor);
+        return updateAddress(id, addressDTO);
+    }
+
+    public AddressDTO findByUserIdAddress(String userId, User actor) {
+        requireOwnerOrAdmin(userId, actor);
+        return findByUserIdAddress(userId);
+    }
+
+    private void requireOwnerOrAdmin(String ownerId, User actor) {
+        if (actor.getUserType() != UserTypeEnum.ADMIN && !actor.getId().equals(ownerId)) {
+            throw new ForbiddenResourceException("Este endereço não é seu.");
+        }
     }
 
     public AddressDTO updateAddress(Long id,AddressDTO addressDTO) {

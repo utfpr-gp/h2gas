@@ -254,6 +254,29 @@ public class OrderService {
                 -> new ResourceNotFoundException("Pedido não encontrado com esse id: " + id));
     }
 
+    // F12: o pedido só aparece para quem participa dele (cliente, loja, entregador) ou para o admin
+    public OrderResponseDTO findByIdOrder(String id, User actor) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido não encontrado com esse id: " + id));
+        if (!participates(order, actor)) {
+            throw new ForbiddenResourceException("Você não tem acesso a este pedido.");
+        }
+        return orderMapper.toResponseDto(order);
+    }
+
+    private boolean participates(Order order, User actor) {
+        String actorId = actor.getId();
+        return actor.getUserType() == UserTypeEnum.ADMIN
+                || (order.getCustomer() != null && actorId.equals(order.getCustomer().getId()))
+                || isStoreOf(order, actor)
+                || (order.getDeliverer() != null && order.getDeliverer().getUser() != null
+                    && actorId.equals(order.getDeliverer().getUser().getId()));
+    }
+
+    private boolean isStoreOf(Order order, User actor) {
+        return order.getSupplier() != null && actor.getId().equals(order.getSupplier().getId());
+    }
+
     public Page<OrderResponseDTO> findByCustomerId(String customerId, String status, Pageable pageable) {
         Page<Order> page;
 
@@ -461,6 +484,17 @@ public class OrderService {
             throw new ForbiddenResourceException("Pedido não está atribuído a este entregador.");
         }
         return order;
+    }
+
+    // F12: só a loja do pedido (ou o admin) muda o status
+    @Transactional
+    public String updateOrderStatus(String id, String newStatus, User actor) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido com " + id + " não encontrado"));
+        if (actor.getUserType() != UserTypeEnum.ADMIN && !isStoreOf(order, actor)) {
+            throw new ForbiddenResourceException("Pedido não pertence ao fornecedor logado.");
+        }
+        return updateOrderStatus(id, newStatus);
     }
 
     @Transactional
