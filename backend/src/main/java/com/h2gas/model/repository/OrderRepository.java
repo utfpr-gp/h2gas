@@ -28,12 +28,14 @@ public interface OrderRepository extends JpaRepository<Order, String> {
     long countBySupplierIdAndStatus(String supplierId, OrderStatusEnum status);
 
     // HU23: todos os status da loja numa consulta só
-    @Query("SELECT o.status AS status, COUNT(o) AS total FROM Order o WHERE o.supplier.id = :supplierId GROUP BY o.status")
+    @Query("SELECT o.status AS status, COUNT(o) AS total, COALESCE(SUM(o.totalPrice), 0) AS amount "
+            + "FROM Order o WHERE o.supplier.id = :supplierId GROUP BY o.status")
     List<StatusCountRow> countBySupplierGroupedByStatus(@Param("supplierId") String supplierId);
 
     interface StatusCountRow {
         OrderStatusEnum getStatus();
         Long getTotal();
+        java.math.BigDecimal getAmount(); // HU28: soma do total dos pedidos no status
     }
 
     // HU12: painel do admin (plataforma inteira)

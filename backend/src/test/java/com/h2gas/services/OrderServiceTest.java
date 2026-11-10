@@ -1543,6 +1543,8 @@ class OrderServiceTest {
         assertEquals(3L, novos.apply(OrderStatusEnum.DELIVERED));
         assertEquals(1L, novos.apply(OrderStatusEnum.CANCELED));
         assertEquals(3L, contagem.active() - antes.active());
+        // HU28 Cenário 2: a receber = soma dos pedidos em andamento (2 pendentes + 1 em rota de R$ 10)
+        assertEquals(0, new BigDecimal("30.00").compareTo(contagem.receivable().subtract(antes.receivable())));
         assertEquals(7L, contagem.total() - antes.total());
         assertEquals(contagem.total(), contagem.counts().values().stream().mapToLong(Long::longValue).sum());
         for (OrderStatusEnum st : OrderStatusEnum.values()) assertNotNull(contagem.counts().get(st), st.name());

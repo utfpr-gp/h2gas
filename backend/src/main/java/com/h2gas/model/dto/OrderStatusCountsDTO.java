@@ -12,6 +12,8 @@ public record OrderStatusCountsDTO(
                 example = "{\"PENDING\": 2, \"CONFIRMED\": 1, \"IN_PREPARATION\": 0, \"OUT_FOR_DELIVERY\": 1, \"DELIVERED\": 7, \"CANCELED\": 1}")
         Map<OrderStatusEnum, Long> counts,
         @Schema(description = "Em andamento: nem entregues nem cancelados", example = "4") long active,
-        @Schema(description = "Todos os pedidos da loja", example = "12") long total
+        @Schema(description = "Todos os pedidos da loja", example = "12") long total,
+        @Schema(description = "HU28: valor a receber, soma do total dos pedidos em andamento (nem entregues nem cancelados), de todo o histórico",
+                example = "335.88") java.math.BigDecimal receivable
 ) {
 }

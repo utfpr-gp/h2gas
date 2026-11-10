@@ -134,7 +134,7 @@ class SupplierDashboardServiceTest {
     }
 
     @Test
-    @DisplayName("HU09: a receita ignora pedidos cancelados e de outro fornecedor")
+    @DisplayName("HU09/HU28: a receita ignora pedidos cancelados e os ainda não entregues")
     void deveSomarReceitaExcluindoPedidosCancelados() {
         pedido(fornecedor, OrderStatusEnum.DELIVERED, "PIX", "100.00", dia(mes, 1), botijao, 1);
         pedido(fornecedor, OrderStatusEnum.PENDING, "PIX", "50.00", dia(mes, 2), botijao, 1);
@@ -142,8 +142,29 @@ class SupplierDashboardServiceTest {
 
         SupplierDashboardDTO d = dashboard();
 
-        assertEquals(0, new BigDecimal("150.00").compareTo(d.getTotalRevenue()));
+        assertEquals(0, new BigDecimal("100.00").compareTo(d.getTotalRevenue()));
         assertEquals(2, d.getTotalOrders());
+    }
+
+    @Test
+    @DisplayName("HU28 Cenário 1: receita, variação, ticket e receita por dia contam só pedidos entregues")
+    void deveContarReceitaSoDeEntregues() {
+        pedido(fornecedor, OrderStatusEnum.DELIVERED, "PIX", "100.00", dia(mes.minusMonths(1), 10), botijao, 1);
+        pedido(fornecedor, OrderStatusEnum.PENDING, "PIX", "500.00", dia(mes.minusMonths(1), 10), botijao, 1);
+        pedido(fornecedor, OrderStatusEnum.DELIVERED, "PIX", "100.00", dia(mes, 1), botijao, 1);
+        pedido(fornecedor, OrderStatusEnum.DELIVERED, "PIX", "50.00", dia(mes, 3), botijao, 1);
+        pedido(fornecedor, OrderStatusEnum.PENDING, "PIX", "40.00", dia(mes, 1), botijao, 1);
+        pedido(fornecedor, OrderStatusEnum.OUT_FOR_DELIVERY, "PIX", "60.00", dia(mes, 1), botijao, 1);
+        pedido(fornecedor, OrderStatusEnum.CANCELED, "PIX", "999.00", dia(mes, 1), botijao, 1);
+
+        SupplierDashboardDTO d = dashboard();
+
+        assertEquals(0, new BigDecimal("150.00").compareTo(d.getTotalRevenue()));
+        assertEquals(50.0, d.getRevenueChangePercent());   // 100 entregue -> 150 entregue
+        assertEquals(0, new BigDecimal("75.00").compareTo(d.getAverageTicket()));
+        assertEquals(0, new BigDecimal("100.00").compareTo(d.getRevenueByDay().get(0).getRevenue()));
+        assertEquals(0, new BigDecimal("100.00").compareTo(d.getReceivable()));
+        assertEquals(4, d.getTotalOrders());
     }
 
     @Test
@@ -156,7 +177,7 @@ class SupplierDashboardServiceTest {
         SupplierDashboardDTO d = dashboard();
 
         assertEquals(1, d.getTotalOrders());
-        assertEquals(0, new BigDecimal("100.00").compareTo(d.getTotalRevenue()));
+        assertEquals(0, new BigDecimal("100.00").compareTo(d.getReceivable()));
         assertEquals(1, d.getPendingOrders());
     }
 
