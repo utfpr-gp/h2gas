@@ -11,6 +11,9 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class ProductItemDTO {
     private Long id;
+    @io.swagger.v3.oas.annotations.media.Schema(description = "F12: código público do produto, usado na URL da edição",
+            example = "k3f9x2ab01")
+    private String publicId;
     private String brand;
     // HU21: preço único do produto; o frete vem da distância (HU17)
     @io.swagger.v3.oas.annotations.media.Schema(description = "Preço do produto (R$), igual na entrega e na retirada", example = "100.00")

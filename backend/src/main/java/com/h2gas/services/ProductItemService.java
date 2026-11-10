@@ -145,6 +145,16 @@ public class ProductItemService {
     public ProductItemDTO findOwnById(Long id, User actor) {
         ProductItem productItem = productItemRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado com esse id: " + id));
+        return ownDto(productItem, actor);
+    }
+
+    public ProductItemDTO findOwnByPublicId(String publicId, User actor) {
+        ProductItem productItem = productItemRepository.findByPublicId(publicId)
+                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado."));
+        return ownDto(productItem, actor);
+    }
+
+    private ProductItemDTO ownDto(ProductItem productItem, User actor) {
         if (productItem.getSupplier() == null || !productItem.getSupplier().getId().equals(actor.getId())) {
             throw new ForbiddenResourceException("Este produto não é da sua loja.");
         }

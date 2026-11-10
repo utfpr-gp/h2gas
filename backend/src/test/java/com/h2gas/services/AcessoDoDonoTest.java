@@ -125,6 +125,24 @@ class AcessoDoDonoTest {
         assertEquals("UltragazFixture", productItemService.findOwnById(produtoDaLojaB.getId(), lojaB).getBrand());
     }
 
+    // Cenário 1b
+    @Test
+    void deveGerarCodigoPublicoAoCadastrar() {
+        String codigo = productItemRepository.findById(produtoDaLojaB.getId()).orElseThrow().getPublicId();
+        assertNotNull(codigo);
+        assertTrue(codigo.matches("[a-z0-9]{10}"), codigo);
+        assertEquals(codigo, productItemService.findOwnById(produtoDaLojaB.getId(), lojaB).getPublicId());
+    }
+
+    @Test
+    void deveAbrirPeloCodigoSoDaPropriaLoja() {
+        String codigo = produtoDaLojaB.getPublicId();
+        assertEquals(produtoDaLojaB.getId(), productItemService.findOwnByPublicId(codigo, lojaB).getId());
+        assertThrows(ForbiddenResourceException.class, () -> productItemService.findOwnByPublicId(codigo, lojaA));
+        assertThrows(com.h2gas.exceptions.ResourceNotFoundException.class,
+                () -> productItemService.findOwnByPublicId("naoexiste0", lojaB));
+    }
+
     // Cenário 2
     @Test
     void deveNegarPedidoAQuemNaoParticipa() {

@@ -24,6 +24,10 @@ usuário. (b) Todo horário gravado e exibido pelo sistema é o de Brasília.
   A, Quando abro `/minha-loja/produtos/{id}/editar` de um produto da loja B,
   Então a API responde 403 e a tela avisa "Este produto não é da sua loja" e
   volta para a lista de produtos.
+- **Cenário 1b — Código do produto na URL**: a tela de edição usa um código
+  aleatório do produto (`/minha-loja/produtos/k3f9x2ab01/editar`), não o id
+  sequencial. Pedido do autor em 2026-11-09, depois do teste do Cenário 1:
+  "em vez do id, podemos usar um hash". Pedidos e usuários já usam UUID.
 - **Cenário 2 — Pedido pelo id**: `GET /api/orders/{id}` só responde ao
   cliente dono, à loja do pedido, ao entregador do pedido ou ao admin;
   qualquer outro recebe 403.
@@ -67,6 +71,16 @@ usuário. (b) Todo horário gravado e exibido pelo sistema é o de Brasília.
 
 - `ProductItemService.findOwnById(id, actor)`: 404 se não existe; 403 se o
   produto não é da loja logada. `GET /api/product-items/{id}` passa a usá-lo.
+- `product_items.public_id` (`V26__product_public_id.sql`): 10 caracteres
+  `[a-z0-9]`, único, preenchido para os produtos existentes e gerado no
+  `@PrePersist` dos novos. `ProductItemDTO.publicId` com `@Schema`.
+  `GET /api/product-items/code/{publicId}` (SUPPLIER, só a própria loja).
+  Edição e exclusão seguem pelo id numérico, que vem no DTO; a URL do
+  navegador mostra só o código. A rota do Angular passa a
+  `minha-loja/produtos/:code/editar`.
+- Migração: a V25 é da HU27 (ainda sem merge). Ao fazer o merge dela depois
+  desta branch, a V25 da HU27 precisa ser renumerada para depois das
+  migrações da F12, senão o Flyway recusa a versão fora de ordem.
 - `OrderService.findByIdOrder(id, actor)`: permite cliente dono, loja do
   pedido, entregador atribuído (`deliverer.user`) e admin. `GET
   /api/orders/{id}` com `@RolesAllowed` dos quatro papéis.
@@ -90,7 +104,7 @@ usuário. (b) Todo horário gravado e exibido pelo sistema é o de Brasília.
 - `OrderService` e os painéis passam a usar o `Clock` injetado no lugar de
   `LocalDateTime.now()`/`LocalDate.now()`/`YearMonth.now()`; `TokenService`
   usa `Instant.now(clock)` no lugar do offset fixo `-03:00`.
-- Migração `V26__horarios_em_brasilia.sql`: subtrai 3 h dos horários já
+- Migração `V27__horarios_em_brasilia.sql`: subtrai 3 h dos horários já
   gravados (pedidos, recusas de entrega, avaliações e produtos). Antes de
   aplicá-la, conferir no banco local que os registros recentes estão +3 h.
 
@@ -99,12 +113,15 @@ usuário. (b) Todo horário gravado e exibido pelo sistema é o de Brasília.
 Item (a):
 1. `AcessoDoDonoTest` (serviço, banco de teste):
    - `deveNegarProdutoDeOutraLoja` e `deveAbrirOProdutoDaPropriaLoja`;
+   - `deveGerarCodigoPublicoAoCadastrar` e `deveAbrirPeloCodigoSoDaPropriaLoja`;
    - `deveNegarPedidoAQuemNaoParticipa`, `deveMostrarPedidoAoClienteALojaEAoEntregador`;
    - `deveNegarStatusDePedidoDeOutraLoja`;
    - `deveNegarEnderecoDeOutroUsuario` (busca e edição).
 2. `OrderControllerTest.deveNegarPedidosDeOutroCliente`.
 3. `AddressControllerTest.deveNegarListaGeralDeEnderecosParaCliente`.
-4. `product-item-form.component.spec.ts`: `deveVoltarParaAListaComProdutoDeOutraLoja`.
+4. `product-item-form.component.spec.ts`: `deveVoltarParaAListaComProdutoDeOutraLoja`,
+   `deveCarregarPeloCodigoESalvarPeloId`; `product-item.component.spec.ts`:
+   `deveEditarPeloCodigoDoProduto`.
 
 Item (b):
 5. `OrderServiceTest.deveGravarOHorarioDeBrasilia` (Clock fixo).
@@ -120,7 +137,7 @@ Item (b):
 
 - [ ] Cenários 1–6 com teste verde; o dono segue com 200.
 - [ ] Rotas tocadas com 403 documentado no Swagger.
-- [ ] Cenários 7–9: V26 aplicada no MySQL local, horários conferidos com a
+- [ ] Cenários 7–9: V27 aplicada no MySQL local, horários conferidos com a
       hora real.
 - [ ] `mvn test` só com o `contextLoads`; `ng test` sem falha; `ng build` ok.
 - [ ] Teste manual do Igor em cada item.

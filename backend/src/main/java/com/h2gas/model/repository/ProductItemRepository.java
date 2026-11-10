@@ -15,6 +15,9 @@ import java.util.Collection;
 import java.util.List;
 
 public interface ProductItemRepository extends JpaRepository<ProductItem, Long> {
+    // F12: busca pelo código público da URL de edição
+    java.util.Optional<ProductItem> findByPublicId(String publicId);
+
     Page<ProductItem> findBySupplierId(String id, Pageable pageable);
 
     // F7 fatia 6: lista do fornecedor; minStock/maxStock nulos = sem limite

@@ -201,6 +201,22 @@ class ProductItemControllerTest {
         org.junit.jupiter.api.Assertions.assertEquals(0, new java.math.BigDecimal("100.00").compareTo(enviado.getValue().getPrice()));
     }
 
+    // F12 Cenário 1b: o formulário abre o produto pelo código público
+    @Test
+    void deveBuscarProdutoPeloCodigo() throws Exception {
+        autenticarFornecedor();
+        ProductItemDTO dto = new ProductItemDTO();
+        dto.setId(12L);
+        dto.setPublicId("k3f9x2ab01");
+        when(productItemService.findOwnByPublicId(eq("k3f9x2ab01"), any())).thenReturn(dto);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                        .get("/api/product-items/code/k3f9x2ab01"))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.id").value(12))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.publicId").value("k3f9x2ab01"));
+    }
+
     @Test
     void deveRejeitarEdicaoSemPreco() throws Exception {
         autenticarFornecedor();
