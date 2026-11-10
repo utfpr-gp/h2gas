@@ -1,3 +1,4 @@
+import { WhatsappIconComponent } from '../../whatsapp-icon/whatsapp-icon.component';
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -15,7 +16,7 @@ import { backendMessage } from '../../../utils/backend-message';
 @Component({
   selector: 'app-deliverer-route-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [WhatsappIconComponent, CommonModule, FormsModule],
   templateUrl: './deliverer-route-detail.component.html',
   animations: [fadeIn],
 })
