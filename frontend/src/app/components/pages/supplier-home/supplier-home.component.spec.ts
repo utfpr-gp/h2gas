@@ -79,6 +79,8 @@ describe('SupplierHomeComponent', () => {
     expect(card('pedidos')!.textContent).toContain('pendentes');
     expect(card('pedidos')!.textContent).toContain('1 em rota');
     expect(valor('painel')).toMatch(/4[.,]?210[.,]50/);
+    // HU28 Cenário 3: a receita do painel é só do que foi entregue
+    expect(card('painel')!.textContent).toContain('recebido no mês');
   });
 
   it('deveMostrarOEstoqueBaixo', async () => {

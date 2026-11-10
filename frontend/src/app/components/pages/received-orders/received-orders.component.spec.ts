@@ -34,7 +34,7 @@ describe('ReceivedOrdersComponent', () => {
     // HU23: contagem por status vinda do backend
     orderServiceSpy.getMyStatusCounts.and.returnValue(of({
       counts: { PENDING: 2, CONFIRMED: 1, IN_PREPARATION: 0, OUT_FOR_DELIVERY: 1, DELIVERED: 7, CANCELED: 1 },
-      active: 4, total: 12,
+      active: 4, total: 12, receivable: 335.88,
     }));
     orderServiceSpy.findBySupplierId.and.returnValue(lista(pedido('e1', 'Entregue')));
     orderServiceSpy.findByExcludeStatus.and.returnValue(
@@ -171,6 +171,14 @@ describe('ReceivedOrdersComponent', () => {
     const badge = fixture.nativeElement.querySelector('[data-testid=pending-count]') as HTMLElement;
     expect(badge.textContent?.trim()).toBe('2');
     expect(fixture.nativeElement.querySelectorAll('[data-testid=order-row]').length).toBe(3);
+  });
+
+  // HU28 Cenário 2: "A receber" vem do backend (pedidos em andamento), não da lista filtrada
+  it('deveMostrarAReceberDoBackend', () => {
+    fixture.detectChanges();
+
+    const card = fixture.nativeElement.querySelector('[data-testid=receivable]') as HTMLElement;
+    expect(card.textContent).toMatch(/335[.,]88/);
   });
 
   it('deveAbrirModalDeJustificativaComBotaoTravado', () => {

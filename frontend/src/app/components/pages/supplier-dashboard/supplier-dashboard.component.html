@@ -90,6 +90,7 @@
             <div class="bg-white rounded-xl border border-gray-200 p-4">
                 <p class="text-xs text-gray-500 flex items-center gap-1"><span class="material-icons text-sm text-primary" aria-hidden="true">payments</span>Receita</p>
                 <p data-testid="kpi-revenue" class="text-xl font-bold text-gray-800 mt-1 tabular-nums">{{ dashboard.totalRevenue | currency:'BRL':'symbol':'1.2-2' }}</p>
+                <p class="text-xs text-gray-500 mt-0.5">pedidos entregues</p>
                 <p *ngIf="dashboard.revenueChangePercent != null" data-testid="revenue-change"
                     class="text-xs font-semibold mt-1 flex items-center gap-0.5"
                     [ngClass]="dashboard.revenueChangePercent >= 0 ? 'text-success' : 'text-error'">
@@ -158,10 +159,10 @@
         </div>
 
         <ng-container *ngIf="hasSales">
-            <!-- Vendas por dia: colunas com eixo e o melhor dia em destaque -->
-            <section class="bg-white rounded-xl border border-gray-200 p-4 mt-5" aria-label="Vendas por dia" [class.opacity-60]="loading">
+            <!-- HU28: receita (entregues) por dia: colunas com eixo e o melhor dia em destaque -->
+            <section class="bg-white rounded-xl border border-gray-200 p-4 mt-5" aria-label="Receita por dia" [class.opacity-60]="loading">
                 <div class="flex flex-wrap items-baseline justify-between gap-2">
-                    <h2 class="font-bold text-gray-800">Vendas por dia</h2>
+                    <h2 class="font-bold text-gray-800">Receita por dia</h2>
                     <p *ngIf="bestDay" data-testid="best-day" class="text-xs text-gray-500">
                         Melhor dia: <strong class="text-gray-800">{{ bestDay.day | date:'dd/MM' }}</strong> ·
                         <span class="tabular-nums">{{ bestDay.revenue | currency:'BRL':'symbol':'1.2-2' }}</span>

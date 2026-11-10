@@ -335,10 +335,5 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
     return this.orders?.filter(order => order.status === status).length || 0;
   }
 
-  getTotalRevenue(): number {
-    return this.orders
-      ?.filter(order => order.status !== 'Entregue')
-      .reduce((sum, order) => sum + order.totalPrice, 0) || 0;
-  }
 
 }
