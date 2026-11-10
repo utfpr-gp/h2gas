@@ -47,7 +47,8 @@ describe('Fluxo do entregador (HU07, 3ª revisão)', () => {
   };
 
   beforeEach(async () => {
-    orderServiceSpy = jasmine.createSpyObj('OrderService', ['myRoutes', 'startDelivery', 'completeDelivery', 'cancelDelivery']);
+    orderServiceSpy = jasmine.createSpyObj('OrderService', ['myRoutes', 'startDelivery', 'completeDelivery', 'cancelDelivery', 'deliveryHistory']);
+    orderServiceSpy.deliveryHistory.and.returnValue(of({ deliveredToday: 0, items: [] })); // HU29: Entregues hoje
     orderServiceSpy.myRoutes.and.callFake(() => of(rotasNoServidor));
     orderServiceSpy.startDelivery.and.callFake((id: string) => {
       rotasNoServidor = rotasNoServidor.map((r) => (r.id === id ? ({ ...r, status: EM_ROTA } as unknown as OrderResponse) : r));

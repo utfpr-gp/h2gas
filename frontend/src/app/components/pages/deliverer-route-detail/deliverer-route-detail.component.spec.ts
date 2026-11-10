@@ -100,6 +100,8 @@ describe('DelivererRouteDetailComponent', () => {
 
     expect(orderServiceSpy.completeDelivery).toHaveBeenCalledOnceWith('r1');
     expect(navigateSpy).toHaveBeenCalledWith(['/entregas']);
+    // HU29 Cenário 6: o aviso diz onde a entrega fica
+    expect(toastrSpy.success).toHaveBeenCalledWith('Entrega confirmada. Ela fica em Entregues hoje.');
   });
 
   // 3ª revisão (h): com a entrega em rota não há "voltar"; a saída é confirmar ou cancelar

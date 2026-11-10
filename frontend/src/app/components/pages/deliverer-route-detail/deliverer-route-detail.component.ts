@@ -125,7 +125,7 @@ export class DelivererRouteDetailComponent implements OnInit {
     this.orderService.completeDelivery(this.order.id).subscribe({
       next: () => {
         this.busy = false;
-        this.toastr.success('Entrega confirmada.');
+        this.toastr.success('Entrega confirmada. Ela fica em Entregues hoje.');
         this.back();
       },
       error: (err) => {

@@ -25,7 +25,8 @@ describe('DelivererRoutesComponent', () => {
   const cards = () => Array.from(fixture.nativeElement.querySelectorAll('[data-testid=route-card]')) as HTMLElement[];
 
   beforeEach(async () => {
-    orderServiceSpy = jasmine.createSpyObj('OrderService', ['myRoutes', 'startDelivery', 'completeDelivery']);
+    orderServiceSpy = jasmine.createSpyObj('OrderService', ['myRoutes', 'startDelivery', 'completeDelivery', 'deliveryHistory']);
+    orderServiceSpy.deliveryHistory.and.returnValue(of({ deliveredToday: 0, items: [] }));
     orderServiceSpy.myRoutes.and.returnValue(of([rota('r1', 'Centro'), rota('r2', 'Batel', 'DINHEIRO', PENDENTE)]));
     orderServiceSpy.startDelivery.and.returnValue(of({ id: 'r2', status: EM_ROTA } as OrderResponse));
     orderServiceSpy.completeDelivery.and.returnValue(of({ id: 'r1', status: 'Entregue' } as OrderResponse));
@@ -135,4 +136,33 @@ describe('DelivererRoutesComponent', () => {
     fixture.destroy();
     discardPeriodicTasks();
   }));
+
+  // ---- HU29 Cenário 6: a entrega confirmada não some ----
+  it('deveMostrarAsEntregasDeHoje', () => {
+    const agora = new Date();
+    const hoje = (h: number, m: number) => new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), h, m).toISOString();
+    const ontem = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate() - 1, 18, 0).toISOString();
+    orderServiceSpy.deliveryHistory.and.returnValue(of({
+      deliveredToday: 2,
+      items: [
+        { orderId: 'd1', kind: 'DELIVERED', occurredAt: hoje(9, 30), neighborhood: 'Centro', streetName: 'Rua XV', number: '10', itemsSummary: '1x Ultragaz Gás 13kg', totalPrice: 111.96 },
+        { orderId: 'x1', kind: 'REFUSED', occurredAt: hoje(9, 0), neighborhood: 'Batel', itemsSummary: '1x Água 20L' },
+        { orderId: 'd0', kind: 'DELIVERED', occurredAt: ontem, neighborhood: 'Trianon', itemsSummary: '1x Água 20L' },
+      ],
+    }));
+    fixture.detectChanges();
+
+    const feitas = Array.from(fixture.nativeElement.querySelectorAll('[data-testid=delivered-today-item]')) as HTMLElement[];
+    expect(feitas.length).toBe(1);
+    expect(feitas[0].textContent).toContain('Centro');
+    expect(feitas[0].textContent).toContain('1x Ultragaz Gás 13kg');
+    expect(fixture.nativeElement.querySelector('[data-testid=delivered-today-title]')?.textContent).toContain('Entregues hoje');
+    expect((fixture.nativeElement.querySelector('[data-testid=history-link]') as HTMLAnchorElement).getAttribute('href')).toBe('/entregas/historico');
+  });
+
+  it('naoDeveMostrarEntreguesHojeSemEntregas', () => {
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[data-testid=delivered-today-title]')).toBeNull();
+  });
 });

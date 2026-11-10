@@ -97,7 +97,11 @@ entregas que já fiz, sem que elas sumam ao confirmar.
 
 ## 8. Definição de Pronto
 
-- [ ] Itens (a) e (b) com testes verdes e validados pelo autor.
-- [ ] Rota nova documentada no Swagger.
-- [ ] `mvn test` só com o `contextLoads`; `ng test` sem falha; `ng build` ok.
-- [ ] Nada do "Fora de Escopo".
+- [x] Itens (a) e (b) com testes verdes e validados pelo autor (2026-11-10).
+- [x] Rota nova documentada no Swagger (`PATCH /api/deliverers/{id}/active`).
+- [x] `mvn test` só com o `contextLoads`; `ng test` sem falha; `ng build` ok.
+- [x] Nada do "Fora de Escopo".
+
+### Registro do teste (2026-11-10, Docker local)
+- Desativar o entregador em rota → 409; outra loja → 403.
+- Entregador de teste: login 200 → desativado 403 → reativado 200 (mesma senha).
