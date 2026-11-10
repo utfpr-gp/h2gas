@@ -1,6 +1,7 @@
+import { DeliveryHistoryItem } from '../../../models/delivery-history';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { Subscription, interval } from 'rxjs';
 import { ToastrService } from 'ngx-toastr';
 import { OrderService } from '../../../services/order.service';
@@ -13,12 +14,14 @@ import { backendMessage } from '../../../utils/backend-message';
 @Component({
   selector: 'app-deliverer-routes',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './deliverer-routes.component.html',
   animations: [listItem],
 })
 export class DelivererRoutesComponent implements OnInit, OnDestroy {
   routes: OrderResponse[] = [];
+  // HU29: entregas confirmadas hoje, para a entrega não "sumir" depois de confirmar
+  deliveredToday: DeliveryHistoryItem[] = [];
   loading = true;
   startingId?: string;
   readonly refreshIntervalMs = 30000;
@@ -42,6 +45,10 @@ export class DelivererRoutesComponent implements OnInit, OnDestroy {
   }
 
   load() {
+    this.orderService.deliveryHistory().subscribe({
+      next: (history) => (this.deliveredToday = history.items.filter(i => i.kind === 'DELIVERED' && this.isToday(i.occurredAt))),
+      error: () => (this.deliveredToday = []), // a lista de rotas segue funcionando; o histórico tem tela própria
+    });
     this.orderService.myRoutes().subscribe({
       next: (routes) => {
         this.routes = routes;
@@ -52,6 +59,11 @@ export class DelivererRoutesComponent implements OnInit, OnDestroy {
         this.toastr.error(`Erro ao buscar suas entregas: ${backendMessage(err)}`);
       },
     });
+  }
+
+  private isToday(date: string): boolean {
+    const d = new Date(date), now = new Date();
+    return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
   }
 
   // sem trackBy, cada atualização periódica recriaria todos os cards

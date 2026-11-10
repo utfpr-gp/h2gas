@@ -1,5 +1,6 @@
 package com.h2gas.controller;
 
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 
 import org.springframework.web.bind.annotation.PathVariable;
@@ -82,6 +83,26 @@ public class DelivererController {
             @Valid @RequestBody DelivererPasswordDTO body) {
         delivererService.resetPassword(id, loggedUser().getId(), body.password());
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Desativa ou reativa um entregador da frota do fornecedor logado",
+            description = "HU29: desativado, o entregador sai do despacho e não consegue mais entrar (a sessão aberta também "
+                    + "perde o acesso); pedidos, recusas e avaliações dele continuam. Reativar devolve o despacho e o login, "
+                    + "com a mesma senha. Não desativa quem está com entrega em rota")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Entregador atualizado"),
+            @ApiResponse(responseCode = "400", description = "Corpo sem o campo active"),
+            @ApiResponse(responseCode = "403", description = "Sem token válido, papel diferente de SUPPLIER ou entregador de outra loja"),
+            @ApiResponse(responseCode = "404", description = "Entregador não encontrado"),
+            @ApiResponse(responseCode = "409", description = "Entregador com entrega em rota")
+    })
+    @PatchMapping("/{id}/active")
+    @RolesAllowed("SUPPLIER")
+    public ResponseEntity<DelivererDTO> setActive(
+            @Parameter(description = "Id do entregador", example = "7") @PathVariable Long id,
+            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Ativo ou desativado")
+            @Valid @RequestBody com.h2gas.model.dto.DelivererActiveDTO body) {
+        return ResponseEntity.ok(delivererService.setActive(id, loggedUser().getId(), body.active()));
     }
 
     private User loggedUser() {

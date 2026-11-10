@@ -125,4 +125,26 @@ class DelivererControllerTest {
                         .content("{\"password\":\"novaSenha9\"}"))
                 .andExpect(status().isForbidden());
     }
+
+    // ---- HU29 ----
+    @Test
+    void deveDesativarEntregadorDaFrota() throws Exception {
+        com.h2gas.model.dto.DelivererDTO dto = new com.h2gas.model.dto.DelivererDTO(7L, "Carlos", "c@teste.com", "41988887777",
+                "Moto", false, false, null, 0);
+        org.mockito.Mockito.when(delivererService.setActive(7L, "fornecedor-1", false)).thenReturn(dto);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/api/deliverers/7/active")
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"active\":false}"))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath("$.active").value(false));
+    }
+
+    @Test
+    void deveRecusarCorpoSemActive() throws Exception {
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/api/deliverers/7/active")
+                        .contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isBadRequest());
+
+        verify(delivererService, never()).setActive(any(), any(), org.mockito.ArgumentMatchers.anyBoolean());
+    }
 }

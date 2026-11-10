@@ -19,7 +19,7 @@ describe('ManageDeliverersComponent', () => {
   const preencher = (campos: Record<string, string>) => component.form.patchValue(campos);
 
   beforeEach(async () => {
-    delivererServiceSpy = jasmine.createSpyObj('DelivererService', ['listMine', 'create', 'resetPassword']);
+    delivererServiceSpy = jasmine.createSpyObj('DelivererService', ['listMine', 'create', 'resetPassword', 'setActive']);
     delivererServiceSpy.resetPassword.and.returnValue(of(void 0));
     delivererServiceSpy.listMine.and.returnValue(of([carlos, ana]));
     delivererServiceSpy.create.and.returnValue(of(ana));
@@ -165,5 +165,54 @@ describe('ManageDeliverersComponent', () => {
 
     abrirCard(1);
     expect(linha(1).querySelector('[data-testid=deliverer-details]')).withContext('tocar de novo fecha').toBeNull();
+  });
+
+  // ---- HU29: desativar e reativar ----
+  const linhaDe = (nome: string) => (Array.from(fixture.nativeElement.querySelectorAll('[data-testid=deliverer-row]')) as HTMLElement[])
+    .find(l => l.textContent?.includes(nome))!;
+  const abrirPorNome = (nome: string) => {
+    (linhaDe(nome).querySelector('[data-testid=deliverer-toggle]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+  };
+
+  it('deveDesativarComConfirmacao', () => {
+    delivererServiceSpy.setActive.and.returnValue(of({ ...ana, active: false }));
+    abrirPorNome('Ana Souza');
+
+    (linhaDe('Ana Souza').querySelector('[data-testid=deactivate]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(delivererServiceSpy.setActive).not.toHaveBeenCalled();
+
+    (linhaDe('Ana Souza').querySelector('[data-testid=confirm-deactivate]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(delivererServiceSpy.setActive).toHaveBeenCalledWith(2, false);
+    expect(linhaDe('Ana Souza').querySelector('[data-testid=deliverer-status]')?.textContent?.trim()).toBe('Desativado');
+    expect(toastrSpy.success).toHaveBeenCalled();
+  });
+
+  it('deveReativarEntregadorDesativado', () => {
+    delivererServiceSpy.listMine.and.returnValue(of([carlos, { ...ana, active: false }]));
+    delivererServiceSpy.setActive.and.returnValue(of({ ...ana, active: true }));
+    component.load();
+    fixture.detectChanges();
+    abrirPorNome('Ana Souza');
+
+    (linhaDe('Ana Souza').querySelector('[data-testid=reactivate]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    expect(delivererServiceSpy.setActive).toHaveBeenCalledWith(2, true);
+    expect(linhaDe('Ana Souza').querySelector('[data-testid=deliverer-status]')?.textContent?.trim()).toBe('Disponível');
+  });
+
+  it('deveMostrarDesativadosNoFim', () => {
+    delivererServiceSpy.listMine.and.returnValue(of([{ ...ana, name: 'Ana Souza', active: false }, carlos]));
+    component.load();
+    fixture.detectChanges();
+
+    const nomes = (Array.from(fixture.nativeElement.querySelectorAll('[data-testid=deliverer-row]')) as HTMLElement[])
+      .map(l => l.textContent ?? '');
+    expect(nomes[0]).toContain('Carlos Silva');
+    expect(nomes[1]).toContain('Ana Souza');
   });
 });

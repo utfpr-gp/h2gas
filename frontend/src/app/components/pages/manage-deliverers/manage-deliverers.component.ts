@@ -44,7 +44,7 @@ export class ManageDeliverersComponent implements OnInit {
   load() {
     this.delivererService.listMine().subscribe({
       next: (frota) => {
-        this.deliverers = frota;
+        this.deliverers = this.activeFirst(frota);
         this.loading = false;
       },
       error: (err) => {
@@ -57,6 +57,31 @@ export class ManageDeliverersComponent implements OnInit {
   // ---- HU22: e-mail copiável e senha redefinida pelo fornecedor ----
   expandedId: number | null = null;
   resettingId: number | null = null;
+
+  // HU29: desativados vão para o fim (a ordem por nome do backend se mantém em cada grupo)
+  private activeFirst(frota: Deliverer[]): Deliverer[] {
+    return [...frota.filter(d => d.active), ...frota.filter(d => !d.active)];
+  }
+
+  // HU29: desativar pede confirmação; reativar é direto
+  confirmingDeactivateId: number | null = null;
+  changingActiveId: number | null = null;
+
+  setActive(deliverer: Deliverer, active: boolean) {
+    this.changingActiveId = deliverer.id;
+    this.delivererService.setActive(deliverer.id, active).subscribe({
+      next: (atualizado) => {
+        this.changingActiveId = null;
+        this.confirmingDeactivateId = null;
+        this.deliverers = this.activeFirst(this.deliverers.map(d => d.id === atualizado.id ? { ...d, ...atualizado } : d));
+        this.toastr.success(active ? `${deliverer.name} foi reativado.` : `${deliverer.name} foi desativado e não consegue mais entrar.`);
+      },
+      error: (err) => {
+        this.changingActiveId = null;
+        this.toastr.error(backendMessage(err));
+      },
+    });
+  }
 
   toggleDetails(deliverer: Deliverer) {
     this.expandedId = this.expandedId === deliverer.id ? null : deliverer.id;
