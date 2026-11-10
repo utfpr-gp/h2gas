@@ -45,8 +45,8 @@ usuário. (b) Todo horário gravado e exibido pelo sistema é o de Brasília.
 
 - **Cenário 7 — Pedido novo**: Dado um pedido feito às 15:07 em Brasília,
   Então a lista da loja, Meus pedidos e o histórico mostram 15:07.
-- **Cenário 8 — Pedidos antigos**: os pedidos já gravados em UTC passam a
-  aparecer no horário de Brasília (sem pedido "no futuro").
+- **Cenário 8 — Pedidos antigos**: os pedidos já gravados (em UTC) passam a
+  aparecer no horário de Brasília (sem pedido "no futuro"), sem migração.
 - **Cenário 9 — Datas de negócio**: "entregues hoje", o mês do painel e a
   validade do token usam o dia e a hora de Brasília.
 
@@ -98,15 +98,22 @@ usuário. (b) Todo horário gravado e exibido pelo sistema é o de Brasília.
 
 ### 5.2 Item (b)
 
-- `backend/Dockerfile`: `ENV TZ=America/Sao_Paulo` e
-  `-Duser.timezone=America/Sao_Paulo`; JDBC com
-  `serverTimezone=America/Sao_Paulo`.
-- `OrderService` e os painéis passam a usar o `Clock` injetado no lugar de
-  `LocalDateTime.now()`/`LocalDate.now()`/`YearMonth.now()`; `TokenService`
-  usa `Instant.now(clock)` no lugar do offset fixo `-03:00`.
-- Migração `V27__horarios_em_brasilia.sql`: subtrai 3 h dos horários já
-  gravados (pedidos, recusas de entrega, avaliações e produtos). Antes de
-  aplicá-la, conferir no banco local que os registros recentes estão +3 h.
+- Achado: nenhuma coluna de data tem valor padrão no MySQL; todas são
+  preenchidas pelo Java. O driver usa `serverTimezone=UTC`, então o banco
+  guarda UTC e o problema era só o Java rodar em UTC (container sem `TZ`):
+  o JSON saía em UTC sem fuso e o navegador mostrava +3 h.
+- Desenho: **banco em UTC, aplicação em Brasília**. Os dados antigos já estão
+  certos em UTC; **não há migração de dados**.
+- `ClockConfig.applyDefaultTimeZone()`, chamado no `main` antes de abrir
+  conexões: fuso padrão da JVM = variável **`APP_TIMEZONE`** (padrão
+  `America/Sao_Paulo`; valor inválido derruba a subida). `ClockConfig.zoneFrom`
+  faz a leitura.
+- `application.properties`:
+  `spring.datasource.hikari.data-source-properties.connectionTimeZone=UTC`,
+  para o banco seguir em UTC mesmo se a URL de algum ambiente não trouxer
+  `serverTimezone`.
+- `APP_TIMEZONE=America/Sao_Paulo` no `.env.example`, no `.env` local e nas
+  variáveis do Coolify.
 
 ## 6. Plano de Testes (TDD)
 
@@ -124,8 +131,10 @@ Item (a):
    `deveEditarPeloCodigoDoProduto`.
 
 Item (b):
-5. `OrderServiceTest.deveGravarOHorarioDeBrasilia` (Clock fixo).
-6. Painel e "entregues hoje" com o dia do Clock.
+5. `ClockConfigTest.deveUsarBrasiliaComoFusoPadrao` (parte de UTC e confere
+   o fuso depois de `applyDefaultTimeZone`) e `deveLerOFusoDaVariavelDeAmbiente`.
+6. `FusoHorarioTest.deveGravarOPedidoNoHorarioDeBrasilia` (pedido salvo com
+   `createdAt` igual à hora de Brasília, com folga de 1 minuto).
 
 ## 7. Fora de Escopo
 
@@ -137,8 +146,8 @@ Item (b):
 
 - [ ] Cenários 1–6 com teste verde; o dono segue com 200.
 - [ ] Rotas tocadas com 403 documentado no Swagger.
-- [ ] Cenários 7–9: V27 aplicada no MySQL local, horários conferidos com a
-      hora real.
+- [ ] Cenários 7–9: no Docker local, banco em UTC e API em Brasília,
+      conferidos com a hora real; `APP_TIMEZONE` no Coolify.
 - [ ] `mvn test` só com o `contextLoads`; `ng test` sem falha; `ng build` ok.
 - [ ] Teste manual do Igor em cada item.
 - [ ] Nada do "Fora de Escopo".
