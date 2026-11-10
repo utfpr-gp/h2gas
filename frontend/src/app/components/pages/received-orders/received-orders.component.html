@@ -165,12 +165,12 @@
                     </p>
                     <p class="text-sm font-semibold text-gray-800">{{ order.customerName }}</p>
                     <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-                        <a *ngIf="order.customerPhone" [href]="'tel:' + order.customerPhone"
-                            class="text-sm text-primary hover:underline">{{ order.customerPhone }}</a>
+                        <a *ngIf="order.customerPhone" data-testid="customer-phone" [href]="'tel:' + phoneDigits(order.customerPhone)"
+                            class="text-sm text-primary hover:underline">{{ order.customerPhone | phone }}</a>
                         <a *ngIf="customerWhatsapp(order) as link" data-testid="whatsapp-customer" [href]="link" target="_blank" rel="noopener"
                             aria-label="Chamar o cliente no WhatsApp"
                             class="btn btn-sm rounded-full min-h-11 sm:min-h-8 border-success/40 bg-success/10 text-success hover:bg-success/20">
-                            <span class="material-icons text-base" aria-hidden="true">chat</span>WhatsApp
+                            <app-whatsapp-icon class="text-base"></app-whatsapp-icon>WhatsApp
                         </a>
                     </div>
                 </div>

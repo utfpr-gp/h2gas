@@ -359,6 +359,18 @@ describe('ReceivedOrdersComponent', () => {
     expect(link.getAttribute('href')).toBe('https://wa.me/5542999990000?text='
       + encodeURIComponent('Olá, Maria! Aqui é a Gás Centro, sobre o seu pedido #4a1a4ffe no H2Gás.'));
     expect(link.getAttribute('rel')).toContain('noopener');
+    expect(link.querySelector('app-whatsapp-icon svg')).not.toBeNull(); // logo do WhatsApp no botão
+  });
+
+  // HU28 Cenário 5: telefone legível; o tel: segue com os dígitos
+  it('deveFormatarOTelefoneDoCliente', () => {
+    orderServiceSpy.findByExcludeStatus.and.returnValue(lista(
+      pedido('p1', 'Pendente', 'DELIVERY', { customerPhone: '42990000011' })));
+    fixture.detectChanges();
+
+    const tel = fixture.nativeElement.querySelector('[data-testid="customer-phone"]') as HTMLAnchorElement;
+    expect(tel.textContent?.trim()).toBe('(42) 99000-0011');
+    expect(tel.getAttribute('href')).toBe('tel:42990000011');
   });
 
   it('naoDeveMostrarWhatsappDoClienteNoPedidoEncerrado', () => {

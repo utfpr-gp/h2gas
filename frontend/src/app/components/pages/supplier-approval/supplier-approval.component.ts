@@ -1,3 +1,4 @@
+import { PhonePipe } from '../../../utils/phone.pipe';
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -16,7 +17,7 @@ type StatusFilter = 'pending' | 'active' | 'all';
 @Component({
   selector: 'app-supplier-approval',
   standalone: true,
-  imports: [CommonModule],
+  imports: [PhonePipe, CommonModule],
   templateUrl: './supplier-approval.component.html',
   host: { class: 'flex-1 flex flex-col' },
   animations: [fadeIn],

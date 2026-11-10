@@ -53,7 +53,7 @@
                         <span class="material-icons text-sm" aria-hidden="true">mail</span>{{ s.email }}
                     </span>
                     <span class="inline-flex items-center gap-1 tabular-nums" *ngIf="s.phone">
-                        <span class="material-icons text-sm" aria-hidden="true">call</span>{{ s.phone }}
+                        <span class="material-icons text-sm" aria-hidden="true">call</span>{{ s.phone | phone }}
                     </span>
                 </p>
                 <p *ngIf="address(s)" class="text-sm text-gray-500 inline-flex items-center gap-1">

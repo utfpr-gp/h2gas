@@ -1,3 +1,5 @@
+import { WhatsappIconComponent } from '../../whatsapp-icon/whatsapp-icon.component';
+import { PhonePipe } from '../../../utils/phone.pipe';
 import { OrderFeeLinesComponent } from '../../order-fee-lines/order-fee-lines.component';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription, interval } from 'rxjs';
@@ -23,7 +25,7 @@ const FILTERED_PAGE_SIZE = 50;
 
 @Component({
   selector: 'app-received-orders',
-  imports: [OrderFeeLinesComponent, 
+  imports: [WhatsappIconComponent, PhonePipe, OrderFeeLinesComponent, 
     CommonModule,
     FormsModule,
     ReactiveFormsModule,
@@ -161,6 +163,11 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
     { value: 'CANCELED', label: 'Cancelados' },
   ];
   statusCounts?: OrderStatusCounts;
+
+  // HU28: o link de ligar usa só os dígitos; a tela mostra o telefone formatado
+  phoneDigits(phone: string): string {
+    return phone.replace(/\D/g, '');
+  }
 
   countFor(value: string): number | null {
     const c = this.statusCounts;

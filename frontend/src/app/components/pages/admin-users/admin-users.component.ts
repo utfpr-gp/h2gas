@@ -1,3 +1,4 @@
+import { PhonePipe } from '../../../utils/phone.pipe';
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -20,7 +21,7 @@ const USER_TYPES: UserType[] = ['CUSTOMER', 'SUPPLIER', 'DELIVERER', 'ADMIN'];
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [PhonePipe, CommonModule, ReactiveFormsModule],
   templateUrl: './admin-users.component.html',
   animations: [fadeIn],
 })
