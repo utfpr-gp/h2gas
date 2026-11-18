@@ -1,3 +1,4 @@
+import { PushService } from '../../../services/push.service';
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
@@ -63,6 +64,7 @@ describe('Fluxo do entregador (HU07, 3ª revisão)', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        { provide: PushService, useValue: jasmine.createSpyObj('PushService', { canAsk: false, syncIfGranted: Promise.resolve(), enable: Promise.resolve(false), dismiss: undefined }) }, // HU27
         provideRouter([
           { path: 'entregas', component: DelivererRoutesComponent, canActivate: [activeDeliveryGuard] },
           { path: 'entregas/historico', component: HistoricoStubComponent, canActivate: [activeDeliveryGuard] },

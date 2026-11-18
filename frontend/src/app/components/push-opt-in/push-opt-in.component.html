@@ -1,0 +1,19 @@
+<section *ngIf="visible" data-testid="push-opt-in" aria-labelledby="push-opt-in-title"
+    class="flex flex-col sm:flex-row sm:items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 mb-4">
+    <span class="w-10 h-10 shrink-0 rounded-full bg-white text-primary flex items-center justify-center" aria-hidden="true">
+        <span class="material-icons">notifications_active</span>
+    </span>
+    <div class="min-w-0 flex-1">
+        <h2 id="push-opt-in-title" class="text-sm font-semibold text-gray-800">Ative as notificações</h2>
+        <p class="text-sm text-gray-600">{{ reason }}</p>
+    </div>
+    <div class="flex gap-2 sm:shrink-0">
+        <button type="button" data-testid="push-dismiss" class="btn btn-ghost btn-sm rounded-lg min-h-11 sm:min-h-8 flex-1 sm:flex-none"
+            [disabled]="enabling" (click)="dismiss()">Agora não</button>
+        <button type="button" data-testid="push-enable" class="btn btn-primary btn-sm rounded-lg min-h-11 sm:min-h-8 flex-1 sm:flex-none"
+            [disabled]="enabling" (click)="enable()">
+            <span *ngIf="enabling" class="loading loading-spinner loading-xs"></span>
+            Ativar
+        </button>
+    </div>
+</section>

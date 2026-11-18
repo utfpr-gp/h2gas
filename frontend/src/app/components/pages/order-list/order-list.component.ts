@@ -12,6 +12,7 @@ import { CartService } from '../../../services/cart.service';
 import { OrderStatusChange, OrderTrackingService } from '../../../services/order-tracking.service';
 import { PaginationComponent } from '../../pagination/pagination.component';
 import { OrderReviewDialogComponent } from '../../order-review-dialog/order-review-dialog.component';
+import { PushOptInComponent } from '../../push-opt-in/push-opt-in.component';
 import { Router } from '@angular/router';
 import { expandCollapse, staggerList } from '../../../animations/checkout.animations';
 import { backendMessage } from '../../../utils/backend-message';
@@ -23,6 +24,7 @@ import { firstName, orderCode, whatsappLink } from '../../../utils/whatsapp-link
     CommonModule,
     PaginationComponent,
     OrderReviewDialogComponent,
+    PushOptInComponent,
   ],
   templateUrl: './order-list.component.html',
   animations: [staggerList, expandCollapse],

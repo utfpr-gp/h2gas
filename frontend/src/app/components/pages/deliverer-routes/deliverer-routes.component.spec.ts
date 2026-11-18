@@ -1,3 +1,4 @@
+import { PushService } from '../../../services/push.service';
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Router, provideRouter } from '@angular/router';
@@ -35,6 +36,7 @@ describe('DelivererRoutesComponent', () => {
     await TestBed.configureTestingModule({
       imports: [DelivererRoutesComponent],
       providers: [
+        { provide: PushService, useValue: jasmine.createSpyObj('PushService', { canAsk: false, syncIfGranted: Promise.resolve(), enable: Promise.resolve(false), dismiss: undefined }) }, // HU27
         { provide: OrderService, useValue: orderServiceSpy },
         { provide: ToastrService, useValue: toastrSpy },
         provideRouter([]),

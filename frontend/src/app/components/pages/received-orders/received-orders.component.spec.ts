@@ -1,3 +1,6 @@
+import { Subject } from 'rxjs';
+import { SupplierLiveService, SupplierLiveEvent } from '../../../services/supplier-live.service';
+import { PushService } from '../../../services/push.service';
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { Router, provideRouter } from '@angular/router';
@@ -13,6 +16,10 @@ import { Deliverer } from '../../../models/deliverer';
 import { OrderResponse } from '../../../models/order.model';
 
 describe('ReceivedOrdersComponent', () => {
+  // HU27 (tempo real da loja): aviso do canal SSE da loja
+  let live$ = new Subject<SupplierLiveEvent>();
+  beforeEach(() => (live$ = new Subject<SupplierLiveEvent>()));
+
   let component: ReceivedOrdersComponent;
   let fixture: ComponentFixture<ReceivedOrdersComponent>;
   let orderServiceSpy: jasmine.SpyObj<OrderService>;
@@ -53,6 +60,8 @@ describe('ReceivedOrdersComponent', () => {
     await TestBed.configureTestingModule({
       imports: [ReceivedOrdersComponent],
       providers: [
+        { provide: SupplierLiveService, useValue: { changes: () => live$.asObservable() } },
+        { provide: PushService, useValue: jasmine.createSpyObj('PushService', { canAsk: false, syncIfGranted: Promise.resolve(), enable: Promise.resolve(false), dismiss: undefined }) }, // HU27
         { provide: OrderService, useValue: orderServiceSpy },
         { provide: UserService, useValue: userServiceSpy },
         { provide: SupplierService, useValue: supplierServiceSpy },
@@ -416,5 +425,15 @@ describe('ReceivedOrdersComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('[data-testid=stalled-alert]')).toBeNull();
+  });
+
+  it('deveRecarregarQuandoChegaPedidoNovo', () => {
+    fixture.detectChanges();
+    const antes = orderServiceSpy.findByExcludeStatus.calls.count();
+
+    live$.next({ type: 'order-placed', orderId: 'novo-1' });
+
+    expect(orderServiceSpy.findByExcludeStatus.calls.count()).toBe(antes + 1);
+    expect(orderServiceSpy.getMyStatusCounts).toHaveBeenCalledTimes(2);
   });
 });
