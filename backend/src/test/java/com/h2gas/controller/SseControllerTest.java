@@ -113,4 +113,35 @@ class SseControllerTest {
 
         verify(sseEmitterService, never()).subscribe(any());
     }
+
+    // ---- HU27: canal da loja ----
+    private void autenticarComoLoja(String userId) {
+        User loja = new User(null, "Loja", "loja@teste.com", "41999999999", "12345678901", "senha", UserTypeEnum.SUPPLIER);
+        loja.setId(userId);
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                loja, null, List.of(new SimpleGrantedAuthority("ROLE_SUPPLIER"))));
+    }
+
+    @Test
+    @DisplayName("HU27: a loja assina o próprio canal supplier:{id}")
+    void deveDeixarALojaAssinarOProprioCanal() throws Exception {
+        autenticarComoLoja("loja-1");
+        when(sseEmitterService.subscribe(eq("supplier:loja-1"))).thenReturn(new org.springframework.web.servlet.mvc.method.annotation.SseEmitter());
+
+        mockMvc.perform(get("/api/sse/subscribe/{channel}", "supplier:loja-1").accept(MediaType.TEXT_EVENT_STREAM))
+                .andExpect(status().isOk());
+
+        verify(sseEmitterService).subscribe("supplier:loja-1");
+    }
+
+    @Test
+    @DisplayName("HU27: assinar o canal de outra loja é 403")
+    void deveNegarCanalDeOutraLoja() throws Exception {
+        autenticarComoLoja("loja-1");
+
+        mockMvc.perform(get("/api/sse/subscribe/{channel}", "supplier:loja-2").accept(MediaType.TEXT_EVENT_STREAM))
+                .andExpect(status().isForbidden());
+
+        verify(sseEmitterService, never()).subscribe(any());
+    }
 }

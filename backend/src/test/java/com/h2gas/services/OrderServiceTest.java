@@ -602,6 +602,11 @@ class OrderServiceTest {
         return applicationEvents.stream(OrderStatusChangedEvent.class).toList();
     }
 
+    // HU27 (tempo real da loja): o evento de status leva também a loja do pedido
+    private String lojaDoPedido(String orderId) {
+        return orderRepository.findById(orderId).orElseThrow().getSupplier().getId();
+    }
+
     private String clienteDoPedido(String orderId) {
         return orderRepository.findById(orderId).orElseThrow().getCustomer().getId();
     }
@@ -614,7 +619,7 @@ class OrderServiceTest {
 
         orderService.updateOrderStatus(orderId, "CONFIRMED");
 
-        assertEquals(List.of(new OrderStatusChangedEvent(orderId, clienteDoPedido(orderId), "Confirmado")), eventosDeStatus());
+        assertEquals(List.of(new OrderStatusChangedEvent(orderId, clienteDoPedido(orderId), lojaDoPedido(orderId), "Confirmado")), eventosDeStatus());
     }
 
     @Test
@@ -625,7 +630,7 @@ class OrderServiceTest {
 
         orderService.cancelOrder(orderId, "Sem gás hoje", fornecedorDoPedido());
 
-        assertEquals(List.of(new OrderStatusChangedEvent(orderId, clienteDoPedido(orderId), "Cancelado")), eventosDeStatus());
+        assertEquals(List.of(new OrderStatusChangedEvent(orderId, clienteDoPedido(orderId), lojaDoPedido(orderId), "Cancelado")), eventosDeStatus());
     }
 
     @Test
@@ -637,7 +642,7 @@ class OrderServiceTest {
 
         orderService.startDelivery(orderId, entregadorId);
 
-        assertEquals(List.of(new OrderStatusChangedEvent(orderId, clienteDoPedido(orderId), "Saiu para entrega")), eventosDeStatus());
+        assertEquals(List.of(new OrderStatusChangedEvent(orderId, clienteDoPedido(orderId), lojaDoPedido(orderId), "Saiu para entrega")), eventosDeStatus());
     }
 
     @Test
@@ -649,7 +654,7 @@ class OrderServiceTest {
 
         orderService.completeDelivery(orderId, entregadorId);
 
-        assertEquals(List.of(new OrderStatusChangedEvent(orderId, clienteDoPedido(orderId), "Entregue")), eventosDeStatus());
+        assertEquals(List.of(new OrderStatusChangedEvent(orderId, clienteDoPedido(orderId), lojaDoPedido(orderId), "Entregue")), eventosDeStatus());
     }
 
     @Test

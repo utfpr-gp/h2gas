@@ -39,7 +39,9 @@ public class SseController {
             description = "Mantém uma conexão text/event-stream aberta por até 30 minutos de inatividade. "
                     + "O EventSource do navegador não envia header Authorization; nesses casos o JWT deve ir em ?token=. "
                     + "Canal do acompanhamento de pedidos (HU08): customer:{customerId}, só o do próprio usuário do token; "
-                    + "o evento order-status-changed traz { orderId, status }."
+                    + "o evento order-status-changed traz { orderId, status }. "
+                    + "HU27: canal da loja supplier:{supplierId}, só o da própria loja; recebe order-placed { orderId } "
+                    + "quando chega um pedido e order-status-changed { orderId, status }."
     )
     @Parameter(
             name = "token",
@@ -51,15 +53,15 @@ public class SseController {
             @ApiResponse(responseCode = "200", description = "Stream SSE aberto",
                     content = @Content(mediaType = MediaType.TEXT_EVENT_STREAM_VALUE)),
             @ApiResponse(responseCode = "401", description = "Token ausente ou inválido"),
-            @ApiResponse(responseCode = "403", description = "Canal de outro cliente ou fora da convenção customer:{customerId}")
+            @ApiResponse(responseCode = "403", description = "Canal de outro usuário ou fora da convenção customer:{id} / supplier:{id}")
     })
     public SseEmitter subscribe(
-            @Parameter(description = "Canal do cliente logado: customer:{customerId}", example = "customer:d124410e-f6d4-4a24-8631-a69ba4aad772")
+            @Parameter(description = "Canal do usuário logado: customer:{customerId} ou supplier:{supplierId}", example = "customer:d124410e-f6d4-4a24-8631-a69ba4aad772")
             @PathVariable String channel,
             @Parameter(hidden = true) @AuthenticationPrincipal User user
     ) {
         // HU08: sem isso qualquer usuário logado ouviria os pedidos de outro cliente
-        if (user == null || !SseChannels.isOwnCustomerChannel(channel, user.getId())) {
+        if (user == null || !SseChannels.isOwnChannel(channel, user.getId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Canal não pertence ao usuário logado.");
         }
         return sseEmitterService.subscribe(channel);

@@ -490,8 +490,8 @@ public class OrderService {
     // HU08: avisa a tela do cliente (via SSE, depois do commit). A recusa do entregador
     // (cancelDelivery) e o despacho (assignDeliverer) não passam por aqui, por decisão do script.
     private void publishStatusChange(Order order) {
-        eventPublisher.publishEvent(new OrderStatusChangedEvent(
-                order.getId(), order.getCustomer().getId(), order.getStatus().getStatus()));
+        eventPublisher.publishEvent(new OrderStatusChangedEvent(order.getId(), order.getCustomer().getId(),
+                order.getSupplier() == null ? null : order.getSupplier().getId(), order.getStatus().getStatus()));
     }
 
     private Order findOrderOfDeliverer(String orderId, Long delivererId) {

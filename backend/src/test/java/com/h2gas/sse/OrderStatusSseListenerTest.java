@@ -22,4 +22,17 @@ class OrderStatusSseListenerTest {
         verify(sseEmitterService).publish("customer:cliente-9", "order-status-changed",
                 Map.of("orderId", "pedido-1", "status", "Saiu para entrega"));
     }
+
+    @org.junit.jupiter.api.Test
+    @DisplayName("HU27: a mudança de status também vai para o canal da loja")
+    void devePublicarParaOClienteEParaALoja() {
+        SseEmitterService sseEmitterService = mock(SseEmitterService.class);
+        OrderStatusSseListener listener = new OrderStatusSseListener(sseEmitterService);
+
+        listener.onOrderStatusChanged(new OrderStatusChangedEvent("pedido-1", "cliente-9", "loja-3", "Entregue"));
+
+        Map<String, String> payload = Map.of("orderId", "pedido-1", "status", "Entregue");
+        verify(sseEmitterService).publish("customer:cliente-9", "order-status-changed", payload);
+        verify(sseEmitterService).publish("supplier:loja-3", "order-status-changed", payload);
+    }
 }

@@ -1,4 +1,4 @@
-# HU27 — Notificação push no PWA (Android e desktop)
+# HU27 — Notificação push no PWA (Android e desktop) e pedidos da loja em tempo real
 
 ## 1. Cabeçalho
 
@@ -48,6 +48,21 @@ precisar ficar olhando a tela para saber do meu pedido.
   anterior.
 - **Cenário 9 — Só o dono**: Cada usuário só grava e apaga as próprias
   assinaturas (o dono vem do token, nunca do corpo).
+
+- **Cenário 10 — Loja vê o pedido novo na hora (tempo real)**: Dado que a
+  loja está em qualquer tela da área da loja, Quando um cliente faz um pedido,
+  Então aparece o aviso "Novo pedido #c6423ce8" uma vez, e Pedidos recebidos
+  (lista, contagens e "A receber"), o início da loja e o Painel se atualizam
+  sem recarregar. Acrescentado em 2026-11-10, no teste do autor: "pro cliente
+  funciona bem, atualiza em tempo real [...], mas pro fornecedor não atualiza
+  no seu dashboard quando um pedido chega, nem em outras rotas".
+- **Cenário 11 — Mudança de status na loja**: Quando o entregador inicia ou
+  confirma a entrega (ou outra mudança passa pelo backend), as mesmas telas da
+  loja se atualizam.
+- **Cenário 12 — Canal só da própria loja**: o canal SSE `supplier:{id}` só
+  aceita a loja do token (403 para os demais); o do cliente continua só dele.
+- **Cenário 13 — Reserva**: se o SSE cair, a atualização periódica de 30 s de
+  Pedidos recebidos continua.
 
 ## 4. Estado atual (achados)
 
@@ -125,6 +140,24 @@ precisar ficar olhando a tela para saber do meu pedido.
 - No Android, o `localhost` chega por USB (port forwarding do
   `chrome://inspect`) ou por um túnel HTTPS.
 
+### 5.4 Tempo real da loja (SSE, cenários 10–13)
+
+- Achado: o SSE da HU08 só tinha o canal `customer:{id}`; Pedidos recebidos
+  dependia do polling de 30 s e o início da loja e o Painel carregavam uma vez.
+- `SseChannels.supplier(id)` e `isOwnChannel(channel, userId)` (aceita
+  `customer:{id}` e `supplier:{id}` do próprio usuário); `SseController` usa o
+  novo método, com o OpenAPI atualizado.
+- `OrderStatusChangedEvent` ganha `supplierId` (construtor antigo mantido
+  para quem só usa o cliente); `OrderStatusSseListener` publica
+  `order-status-changed` também em `supplier:{id}`.
+- `OrderPlacedSseListener` (`AFTER_COMMIT`): `order-placed` `{ orderId }` no
+  canal da loja, a partir do `OrderPlacedEvent` deste script.
+- Front: `SupplierLiveService` (um `EventSource` em `supplier:{id}` com o JWT
+  em `?token=`, `changes$` e o aviso "Novo pedido #código"), conectado pelo
+  `app.component` quando o usuário é SUPPLIER e desconectado no logout;
+  `received-orders`, `supplier-home` e `supplier-dashboard` recarregam em
+  `changes$`.
+
 ## 6. Plano de Testes (TDD)
 
 1. `PushSubscriptionServiceTest`:
@@ -163,6 +196,16 @@ precisar ficar olhando a tela para saber do meu pedido.
   "saiu para entrega" e ver a do cliente, com o app fechado;
 - no Android, se der, pelo port forwarding.
 
+Tempo real da loja:
+- `SseChannelsTest` (canal da própria loja, de outra loja, do cliente);
+  `SseControllerTest` (loja assina o próprio canal; 403 no de outra);
+  `OrderStatusSseListenerTest.devePublicarParaOClienteEParaALoja`;
+  `OrderPlacedSseListenerTest` (avisa a loja; pedido sumido não quebra).
+- `supplier-live.service.spec.ts` (canal e token, `changes$`, aviso uma vez,
+  `disconnect`); `app.component.spec.ts` (conecta só para SUPPLIER);
+  `received-orders`, `supplier-home`, `supplier-dashboard` recarregam em
+  `changes$`.
+
 ## 7. Fora de Escopo
 
 - iOS.
@@ -173,6 +216,9 @@ precisar ficar olhando a tela para saber do meu pedido.
 - Trocar o SSE da HU08 (ele continua para a tela aberta).
 - Ícone com contador (badge).
 
+- Tempo real: som ou contador de pedidos novos no menu; SSE para o
+  entregador; avisar a loja da recusa do entregador por SSE (o polling cobre).
+
 ## 8. Definição de Pronto
 
 - [x] V27 aplicada no MySQL local (2026-11-10); chaves VAPID no ambiente.
@@ -180,6 +226,7 @@ precisar ficar olhando a tela para saber do meu pedido.
 - [ ] Ativar, desativar e sair funcionando, só com as próprias assinaturas.
 - [ ] Notificações do cliente, da loja e do entregador depois do commit.
 - [ ] Assinatura vencida apagada.
+- [ ] Loja vê pedido novo e mudanças de status na hora (cenários 10–13).
 - [ ] Rotas documentadas no Swagger.
 - [ ] Testes da seção 6 verdes; `mvn test` e `ng test` sem falha nova;
       `ng build` ok.

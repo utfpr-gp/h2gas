@@ -25,9 +25,11 @@ public class OrderStatusSseListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void onOrderStatusChanged(OrderStatusChangedEvent event) {
-        sseEmitterService.publish(
-                SseChannels.customer(event.customerId()),
-                EVENT_NAME,
-                Map.of("orderId", event.orderId(), "status", event.status()));
+        Map<String, String> payload = Map.of("orderId", event.orderId(), "status", event.status());
+        sseEmitterService.publish(SseChannels.customer(event.customerId()), EVENT_NAME, payload);
+        // HU27: a loja também acompanha as mudanças (ex.: o entregador confirmou)
+        if (event.supplierId() != null) {
+            sseEmitterService.publish(SseChannels.supplier(event.supplierId()), EVENT_NAME, payload);
+        }
     }
 }
