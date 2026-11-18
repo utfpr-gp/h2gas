@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { SupplierLiveService } from '../../../services/supplier-live.service';
+import { Subscription } from 'rxjs';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SupplierService } from '../../../services/supplier.service';
@@ -19,7 +21,10 @@ type Loadable<T> = T | null | undefined;
   styleUrl: './supplier-home.component.css',
   host: { class: 'flex-1 flex flex-col' },
 })
-export class SupplierHomeComponent implements OnInit {
+export class SupplierHomeComponent implements OnInit, OnDestroy {
+  // HU27 (tempo real da loja): os números se atualizam quando chega pedido ou muda status
+  private readonly supplierLive = inject(SupplierLiveService);
+  private liveSub?: Subscription;
   storeName = '';
   pendingOrders: Loadable<number>;
   outForDelivery: Loadable<number>;
@@ -40,6 +45,15 @@ export class SupplierHomeComponent implements OnInit {
   ngOnInit(): void {
     const user = this.userService.getUserLocalStorage();
     this.storeName = user?.name ?? '';
+    this.load();
+    this.liveSub = this.supplierLive.changes().subscribe(() => this.load());
+  }
+
+  ngOnDestroy(): void {
+    this.liveSub?.unsubscribe();
+  }
+
+  load(): void {
 
     this.supplierService.getDashboard().subscribe({
       next: (d) => {
@@ -61,7 +75,7 @@ export class SupplierHomeComponent implements OnInit {
       error: () => (this.deliverers = null),
     });
 
-    const supplierId = user?.supplierId;
+    const supplierId = this.userService.getUserLocalStorage()?.supplierId;
     if (supplierId) {
       this.supplierService.getOpen(supplierId).subscribe({
         next: (open) => (this.open = !!open),

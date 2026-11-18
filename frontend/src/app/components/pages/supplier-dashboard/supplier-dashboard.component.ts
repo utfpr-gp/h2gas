@@ -1,4 +1,6 @@
-import { Component, OnInit } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { SupplierLiveService } from '../../../services/supplier-live.service';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
@@ -50,7 +52,10 @@ type FilterKey = keyof DashboardFilter;
   templateUrl: './supplier-dashboard.component.html',
   animations: [fadeIn],
 })
-export class SupplierDashboardComponent implements OnInit {
+export class SupplierDashboardComponent implements OnInit, OnDestroy {
+  // HU27 (tempo real da loja): o painel recarrega quando chega pedido ou muda status
+  private readonly supplierLive = inject(SupplierLiveService);
+  private liveSub?: Subscription;
   readonly months: MonthOption[] = this.lastMonths(12);
   readonly paymentLabel = paymentLabel;
   readonly payments: NonNullable<DashboardFilter['payment']>[] = ['PIX', 'DINHEIRO', 'CREDIT_CARD'];
@@ -75,6 +80,11 @@ export class SupplierDashboardComponent implements OnInit {
   ngOnInit(): void {
     this.loadOptions();
     this.load();
+    this.liveSub = this.supplierLive.changes().subscribe(() => this.load());
+  }
+
+  ngOnDestroy(): void {
+    this.liveSub?.unsubscribe();
   }
 
   changeMonth(month: string) {

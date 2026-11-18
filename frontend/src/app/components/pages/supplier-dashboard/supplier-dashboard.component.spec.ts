@@ -1,3 +1,5 @@
+import { Subject } from 'rxjs';
+import { SupplierLiveService, SupplierLiveEvent } from '../../../services/supplier-live.service';
 import { registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
 import { LOCALE_ID } from '@angular/core';
@@ -17,6 +19,10 @@ import { ProductTypeService } from '../../../services/product-type.service';
 registerLocaleData(localePt);
 
 describe('SupplierDashboardComponent', () => {
+  // HU27 (tempo real da loja): aviso do canal SSE da loja
+  let live$ = new Subject<SupplierLiveEvent>();
+  beforeEach(() => (live$ = new Subject<SupplierLiveEvent>()));
+
   let fixture: ComponentFixture<SupplierDashboardComponent>;
   let component: SupplierDashboardComponent;
   let supplierServiceSpy: jasmine.SpyObj<SupplierService>;
@@ -80,6 +86,7 @@ describe('SupplierDashboardComponent', () => {
     await TestBed.configureTestingModule({
       imports: [SupplierDashboardComponent],
       providers: [
+        { provide: SupplierLiveService, useValue: { changes: () => live$.asObservable() } },
         { provide: SupplierService, useValue: supplierServiceSpy },
         { provide: ToastrService, useValue: toastrSpy },
         { provide: ProductItemService, useValue: productSpy },
@@ -350,5 +357,14 @@ describe('SupplierDashboardComponent', () => {
     const dias = all('day-label');
     expect(dias[1].classList).not.toContain('invisible');
     expect(dias[1].classList).toContain('font-bold');
+  });
+
+  it('deveRecarregarOPainelQuandoMudaUmPedido', async () => {
+    await setup();
+    const antes = supplierServiceSpy.getDashboard.calls.count();
+
+    live$.next({ type: 'order-status-changed', orderId: 'p1', status: 'Entregue' });
+
+    expect(supplierServiceSpy.getDashboard.calls.count()).toBe(antes + 1);
   });
 });

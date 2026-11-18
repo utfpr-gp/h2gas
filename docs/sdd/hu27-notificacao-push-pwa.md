@@ -152,11 +152,12 @@ precisar ficar olhando a tela para saber do meu pedido.
   `order-status-changed` também em `supplier:{id}`.
 - `OrderPlacedSseListener` (`AFTER_COMMIT`): `order-placed` `{ orderId }` no
   canal da loja, a partir do `OrderPlacedEvent` deste script.
-- Front: `SupplierLiveService` (um `EventSource` em `supplier:{id}` com o JWT
-  em `?token=`, `changes$` e o aviso "Novo pedido #código"), conectado pelo
-  `app.component` quando o usuário é SUPPLIER e desconectado no logout;
-  `received-orders`, `supplier-home` e `supplier-dashboard` recarregam em
-  `changes$`.
+- Front: `SupplierLiveService` (um único `EventSource` em `supplier:{id}` com
+  o JWT em `?token=`, `changes()` e o aviso "Novo pedido #código"). Ele conecta
+  na primeira assinatura, só quando o usuário é SUPPLIER, e o `AuthService`
+  fecha o canal no logout. `received-orders`, `supplier-home` e
+  `supplier-dashboard` assinam `changes()` e recarregam; o polling de 30 s de
+  Pedidos recebidos continua como reserva.
 
 ## 6. Plano de Testes (TDD)
 
@@ -202,8 +203,7 @@ Tempo real da loja:
   `OrderStatusSseListenerTest.devePublicarParaOClienteEParaALoja`;
   `OrderPlacedSseListenerTest` (avisa a loja; pedido sumido não quebra).
 - `supplier-live.service.spec.ts` (canal e token, `changes$`, aviso uma vez,
-  `disconnect`); `app.component.spec.ts` (conecta só para SUPPLIER);
-  `received-orders`, `supplier-home`, `supplier-dashboard` recarregam em
+  `disconnect`, não conecta quem não é loja); `received-orders`, `supplier-home`, `supplier-dashboard` recarregam em
   `changes$`.
 
 ## 7. Fora de Escopo

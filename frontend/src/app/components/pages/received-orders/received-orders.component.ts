@@ -1,8 +1,9 @@
+import { SupplierLiveService } from '../../../services/supplier-live.service';
 import { stallLabel } from '../../../utils/stall-label';
 import { WhatsappIconComponent } from '../../whatsapp-icon/whatsapp-icon.component';
 import { PhonePipe } from '../../../utils/phone.pipe';
 import { OrderFeeLinesComponent } from '../../order-fee-lines/order-fee-lines.component';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subscription, interval } from 'rxjs';
 import { OrderService, OrderStatusCounts } from '../../../services/order.service';
 import { UserService } from '../../../services/user.service';
@@ -72,6 +73,9 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
   private knownOrderIds = new Set<string>();
   private newOrderIds = new Set<string>();
   private refreshSub?: Subscription;
+  // HU27 (tempo real da loja): pedido novo ou mudança de status recarrega na hora; o polling fica de reserva
+  private liveSub?: Subscription;
+  private readonly supplierLive = inject(SupplierLiveService);
 
   actionsByStatus: Record<OrderStatus, { label: string, icon: string, color: string, action: string }[]> = {
     [OrderStatus.PENDING]: [
@@ -97,10 +101,12 @@ export class ReceivedOrdersComponent implements OnInit, OnDestroy {
     this.loadOrders();
     // a HU08 (SSE) não cobre o painel do fornecedor: pedido novo chega por atualização periódica
     this.refreshSub = interval(this.refreshIntervalMs).subscribe(() => this.loadOrders());
+    this.liveSub = this.supplierLive.changes().subscribe(() => this.loadOrders());
   }
 
   ngOnDestroy() {
     this.refreshSub?.unsubscribe();
+    this.liveSub?.unsubscribe();
   }
 
   get pendingOrders(): OrderResponse[] {

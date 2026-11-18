@@ -1,3 +1,4 @@
+import { SupplierLiveService } from './supplier-live.service';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Injectable, inject } from '@angular/core';
@@ -21,6 +22,7 @@ interface JwtPayload {
 export class AuthService {
   baseUrl: string = `${environment.apiUrl}/auth`
   private readonly pushService = inject(PushService);
+  private readonly supplierLive = inject(SupplierLiveService);
 
 
   constructor(
@@ -73,6 +75,7 @@ export class AuthService {
   logout() {
     // HU27: a assinatura deste aparelho sai junto (o token é lido antes de ser apagado)
     void this.pushService.disable();
+    this.supplierLive.disconnect(); // HU27: o canal SSE da loja fecha junto com a sessão
     localStorage.removeItem('access_token');
     localStorage.removeItem('user');
     this.locationContext.clear();

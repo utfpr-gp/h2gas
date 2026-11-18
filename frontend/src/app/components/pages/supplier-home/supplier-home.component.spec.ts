@@ -1,3 +1,5 @@
+import { Subject } from 'rxjs';
+import { SupplierLiveService, SupplierLiveEvent } from '../../../services/supplier-live.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -10,6 +12,10 @@ import { UserService } from '../../../services/user.service';
 
 // F9: tela inicial do fornecedor, com um card por área e o número que importa agora
 describe('SupplierHomeComponent', () => {
+  // HU27 (tempo real da loja): aviso do canal SSE da loja
+  let live$ = new Subject<SupplierLiveEvent>();
+  beforeEach(() => (live$ = new Subject<SupplierLiveEvent>()));
+
   let fixture: ComponentFixture<SupplierHomeComponent>;
   let supplierSpy: jasmine.SpyObj<SupplierService>;
   let productSpy: jasmine.SpyObj<ProductItemService>;
@@ -41,6 +47,7 @@ describe('SupplierHomeComponent', () => {
     await TestBed.configureTestingModule({
       imports: [SupplierHomeComponent],
       providers: [
+        { provide: SupplierLiveService, useValue: { changes: () => live$.asObservable() } },
         provideRouter([]),
         { provide: SupplierService, useValue: supplierSpy },
         { provide: ProductItemService, useValue: productSpy },
@@ -120,5 +127,12 @@ describe('SupplierHomeComponent', () => {
     await setup();
 
     expect(fixture.nativeElement.querySelector('h1')?.textContent).toContain('Gás Centro');
+  });
+
+  it('deveRecarregarOsNumerosQuandoChegaPedidoNovo', async () => {
+    await setup();
+    live$.next({ type: 'order-placed', orderId: 'novo-1' });
+
+    expect(supplierSpy.getDashboard).toHaveBeenCalledTimes(2);
   });
 });
