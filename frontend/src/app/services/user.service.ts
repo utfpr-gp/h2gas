@@ -3,7 +3,7 @@ import { AbstractService } from './abstract.service';
 import { HttpClient } from '@angular/common/http';
 import { User } from '../models/user';
 import { environment } from '../../environments/environment';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -12,8 +12,25 @@ export class UserService extends AbstractService<User> {
   override baseUrl: string = `${environment.apiUrl}/auth/register`;
   // override baseUrl: string = 'http://localhost:8080/h2gas/api/auth/register'
 
+  // F7: o menu e o "Meus Dados" acompanham o usuário atual (o avatar muda quando o nome é salvo)
+  private readonly currentUserSubject = new BehaviorSubject<User | null>(this.readStoredUser());
+  readonly currentUser$ = this.currentUserSubject.asObservable();
+
   constructor(protected override http: HttpClient) {
     super(http);
+  }
+
+  setCurrentUser(user: User) {
+    localStorage.setItem('user', JSON.stringify(user));
+    this.currentUserSubject.next(user);
+  }
+
+  private readStoredUser(): User | null {
+    try {
+      return JSON.parse(localStorage.getItem('user') ?? 'null');
+    } catch {
+      return null;
+    }
   }
 
   getMe() {
@@ -26,6 +43,15 @@ export class UserService extends AbstractService<User> {
 
   updateUser(id: string, data: User) {
     return this.http.put(`${environment.apiUrl}/users/${id}`, data);
+  }
+
+  // HU12: o admin troca o próprio e-mail com o código enviado ao endereço novo
+  requestEmailChange(newEmail: string): Observable<void> {
+    return this.http.post<void>(`${environment.apiUrl}/users/me/email-change`, { newEmail });
+  }
+
+  confirmEmailChange(code: string): Observable<{ token: string }> {
+    return this.http.post<{ token: string }>(`${environment.apiUrl}/users/me/email-change/confirm`, { code });
   }
 
   createUser(user: any): Observable<User> {

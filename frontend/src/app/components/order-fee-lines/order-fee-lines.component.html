@@ -1,0 +1,14 @@
+<dl *ngIf="isDelivery" class="text-sm space-y-0.5 tabular-nums">
+    <div class="flex justify-between gap-3">
+        <dt class="text-gray-500">Subtotal</dt>
+        <dd data-testid="order-subtotal" class="text-gray-700">{{ subtotal | currency:'BRL':'symbol':'1.2-2' }}</dd>
+    </div>
+    <div class="flex justify-between gap-3">
+        <dt data-testid="order-fee-label" class="text-gray-500">
+            Frete<ng-container *ngIf="order.deliveryDistanceKm != null"> ({{ order.deliveryDistanceKm | number:'1.1-1' }} km)</ng-container>
+        </dt>
+        <dd data-testid="order-fee" [class]="fee > 0 ? 'text-gray-700' : 'text-success font-medium'">
+            {{ fee > 0 ? (fee | currency:'BRL':'symbol':'1.2-2') : 'Grátis' }}
+        </dd>
+    </div>
+</dl>

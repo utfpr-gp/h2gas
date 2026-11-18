@@ -1,0 +1,3 @@
+-- Baseline: schema já existente, criado historicamente via ddl-auto=update.
+-- Este arquivo não altera nada; com spring.flyway.baseline-version=1,
+-- o Flyway assume que o banco já satisfaz V1 e só aplica V2 em diante.

@@ -1,70 +1,170 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+<div class="max-w-5xl w-full mx-auto px-4 md:px-8 pt-6 pb-24 md:pb-10">
+    <header class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Histórico de pedidos</h1>
+            <p class="text-sm text-gray-500">Pedidos entregues e cancelados da sua loja.</p>
+        </div>
+        <!-- HU18: a loja abre e fecha pelo horário; aqui só o estado, sem interruptor -->
+        <app-store-hours-status></app-store-hours-status>
+    </header>
 
-<body class="bg-gray-100">
-    <main class="p-8 max-w-7xl mx-auto">
-        <header class="flex items-center justify-between mb-8">
-            <div class="flex justify-between items-center gap-4">
+    <!-- Resumo (acompanha os filtros) -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4" aria-label="Resumo do período" [class.opacity-60]="loading">
+        <div class="bg-white rounded-xl border border-gray-200 p-3">
+            <p class="text-xs text-gray-500 flex items-center gap-1"><span class="material-icons text-sm text-success">payments</span>Receita entregue</p>
+            <p data-testid="summary-revenue" class="text-xl font-bold text-gray-800 tabular-nums">
+                <ng-container *ngIf="summary; else carregando">{{ summary.revenue | currency:'BRL':'symbol':'1.2-2' }}</ng-container>
+            </p>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-200 p-3">
+            <p class="text-xs text-gray-500 flex items-center gap-1"><span class="material-icons text-sm text-success">check_circle</span>Entregues</p>
+            <p data-testid="summary-delivered" class="text-xl font-bold text-gray-800 tabular-nums">
+                <ng-container *ngIf="summary; else carregando">{{ summary.delivered }}</ng-container>
+            </p>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-200 p-3">
+            <p class="text-xs text-gray-500 flex items-center gap-1"><span class="material-icons text-sm text-error">cancel</span>Cancelados</p>
+            <p data-testid="summary-canceled" class="text-xl font-bold text-gray-800 tabular-nums">
+                <ng-container *ngIf="summary; else carregando">{{ summary.canceled }}</ng-container>
+            </p>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-200 p-3">
+            <p class="text-xs text-gray-500 flex items-center gap-1"><span class="material-icons text-sm text-primary">receipt_long</span>Ticket médio</p>
+            <p data-testid="summary-ticket" class="text-xl font-bold text-gray-800 tabular-nums">
+                <ng-container *ngIf="summary; else carregando">{{ summary.averageTicket != null ? (summary.averageTicket | currency:'BRL':'symbol':'1.2-2') : '—' }}</ng-container>
+            </p>
+        </div>
+        <ng-template #carregando><span class="skeleton inline-block h-7 w-20 align-middle"></span></ng-template>
+    </section>
+
+    <!-- Filtros -->
+    <section class="bg-white rounded-xl border border-gray-200 p-3 mb-4 space-y-3" aria-label="Filtros">
+        <div class="flex flex-wrap items-center gap-2">
+            <div class="flex gap-1 overflow-x-auto" role="group" aria-label="Filtrar por status">
+                <button *ngFor="let c of statusChips" type="button" [attr.data-testid]="'status-' + (c.value ?? 'all')"
+                    class="btn btn-sm rounded-full whitespace-nowrap"
+                    [ngClass]="status === c.value ? 'btn-primary' : 'btn-ghost border border-gray-200'"
+                    [attr.aria-pressed]="status === c.value" (click)="selectStatus(c.value)">{{ c.label }}</button>
+            </div>
+            <label class="input input-bordered input-sm rounded-xl flex items-center gap-2 w-full sm:w-64 sm:ml-auto">
+                <span class="material-icons text-base text-gray-400">search</span>
+                <input id="history-search" data-testid="history-search" type="search" class="grow" placeholder="Cliente ou código do pedido"
+                    aria-label="Buscar por cliente ou código do pedido" (input)="onSearch($any($event.target).value)" />
+            </label>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <label class="form-control">
+                <span class="label-text text-xs text-gray-500">Período</span>
+                <select data-testid="period-select" class="select select-bordered select-sm rounded-xl" (change)="selectPeriod($any($event.target).value)">
+                    <option *ngFor="let p of periods" [value]="p.value" [selected]="p.value === period">{{ p.label }}</option>
+                </select>
+            </label>
+            <label class="form-control">
+                <span class="label-text text-xs text-gray-500">Pagamento</span>
+                <select data-testid="payment-select" class="select select-bordered select-sm rounded-xl" (change)="selectPayment($any($event.target).value)">
+                    <option value="" [selected]="!payment">Todos</option>
+                    <option *ngFor="let p of payments" [value]="p" [selected]="p === payment">{{ paymentLabel(p) }}</option>
+                </select>
+            </label>
+            <label class="form-control">
+                <span class="label-text text-xs text-gray-500">Entrega ou retirada</span>
+                <select data-testid="mode-select" class="select select-bordered select-sm rounded-xl" (change)="selectMode($any($event.target).value)">
+                    <option value="" [selected]="!mode">Todas</option>
+                    <option value="DELIVERY" [selected]="mode === 'DELIVERY'">Entrega</option>
+                    <option value="PICKUP" [selected]="mode === 'PICKUP'">Retirada</option>
+                </select>
+            </label>
+        </div>
+        <div *ngIf="period === 'custom'" class="grid grid-cols-2 gap-2">
+            <label class="form-control">
+                <span class="label-text text-xs text-gray-500">De</span>
+                <input type="date" data-testid="custom-from" class="input input-bordered input-sm rounded-xl" [value]="customFrom"
+                    (change)="setCustom('from', $any($event.target).value)" />
+            </label>
+            <label class="form-control">
+                <span class="label-text text-xs text-gray-500">Até</span>
+                <input type="date" data-testid="custom-to" class="input input-bordered input-sm rounded-xl" [value]="customTo"
+                    (change)="setCustom('to', $any($event.target).value)" />
+            </label>
+            <span *ngIf="invalidCustomRange" class="col-span-2 text-xs text-error">A data inicial precisa ser anterior ou igual à final.</span>
+        </div>
+        <div *ngIf="activeFilters.length" data-testid="active-filters" class="flex flex-wrap items-center gap-1.5">
+            <button *ngFor="let f of activeFilters" type="button" class="badge badge-primary badge-outline gap-1 py-3"
+                [attr.aria-label]="'Remover filtro ' + f.label" (click)="removeFilter(f.key)">
+                {{ f.label }}<span class="material-icons text-sm" aria-hidden="true">close</span>
+            </button>
+            <button type="button" data-testid="clear-filters" class="btn btn-xs btn-ghost text-primary" (click)="clearFilters()">Limpar</button>
+        </div>
+    </section>
+
+    <p *ngIf="!loading && totalElements" class="text-sm text-gray-500 mb-2">{{ totalElements }} {{ totalElements === 1 ? 'pedido' : 'pedidos' }}</p>
+
+    <div *ngIf="loading && !orders.length" class="space-y-2" aria-busy="true">
+        <div *ngFor="let n of [1,2,3]" class="skeleton h-20 rounded-xl"></div>
+    </div>
+
+    <div *ngIf="!loading && !orders.length" data-testid="empty-state" class="text-center bg-white rounded-xl border border-gray-200 py-12 px-4">
+        <span class="material-icons text-gray-300" style="font-size: 56px">history</span>
+        <p class="text-gray-700 font-semibold mt-2">Nenhum pedido finalizado</p>
+        <p class="text-sm text-gray-500">Troque o período ou os filtros.</p>
+    </div>
+
+    <ul *ngIf="orders.length" class="space-y-2" [class.opacity-60]="loading">
+        <li *ngFor="let o of orders" [attr.data-testid]="'order-' + o.id" class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <button type="button" [attr.data-testid]="'toggle-' + o.id" class="w-full text-left p-3 flex flex-wrap items-center gap-x-3 gap-y-1"
+                [attr.aria-expanded]="expanded.has(o.id)" [attr.aria-controls]="'details-' + o.id" (click)="toggle(o)">
+                <span class="min-w-0 flex-1">
+                    <span class="flex flex-wrap items-center gap-2">
+                        <span class="font-semibold text-gray-800 tabular-nums">{{ shortCode(o) }}</span>
+                        <span class="badge badge-sm" [ngClass]="isDelivered(o) ? 'badge-success badge-outline' : 'badge-error'">{{ o.status }}</span>
+                    </span>
+                    <span class="block text-sm text-gray-700 truncate">{{ o.customerName }}</span>
+                    <span class="block text-xs text-gray-500 tabular-nums">{{ o.createdAt | date:'dd/MM/yyyy HH:mm' }} · {{ paymentLabel(o.paymentMethod) }} · {{ o.deliveryMode ? modeLabel[o.deliveryMode] : 'Entrega' }}</span>
+                </span>
+                <span class="font-bold text-gray-800 tabular-nums">{{ o.totalPrice | currency:'BRL':'symbol':'1.2-2' }}</span>
+                <span class="material-icons text-gray-400 transition-transform" [class.rotate-180]="expanded.has(o.id)" aria-hidden="true">expand_more</span>
+            </button>
+
+            <div *ngIf="expanded.has(o.id)" [id]="'details-' + o.id" [attr.data-testid]="'details-' + o.id" @fadeIn
+                class="border-t border-gray-100 px-3 pb-3 pt-2 grid sm:grid-cols-2 gap-3 text-sm">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-800">Historico de pedidos finalizados</h1>
-                    <p class="text-sm text-gray-500">Visão geral dos seus pedidos recebidos e finalizados.</p>
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Itens</p>
+                    <ul class="space-y-0.5">
+                        <li *ngFor="let item of o.orderItems" class="flex justify-between gap-2 tabular-nums">
+                            <span class="text-gray-700">{{ item.quantity }} × {{ item.productBrand }} · {{ item.productNameCategory }}</span>
+                            <span class="text-gray-500">{{ item.totalPrice | currency:'BRL':'symbol':'1.2-2' }}</span>
+                        </li>
+                        <li *ngIf="!o.orderItems?.length" class="text-gray-400">Sem itens registrados</li>
+                    </ul>
+                    <!-- HU28: subtotal e frete (o total fica no cabeçalho do card) -->
+                    <app-order-fee-lines [order]="o" class="block mt-2 pt-2 border-t border-gray-100"></app-order-fee-lines>
+                </div>
+                <div class="space-y-1 text-gray-700">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">{{ o.deliveryMode === 'PICKUP' ? 'Retirada na loja' : 'Entrega' }}</p>
+                    <p *ngIf="o.deliveryMode !== 'PICKUP' && address(o)" class="flex items-start gap-1">
+                        <span class="material-icons text-sm text-gray-400" aria-hidden="true">location_on</span>{{ address(o) }}
+                    </p>
+                    <p *ngIf="o.delivererName" class="flex items-center gap-1">
+                        <span class="material-icons text-sm text-gray-400" aria-hidden="true">two_wheeler</span>Entregador: {{ o.delivererName }}
+                    </p>
+                    <p *ngIf="o.deliveredAt" class="flex items-center gap-1">
+                        <span class="material-icons text-sm text-gray-400" aria-hidden="true">schedule</span>Entregue em {{ o.deliveredAt | date:'dd/MM/yyyy HH:mm' }}
+                    </p>
+                    <p *ngIf="o.cancellationReason" class="flex items-start gap-1 text-error">
+                        <span class="material-icons text-sm" aria-hidden="true">info</span>Motivo do cancelamento: {{ o.cancellationReason }}
+                    </p>
                 </div>
             </div>
-        </header>
+        </li>
+    </ul>
 
-
-        <!-- CARDS -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
-            <!-- Receita Total -->
-            <div class="col-span-1 bg-white p-5 rounded-xl shadow-md">
-                <p class="text-sm text-gray-500 mb-1">Receita Total (Entregues)</p>
-                <p class="text-4xl font-bold text-green-600">
-                    R$ {{ getTotalRevenue() | number:'1.2-2' }}
-                </p>
-            </div>
-
-            <!-- Total de Pedidos -->
-            <div class="bg-white p-5 rounded-xl shadow-md flex flex-col items-center text-center">
-                <i class="fa-solid fa-list text-4xl text-blue-500 mb-1"></i>
-                <p class="text-2xl font-bold text-gray-800">{{ orders?.length || 0 }}</p>
-                <p class="text-sm text-gray-500">Total de Pedidos</p>
-            </div>
-            <!-- Pendentes -->
-            <div class="bg-white p-5 rounded-xl shadow-md flex flex-col items-center text-center">
-                <i class="fa-regular fa-x text-4xl text-red-500 mb-1"></i>
-                <p class="text-2xl font-bold text-gray-800">{{ getCountByStatus('Cancelado') }}</p>
-                <p class="text-sm text-gray-500">Cancelados</p>
-            </div>
-
-            <!-- Em Rota -->
-            <!-- <div class="bg-white p-5 rounded-xl shadow-md flex flex-col items-center text-center">
-                <i class="fa-solid fa-truck text-4xl text-indigo-500 mb-1"></i>
-                <p class="text-2xl font-bold text-gray-800">{{ getCountByStatus('Saiu para entrega') }}</p>
-                <p class="text-sm text-gray-500">Em Rota</p>
-            </div> -->
-
-            <!-- Entregues -->
-            <div class="bg-white p-5 rounded-xl shadow-md flex flex-col items-center text-center">
-                <i class="fa-solid fa-circle-check text-4xl text-green-500 mb-1"></i>
-                <p class="text-2xl font-bold text-gray-800">{{ getCountByStatus('Entregue') }}</p>
-                <p class="text-sm text-gray-500">Entregues</p>
-            </div>
-        </div>
-
-
-        <!-- PEDIDOS -->
-        <app-orders-widget
-            [orders]="orders!"
-            [orderStatus]="orderStatus"
-            [actionsByStatus]="actionsByStatus"
-            [showSupplierToggle]="true"
-            [showSupplier]="showSupplier"
-            (statusChange)="onStatusChange($event)"
-            (toggleSupplier)="onToggleSupplier($event)"
-            (changeOrderStatus)="changeStatus($event.order, $event.action)">
-        </app-orders-widget>
-
-    </main>
-</body>
-
-</html>
+    <nav *ngIf="totalPages > 1" class="flex items-center justify-center gap-3 mt-4" aria-label="Paginação">
+        <button type="button" data-testid="prev-page" class="btn btn-sm btn-ghost rounded-lg" [disabled]="page === 0 || loading" (click)="load(page - 1)">
+            <span class="material-icons text-base">chevron_left</span> Anterior
+        </button>
+        <span class="text-sm text-gray-600">Página {{ page + 1 }} de {{ totalPages }}</span>
+        <button type="button" data-testid="next-page" class="btn btn-sm btn-ghost rounded-lg" [disabled]="page + 1 >= totalPages || loading" (click)="load(page + 1)">
+            Próxima <span class="material-icons text-base">chevron_right</span>
+        </button>
+    </nav>
+</div>

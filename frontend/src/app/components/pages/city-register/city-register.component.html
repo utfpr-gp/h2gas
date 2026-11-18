@@ -1,158 +1,106 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Azul Cidades - Cadastro</title>
-    <!-- <link rel="stylesheet" href="styles.css" /> -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  </head>
-  <body>
-    <!-- Navbar -->
-    <!-- <header class="sticky top-0 z-40 w-full shadow-md">
-      <app-menu></app-menu>
-    </header> -->
-
-    <!-- Mobile Menu (hidden by default) -->
-    <div id="mobile-menu" class="fixed inset-y-0 left-0 transform -translate-x-full transition duration-300 ease-in-out z-50 w-[240px] sm:w-[300px] bg-white shadow-xl">
-      <div class="flex items-center justify-between p-4 border-b">
-        <div class="flex items-center">
-          <div class="h-10 w-10 rounded-full bg-[#0017bf] flex items-center justify-center">
-            <span class="text-white font-bold text-xl">AC</span>
-          </div>
-          <div class="ml-3 text-lg font-bold">Azul Cidades</div>
+<div class="max-w-5xl w-full mx-auto px-4 md:px-8 pt-6 pb-24 md:pb-10">
+    <header class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Cidades atendidas</h1>
+            <p class="text-sm text-gray-500">
+                {{ cities.length }} {{ cities.length === 1 ? 'cidade atendida' : 'cidades atendidas' }}. Clientes e fornecedores só se cadastram nelas.
+            </p>
         </div>
-        <button id="close-menu-button" class="p-2 rounded-md text-gray-500 hover:bg-gray-100">
-          <i class="fas fa-times h-6 w-6"></i>
+        <button type="button" data-testid="new-city" class="btn btn-primary rounded-xl" (click)="openCreate()">
+            <span class="material-icons text-base">add_location_alt</span>
+            Nova cidade
         </button>
-      </div>
-      <nav class="flex flex-col gap-1 mt-6">
-        <a href="/" class="flex items-center px-3 py-2.5 text-base font-medium rounded-md hover:bg-gray-100">
-          <span class="p-1.5 rounded-md bg-[#0017bf]/10 text-[#0017bf] mr-3">
-            <i class="fas fa-home h-5 w-5"></i>
-          </span>
-          Início
-        </a>
-        <a href="/" class="flex items-center px-3 py-2.5 text-base font-medium rounded-md hover:bg-gray-100">
-          <span class="p-1.5 rounded-md bg-[#0017bf]/10 text-[#0017bf] mr-3">
-            <i class="fas fa-map h-5 w-5"></i>
-          </span>
-          Cidades
-          <i class="fas fa-chevron-down ml-auto h-4 w-4"></i>
-        </a>
-        <a href="#" class="flex items-center px-3 py-2.5 text-base font-medium rounded-md hover:bg-gray-100">
-          <span class="p-1.5 rounded-md bg-[#0017bf]/10 text-[#0017bf] mr-3">
-            <i class="fas fa-cog h-5 w-5"></i>
-          </span>
-          Configurações
-        </a>
-      </nav>
+    </header>
+
+    <label class="input input-bordered rounded-xl flex items-center gap-2 w-full md:w-72 bg-white mb-4">
+        <span class="material-icons text-base text-gray-400">search</span>
+        <input data-testid="city-search" type="search" class="grow" placeholder="Cidade ou UF"
+            aria-label="Buscar cidade ou UF" (input)="onSearch($any($event.target).value)" />
+    </label>
+
+    <div *ngIf="loading && !cities.length" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2" aria-busy="true">
+        <div *ngFor="let n of [1,2,3]" class="skeleton h-16 rounded-xl"></div>
     </div>
 
-    <!-- Main Content -->
-    <main class="flex-1 container mx-auto px-4 py-8">
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Cadastro de Cidades</h1>
-        <p class="text-gray-600 mt-1">
-          Gerencie o cadastro de cidades com facilidade
-        </p>
-      </div>
-      
-      <!-- City List -->
-      <div class="w-full space-y-4">
-        <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <!-- <div class="relative w-full sm:w-64">
-            <i class="fas fa-search absolute left-2.5 top-2.5 h-4 w-4 text-gray-500"></i>
-            <input
-              type="search"
-              placeholder="Buscar cidades..."
-              class="w-full pl-8 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50 focus:border-transparent"
-            />
-          </div> -->
-          <button 
-            class="w-full sm:w-auto bg-[#0017bf] hover:bg-[#0017bf]/80 text-white px-4 py-2 rounded-md transition-colors"
-            id="add-city-button"
-            (click)="openModal()"
-          >
-            <i class="fas fa-plus h-4 w-4 mr-2"></i>
-            Nova Cidade
-          </button>
-        </div>
+    <div *ngIf="!loading && !filtered.length" data-testid="empty-state"
+        class="text-center bg-white rounded-xl border border-gray-200 py-12 px-4">
+        <span class="material-icons text-gray-300" style="font-size: 56px">location_city</span>
+        <p class="text-gray-700 font-semibold mt-2">{{ query ? 'Nenhuma cidade encontrada' : 'Nenhuma cidade atendida' }}</p>
+        <p class="text-sm text-gray-500">{{ query ? 'Troque o termo da busca.' : 'Use "Nova cidade" para começar a atender uma cidade.' }}</p>
+    </div>
 
-        <div class="overflow-x-auto rounded-lg shadow-md">
-          <app-dynamic-table [data]="cityTabble!!"
-            [columns]="colunsCityTabble!!"
-            [actions]="actions"
-          >
-            
-          </app-dynamic-table>
-        </div>
-      </div>
-    </main>
-
-    <!-- City Form Modal -->
-    <div *ngIf="modalAberta" class="fixed inset-0 bg-black bg-opacity-25 backdrop-blur-sm flex justify-center items-center z-50">
-      <div class="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-md mx-4">
-        <div class="p-6">
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold">Nova Cidade</h2>
-            <button class="text-gray-500 hover:text-gray-700" (click)="modalAberta = false">
-              <i class="fas fa-times h-5 w-5"></i>
+    <ul *ngIf="filtered.length" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2" [class.opacity-60]="loading">
+        <li *ngFor="let c of filtered" [attr.data-testid]="'city-' + c.id"
+            class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 flex items-center gap-3">
+            <span class="badge badge-primary badge-outline font-semibold shrink-0">{{ c.state }}</span>
+            <div class="min-w-0 flex-1">
+                <p class="font-semibold text-gray-800 truncate">{{ c.name }}</p>
+                <p class="text-xs text-gray-500 tabular-nums">{{ c.ibgeCode ? 'IBGE ' + c.ibgeCode : 'Cadastrada antes do IBGE' }}</p>
+            </div>
+            <button type="button" [attr.data-testid]="'delete-' + c.id" class="btn btn-sm btn-ghost text-error rounded-lg"
+                [attr.aria-label]="'Deixar de atender ' + c.name" (click)="askDelete(c)">
+                <span class="material-icons text-base">delete</span>
             </button>
-          </div>
+        </li>
+    </ul>
 
-          <form class="space-y-4" [formGroup]="cityForm">
-            <div class="space-y-2">
-              <label class="block text-sm font-medium text-gray-700">Nome da Cidade</label>
-              <input
-                type="text"
-                placeholder="Digite o nome da cidade"
-                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
-                required
-                formControlName="name"
-              />
-            </div>
+    <!-- Nova cidade -->
+    <div *ngIf="creating" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-gray-900/40 p-4"
+        (click)="closeCreate()">
+        <form data-testid="new-city-modal" role="dialog" aria-modal="true" aria-labelledby="new-city-title" @fadeIn
+            class="w-full max-w-md bg-white rounded-xl shadow-xl p-5 space-y-3" (click)="$event.stopPropagation()"
+            (submit)="$event.preventDefault(); saveCreate()">
+            <h3 id="new-city-title" class="text-lg font-bold text-gray-800">Nova cidade</h3>
+            <p class="text-sm text-gray-500">A lista é a oficial do IBGE. O CEP dos clientes casa com a cidade pelo código do município.</p>
 
-            <div class="space-y-2">
-              <label class="block text-sm font-medium text-gray-700">Estado</label>
-              <input
-                type="text"
-                placeholder="Digite o estado"
-                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
-                required
-                formControlName="state"
-              />
-            </div>
+            <label class="form-control w-full">
+                <span class="label-text text-sm text-gray-700">Estado</span>
+                <select data-testid="new-uf" class="select select-bordered rounded-xl w-full"
+                    [disabled]="!states.length" (change)="selectUf($any($event.target).value)">
+                    <option value="" [selected]="!uf">{{ states.length ? 'Escolha o estado' : 'Carregando estados...' }}</option>
+                    <option *ngFor="let s of states" [value]="s.uf" [selected]="s.uf === uf">{{ s.name }} ({{ s.uf }})</option>
+                </select>
+            </label>
 
-            <div class="flex justify-end gap-2 pt-4">
-              <button
-                type="button"
-                class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                (click)="modalAberta = false"
-              >
-                Cancelar
-              </button>
-              <button 
-                type="submit" 
-                (click)="createCity()" 
-                class="px-4 py-2 bg-[#0017bf] hover:bg-[#0017bf]/80 text-white rounded-md cursor-pointer">
-                Salvar
-              </button>
+            <label class="form-control w-full">
+                <span class="label-text text-sm text-gray-700">Cidade</span>
+                <select data-testid="new-municipality" class="select select-bordered rounded-xl w-full"
+                    [disabled]="!uf || loadingMunicipalities" (change)="selectMunicipality($any($event.target).value)">
+                    <option value="" [selected]="!ibgeCode">
+                        {{ !uf ? 'Escolha o estado primeiro' : loadingMunicipalities ? 'Carregando cidades...' : 'Escolha a cidade (' + municipalities.length + ')' }}
+                    </option>
+                    <option *ngFor="let m of municipalities" [value]="m.code" [disabled]="isServed(m)" [selected]="m.code === ibgeCode">
+                        {{ m.name }}{{ isServed(m) ? ' (já atendida)' : '' }}
+                    </option>
+                </select>
+            </label>
+
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <button type="button" class="btn btn-outline btn-primary rounded-xl" [disabled]="saving" (click)="closeCreate()">Voltar</button>
+                <button type="submit" data-testid="save-city" class="btn btn-primary rounded-xl" [disabled]="!ibgeCode || saving">
+                    <span *ngIf="saving" class="loading loading-spinner loading-sm"></span>
+                    Atender cidade
+                </button>
             </div>
-          </form>
-        </div>
-      </div>
+        </form>
     </div>
 
-    <!-- modal delete -->
-    <app-delete-confirmation-modal
-      [itemName]="cityDeleteName"
-      (confirm)="deleteConfirmed()"
-      (cancel)="idSelectCity = undefined">
-    </app-delete-confirmation-modal>
-
-    <!-- Toggle checkbox que ativa o modal -->
-    <input type="checkbox" id="delete-modal" class="modal-toggle" [checked]="idSelectCity" hidden />
-
-  </body>
-</html>
+    <!-- Confirmação de exclusão -->
+    <div *ngIf="deleteTarget" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-gray-900/40 p-4"
+        (click)="closeDelete()">
+        <div data-testid="delete-modal" role="dialog" aria-modal="true" aria-labelledby="delete-title" @fadeIn
+            class="w-full max-w-md bg-white rounded-xl shadow-xl p-5" (click)="$event.stopPropagation()">
+            <h3 id="delete-title" class="text-lg font-bold text-gray-800">Deixar de atender {{ deleteTarget.name }} - {{ deleteTarget.state }}?</h3>
+            <p class="text-sm text-gray-500 mt-1">
+                Novos clientes e fornecedores dessa cidade não conseguem mais se cadastrar. Cidade com fornecedores ou endereços não pode ser excluída.
+            </p>
+            <div class="grid grid-cols-2 gap-2 mt-4">
+                <button type="button" data-testid="cancel-delete" class="btn btn-outline btn-primary rounded-xl" [disabled]="deleting" (click)="closeDelete()">Voltar</button>
+                <button type="button" data-testid="confirm-delete" class="btn btn-error rounded-xl" [disabled]="deleting" (click)="confirmDelete()">
+                    <span *ngIf="deleting" class="loading loading-spinner loading-sm"></span>
+                    Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

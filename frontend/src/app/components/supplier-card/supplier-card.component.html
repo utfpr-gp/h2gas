@@ -1,0 +1,60 @@
+<!-- HU15: card compacto — logo quadrada à esquerda, nome e metadados à direita; o card inteiro abre a loja -->
+<!-- HU18: loja fora do horário fica acinzentada -->
+<div
+  data-testid="view-products"
+  role="button"
+  tabindex="0"
+  [attr.aria-label]="'Ver produtos de ' + supplier.name"
+  (click)="onViewProducts()"
+  (keydown.enter)="onViewProducts()"
+  (keydown.space)="onViewProducts(); $event.preventDefault()"
+  [class.grayscale]="supplier.open === false" [class.opacity-60]="supplier.open === false"
+  class="flex items-center gap-3 p-3 md:p-2 rounded-xl min-h-11 cursor-pointer transition-colors
+         border border-base-300 md:border-transparent hover:bg-base-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary">
+
+  <!-- F7 fatia 6: logo da loja; sem logo (ou com a imagem quebrada) fica o ícone -->
+  <div class="w-20 h-20 rounded-xl overflow-hidden bg-base-200 border border-base-300 shrink-0
+              flex items-center justify-center">
+    <img *ngIf="supplier.logoUrl && !logoBroken; else icone" data-testid="supplier-logo" [src]="supplier.logoUrl"
+      [alt]="'Logo de ' + supplier.name" loading="lazy" width="80" height="80" class="w-full h-full object-cover"
+      (error)="logoBroken = true" />
+    <ng-template #icone>
+      <span data-testid="supplier-icon" class="material-icons text-primary text-3xl" aria-hidden="true">storefront</span>
+    </ng-template>
+  </div>
+
+  <div class="min-w-0 flex-grow">
+    <div class="flex items-center gap-2 min-w-0">
+      <h2 class="font-semibold text-base-content truncate">{{ supplier.name }}</h2>
+      <!-- HU18: lojas fora do horário aparecem depois das abertas, com o horário de abertura -->
+      <span *ngIf="supplier.open === false" data-testid="supplier-closed"
+        class="badge badge-sm badge-warning shrink-0">Fechada<ng-container *ngIf="supplier.openingTime"> · abre às {{ supplier.openingTime }}</ng-container></span>
+    </div>
+
+    <!-- a nota tem a própria linha; quando é botão (abre as avaliações), a área de toque cresce para 44px sem aumentar o card -->
+    <app-store-rating class="block [&_button]:min-h-11 [&_button]:py-1.5 [&_button]:-my-1.5 md:[&_button]:min-h-8 md:[&_button]:py-0 md:[&_button]:my-0"
+      [average]="supplier.averageRating" [count]="supplier.reviewCount" [clickable]="true"
+      (openReviews)="viewReviews.emit(supplier)"></app-store-rating>
+
+    <!-- o que a loja vende (HU15) -->
+    <div class="flex flex-wrap gap-1 mt-0.5" *ngIf="supplier.productTypes?.length">
+      <span *ngFor="let tipo of supplier.productTypes" data-testid="supplier-type"
+        class="inline-flex items-center gap-1 rounded-full bg-base-200 px-2 py-0.5 text-xs text-neutral">
+        <span class="material-icons text-xs" aria-hidden="true">{{ tipo.icon }}</span>{{ tipo.name }}
+      </span>
+    </div>
+
+    <!-- HU17: distância e frete vêm do backend (RN01); sem CEP a linha não aparece -->
+    <p *ngIf="deliveryLine as linha" data-testid="supplier-delivery"
+      class="flex flex-wrap items-center gap-x-1 text-xs text-base-content">
+      <span class="material-icons text-sm" [ngClass]="linha.iconClass" aria-hidden="true">{{ linha.icon }}</span>
+      <span *ngIf="supplier.distanceKm != null" class="tabular-nums">{{ supplier.distanceKm | number:'1.1-1' }} km ·</span>
+      <span class="font-semibold">{{ linha.text }}</span>
+      <span *ngIf="linha.hint" class="text-neutral">· {{ linha.hint }}</span>
+    </p>
+    <div class="flex items-center text-neutral text-xs gap-1" *ngIf="supplier.openingTime && supplier.closingTime">
+      <span>{{ supplier.openingTime }} - {{ supplier.closingTime }}</span>
+      <span *ngIf="supplier.averageDeliveryTime"> · {{ supplier.averageDeliveryTime }} min</span>
+    </div>
+  </div>
+</div>

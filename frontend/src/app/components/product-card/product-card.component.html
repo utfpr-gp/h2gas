@@ -1,0 +1,66 @@
+<!-- HU15 §5.5: foto em destaque, preço de entrega como principal e "Comprar agora" como a ação cheia -->
+<article class="h-full flex flex-col bg-base-100 rounded-2xl border border-base-300 overflow-hidden transition-shadow
+                [@media(hover:hover)]:hover:shadow-md">
+  <!-- as fotos reais não têm fundo branco: a própria foto, desfocada, preenche as laterais, e a foto nítida
+       fica inteira por cima — o produto aparece completo e sem faixa vazia em volta. As duas usam o mesmo
+       endereço (um download só) e ficam por cima da área (absolute) para a proporção 4:3 valer com foto em pé -->
+  <div data-testid="product-media" class="relative aspect-[4/3] bg-base-200 overflow-hidden flex items-center justify-center">
+    <img *ngIf="product.imageUrl" [src]="product.imageUrl" alt="" aria-hidden="true" loading="lazy" width="320" height="240"
+      data-testid="product-media-fill" class="absolute inset-0 w-full h-full object-cover scale-150 blur-3xl opacity-40" />
+    <img
+      *ngIf="product.imageUrl"
+      [src]="product.imageUrl"
+      [alt]="product.brand + ' ' + (product.category ?? '')"
+      loading="lazy" width="320" height="240"
+      data-testid="product-image"
+      class="absolute inset-0 w-full h-full object-contain product-photo-edge" />
+    <span *ngIf="!product.imageUrl" class="material-symbols-rounded text-5xl text-base-300" aria-hidden="true">inventory_2</span>
+
+  </div>
+
+  <div class="p-3 sm:p-4 flex flex-col flex-grow gap-2">
+    <div class="min-w-0">
+      <h3 class="font-semibold text-base leading-snug text-base-content line-clamp-2">{{ product.brand }} {{ product.category }}</h3>
+      <!-- HU15 §5.4: quem vende — só na vitrine de produtos, que mistura lojas -->
+      <button *ngIf="showStore && product.supllierName" type="button" data-testid="product-store"
+        [attr.aria-label]="'Ver a loja ' + product.supllierName" (click)="onViewStore()"
+        class="inline-flex items-center gap-1 -ml-1 px-1 rounded-md text-sm text-primary hover:bg-base-200 min-h-11 sm:min-h-8 max-w-full">
+        <!-- HU15 §5.5: avatar redondo com a logo da loja; sem logo (ou quebrada), a inicial do nome -->
+        <span data-testid="product-store-avatar" aria-hidden="true"
+          class="w-6 h-6 shrink-0 rounded-full overflow-hidden border border-base-300 bg-primary/10 text-primary
+                 text-[11px] font-bold flex items-center justify-center">
+          <img *ngIf="product.supplierLogoUrl && !storeLogoBroken; else inicial" [src]="product.supplierLogoUrl" alt=""
+            loading="lazy" width="24" height="24" class="w-full h-full object-cover" (error)="storeLogoBroken = true" />
+          <ng-template #inicial>{{ storeInitial }}</ng-template>
+        </span>
+        <span class="truncate">{{ product.supllierName }}</span>
+      </button>
+    </div>
+
+    <!-- HU21: um preço só; o frete aparece separado, pela distância (HU17) -->
+    <p data-testid="product-price" class="text-lg font-bold text-base-content tabular-nums">
+      {{ product.price | currency:'BRL':'symbol':'1.2-2' }}
+    </p>
+
+    <div data-testid="product-actions" class="mt-auto pt-1 grid grid-cols-2 gap-2">
+      <button
+        type="button"
+        data-testid="add-to-cart"
+        [disabled]="!!blockedReason" [attr.title]="blockedReason"
+        (click)="onAdd()"
+        class="btn btn-sm btn-outline btn-accent rounded-xl min-h-11 sm:min-h-9 px-2 whitespace-nowrap">
+        <span class="material-symbols-rounded text-lg" aria-hidden="true">add_shopping_cart</span>
+        Adicionar
+      </button>
+      <!-- verde 700 da paleta: o success do tema com texto branco não chega a 4,5:1 em 14 px -->
+      <button
+        type="button"
+        data-testid="buy-now"
+        [disabled]="!!blockedReason" [attr.title]="blockedReason"
+        (click)="onBuyNow()"
+        class="btn btn-sm btn-success [--btn-color:var(--color-green-700)] text-white rounded-xl min-h-11 sm:min-h-9 px-2 whitespace-nowrap">
+        Comprar agora
+      </button>
+    </div>
+  </div>
+</article>

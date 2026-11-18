@@ -1,11 +1,13 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { UserService } from '../../../services/user.service';
 import { ToastrService } from 'ngx-toastr';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../../../services/auth.service';
-import { CartService } from '../../../services/cart.service';
+import { LocationContextService } from '../../../services/location-context.service';
+import { backendMessage } from '../../../utils/backend-message';
+import { isCheckoutReturn, navigateAfterLogin, navigateKeepingReturnUrl } from '../../../utils/return-url';
 
 @Component({
   selector: 'app-login',
@@ -19,13 +21,23 @@ import { CartService } from '../../../services/cart.service';
 })
 export class LoginComponent {
   
+  // HU13: para onde voltar depois de entrar (ex.: o checkout do visitante)
+  get returnUrl(): string | null {
+    return this.route.snapshot.queryParamMap.get('returnUrl');
+  }
+
+  get checkoutLogin(): boolean {
+    return isCheckoutReturn(this.returnUrl);
+  }
+
   constructor(
     private router: Router,
+    private route: ActivatedRoute,
     private fb: FormBuilder, 
     private userService: UserService,
     private toastr: ToastrService,
     private authService: AuthService,
-    private cartService: CartService,
+    private locationContext: LocationContextService,
   ) {
     this.loginform = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -40,20 +52,18 @@ export class LoginComponent {
   login() {
     localStorage.removeItem('access_token');
     localStorage.removeItem('user');
+    this.locationContext.clear();
     this.loading = true;
-    this.cartService.setCart([]);
     this.authService.loginUser(this.loginform.value).subscribe({
       next: (response: any) => {
         this.loading = false;
-        console.log('Usuario logado com sucesso!', response);
-        this.toastr.success('Usuario logado com sucesso!');
         localStorage.setItem('access_token', response.token)
         this.getAndSaveMe();
       }, 
       error: (err) => {
         this.loading = false;
         console.error('Erro ao logar:', err);
-        this.toastr.error(`Erro ao efetuar o login: ${err.error.message}`)
+        this.toastr.error(`Não foi possível entrar: ${backendMessage(err)}`)
       }
     })
   }
@@ -63,11 +73,13 @@ export class LoginComponent {
       next: (response: any) => {
         console.log('Usuario buscado sucesso!', response);
         localStorage.setItem('user', JSON.stringify(response))
-        this.navigate('/inicio')  
+        const firstName = (response?.name || '').trim().split(/\s+/)[0];
+        this.toastr.success(firstName ? `Bem-vindo(a), ${firstName}!` : 'Bem-vindo(a)!');
+        navigateAfterLogin(this.router, this.returnUrl, response.userType);
       }, 
       error: (err) => {
         console.error('Erro ao buscar o usuario logado:', err);
-        this.toastr.error(`Erro ao buscar o usuario: ${err.error.message}`)
+        this.toastr.error(`Erro ao carregar seus dados: ${backendMessage(err)}`)
       }
     })
   }

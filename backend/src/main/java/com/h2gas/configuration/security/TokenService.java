@@ -28,7 +28,7 @@ public class TokenService {
                         .withExpiresAt(genExperirationDate())
                         .sign(algorithm);
             } catch (JWTCreationException e) {
-                throw new RuntimeException("Error generating token", e);
+                throw new IllegalStateException("Não foi possível gerar o acesso.", e);
             }
     }
 

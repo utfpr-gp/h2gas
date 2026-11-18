@@ -17,4 +17,10 @@ public class CloudinaryService {
     public Map upload(MultipartFile file) throws IOException {
         return cloudinary.uploader().upload(file.getBytes(), ObjectUtils.emptyMap());
     }
+
+    // HU28: endereço https da imagem (secure_url); "url" é http e o navegador bloqueia numa página https
+    public static String secureUrl(Map<?, ?> uploaded) {
+        Object secure = uploaded.get("secure_url");
+        return String.valueOf(secure != null ? secure : uploaded.get("url"));
+    }
 }

@@ -1,7 +1,15 @@
+import { SupplierLiveService } from './supplier-live.service';
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
 import { environment } from '../../environments/environment';
 import {jwtDecode} from 'jwt-decode';
+import { LocationContextService } from './location-context.service';
+import { CartService } from './cart.service';
+import { PushService } from './push.service';
+
+export type LoginChannel = 'EMAIL' | 'PHONE';
+export interface LoginChannels { phone: boolean; phoneChannel: 'WHATSAPP' | 'SMS'; }
 
 interface JwtPayload {
   exp: number;
@@ -13,10 +21,14 @@ interface JwtPayload {
 })
 export class AuthService {
   baseUrl: string = `${environment.apiUrl}/auth`
+  private readonly pushService = inject(PushService);
+  private readonly supplierLive = inject(SupplierLiveService);
 
 
   constructor(
-    private http: HttpClient
+    private http: HttpClient,
+    private locationContext: LocationContextService,
+    private cartService: CartService,
   ) { }
 
   isLogged(): boolean {
@@ -46,9 +58,38 @@ export class AuthService {
     return this.http.post(`${this.baseUrl}/login`, data)
   }
 
+  // HU11: login por código de 6 dígitos enviado por e-mail
+  // HU26: o canal só muda por onde o código vai (o celular volta para o e-mail quando não dá)
+  requestLoginToken(email: string, channel: LoginChannel = 'EMAIL'): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/login/token/request`, { email, channel });
+  }
+
+  getLoginChannels(): Observable<LoginChannels> {
+    return this.http.get<LoginChannels>(`${this.baseUrl}/login/channels`);
+  }
+
+  validateLoginToken(email: string, code: string): Observable<{ token: string }> {
+    return this.http.post<{ token: string }>(`${this.baseUrl}/login/token/validate`, { email, code });
+  }
+
   logout() {
+    // HU27: a assinatura deste aparelho sai junto (o token é lido antes de ser apagado)
+    void this.pushService.disable();
+    this.supplierLive.disconnect(); // HU27: o canal SSE da loja fecha junto com a sessão
     localStorage.removeItem('access_token');
     localStorage.removeItem('user');
+    this.locationContext.clear();
+    // HU13: o carrinho sai junto com a sessão (e não ao entrar), para o visitante levar o carrinho ao login
+    this.cartService.clear();
+    this.cartService.clearBuyNow();
+  }
+
+  // HU13: sessão vencida vira visitante — sai o token e o usuário, ficam o carrinho e a cidade
+  dropExpiredSession() {
+    if (localStorage.getItem('access_token') && this.isTokenExpired()) {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user');
+    }
   }
 
   requestPasswordReset(data: any) {

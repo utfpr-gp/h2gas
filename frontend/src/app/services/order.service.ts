@@ -1,10 +1,20 @@
 import { Injectable } from '@angular/core';
 import { AbstractService } from './abstract.service';
 import { environment } from '../../environments/environment';
-import { OrderRequest, OrderResponse } from '../models/order.model';
-import { HttpClient } from '@angular/common/http';
+import { CancelOrderResponse, OrderPreview, OrderPreviewRequest, OrderRequest, OrderResponse, OrderReview, ReorderPreview } from '../models/order.model';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { OrderHistoryFilter, OrderHistorySummary } from '../models/order-history';
 import { Observable } from 'rxjs';
 import { PaginatedResponse } from '../models/paginated-response';
+import { DeliveryHistory } from '../models/delivery-history';
+
+// HU23: contagem por status do painel de pedidos
+export interface OrderStatusCounts {
+  counts: Record<'PENDING' | 'CONFIRMED' | 'IN_PREPARATION' | 'OUT_FOR_DELIVERY' | 'DELIVERED' | 'CANCELED', number>;
+  active: number;
+  total: number;
+  receivable: number; // HU28: soma dos pedidos em andamento (nem entregues nem cancelados)
+}
 
 @Injectable({
   providedIn: 'root'
@@ -16,8 +26,70 @@ export class OrderService extends AbstractService<OrderResponse> {
     super(http);
   }
 
+  // F7 fatia 6: histórico do fornecedor do token, filtrado e contado no backend
+  listMyHistory(filter: OrderHistoryFilter & { page?: number; size?: number }): Observable<PaginatedResponse<OrderResponse>> {
+    let params = this.historyParams(filter);
+    if (filter.page != null) params = params.set('page', filter.page);
+    if (filter.size != null) params = params.set('size', filter.size);
+    return this.http.get<PaginatedResponse<OrderResponse>>(`${this.baseUrl}/mine/history`, { params });
+  }
+
+  getMyHistorySummary(filter: OrderHistoryFilter): Observable<OrderHistorySummary> {
+    return this.http.get<OrderHistorySummary>(`${this.baseUrl}/mine/history/summary`, { params: this.historyParams(filter) });
+  }
+
+  private historyParams(filter: OrderHistoryFilter): HttpParams {
+    let params = new HttpParams();
+    for (const key of ['status', 'from', 'to', 'payment', 'mode'] as const) {
+      if (filter[key]) params = params.set(key, filter[key]!);
+    }
+    if (filter.q?.trim()) params = params.set('q', filter.q.trim());
+    return params;
+  }
+
   createOrder(data: OrderRequest): Observable<OrderResponse> {
     return this.http.post<OrderResponse>(this.baseUrl, data);
+  }
+
+  previewOrder(data: OrderPreviewRequest): Observable<OrderPreview> {
+    return this.http.post<OrderPreview>(`${this.baseUrl}/preview`, data);
+  }
+
+  assignDeliverer(orderId: string, delivererId: number): Observable<OrderResponse> {
+    return this.http.patch<OrderResponse>(`${this.baseUrl}/${orderId}/assign-deliverer`, { delivererId });
+  }
+
+  myRoutes(): Observable<OrderResponse[]> {
+    return this.http.get<OrderResponse[]>(`${this.baseUrl}/my-routes`);
+  }
+
+  startDelivery(orderId: string): Observable<OrderResponse> {
+    return this.http.patch<OrderResponse>(`${this.baseUrl}/${orderId}/start-delivery`, {});
+  }
+
+  cancelDelivery(orderId: string, reason: string): Observable<OrderResponse> {
+    return this.http.patch<OrderResponse>(`${this.baseUrl}/${orderId}/cancel-delivery`, { reason });
+  }
+
+  deliveryHistory(): Observable<DeliveryHistory> {
+    return this.http.get<DeliveryHistory>(`${this.baseUrl}/my-deliveries/history`);
+  }
+
+  completeDelivery(orderId: string): Observable<OrderResponse> {
+    return this.http.patch<OrderResponse>(`${this.baseUrl}/${orderId}/complete-delivery`, {});
+  }
+
+  cancelOrder(orderId: string, reason: string): Observable<CancelOrderResponse> {
+    return this.http.patch<CancelOrderResponse>(`${this.baseUrl}/${orderId}/cancel`, { reason });
+  }
+
+  // HU24: o cliente avalia a loja e o entregador do pedido entregue
+  reviewOrder(orderId: string, review: OrderReview): Observable<OrderReview> {
+    return this.http.post<OrderReview>(`${this.baseUrl}/${orderId}/review`, review);
+  }
+
+  getReorderPreview(orderId: string): Observable<ReorderPreview> {
+    return this.http.get<ReorderPreview>(`${this.baseUrl}/${orderId}/reorder-preview`);
   }
 
   findByCustomerId(customerId: string, page: number = 0, size: number = 5, status?: string): Observable<PaginatedResponse<OrderResponse>> {
@@ -68,4 +140,9 @@ export class OrderService extends AbstractService<OrderResponse> {
     return this.http.patch(`${this.baseUrl}/${id}/update-order-status`, data);
   }
 
+
+  // HU23: quantos pedidos a loja tem em cada status (o fornecedor vem do token)
+  getMyStatusCounts(): Observable<OrderStatusCounts> {
+    return this.http.get<OrderStatusCounts>(`${this.baseUrl}/mine/status-counts`);
+  }
 }

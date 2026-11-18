@@ -1,6 +1,7 @@
 package com.h2gas.services;
 
 import com.h2gas.enums.UserTypeEnum;
+import com.h2gas.exceptions.ForbiddenResourceException;
 import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.*;
@@ -54,12 +55,12 @@ public class UserService {
     public UserDto findByIdUser(String id) {
         Optional<User> userEntityOptional = userRepository.findById(id);
         return userEntityOptional.map(userMapper::toDto).orElseThrow(()
-                -> new ResourceNotFoundException("User not found with id: " + id));
+                -> new ResourceNotFoundException("Usuário não encontrado."));
     }
 
     public User findEntityByIdUser(String id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
     }
 
     public UserDto findByName(String name) {
@@ -85,17 +86,32 @@ public class UserService {
         passwordTokenRepository.save(myToken);
     }
 
-    public UserDto update(String id, UserDto userDto) {
+    // F7: só o próprio usuário (ou ADMIN) edita; o e-mail é a identidade do login por código (HU11),
+    // então usuário comum não o troca por aqui
+    public UserDto update(String id, UserDto userDto, User actor) {
+        boolean isAdmin = actor.getUserType() == UserTypeEnum.ADMIN;
+        if (!isAdmin && !actor.getId().equals(id)) {
+            throw new ForbiddenResourceException("Você só pode editar os seus próprios dados.");
+        }
         User userEdit = userRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
 
-        userEdit.setName(userDto.getName());
-        if (userRepository.existsByEmail(userDto.getEmail()) &&
-                !userEdit.getEmail().equals(userDto.getEmail())) {
-            throw new BusinessRuleException("Email já cadastrado.");
+        boolean emailChanged = userDto.getEmail() != null && !userDto.getEmail().equals(userEdit.getEmail());
+        if (emailChanged && !isAdmin) {
+            throw new BusinessRuleException("O e-mail não pode ser alterado por aqui.");
+        }
+        // HU12: o próprio e-mail do admin só muda com o código enviado ao endereço novo
+        if (emailChanged && actor.getId().equals(id)) {
+            throw new BusinessRuleException("Para trocar o seu e-mail, confirme pelo código em Meus Dados.");
+        }
+        if (emailChanged && userRepository.existsByEmail(userDto.getEmail())) {
+            throw new BusinessRuleException("E-mail já cadastrado.");
         }
 
-        userEdit.setEmail(userDto.getEmail());
+        userEdit.setName(userDto.getName());
+        if (emailChanged) {
+            userEdit.setEmail(userDto.getEmail());
+        }
 //        if (userEdit.getUserType() != UserTypeEnum.CUSTOMER) {
 //            userEdit.setCnpj(userDto.getCnpj());
 //        }
@@ -109,7 +125,7 @@ public class UserService {
     @Transactional
     public UserDto create(RegisterDTO data) {
         if (userRepository.existsByEmail(data.getEmail())) {
-            throw new BusinessRuleException("Email já cadastrado.");
+            throw new BusinessRuleException("E-mail já cadastrado.");
         }
 
         String encryptedPassword = new BCryptPasswordEncoder().encode(data.getPassword());
@@ -119,29 +135,25 @@ public class UserService {
         }
 
         if (data.getUserType() == UserTypeEnum.SUPPLIER) {
-            Supplier supplier = new Supplier();
-            supplier.setName(data.getName());
-            supplier.setEmail(data.getEmail());
-            supplier.setCpf(data.getCpf());
-            supplier.setPassword(encryptedPassword);
-            supplier.setUserType(data.getUserType());
-            supplier.setCnpj(data.getCnpj());
-            supplier.setPhoneNumber(data.getPhoneNumber());
-            supplier.setDescription("Fornecedor pré-criado");
-            supplier.setOpeningTime(LocalTime.parse("08:00"));
-            supplier.setClosingTime(LocalTime.parse("18:00"));
-            supplier.setAverageDeliveryTime(Duration.ofMinutes(60));
-            City city = cityRepository.findById(data.getAddress().getCityId())
-                    .orElseThrow(() -> new ResourceNotFoundException("City not found"));
-            supplier.setCity(city);
+            Supplier supplier = newSupplier(data.getName(), data.getEmail(), data.getPhoneNumber(),
+                    data.getCpf(), data.getCnpj(), encryptedPassword);
+
+            if (data.getAddress() != null) {
+                City city = cityRepository.findById(data.getAddress().getCityId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Cidade não encontrada."));
+                supplier.setCity(city);
+
+                Supplier savedSupplier = supplierService.createSupplier(supplier);
+                Address address = addressService.createAddress(data.getAddress(), savedSupplier, city);
+                savedSupplier.setAddress(address);
+                supplierService.createSupplier(savedSupplier);
+                return userMapper.toDto(savedSupplier);
+            }
 
             Supplier savedSupplier = supplierService.createSupplier(supplier);
-            Address address = addressService.createAddress(data.getAddress(), savedSupplier, city);
-            supplier.setAddress(address);
-            supplierService.createSupplier(savedSupplier);
             return userMapper.toDto(savedSupplier);
         } else {
-            // Cria usuário normal
+            // Cria usuário normal — endereço é definido depois do login (HU01)
             User user = new User(
                     data.getName(),
                     data.getEmail(),
@@ -151,11 +163,33 @@ public class UserService {
                     data.getUserType()
             );
             userRepository.save(user);
-            City city = cityRepository.findById(data.getAddress().getCityId())
-                    .orElseThrow(() -> new ResourceNotFoundException("City not found"));
-            Address address = addressService.createAddress(data.getAddress(), user, city);
+
+            if (data.getAddress() != null) {
+                City city = cityRepository.findById(data.getAddress().getCityId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Cidade não encontrada."));
+                addressService.createAddress(data.getAddress(), user, city);
+            }
+
             return userMapper.toDto(user);
         }
+    }
+
+    // padrões do fornecedor recém-cadastrado; ele ajusta horário e prazo depois de aprovado
+    static Supplier newSupplier(String name, String email, String phoneNumber, String cpf,
+                                String cnpj, String encryptedPassword) {
+        Supplier supplier = new Supplier();
+        supplier.setName(name);
+        supplier.setEmail(email);
+        supplier.setCpf(cpf);
+        supplier.setPassword(encryptedPassword);
+        supplier.setUserType(UserTypeEnum.SUPPLIER);
+        supplier.setCnpj(cnpj);
+        supplier.setPhoneNumber(phoneNumber);
+        supplier.setDescription("Fornecedor pré-criado");
+        supplier.setOpeningTime(LocalTime.parse("08:00"));
+        supplier.setClosingTime(LocalTime.parse("18:00"));
+        supplier.setAverageDeliveryTime(Duration.ofMinutes(60));
+        return supplier;
     }
 
     private static SupplierCreateDTO getSupplierCreateDTO(RegisterDTO data, User user, Address address) {

@@ -1,5 +1,8 @@
 package com.h2gas.model.entity;
 
+import com.h2gas.model.DeliveryTerms;
+import java.math.BigDecimal;
+
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -58,9 +61,38 @@ public class Supplier extends User{
     @OneToMany(mappedBy = "supplier")
     private List<ProductItem> productItems;
 
-    private boolean open = false;
 
-    @OneToMany(mappedBy = "supplier", cascade = CascadeType.ALL)
-    private Set<CategoryProduct> categoryProducts = new HashSet<>();
+    // abaixo disso o produto aparece como estoque baixo na tela de produtos do fornecedor
+    @Column(name = "low_stock_threshold", nullable = false)
+    private int lowStockThreshold = 8;
+
+    // logo da loja no Cloudinary; nula = o catálogo mostra o ícone de loja
+    @Column(name = "logo_url", length = 500)
+    private String logoUrl;
+
+    // F7 §5.26: banner da loja no Cloudinary; nulo = a página da loja mostra o banner padrão
+    @Column(name = "banner_url", length = 500)
+    private String bannerUrl;
+
+    // HU17: como a loja entrega; raio nulo = sem limite
+    @Column(name = "offers_delivery", nullable = false)
+    private boolean offersDelivery = true;
+
+    @Column(name = "offers_pickup", nullable = false)
+    private boolean offersPickup = true;
+
+    @Column(name = "delivery_radius_km", precision = 6, scale = 2)
+    private BigDecimal deliveryRadiusKm;
+
+    @Column(name = "delivery_base_fee", precision = 10, scale = 2, nullable = false)
+    private BigDecimal deliveryBaseFee = BigDecimal.ZERO;
+
+    @Column(name = "delivery_fee_per_km", precision = 10, scale = 2, nullable = false)
+    private BigDecimal deliveryFeePerKm = BigDecimal.ZERO;
+
+    public DeliveryTerms deliveryTerms() {
+        return new DeliveryTerms(offersDelivery, deliveryRadiusKm, deliveryBaseFee, deliveryFeePerKm);
+    }
+
 
 }

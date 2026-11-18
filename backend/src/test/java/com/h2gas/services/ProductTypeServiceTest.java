@@ -1,5 +1,7 @@
 package com.h2gas.services;
 
+import com.h2gas.exceptions.BusinessRuleException;
+import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.CityDTO;
 import com.h2gas.model.dto.ProductTypeDTO;
 import com.h2gas.model.entity.City;
@@ -111,5 +113,80 @@ class ProductTypeServiceTest {
         ProductType entidade = productTypeRepository.findById(tipoCriado.getId()).orElse(null);
         assertNotNull(entidade);
         assertEquals("Gás teste", entidade.getName());
+    }
+
+    @Test
+    @DisplayName("HU12: admin cria tipo, gravado sem espaços nas pontas")
+    void deveCriarTipoSemEspacosNasPontas() {
+        ProductTypeDTO criado = productTypeService.createProductType(new ProductTypeDTO(null, "  Carvão  "));
+
+        assertNotNull(criado.getId());
+        assertEquals("Carvão", productTypeRepository.findById(criado.getId()).orElseThrow().getName());
+    }
+
+    @Test
+    @DisplayName("HU12: tipo repetido (sem diferenciar maiúsculas) é recusado")
+    void deveRecusarTipoRepetidoSemDiferenciarMaiusculas() {
+        BusinessRuleException erro = assertThrows(BusinessRuleException.class,
+                () -> productTypeService.createProductType(new ProductTypeDTO(null, " gÁS ")));
+        assertEquals("Tipo já cadastrado.", erro.getMessage());
+    }
+
+    @Test
+    @DisplayName("HU12: admin renomeia tipo; o próprio nome não conta como repetido")
+    void deveRenomearTipo() {
+        ProductTypeDTO renomeado = productTypeService.updateProductType(validTypeId, new ProductTypeDTO(null, "Água mineral 20L"));
+        assertEquals("Água mineral 20L", renomeado.getName());
+
+        assertDoesNotThrow(() -> productTypeService.updateProductType(validTypeId, new ProductTypeDTO(null, "ÁGUA MINERAL 20L")));
+        assertThrows(BusinessRuleException.class,
+                () -> productTypeService.updateProductType(validTypeId, new ProductTypeDTO(null, "Gás")));
+    }
+
+    @Test
+    @DisplayName("HU12: renomear tipo inexistente é 404")
+    void deveRetornar404AoRenomearTipoInexistente() {
+        assertThrows(ResourceNotFoundException.class,
+                () -> productTypeService.updateProductType(999_999L, new ProductTypeDTO(null, "Qualquer")));
+    }
+
+    @Test
+    @DisplayName("HU12: o ícone escolhido pelo admin é gravado e devolvido")
+    void deveGravarIconeEscolhido() {
+        ProductTypeDTO criado = productTypeService.createProductType(new ProductTypeDTO(null, "Gelo", "ac_unit"));
+
+        assertEquals("ac_unit", criado.getIcon());
+        assertEquals("ac_unit", productTypeRepository.findById(criado.getId()).orElseThrow().getIcon());
+    }
+
+    @Test
+    @DisplayName("HU12: tipo criado sem ícone usa o genérico")
+    void deveUsarIconeGenericoQuandoAusente() {
+        ProductTypeDTO criado = productTypeService.createProductType(new ProductTypeDTO(null, "Diversos"));
+
+        assertEquals("category", criado.getIcon());
+    }
+
+    @Test
+    @DisplayName("HU12: ícone fora da lista fechada é recusado")
+    void deveRecusarIconeForaDaLista() {
+        BusinessRuleException erro = assertThrows(BusinessRuleException.class,
+                () -> productTypeService.createProductType(new ProductTypeDTO(null, "Lenha", "<script>")));
+        assertEquals("Ícone inválido.", erro.getMessage());
+
+        assertThrows(BusinessRuleException.class,
+                () -> productTypeService.updateProductType(validTypeId, new ProductTypeDTO(null, "Água Mineral", "home")));
+    }
+
+    @Test
+    @DisplayName("HU12: renomear sem mandar ícone mantém o atual; mandando, troca")
+    void deveManterIconeAoRenomearSemIcone() {
+        productTypeService.updateProductType(validTypeId, new ProductTypeDTO(null, "Água Mineral", "water_drop"));
+
+        ProductTypeDTO renomeado = productTypeService.updateProductType(validTypeId, new ProductTypeDTO(null, "Água 20L"));
+        assertEquals("water_drop", renomeado.getIcon());
+
+        ProductTypeDTO trocado = productTypeService.updateProductType(validTypeId, new ProductTypeDTO(null, "Água 20L", "local_drink"));
+        assertEquals("local_drink", trocado.getIcon());
     }
 }

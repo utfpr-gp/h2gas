@@ -1,23 +1,41 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { ProductItemService } from '../../../services/product-item.service';
 import { ProductItem } from '../../../models/product-item';
+import { ProductType } from '../../../models/product-type';
 import { CartService } from '../../../services/cart.service';
 import { PaginatedResponse } from '../../../models/paginated-response';
 import { PaginationComponent } from '../../pagination/pagination.component';
+import { ProductTypeService } from '../../../services/product-type.service';
+import { CategoryChipBarComponent } from '../../category-chip-bar/category-chip-bar.component';
+import { ProductCardComponent } from '../../product-card/product-card.component';
+import { fadeIn, staggerList } from '../../../animations/checkout.animations';
+import { SupplierService } from '../../../services/supplier.service';
+import { Storefront } from '../../../models/storefront';
+import { StoreRatingComponent } from '../../store-rating/store-rating.component';
+import { StoreReviewsDialogComponent } from '../../store-reviews-dialog/store-reviews-dialog.component';
+import { CartOtherStoreDialogComponent } from '../../cart-other-store-dialog/cart-other-store-dialog.component';
+import { backendMessage } from '../../../utils/backend-message';
+import { groupProductsByTypeAndCategory } from '../../../utils/product-sections';
 
 @Component({
   selector: 'app-product-list',
   imports: [
     FormsModule,
     CommonModule,
-    PaginationComponent
+    PaginationComponent,
+    CategoryChipBarComponent,
+    ProductCardComponent,
+    StoreRatingComponent,
+    StoreReviewsDialogComponent,
+    CartOtherStoreDialogComponent,
   ],
   templateUrl: './product-list.component.html',
-  styleUrl: './product-list.component.css'
+  animations: [staggerList, fadeIn],
+  host: { class: 'flex flex-1 flex-col bg-gray-50 -mt-5 pt-5' }
 })
 export class ProductListComponent implements OnInit {
   constructor(
@@ -25,15 +43,24 @@ export class ProductListComponent implements OnInit {
     private router: Router,
     private routeActive: ActivatedRoute,
     private productItemService: ProductItemService,
-    private cartService: CartService
+    private productTypeService: ProductTypeService,
+    private cartService: CartService,
+    private supplierService: SupplierService
   ) {}
 
-  @ViewChild('productModal') productModal!: ElementRef<HTMLDialogElement>;
   idSupplier?: string = '';
   products?: ProductItem[];
-  productSelect?: ProductItem = new ProductItem();
-  quantity: number = 1;
-  cartProduct?: ProductItem[] = [];
+  // F7 §5.26: cabeçalho da loja (banner, logo, nome, nota, horário, bairro, descrição)
+  store?: Storefront;
+  storeLoading = true;
+  bannerBroken = false;
+  logoBroken = false;
+  descriptionExpanded = false;
+  reviewsOpen = false; // F7 §5.27
+  readonly descriptionClampLength = 120;
+  loading = false;
+  listVersion = 0; // muda a cada resposta, para a lista entrar em sequência mesmo com a mesma quantidade
+  categories: ProductType[] = [];
 
   ngOnInit(): void {
     const idParam = this.routeActive.snapshot.paramMap.get('id');
@@ -42,7 +69,8 @@ export class ProductListComponent implements OnInit {
       return;
     }
     this.idSupplier = idParam;
-    console.log(this.idSupplier);
+    this.loadStore(idParam);
+    this.loadCategories();
     this.getProducts(this.idSupplier);
   }
 
@@ -54,63 +82,110 @@ export class ProductListComponent implements OnInit {
   searchTerm = '';
   selectedCategory: string | null = null;
 
+  loadStore(id: string) {
+    this.supplierService.getStorefront(id).subscribe({
+      next: (store) => {
+        this.store = store;
+        this.storeLoading = false;
+      },
+      error: (err) => {
+        this.storeLoading = false;
+        this.toastr.error(`Erro ao carregar a loja: ${backendMessage(err)}`);
+      }
+    });
+  }
+
+  get hasLongDescription(): boolean {
+    return (this.store?.description?.length ?? 0) > this.descriptionClampLength;
+  }
+
+  get storeLocation(): string {
+    return [this.store?.addressNeighborhood, this.store?.cityName].filter(Boolean).join(' · ');
+  }
+
+  loadCategories() {
+    this.productTypeService.findAll().subscribe({
+      next: (response) => {
+        this.categories = response;
+      },
+      error: (err) => {
+        this.toastr.error(`Erro ao carregar as categorias: ${backendMessage(err)}`);
+      }
+    });
+  }
+
+  // HU18: fora do horário a loja aparece, mas não vende
+  get closedNotice(): string | null {
+    if (!this.store || this.store.open) return null;
+    return this.store.openingTime ? `Loja fechada · abre às ${this.store.openingTime}` : 'Loja fechada';
+  }
+
+  get productSections() {
+    return groupProductsByTypeAndCategory(this.products ?? [], this.categories);
+  }
+
+  // HU15: o chip passou a emitir o tipo inteiro; aqui o filtro segue sendo pelo nome
+  onCategorySelected(type: ProductType | null) {
+    this.selectedCategory = type?.name ?? null;
+    this.getProducts(this.idSupplier!);
+  }
+
   getProducts(supplierId: string, page: number = 0) {
+    this.loading = true;
     this.productItemService
       .getProductsBySupplierId(
         supplierId,
         page,
         this.pageSizeProducts,
-        this.searchTerm || undefined,      
-        this.selectedCategory || undefined 
+        this.searchTerm || undefined,
+        this.selectedCategory || undefined
       )
       .subscribe({
         next: (response: PaginatedResponse<ProductItem>) => {
+          this.loading = false;
+          this.listVersion++;
           this.products = response.data;
           this.currentPageProducts = response.page;
           this.pageSizeProducts = response.size;
           this.totalPagesProducts = response.totalPages;
           this.totalElementsProducts = response.totalElements;
-  
-          if (page === 0) {
-            this.toastr.success('Produtos carregados com sucesso!');
-          }
         },
         error: (err) => {
+          this.loading = false;
           console.error('Erro ao buscar produtos:', err.error?.message || err.message);
-          this.toastr.error(`Erro ao buscar produtos: ${err.error?.message || err.message}`);
+          this.toastr.error(`Erro ao buscar produtos: ${backendMessage(err)}`);
         },
       });
   }
-  
-  
 
-  openModal(product: any) {
-    this.productSelect = product;
-    this.quantity = 1;
-    this.productModal.nativeElement.showModal();
-  }
+  // HU14: produto aguardando confirmação de esvaziar o carrinho de outra loja
+  pendingOtherStoreProduct?: ProductItem;
 
-  closeModal() {
-    this.productModal.nativeElement.close();
-  }
-
-  confirmRequest() {
-    if (this.quantity < 1) {
-      this.toastr.warning("Selecione pelo menos 1 produto!");
-      this.closeModal();
+  addToCart(product: ProductItem) {
+    const item = { ...product, quantitySelect: 1 };
+    if (this.cartService.addProduct(item) === 'other_supplier') {
+      this.pendingOtherStoreProduct = item;
       return;
     }
-  
-    const productToAdd = {
-      ...this.productSelect,
-      quantitySelect: this.quantity
-    };
-  
-    this.cartService.addProduct(productToAdd);
-  
-    this.toastr.success("Produto adicionado ao carrinho!");
-    this.closeModal();
+    this.toastr.success('Produto adicionado ao carrinho.');
   }
 
+  confirmClearAndAdd() {
+    if (!this.pendingOtherStoreProduct) {
+      return;
+    }
+    this.cartService.clearAndAdd(this.pendingOtherStoreProduct);
+    this.pendingOtherStoreProduct = undefined;
+    this.toastr.success('Produto adicionado ao carrinho.');
+  }
 
+  cancelOtherStoreDialog() {
+    this.pendingOtherStoreProduct = undefined;
+  }
+
+  // F7 §5.23: compra direta — item avulso, sem passar pelo carrinho
+  buyNow(product: ProductItem) {
+    this.cartService.startBuyNow({ ...product, quantitySelect: 1 });
+    this.router.navigate(['/resumo-pedido'], { queryParams: { modo: 'compra-direta' } });
+  }
 }

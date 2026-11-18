@@ -28,8 +28,5 @@ public class CategoryProduct {
 
     @OneToMany(mappedBy = "categoryProduct", cascade = CascadeType.ALL)
     private Set<ProductItem> items = new HashSet<>();
-
-    @ManyToOne
-    @JoinColumn(name = "supplier_id")
-    private Supplier supplier;
+    // HU19: a categoria é global (cadastrada pelo admin, única por tipo + nome); quem vende é o ProductItem
 }

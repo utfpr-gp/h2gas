@@ -1,159 +1,133 @@
-<div class="max-w-4xl mx-auto p-4 mb-6">
-  <div class="bg-white rounded-xl border border-blue-300 shadow-2xl">
-    <div class="bg-blue-700 text-white rounded-t-xl p-4 shadow-md">
-      <h2 class="text-xl font-semibold">Editar </h2>
-      <p class="text-sm text-blue-100">Preencha as informações basicas da sua fornecedora</p>
+<div class="max-w-2xl mx-auto p-4 pb-24 md:p-8">
+  <!-- Carregando -->
+  <div *ngIf="loading" data-testid="profile-skeleton" class="space-y-4" aria-busy="true" aria-label="Carregando seus dados">
+    <div class="flex items-center gap-4">
+      <div class="skeleton w-20 h-20 rounded-full"></div>
+      <div class="space-y-2 flex-1">
+        <div class="skeleton h-5 w-2/3 rounded"></div>
+        <div class="skeleton h-4 w-1/2 rounded"></div>
+      </div>
     </div>
-
-    <div class="p-6">
-      <form [formGroup]="registerFormUser" class="space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Nome Usuário</label>
-            <input formControlName="name" type="text"
-              class="mt-1 block w-full rounded-lg border-2 border-blue-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Nome Usuário" />
-          </div>
-
-          <div class="form-control">
-            <label class="block text-sm font-medium text-gray-700">Email</label>
-            <input type="email" placeholder="email@exemplo.com" formControlName="email"
-              class="mt-1 block w-full rounded-lg border-2 border-blue-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-gray-700">Telefone de contato</label>
-            <input formControlName="phoneNumber" type="text" mask="(00) 00000-0000"
-              class="mt-1 block w-full rounded-lg border-2 border-blue-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="(00) 00000-0000" />
-          </div>
-
-          <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700">Endereço</label>
-
-            <div class="flex items-center gap-2 mt-1">
-              <button type="button"
-                class="flex items-center gap-1 px-3 py-1.5 text-blue-600 border border-blue-500 rounded-lg hover:bg-blue-50"
-                (click)="openModal()">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                <span *ngIf="!address">
-                  Adicionar
-                </span>
-                <span *ngIf="address">
-                  Editar
-                </span>
-              </button>
-
-              <p *ngIf="address" class="text-sm text-gray-800 font-medium">
-                {{ address.streetName }}, {{address.cityName}}
-              </p>
-
-              <p *ngIf="!address" class="text-sm text-gray-500 italic">
-                Clique em 'Adicionar' para inserir um endereço
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div *ngIf="modalAberta"
-          class="fixed inset-0 bg-black bg-opacity-25 backdrop-blur-sm flex justify-center items-center z-50">
-          <div class="bg-white rounded-lg shadow-xl overflow-hidden w-full max-w-md mx-4">
-            <div class="p-6">
-              <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold">Seu endereço</h2>
-                <button class="text-gray-500 hover:text-gray-700" (click)="modalAberta = false">
-                  <i class="fas fa-times h-5 w-5"></i>
-                </button>
-              </div>
-
-              <form class="space-y-4" [formGroup]="registerFormAddress">
-
-                <div class="space-y-2">
-                  <label class="block text-sm font-medium text-gray-700">CEP</label>
-                  <div class="flex gap-2">
-                    <input type="text" placeholder="Digite o seu CEP"
-                      class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
-                      required formControlName="zipCode" />
-                    <button type="button" (click)="buscarCep()"
-                      class="px-2 py-1 text-sm bg-[#0017bf] hover:bg-[#0017bf]/80 text-white rounded-md">
-                      Buscar
-                    </button>
-                  </div>
-                </div>
-
-                <div class="space-y-2">
-                  <label class="block text-sm font-medium text-gray-700">Cidade</label>
-                  <select formControlName="cityId"
-                    class="mt-1 block w-full rounded-lg border-2 border-blue-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500">
-                    <option *ngFor="let city of cities" 
-                      [ngValue]="city.id">
-                      {{ city.name }}
-                    </option>
-                  </select>
-                </div>
-
-                <!-- <div class="space-y-2">
-                  <label class="block text-sm font-medium text-gray-700">Cidade</label>
-                  <input type="text" placeholder="Digite o nome de sua Cidade"
-                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
-                    required formControlName="cityName" />
-                </div> -->
-
-                <div class="space-y-2">
-                  <label class="block text-sm font-medium text-gray-700">Rua</label>
-                  <input type="text" placeholder="Digite o nome da sua Rua"
-                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
-                    required formControlName="streetName" />
-                </div>
-
-                <div class="space-y-2">
-                  <label class="block text-sm font-medium text-gray-700">Complemento</label>
-                  <input type="text" placeholder="Digite um Complemento"
-                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
-                    required formControlName="complement" />
-                </div>
-
-
-                <div class="space-y-2">
-                  <label class="block text-sm font-medium text-gray-700">Bairro</label>
-                  <input type="text" placeholder="Digite o bairro"
-                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
-                    required formControlName="neighborhood" />
-                </div>
-
-                <div class="space-y-2">
-                  <label class="block text-sm font-medium text-gray-700">Numero</label>
-                  <input type="number" placeholder="Digite o Numero"
-                    class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#0017bf]/50"
-                    required formControlName="number" />
-                </div>
-
-                <div class="flex justify-end gap-2 pt-4">
-                  <button type="button"
-                    class="cursor-pointer px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                    (click)="modalAberta = false">
-                    Cancelar
-                  </button>
-                  <button type="submit" (click)="salvarAddress()"
-                    class="px-4 py-2 bg-[#0017bf] hover:bg-[#0017bf]/80 text-white rounded-md cursor-pointer">
-                    Salvar
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-
-        <div class="mt-6">
-          <button type="submit" (click)="update()"
-            class="w-full cursor-pointer bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 rounded-lg shadow-md">
-            Editar
-          </button>
-        </div>
-      </form>
-    </div>
+    <div class="skeleton h-14 w-full rounded-xl"></div>
+    <div class="skeleton h-14 w-full rounded-xl"></div>
+    <div class="skeleton h-14 w-full rounded-xl"></div>
   </div>
+
+  <ng-container *ngIf="!loading && user">
+    <!-- Cabeçalho do perfil -->
+    <header class="flex items-center gap-4 mb-6">
+      <span data-testid="profile-avatar"
+        class="w-20 h-20 shrink-0 rounded-full bg-secondary text-secondary-content flex items-center justify-center text-2xl font-bold">{{ initials }}</span>
+      <div class="min-w-0">
+        <h1 data-testid="profile-name" class="text-2xl font-bold text-gray-800 truncate">{{ user.name }}</h1>
+        <p data-testid="profile-email" class="text-sm text-gray-500 truncate">{{ user.email }}</p>
+      </div>
+    </header>
+
+    <section class="bg-white rounded-xl shadow-md border border-gray-200 p-4 md:p-6 mb-4">
+      <h2 class="text-xs font-bold tracking-wide text-primary uppercase mb-4">Dados de contato</h2>
+      <form [formGroup]="profileForm" (ngSubmit)="save()" class="space-y-4">
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">Nome</span>
+          <span class="relative mt-1 block">
+            <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-gray-400 text-base">person</span>
+            <input formControlName="name" type="text" placeholder="Seu nome" autocomplete="name"
+              class="input w-full rounded-xl border bg-white pl-10"
+              [ngClass]="profileForm.get('name')!.invalid && profileForm.get('name')!.touched ? 'border-red-400' : 'border-gray-300'" />
+          </span>
+          <span *ngIf="profileForm.get('name')!.invalid && profileForm.get('name')!.touched" class="text-red-500 text-sm">
+            Informe seu nome (mínimo de 3 letras).
+          </span>
+        </label>
+
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">E-mail</span>
+          <span class="relative mt-1 block">
+            <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-gray-400 text-base">mail</span>
+            <input data-testid="email-field" type="email" [value]="user.email" readonly aria-readonly="true"
+              class="input w-full rounded-xl border border-gray-200 bg-gray-100 text-gray-500 pl-10 cursor-not-allowed" />
+          </span>
+          <span *ngIf="userType !== 'ADMIN'" class="text-xs text-gray-500">Para trocar o e-mail, fale com o suporte.</span>
+        </label>
+        <button *ngIf="userType === 'ADMIN' && emailStep === 'idle'" type="button" data-testid="change-email"
+          class="btn btn-sm btn-ghost text-primary rounded-lg -mt-2 px-2" (click)="startEmailChange()">
+          <span class="material-icons text-base">edit</span> Trocar e-mail
+        </button>
+
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">Telefone de contato</span>
+          <span class="relative mt-1 block">
+            <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-gray-400 text-base">call</span>
+            <input formControlName="phoneNumber" type="text" mask="(00) 00000-0000" placeholder="(00) 00000-0000" autocomplete="tel"
+              class="input w-full rounded-xl border bg-white pl-10"
+              [ngClass]="profileForm.get('phoneNumber')!.invalid && profileForm.get('phoneNumber')!.touched ? 'border-red-400' : 'border-gray-300'" />
+          </span>
+        </label>
+
+        <button type="submit" data-testid="save-profile" [disabled]="!canSave" class="btn btn-primary w-full rounded-xl">
+          <span *ngIf="saving" class="loading loading-spinner loading-sm"></span>
+          {{ saving ? 'Salvando...' : 'Salvar alterações' }}
+        </button>
+      </form>
+
+      <!-- HU12: troca do e-mail do admin com código; fora do form do perfil para não submetê-lo -->
+      <div *ngIf="userType === 'ADMIN' && emailStep !== 'idle'" data-testid="email-change-panel"
+        class="mt-4 rounded-xl border border-gray-200 bg-base-200 p-4 space-y-3">
+        <ng-container *ngIf="emailStep === 'email'">
+          <label class="block">
+            <span class="text-sm font-medium text-gray-700">E-mail novo</span>
+            <input data-testid="new-email" type="email" [formControl]="newEmail" placeholder="novo@exemplo.com" autocomplete="email"
+              class="input w-full rounded-xl border bg-white mt-1"
+              [ngClass]="newEmail.invalid && newEmail.touched ? 'border-red-400' : 'border-gray-300'" (keydown.enter)="$event.preventDefault(); sendEmailCode()" />
+            <span class="text-xs text-gray-500">Vamos mandar um código para ele. O e-mail atual só muda depois da confirmação.</span>
+          </label>
+          <div class="flex justify-end gap-2">
+            <button type="button" class="btn btn-ghost rounded-xl" (click)="cancelEmailChange()">Cancelar</button>
+            <button type="button" data-testid="send-email-code" class="btn btn-primary rounded-xl" [disabled]="emailBusy" (click)="sendEmailCode()">
+              <span *ngIf="emailBusy" class="loading loading-spinner loading-sm"></span> Enviar código
+            </button>
+          </div>
+        </ng-container>
+        <ng-container *ngIf="emailStep === 'code'">
+          <p class="text-sm text-gray-700">Digite o código de 6 dígitos que enviamos para <strong>{{ pendingEmail }}</strong>.</p>
+          <input data-testid="email-code" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" [formControl]="emailCode"
+            aria-label="Código de confirmação" placeholder="000000"
+            class="input w-full rounded-xl border bg-white tracking-[0.4em] text-center text-lg"
+            [ngClass]="emailCode.invalid && emailCode.touched ? 'border-red-400' : 'border-gray-300'" (keydown.enter)="$event.preventDefault(); confirmEmailCode()" />
+          <div class="flex flex-wrap justify-end gap-2">
+            <button type="button" class="btn btn-ghost rounded-xl" (click)="cancelEmailChange()">Cancelar</button>
+            <button type="button" class="btn btn-ghost rounded-xl" [disabled]="emailBusy" (click)="emailStep = 'email'">Trocar o e-mail digitado</button>
+            <button type="button" data-testid="confirm-email-code" class="btn btn-primary rounded-xl" [disabled]="emailBusy" (click)="confirmEmailCode()">
+              <span *ngIf="emailBusy" class="loading loading-spinner loading-sm"></span> Confirmar
+            </button>
+          </div>
+        </ng-container>
+      </div>
+    </section>
+
+    <!-- Atalhos por perfil -->
+    <div class="space-y-3">
+      <ng-container *ngIf="userType === 'CUSTOMER'">
+        <button type="button" data-testid="atalho-meus-enderecos" (click)="go('/meus-enderecos')"
+          class="w-full bg-white rounded-xl shadow-md border border-gray-200 p-4 flex items-center gap-3 text-left hover:border-primary transition">
+          <span class="material-icons text-primary">location_on</span>
+          <span class="flex-grow">
+            <span class="block font-semibold text-gray-800">Meus endereços</span>
+            <span class="block text-sm text-gray-500">Veja, adicione e escolha onde receber</span>
+          </span>
+          <span class="material-icons text-gray-400">chevron_right</span>
+        </button>
+        <button type="button" data-testid="atalho-meus-pedidos" (click)="go('/meus-pedidos')"
+          class="w-full bg-white rounded-xl shadow-md border border-gray-200 p-4 flex items-center gap-3 text-left hover:border-primary transition">
+          <span class="material-icons text-primary">receipt_long</span>
+          <span class="flex-grow">
+            <span class="block font-semibold text-gray-800">Meus pedidos</span>
+            <span class="block text-sm text-gray-500">Acompanhe e refaça seus pedidos</span>
+          </span>
+          <span class="material-icons text-gray-400">chevron_right</span>
+        </button>
+      </ng-container>
+
+    </div>
+  </ng-container>
 </div>

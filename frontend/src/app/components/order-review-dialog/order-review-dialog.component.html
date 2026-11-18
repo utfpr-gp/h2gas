@@ -1,0 +1,65 @@
+<div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-gray-900/40 sm:p-4" (click)="close()">
+  <div role="dialog" aria-modal="true" aria-labelledby="order-review-title" @fadeIn (click)="$event.stopPropagation()"
+    class="w-full sm:max-w-md bg-white rounded-t-2xl sm:rounded-xl shadow-xl flex flex-col max-h-[90vh]">
+    <header class="flex items-start justify-between gap-3 p-4 md:p-5 border-b border-gray-200">
+      <div class="min-w-0">
+        <h2 id="order-review-title" class="text-lg font-bold text-gray-800">Como foi o pedido?</h2>
+        <p class="text-sm text-gray-500 truncate">{{ order.supplierName }}</p>
+      </div>
+      <button type="button" data-testid="close-review" class="btn btn-ghost btn-sm btn-circle min-h-11 min-w-11"
+        aria-label="Fechar avaliação" [disabled]="sending" (click)="close()">
+        <span class="material-icons" aria-hidden="true">close</span>
+      </button>
+    </header>
+
+    <div class="overflow-y-auto p-4 md:p-5 space-y-5">
+      <fieldset>
+        <legend class="text-sm font-semibold text-gray-800">A loja</legend>
+        <div data-testid="store-stars" role="radiogroup" aria-label="Nota da loja" class="flex items-center gap-1 mt-1">
+          <label *ngFor="let star of stars" class="cursor-pointer min-h-11 min-w-11 flex items-center justify-center rounded-full has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary">
+            <input type="radio" name="store-rating" class="sr-only" [value]="star"
+              [attr.data-testid]="'store-star-' + star" [attr.aria-label]="star + ' de 5'"
+              [checked]="storeRating === star" (change)="storeRating = star" />
+            <span class="material-icons text-3xl!" aria-hidden="true"
+              [ngClass]="star <= storeRating ? 'text-warning' : 'text-gray-300'">{{ star <= storeRating ? 'star' : 'star_border' }}</span>
+          </label>
+          <span class="ml-2 text-sm text-gray-600" aria-live="polite">{{ label(storeRating) }}</span>
+        </div>
+      </fieldset>
+
+      <fieldset *ngIf="hasDeliverer" data-testid="deliverer-stars">
+        <legend class="text-sm font-semibold text-gray-800">O entregador <span class="font-normal text-gray-500">· {{ order.delivererName }}</span></legend>
+        <div role="radiogroup" aria-label="Nota do entregador" class="flex items-center gap-1 mt-1">
+          <label *ngFor="let star of stars" class="cursor-pointer min-h-11 min-w-11 flex items-center justify-center rounded-full has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-primary">
+            <input type="radio" name="deliverer-rating" class="sr-only" [value]="star"
+              [attr.data-testid]="'deliverer-star-' + star" [attr.aria-label]="star + ' de 5'"
+              [checked]="delivererRating === star" (change)="delivererRating = star" />
+            <span class="material-icons text-3xl!" aria-hidden="true"
+              [ngClass]="star <= delivererRating ? 'text-warning' : 'text-gray-300'">{{ star <= delivererRating ? 'star' : 'star_border' }}</span>
+          </label>
+          <span class="ml-2 text-sm text-gray-600" aria-live="polite">{{ label(delivererRating) }}</span>
+        </div>
+        <p class="text-xs text-gray-500 mt-1">Opcional.</p>
+      </fieldset>
+
+      <label class="form-control w-full" for="review-comment">
+        <span class="label-text text-sm font-semibold text-gray-800">Comentário <span class="font-normal text-gray-500">(opcional)</span></span>
+        <textarea id="review-comment" data-testid="review-comment" rows="3" [maxLength]="maxComment"
+          class="textarea textarea-bordered rounded-xl w-full mt-1" placeholder="Conte como foi a entrega e o atendimento"
+          [value]="comment" (input)="setComment($any($event.target).value)"></textarea>
+        <span class="block text-right text-xs text-gray-500 mt-1 tabular-nums">{{ comment.length }}/{{ maxComment }}</span>
+      </label>
+
+      <p *ngIf="error" data-testid="review-error" role="alert" class="text-sm text-error">{{ error }}</p>
+    </div>
+
+    <footer class="p-4 md:p-5 border-t border-gray-200 flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+      <button type="button" class="btn btn-ghost rounded-xl min-h-11" [disabled]="sending" (click)="close()">Agora não</button>
+      <button type="button" data-testid="submit-review" class="btn btn-primary rounded-xl min-h-11"
+        [disabled]="!storeRating || sending" (click)="submit()">
+        <span *ngIf="sending" class="loading loading-spinner loading-sm"></span>
+        Enviar avaliação
+      </button>
+    </footer>
+  </div>
+</div>

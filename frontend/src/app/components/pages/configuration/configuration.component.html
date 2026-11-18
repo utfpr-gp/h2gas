@@ -1,106 +1,151 @@
-<div class="p-10 space-y-10 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
-  <h1 class="text-4xl font-extrabold text-blue-700 mb-8 tracking-tight flex items-center gap-3">
-    <i class="fa-solid fa-gear text-blue-600"></i>
-    Configurações
-  </h1>
-
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-    <!-- Gestão de Estoque -->
-    <div
-      class="bg-white p-8 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100"
-    >
-      <div class="flex items-center gap-3 mb-4">
-        <div class="p-3 rounded-full bg-blue-100 text-blue-600">
-          <i class="fa-solid fa-boxes-stacked text-xl"></i>
-        </div>
-        <h2 class="text-2xl font-semibold text-gray-800">Gestão de Estoque</h2>
-      </div>
-
-      <p class="text-gray-500 mb-6 text-sm leading-relaxed">
-        Configure os níveis mínimos de estoque para acompanhar melhor o desempenho do seu
-        negócio.
-      </p>
-      <form class="space-y-4" [formGroup]="formSettingsStock">
-        <div class="space-y-5">
-          <div>
-            <label class="block text-gray-700 font-medium mb-1">Estoque Mínimo</label>
-            <input
-              type="number"
-              formControlName="estoqueMin"
-              placeholder="Ex: 10"
-              class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all"
-            />
-          </div>
-        </div>
-      </form>
-     
-    </div>
-
-    <!-- Horário de Funcionamento -->
-    <div
-      class="bg-white p-8 rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100"
-    >
-      <div class="flex items-center gap-3 mb-4">
-        <div class="p-3 rounded-full bg-blue-100 text-blue-600">
-          <i class="fa-solid fa-clock text-xl"></i>
-        </div>
-        <h2 class="text-2xl font-semibold text-gray-800">Horário de Funcionamento e tempo de entrega</h2>
-      </div>
-
-      <p class="text-gray-500 mb-6 text-sm leading-relaxed">
-        Defina os horários de abertura e fechamento do seu estabelecimento.
-      </p>
-      <form class="space-y-4" [formGroup]="formHours">
-        <div class="grid grid-cols-2 gap-6">
-          <div>
-            <label class="block text-gray-700 font-medium mb-1 flex items-center gap-2">
-              <i class="fa-solid fa-door-open text-blue-500"></i>
-              Abertura
-            </label>
-            <input
-              formControlName="openingTime"
-              type="time"
-              class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all"
-            />
-          </div>
-          <div>
-            <label class="block text-gray-700 font-medium mb-1 flex items-center gap-2">
-              <i class="fa-solid fa-door-closed text-blue-500"></i>
-              Fechamento
-            </label>
-            <input
-              formControlName="closingTime"
-              type="time"
-              class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all"
-            />
-          </div>
-        </div>
-
-        <div class="mt-6">
-          <label class="block text-gray-700 font-medium mb-1 flex items-center gap-2">
-            <i class="fa-solid fa-truck text-blue-500"></i>
-            Tempo Médio de Entrega (minutos)
-          </label>
-          <input
-            type="number"
-            formControlName="averageDeliveryTime"
-            placeholder="Ex: 30"
-            class="w-full border border-gray-300 rounded-lg p-3 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none transition-all"
-          />
-        </div>
-      </form>
-      
-    </div>
-  </div>
-
-  <!-- Botão de ação -->
-  <div class="flex justify-end mt-10">
-    <button
-      (click)="salvar()"
-      class="bg-blue-600 cursor-pointer text-white px-8 py-3 rounded-xl font-medium shadow-md hover:bg-blue-700 hover:shadow-lg transition-all duration-300 flex items-center gap-2"
-    >
-      <i class="fa-solid fa-floppy-disk"></i>
-      Salvar Configurações
-    </button>
-  </div>
+<!-- F9: seções "Funcionamento e entrega" e "Estoque" da tela da loja; cada uma com o seu salvar -->
+<div *ngIf="loading" class="space-y-4" aria-busy="true">
+    <div *ngFor="let n of [1,2]" class="skeleton h-40 rounded-xl"></div>
 </div>
+
+<div *ngIf="!loading && loadFailed" class="text-center bg-white rounded-xl border border-gray-200 py-10 px-4">
+    <span class="material-icons text-gray-300" style="font-size: 48px">cloud_off</span>
+    <p class="text-gray-700 font-semibold mt-2">Não foi possível carregar o horário e o estoque</p>
+    <button type="button" class="btn btn-primary btn-sm rounded-xl mt-3" (click)="load()">Tentar de novo</button>
+</div>
+
+<form *ngIf="!loading && !loadFailed" [formGroup]="form" novalidate class="space-y-4">
+    <section id="funcionamento" [hidden]="isHidden('funcionamento')" class="scroll-mt-24 bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-5 space-y-4"
+        aria-labelledby="hours-title">
+        <div class="flex items-center gap-2">
+            <span class="material-icons text-primary" aria-hidden="true">schedule</span>
+            <h2 id="hours-title" class="font-semibold text-gray-800">Funcionamento e entrega</h2>
+        </div>
+
+        <p data-testid="settings-preview" *ngIf="preview"
+            class="flex items-center gap-2 text-sm font-medium text-primary bg-primary/10 rounded-xl px-4 py-3">
+            <span class="material-icons text-base" aria-hidden="true">storefront</span>{{ preview }}
+        </p>
+
+        <div>
+            <p class="text-sm text-gray-500 mb-2">A loja abre e fecha sozinha nesse horário. Se fecha depois da meia-noite, informe o fechamento normalmente (ex.: 02:00).</p>
+            <div class="grid grid-cols-2 gap-3">
+                <label class="form-control w-full" for="opening-time">
+                    <span class="label-text text-sm text-gray-700">Abertura</span>
+                    <input id="opening-time" data-testid="opening-time" type="time" formControlName="openingTime"
+                        class="input input-bordered rounded-xl w-full" [class.input-error]="invalid('openingTime')" />
+                    <span *ngIf="invalid('openingTime')" class="text-xs text-error mt-1">Informe a abertura.</span>
+                </label>
+                <label class="form-control w-full" for="closing-time">
+                    <span class="label-text text-sm text-gray-700">Fechamento</span>
+                    <input id="closing-time" data-testid="closing-time" type="time" formControlName="closingTime"
+                        class="input input-bordered rounded-xl w-full" [class.input-error]="invalid('closingTime') || sameTime" />
+                    <span *ngIf="invalid('closingTime')" class="text-xs text-error mt-1">Informe o fechamento.</span>
+                    <span *ngIf="sameTime" data-testid="error-closing-time" class="text-xs text-error mt-1">O fechamento precisa ser diferente da abertura.</span>
+                </label>
+            </div>
+        </div>
+
+        <label class="form-control w-full sm:max-w-xs" for="delivery-time">
+            <span class="label-text text-sm text-gray-700">Tempo médio de entrega</span>
+            <span class="input input-bordered rounded-xl flex items-center gap-2" [class.input-error]="invalid('averageDeliveryTime')">
+                <input id="delivery-time" data-testid="delivery-time" type="number" inputmode="numeric" min="1" max="240"
+                    formControlName="averageDeliveryTime" class="grow" />
+                <span class="text-sm text-gray-500">min</span>
+            </span>
+            <span *ngIf="invalid('averageDeliveryTime')" data-testid="error-delivery-time" class="text-xs text-error mt-1">Entre 1 e 240 minutos.</span>
+            <span *ngIf="!invalid('averageDeliveryTime')" class="text-xs text-gray-500 mt-1">Quanto tempo o pedido leva para chegar, em média.</span>
+        </label>
+
+        <!-- HU17: como a loja entrega; o frete é taxa fixa + valor por km × distância em linha reta -->
+        <div class="border-t border-gray-100 pt-4 space-y-3">
+            <h3 class="text-sm font-semibold text-gray-800">Entrega e retirada</h3>
+            <div class="grid sm:grid-cols-2 gap-3">
+                <label class="flex items-start gap-3 rounded-xl border border-gray-200 px-3 py-3 cursor-pointer min-h-11">
+                    <input id="offers-delivery" data-testid="offers-delivery" type="checkbox" formControlName="offersDelivery" class="toggle toggle-primary mt-0.5" />
+                    <span>
+                        <span class="block text-sm font-semibold text-gray-800">Faço entrega</span>
+                        <span class="block text-xs text-gray-500">O cliente recebe no endereço dele</span>
+                    </span>
+                </label>
+                <label class="flex items-start gap-3 rounded-xl border border-gray-200 px-3 py-3 cursor-pointer min-h-11">
+                    <input id="offers-pickup" data-testid="offers-pickup" type="checkbox" formControlName="offersPickup" class="toggle toggle-primary mt-0.5" />
+                    <span>
+                        <span class="block text-sm font-semibold text-gray-800">Aceito retirada</span>
+                        <span class="block text-xs text-gray-500">O cliente busca na loja, sem frete</span>
+                    </span>
+                </label>
+            </div>
+            <p *ngIf="noMode" data-testid="error-delivery-modes" role="alert" class="text-xs text-error">A loja precisa oferecer entrega ou retirada.</p>
+
+            <div *ngIf="form.controls.offersDelivery.value" class="grid sm:grid-cols-3 gap-3">
+                <label class="form-control w-full" for="delivery-radius">
+                    <span class="label-text text-sm text-gray-700">Raio de entrega</span>
+                    <span class="input input-bordered rounded-xl flex items-center gap-2" [class.input-error]="invalid('deliveryRadiusKm')">
+                        <input id="delivery-radius" data-testid="delivery-radius" type="number" inputmode="decimal" min="0.1" step="0.5"
+                            formControlName="deliveryRadiusKm" class="grow" />
+                        <span class="text-sm text-gray-500">km</span>
+                    </span>
+                    <span *ngIf="invalid('deliveryRadiusKm')" class="text-xs text-error mt-1">Entre 0,1 e 100 km.</span>
+                    <span *ngIf="!invalid('deliveryRadiusKm')" class="text-xs text-gray-500 mt-1">Vazio = sem limite</span>
+                </label>
+                <label class="form-control w-full" for="delivery-base-fee">
+                    <span class="label-text text-sm text-gray-700">Taxa fixa</span>
+                    <span class="input input-bordered rounded-xl flex items-center gap-2" [class.input-error]="invalid('deliveryBaseFee')">
+                        <input id="delivery-base-fee" data-testid="delivery-base-fee" type="number" inputmode="decimal" min="0" step="0.50"
+                            formControlName="deliveryBaseFee" class="grow" />
+                        <span class="text-sm text-gray-500">R$</span>
+                    </span>
+                    <span *ngIf="invalid('deliveryBaseFee')" class="text-xs text-error mt-1">Não pode ser negativa.</span>
+                    <span *ngIf="!invalid('deliveryBaseFee')" class="text-xs text-gray-500 mt-1">Cobrada em toda entrega</span>
+                </label>
+                <label class="form-control w-full" for="delivery-fee-per-km">
+                    <span class="label-text text-sm text-gray-700">Valor por km</span>
+                    <span class="input input-bordered rounded-xl flex items-center gap-2" [class.input-error]="invalid('deliveryFeePerKm')">
+                        <input id="delivery-fee-per-km" data-testid="delivery-fee-per-km" type="number" inputmode="decimal" min="0" step="0.10"
+                            formControlName="deliveryFeePerKm" class="grow" />
+                        <span class="text-sm text-gray-500">R$/km</span>
+                    </span>
+                    <span *ngIf="invalid('deliveryFeePerKm')" class="text-xs text-error mt-1">Não pode ser negativo.</span>
+                    <span *ngIf="!invalid('deliveryFeePerKm')" class="text-xs text-gray-500 mt-1">Somado a cada km</span>
+                </label>
+            </div>
+            <p *ngIf="form.controls.offersDelivery.value && feePreview" data-testid="delivery-fee-preview"
+                class="flex items-center gap-2 text-sm text-gray-700 bg-base-200 rounded-xl px-4 py-3">
+                <span class="material-icons text-base text-primary" aria-hidden="true">local_shipping</span>
+                <span>{{ feePreview }}. A distância é medida em linha reta, do CEP da loja ao do cliente.</span>
+            </p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2">
+            <span *ngIf="changed('hours')" class="text-xs sm:text-sm text-gray-500 text-center">Alterações não salvas</span>
+            <button type="button" data-testid="save-hours" class="btn btn-primary rounded-xl w-full sm:w-auto min-h-11"
+                [disabled]="!canSave('hours')" (click)="save('hours')">
+                <span *ngIf="saving === 'hours'" class="loading loading-spinner loading-sm"></span>
+                Salvar horário e entrega
+            </button>
+        </div>
+    </section>
+
+    <section id="estoque" [hidden]="isHidden('estoque')" class="scroll-mt-24 bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-5 space-y-4"
+        aria-labelledby="stock-title">
+        <div class="flex items-center gap-2">
+            <span class="material-icons text-primary" aria-hidden="true">inventory_2</span>
+            <h2 id="stock-title" class="font-semibold text-gray-800">Estoque</h2>
+        </div>
+        <label class="form-control w-full sm:max-w-xs" for="low-stock">
+            <span class="label-text text-sm text-gray-700">Estoque mínimo</span>
+            <span class="input input-bordered rounded-xl flex items-center gap-2" [class.input-error]="invalid('lowStockThreshold')">
+                <input id="low-stock" data-testid="low-stock" type="number" inputmode="numeric" min="1" max="9999"
+                    formControlName="lowStockThreshold" class="grow" />
+                <span class="text-sm text-gray-500">unidades</span>
+            </span>
+            <span *ngIf="invalid('lowStockThreshold')" class="text-xs text-error mt-1">Entre 1 e 9999 unidades.</span>
+            <span *ngIf="!invalid('lowStockThreshold')" class="text-xs text-gray-500 mt-1">Com essa quantidade ou menos, o produto aparece como estoque baixo em Produtos.</span>
+        </label>
+
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2">
+            <span *ngIf="changed('stock')" class="text-xs sm:text-sm text-gray-500 text-center">Alterações não salvas</span>
+            <button type="button" data-testid="save-stock" class="btn btn-primary rounded-xl w-full sm:w-auto min-h-11"
+                [disabled]="!canSave('stock')" (click)="save('stock')">
+                <span *ngIf="saving === 'stock'" class="loading loading-spinner loading-sm"></span>
+                Salvar estoque mínimo
+            </button>
+        </div>
+    </section>
+</form>

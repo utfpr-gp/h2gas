@@ -1,172 +1,124 @@
-<div class="p-4 md:p-6 bg-blue-50 min-h-screen">
-  <!-- Header -->
-  <div
-    class="bg-gradient-to-r from-blue-700 to-blue-400 rounded-2xl p-6 text-white shadow-md text-center md:text-left"
-  >
-    <h1 class="text-2xl md:text-3xl font-bold">Gestão dos produtos</h1>
-    <p class="text-sm md:text-base">Gerencie estoque, preço e marca dos seus produtos</p>
-  </div>
-
-  <!-- Cards Resumo -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-    <!-- Total -->
-    <div
-      class="bg-white border border-blue-300 rounded-xl shadow-md p-6 flex items-center justify-between hover:shadow-lg transition"
-    >
-      <div>
-        <p class="text-blue-600 font-medium">Total de Produtos</p>
-        <p class="text-3xl font-bold text-blue-800">
-          {{ itemProducts?.length || 0 }}
-        </p>
-      </div>
-      <div class="h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
-        <i class="fa-solid fa-box text-blue-600 text-xl"></i>
-      </div>
-    </div>
-
-    <!-- Disponíveis -->
-    <div
-      class="bg-white border border-green-300 rounded-xl shadow-md p-6 flex items-center justify-between hover:shadow-lg transition"
-    >
-      <div>
-        <p class="text-green-600 font-medium">Disponíveis</p>
-        <p class="text-3xl font-bold text-green-800">{{ availableProduct }}</p>
-      </div>
-      <div class="h-12 w-12 bg-green-100 rounded-full flex items-center justify-center">
-        <i class="fa-solid fa-circle-check text-green-600 text-xl"></i>
-      </div>
-    </div>
-
-    <!-- Baixo Estoque -->
-    <div
-      class="bg-white border border-yellow-300 rounded-xl shadow-md p-6 flex items-center justify-between hover:shadow-lg transition"
-    >
-      <div>
-        <p class="text-yellow-600 font-medium">Baixo Estoque</p>
-        <p class="text-3xl font-bold text-yellow-800">{{ lowProducts }}</p>
-      </div>
-      <div class="h-12 w-12 bg-yellow-100 rounded-full flex items-center justify-center">
-        <i class="fa-solid fa-triangle-exclamation text-yellow-600 text-xl"></i>
-      </div>
-    </div>
-
-    <!-- Esgotados -->
-    <div
-      class="bg-white border border-red-300 rounded-xl shadow-md p-6 flex items-center justify-between hover:shadow-lg transition"
-    >
-      <div>
-        <p class="text-red-600 font-medium">Esgotados</p>
-        <p class="text-3xl font-bold text-red-800">{{ esgotadoProducts }}</p>
-      </div>
-      <div class="h-12 w-12 bg-red-100 rounded-full flex items-center justify-center">
-        <i class="fa-solid fa-ban text-red-600 text-xl"></i>
-      </div>
-    </div>
-  </div>
-
-  <!-- Seção Produtos -->
-  <div class="mt-8 max-w-6xl mx-auto">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
-      <h2 class="text-xl font-semibold text-gray-800 text-center sm:text-left">Produtos</h2>
-      <button
-        (click)="navigateRoute('/product-items/new')"
-        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow transition w-full sm:w-auto"
-      >
-        + Novo Produto
-      </button>
-    </div>
-
-    <!-- Mensagem quando não houver produtos -->
-    <div
-      *ngIf="!itemProducts || itemProducts.length === 0"
-      class="p-6 text-center text-gray-600 bg-white rounded-xl shadow"
-    >
-      <p class="italic">Nenhum produto cadastrado ainda.</p>
-      <p class="mt-2 text-sm">
-        Clique em
-        <span class="font-semibold text-blue-600">"+ Novo Produto"</span> para
-        adicionar o primeiro item.
-      </p>
-    </div>
-
-    <!-- Lista de produtos -->
-    <div *ngIf="itemProducts && itemProducts.length > 0" class="space-y-4">
-      <div *ngFor="let produto of itemProducts">
-        <div
-          class="bg-white hover:shadow-lg hover:-translate-y-1 transition border border-transparent hover:border-blue-300 rounded-xl shadow p-4 flex flex-col sm:flex-row items-center sm:items-stretch sm:justify-between gap-4"
-        >
-          <!-- Imagem -->
-          <div class="w-28 h-28 rounded overflow-hidden flex-shrink-0">
-            <img
-              [src]="produto.imageUrl"
-              alt="imagem_produto"
-              class="w-full h-full object-cover"
-            />
-          </div>
-
-          <!-- Detalhes -->
-          <div class="flex-1 w-full sm:px-4">
-            <div class="flex flex-wrap items-center gap-2 mb-2 justify-center sm:justify-start">
-              <h2 class="text-lg font-semibold text-gray-800">{{ produto.type }}</h2>
-              <span
-                class="bg-blue-100 text-blue-600 text-xs font-semibold px-2 py-0.5 rounded"
-                >{{ produto.category }}</span
-              >
-              <span
-                class="bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded"
-                >Disponível</span
-              >
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 text-sm text-gray-700">
-              <div>
-                <span class="block font-medium text-gray-500">Fornecedor:</span>
-                {{ produto.brand }}
-              </div>
-              <div>
-                <span class="block font-medium text-gray-500">Preço:</span>
-                <span class="text-blue-700 font-bold">R$ {{ produto.price }}</span>
-              </div>
-              <div>
-                <span class="block font-medium text-gray-500">Estoque:</span>
-                <span class="text-blue-700 font-bold"
-                  >{{ produto.stockQuantity }} unidades</span
-                >
-              </div>
-              <div>
-                <span class="block font-medium text-gray-500">Última atualização:</span>
-                {{ produto.updatedAt | date: 'dd/MM/yyyy HH:mm' }}
-              </div>
-            </div>
-          </div>
-
-          <!-- Ações -->
-          <div
-            class="flex sm:flex-col flex-row gap-2 justify-center sm:justify-start w-full sm:w-auto"
-          >
-            <button
-              (click)="navigateEdit(produto.id)"
-              class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-4 py-2 rounded w-full sm:w-auto"
-            >
-              <i class="fa-solid fa-pen-to-square"></i> Editar
-            </button>
-            <button
-              (click)="openModalDelete(produto)"
-              class="bg-red-100 hover:bg-red-200 text-red-700 text-sm font-semibold px-4 py-2 rounded w-full sm:w-auto"
-            >
-              <i class="fa-solid fa-trash"></i> Excluir
-            </button>
-          </div>
+<div class="max-w-5xl w-full mx-auto px-4 md:px-8 pt-6 pb-24 md:pb-10">
+    <header class="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Produtos</h1>
+            <p class="text-sm text-gray-500">Estoque, preços e fotos do que você vende.</p>
         </div>
-      </div>
+        <a routerLink="/minha-loja/produtos/novo" data-testid="new-product" class="btn btn-primary rounded-xl">
+            <span class="material-icons text-base">add</span>
+            Novo produto
+        </a>
+    </header>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4" role="group" aria-label="Filtrar por estoque">
+        <button *ngFor="let f of filters" type="button" [attr.data-testid]="'stock-' + f.stock"
+            class="text-left rounded-xl border p-3 transition-colors"
+            [ngClass]="stock === f.stock ? 'border-primary bg-primary/10' : 'border-gray-200 bg-white hover:border-primary/40'"
+            [attr.aria-pressed]="stock === f.stock" (click)="selectStock(f.stock)">
+            <span class="flex items-center gap-1 text-xs font-medium"
+                [ngClass]="{ 'text-warning': f.stock === 'low', 'text-error': f.stock === 'out', 'text-success': f.stock === 'available', 'text-gray-500': f.stock === 'all' }">
+                <span class="material-icons text-sm" aria-hidden="true">{{ f.icon }}</span>{{ f.label }}
+            </span>
+            <span class="block text-2xl font-bold text-gray-800 tabular-nums">
+                <ng-container *ngIf="f.count != null; else carregando">{{ f.count }}</ng-container>
+                <ng-template #carregando><span class="skeleton inline-block h-7 w-8 align-middle"></span></ng-template>
+            </span>
+            <span *ngIf="f.hint" class="block text-xs text-gray-500">{{ f.hint }}</span>
+        </button>
+    </div>
+    <p *ngIf="summary" class="text-xs text-gray-500 -mt-2 mb-4">
+        Estoque baixo é de 1 até {{ summary.lowStockThreshold }} unidades.
+        <a routerLink="/minha-loja/configuracoes" fragment="estoque" data-testid="adjust-threshold" class="link link-primary">Ajustar o estoque mínimo</a>
+    </p>
+
+    <label class="input input-bordered rounded-xl flex items-center gap-2 w-full md:w-80 bg-white mb-4">
+        <span class="material-icons text-base text-gray-400">search</span>
+        <input data-testid="product-search" type="search" class="grow" placeholder="Marca, categoria ou tipo"
+            aria-label="Buscar por marca, categoria ou tipo" (input)="onSearch($any($event.target).value)" />
+    </label>
+
+    <div *ngIf="loading && !products.length" class="space-y-2" aria-busy="true">
+        <div *ngFor="let n of [1,2,3]" class="skeleton h-28 rounded-xl"></div>
     </div>
 
-    <!-- Modal -->
-    <app-delete-confirmation-modal
-      [itemName]="deleteNameProduct!!"
-      (confirm)="deleteConfirmed()"
-      (cancel)="idProductRow = undefined"
-    >
-    </app-delete-confirmation-modal>
-  </div>
+    <div *ngIf="!loading && !products.length" data-testid="empty-state"
+        class="text-center bg-white rounded-xl border border-gray-200 py-12 px-4">
+        <span class="material-icons text-gray-300" style="font-size: 56px">inventory_2</span>
+        <p class="text-gray-700 font-semibold mt-2">{{ query ? 'Nenhum produto encontrado' : emptyMessage[stock] }}</p>
+        <p class="text-sm text-gray-500">
+            {{ query ? 'Troque o termo da busca ou o filtro.' : stock === 'all' ? 'Use "Novo produto" para cadastrar o primeiro.' : 'Troque o filtro de estoque.' }}
+        </p>
+    </div>
+
+    <ul *ngIf="products.length" class="space-y-2" [class.opacity-60]="loading">
+        <li *ngFor="let p of products" [attr.data-testid]="'product-' + p.id"
+            class="bg-white rounded-xl shadow-sm border border-gray-200 p-3 flex flex-wrap sm:flex-nowrap items-start gap-3">
+            <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-base-200 flex items-center justify-center shrink-0">
+                <img *ngIf="p.imageUrl && !brokenImages.has(p.id!); else icone" [src]="p.imageUrl" [alt]="name(p)"
+                    class="w-full h-full object-cover" loading="lazy" (error)="brokenImages.add(p.id!)" />
+                <ng-template #icone>
+                    <span class="material-icons text-gray-400" style="font-size: 32px" aria-hidden="true">{{ typeIcon(p) }}</span>
+                </ng-template>
+            </div>
+
+            <div class="min-w-0 flex-1 space-y-1">
+                <div class="flex flex-wrap items-center gap-2">
+                    <p class="font-semibold text-gray-800 truncate">{{ p.brand }}</p>
+                    <span class="badge badge-ghost badge-sm">{{ p.category }}</span>
+                    <span class="text-xs text-gray-500">{{ p.type }}</span>
+                </div>
+                <p class="text-sm text-gray-700 flex flex-wrap gap-x-3 gap-y-0.5 tabular-nums">
+                    <span data-testid="manage-price">Preço <strong>{{ p.price | currency:'BRL':'symbol':'1.2-2' }}</strong></span>
+                </p>
+                <p class="text-sm flex flex-wrap items-center gap-2">
+                    <span [attr.data-testid]="'stock-badge-' + p.id" class="badge badge-sm"
+                        [ngClass]="{ 'badge-success badge-outline': status(p) === 'available', 'badge-warning': status(p) === 'low', 'badge-error': status(p) === 'out' }">
+                        {{ statusLabel[status(p)] }}
+                    </span>
+                    <span class="text-gray-700 tabular-nums">{{ p.stockQuantity ?? 0 }} un.</span>
+                    <span *ngIf="p.updatedAt" class="text-xs text-gray-400">atualizado em {{ p.updatedAt | date: 'dd/MM/yyyy HH:mm' }}</span>
+                </p>
+            </div>
+
+            <div class="flex gap-1 w-full sm:w-auto justify-end">
+                <button type="button" [attr.data-testid]="'edit-' + p.id" class="btn btn-sm btn-ghost rounded-lg"
+                    [attr.aria-label]="'Editar ' + name(p)" (click)="edit(p)">
+                    <span class="material-icons text-base">edit</span><span class="sm:hidden">Editar</span>
+                </button>
+                <button type="button" [attr.data-testid]="'delete-' + p.id" class="btn btn-sm btn-ghost text-error rounded-lg"
+                    [attr.aria-label]="'Excluir ' + name(p)" (click)="askDelete(p)">
+                    <span class="material-icons text-base">delete</span><span class="sm:hidden">Excluir</span>
+                </button>
+            </div>
+        </li>
+    </ul>
+
+    <nav *ngIf="totalPages > 1" class="flex items-center justify-center gap-3 mt-4" aria-label="Paginação">
+        <button type="button" data-testid="prev-page" class="btn btn-sm btn-ghost rounded-lg" [disabled]="page === 0 || loading" (click)="load(page - 1)">
+            <span class="material-icons text-base">chevron_left</span> Anterior
+        </button>
+        <span class="text-sm text-gray-600">Página {{ page + 1 }} de {{ totalPages }}</span>
+        <button type="button" data-testid="next-page" class="btn btn-sm btn-ghost rounded-lg" [disabled]="page + 1 >= totalPages || loading" (click)="load(page + 1)">
+            Próxima <span class="material-icons text-base">chevron_right</span>
+        </button>
+    </nav>
+
+    <!-- Confirmação de exclusão -->
+    <div *ngIf="deleteTarget" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-gray-900/40 p-4"
+        (click)="closeDelete()">
+        <div data-testid="delete-modal" role="dialog" aria-modal="true" aria-labelledby="delete-title" @fadeIn
+            class="w-full max-w-md bg-white rounded-xl shadow-xl p-5" (click)="$event.stopPropagation()">
+            <h3 id="delete-title" class="text-lg font-bold text-gray-800">Excluir {{ name(deleteTarget) }}?</h3>
+            <p class="text-sm text-gray-500 mt-1">
+                O produto sai do catálogo e da sua lista. Produto que já está em pedidos não pode ser excluído: zere o estoque para tirá-lo do catálogo.
+            </p>
+            <div class="grid grid-cols-2 gap-2 mt-4">
+                <button type="button" data-testid="cancel-delete" class="btn btn-outline btn-primary rounded-xl" [disabled]="deleting" (click)="closeDelete()">Voltar</button>
+                <button type="button" data-testid="confirm-delete" class="btn btn-error rounded-xl" [disabled]="deleting" (click)="confirmDelete()">
+                    <span *ngIf="deleting" class="loading loading-spinner loading-sm"></span>
+                    Excluir
+                </button>
+            </div>
+        </div>
+    </div>
 </div>

@@ -1,0 +1,83 @@
+<div class="max-w-3xl w-full mx-auto px-4 md:px-8 pt-6 pb-24 md:pb-10">
+    <header class="mb-4">
+        <h1 class="text-2xl font-bold text-base-content">Categorias de produto</h1>
+        <p class="text-sm text-neutral">Valem para todas as lojas: o fornecedor só escolhe uma destas ao cadastrar um produto.</p>
+    </header>
+
+    <form class="bg-base-100 rounded-xl shadow-sm border border-base-300 p-3 mb-4 flex flex-wrap gap-3" [formGroup]="newForm" (ngSubmit)="create()">
+        <label class="sr-only" for="new-category-type">Tipo da nova categoria</label>
+        <select id="new-category-type" data-testid="new-category-type" formControlName="productTypeId"
+            class="select select-bordered rounded-xl bg-base-100 basis-full sm:basis-48"
+            [class.select-error]="newForm.controls.productTypeId.touched && newForm.controls.productTypeId.invalid">
+            <option [ngValue]="0" disabled>Tipo…</option>
+            <option *ngFor="let t of types" [ngValue]="t.id">{{ t.name }}</option>
+        </select>
+        <label class="sr-only" for="new-category-name">Nome da nova categoria</label>
+        <input id="new-category-name" data-testid="new-category-name" type="text" maxlength="60"
+            class="input input-bordered rounded-xl bg-base-100 basis-full sm:basis-0 sm:flex-1 min-w-0" placeholder="Ex.: P13, Galão 20L"
+            formControlName="name" [class.input-error]="newForm.controls.name.touched && newForm.controls.name.invalid" />
+        <button type="submit" data-testid="save-new-category" class="btn btn-primary rounded-xl basis-full sm:basis-auto" [disabled]="creating">
+            <span *ngIf="creating" class="loading loading-spinner loading-sm"></span>
+            <span *ngIf="!creating" class="material-icons text-base" aria-hidden="true">add</span>
+            Nova categoria
+        </button>
+        <div *ngIf="suggestions.length" class="basis-full flex flex-wrap items-center gap-1" role="group" aria-label="Sugestões de nome">
+            <span class="text-xs text-neutral mr-1">Sugestões:</span>
+            <button *ngFor="let s of suggestions" type="button" [attr.data-testid]="'suggestion-' + s"
+                class="btn btn-xs btn-ghost border border-base-300 rounded-full min-h-8" (click)="useSuggestion(s)">{{ s }}</button>
+        </div>
+    </form>
+
+    <div *ngIf="loading" class="space-y-2" aria-busy="true">
+        <div *ngFor="let n of [1,2,3]" class="skeleton h-14 rounded-xl"></div>
+    </div>
+
+    <div *ngIf="!loading && !categories.length" class="text-center bg-base-100 rounded-xl border border-base-300 py-12 px-4">
+        <span class="material-icons text-base-300" style="font-size: 56px" aria-hidden="true">label</span>
+        <p class="text-base-content font-semibold mt-2">Nenhuma categoria cadastrada</p>
+        <p class="text-sm text-neutral">Cadastre a primeira para os fornecedores usarem nos produtos.</p>
+    </div>
+
+    <section *ngFor="let group of groups" [attr.data-testid]="'group-' + group.type.id" class="mb-5">
+        <h2 class="flex items-center gap-2 text-lg font-bold text-base-content mb-2">
+            <span class="material-icons text-primary" aria-hidden="true">{{ iconOf(group.type) }}</span>{{ group.type.name }}
+        </h2>
+        <ul class="space-y-2">
+            <li *ngFor="let c of group.categories" [attr.data-testid]="'category-' + c.id"
+                class="bg-base-100 rounded-xl shadow-sm border border-base-300 p-3 flex flex-wrap items-center gap-2">
+                <ng-container *ngIf="renamingId !== c.id; else editando">
+                    <span class="font-semibold text-base-content truncate grow">{{ c.name }}</span>
+                    <ng-container *ngIf="confirmingDeleteId !== c.id; else confirmando">
+                        <button type="button" [attr.data-testid]="'rename-' + c.id" class="btn btn-sm btn-ghost rounded-lg min-h-11 sm:min-h-8"
+                            [attr.aria-label]="'Renomear ' + c.name" (click)="startRename(c)">
+                            <span class="material-icons text-base" aria-hidden="true">edit</span>
+                            <span class="hidden sm:inline">Renomear</span>
+                        </button>
+                        <button type="button" [attr.data-testid]="'delete-' + c.id" class="btn btn-sm btn-ghost text-error rounded-lg min-h-11 sm:min-h-8"
+                            [attr.aria-label]="'Excluir ' + c.name" (click)="askDelete(c)">
+                            <span class="material-icons text-base" aria-hidden="true">delete</span>
+                            <span class="hidden sm:inline">Excluir</span>
+                        </button>
+                    </ng-container>
+                    <ng-template #confirmando>
+                        <span class="text-sm text-base-content">Excluir {{ c.name }}?</span>
+                        <button type="button" [attr.data-testid]="'cancel-delete-' + c.id" class="btn btn-sm btn-ghost rounded-lg min-h-11 sm:min-h-8" (click)="cancelDelete()">Cancelar</button>
+                        <button type="button" [attr.data-testid]="'confirm-delete-' + c.id" class="btn btn-sm btn-error rounded-lg min-h-11 sm:min-h-8" (click)="confirmDelete(c)">Excluir</button>
+                    </ng-template>
+                </ng-container>
+                <ng-template #editando>
+                    <form class="flex flex-wrap items-center gap-2 w-full" [formGroup]="renameForm" (ngSubmit)="saveRename(c)">
+                        <label class="sr-only" [for]="'rename-input-' + c.id">Novo nome de {{ c.name }}</label>
+                        <input [id]="'rename-input-' + c.id" [attr.data-testid]="'rename-input-' + c.id" type="text" maxlength="60"
+                            class="input input-bordered input-sm rounded-lg grow min-w-0"
+                            formControlName="name" [class.input-error]="renameForm.controls.name.touched && renameForm.controls.name.invalid" />
+                        <div class="flex gap-1 ml-auto">
+                            <button type="button" class="btn btn-sm btn-ghost rounded-lg min-h-11 sm:min-h-8" (click)="cancelRename()">Cancelar</button>
+                            <button type="submit" [attr.data-testid]="'save-rename-' + c.id" class="btn btn-sm btn-primary rounded-lg min-h-11 sm:min-h-8" [disabled]="renaming">Salvar</button>
+                        </div>
+                    </form>
+                </ng-template>
+            </li>
+        </ul>
+    </section>
+</div>

@@ -1,128 +1,125 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-
-<head>
-    <meta charset="utf-8" />
-    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com" rel="preconnect" />
-    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
-        rel="stylesheet" />
-</head>
-
-<body class="bg-gray-50">
-    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-        <header class="text-center mb-12">
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 animate-fade-in-down">Nossos Produtos</h1>
-            <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto animate-fade-in-up">Oferecemos uma linha completa de
-                produtos de gás e água com a melhor qualidade e preços competitivos do mercado.</p>
-        </header>
-        <div class="mb-8">
-            <div
-                class="flex flex-col sm:flex-row items-center bg-white border border-gray-200 rounded-lg p-2 shadow-sm gap-4">
-                <div class="relative flex-grow">
-                    <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
-                    <input
-                      class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Filtre por marcar do produto"
-                      type="text"
-                      [(ngModel)]="searchTerm"
-                      (keyup.enter)="getProducts(idSupplier!)"
-                    />
-                  </div>
-                  
-                <div class="flex items-center space-x-2 w-full sm:w-auto">
-                    <!-- Botão Todos -->
-                    <button
-                      class="flex-grow sm:flex-grow-0 flex items-center justify-center px-4 py-2 rounded-md transition-all duration-300 transform hover:scale-105"
-                      [ngClass]="selectedCategory === null
-                        ? 'bg-blue-500 text-white hover:bg-blue-600'
-                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'"
-                      (click)="selectedCategory = null; getProducts(idSupplier!)">
-                      <span class="material-icons text-sm mr-2">filter_list</span>
-                      Todos
-                    </button>
-                  
-                    <!-- Botão Gás -->
-                    <button
-                      class="flex-grow sm:flex-grow-0 px-4 py-2 rounded-md transition-all duration-300 transform hover:scale-105"
-                      [ngClass]="selectedCategory === 'Gás'
-                        ? 'bg-blue-500 text-white hover:bg-blue-600'
-                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'"
-                      (click)="selectedCategory = 'Gás'; getProducts(idSupplier!)">
-                      Gás
-                    </button>
-                  
-                    <!-- Botão Água -->
-                    <button
-                      class="flex-grow sm:flex-grow-0 px-4 py-2 rounded-md transition-all duration-300 transform hover:scale-105"
-                      [ngClass]="selectedCategory === 'Água mineral'
-                        ? 'bg-blue-500 text-white hover:bg-blue-600'
-                        : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-100'"
-                      (click)="selectedCategory = 'Água mineral'; getProducts(idSupplier!)">
-                      Água
-                    </button>
-                </div>
-            </div>
+<div class="container w-full mx-auto px-4 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-20 md:pb-12">
+    <!-- F7 §5.26: cabeçalho da loja -->
+    <div *ngIf="storeLoading" data-testid="store-header-loading" class="rounded-xl overflow-hidden border border-gray-200 bg-white mb-6" aria-hidden="true">
+        <div class="skeleton h-40 md:h-56 w-full rounded-none"></div>
+        <div class="p-4 md:p-6 space-y-2">
+            <div class="skeleton h-7 w-2/3 md:w-1/3"></div>
+            <div class="skeleton h-4 w-1/2 md:w-1/4"></div>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-
-            <div class="product-card" *ngFor="let product of products">
-                <div class="bg-gray-100 p-4 flex-grow flex items-center justify-center overflow-hidden">
-                    <img alt="Botijão de gás GLP 13kg"
-                        class="h-48 object-contain transition-transform duration-500 ease-in-out hover:scale-110"
-                        src="{{product.imageUrl}}" />
-                </div>
-                <div class="p-6 flex flex-col flex-grow">
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="font-bold text-lg text-gray-800 flex items-center"><span
-                                class="material-icons text-blue-500 mr-2">local_fire_department</span>
-                            {{product!!.type}} {{product!!.brand}} {{product!!.category}}
-                        </h3>
-                        <span
-                            class="text-xs font-semibold bg-green-100 text-green-800 px-2 py-1 rounded-full">Disponível</span>
-                    </div>
-                    <p class="text-gray-600 text-sm mb-4 flex-grow">
-                        {{product.description}}
-                    </p>
-                    <div class="flex flex-col sm:flex-row items-center justify-between mt-auto gap-4">
-                        <div>
-                            <p class="text-2xl font-bold text-gray-900">{{product!!.price | currency:'BRL':'symbol':'1.2-2'}}</p>
-                            <p class="text-sm text-gray-500 text-center sm:text-left">por produto</p>
-                        </div>
-                        <button (click)="openModal(product)"
-                            class="w-full sm:w-auto cursor-pointer bg-blue-500 text-white px-6 py-2 rounded-md hover:bg-blue-600 transition-all duration-300 font-semibold transform hover:scale-105">
-                            Solicitar
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <app-pagination
-        [currentPage]="currentPageProducts"
-        [totalPages]="totalPagesProducts"
-        (pageChange)="getProducts(idSupplier!, $event)">
-        </app-pagination>
     </div>
 
-    <!-- Modal -->
-    <dialog #productModal class="modal">
-        <div class="modal-box">
-            <h3 class="font-bold text-lg">Solicitar Produto</h3>
-            <p class="py-2">Selecione a quantidade desejada para {{productSelect!!.type}} {{productSelect!!.brand}} {{productSelect!!.category}}</p>
+    <section *ngIf="store" data-testid="store-header" @fadeIn
+        class="rounded-xl overflow-hidden border border-gray-200 bg-white shadow-sm mb-6" aria-labelledby="store-name">
+        <div class="relative h-40 md:h-56">
+            <img *ngIf="store.bannerUrl && !bannerBroken; else bannerPadrao" data-testid="store-banner-image" [src]="store.bannerUrl"
+                alt="" class="w-full h-full object-cover" (error)="bannerBroken = true" />
+            <ng-template #bannerPadrao>
+                <div data-testid="store-banner-default" class="w-full h-full bg-linear-to-br from-primary to-accent flex items-center justify-end pr-6 md:pr-12">
+                    <span class="material-icons text-white/15 text-8xl! md:text-9xl!" aria-hidden="true">storefront</span>
+                </div>
+            </ng-template>
+        </div>
 
-            <input type="number" min="1" [(ngModel)]="quantity"  class="input input-bordered w-full"
-                placeholder="Quantidade" />
+        <div class="px-4 md:px-6 pb-4 md:pb-5">
+            <div class="relative z-10 flex items-end gap-3 md:gap-4 -mt-10 md:-mt-12">
+                <div class="w-20 h-20 md:w-24 md:h-24 rounded-full overflow-hidden ring-4 ring-white bg-white shadow-md flex items-center justify-center shrink-0">
+                    <img *ngIf="store.logoUrl && !logoBroken; else iconeLoja" data-testid="store-logo" [src]="store.logoUrl"
+                        [alt]="'Logo de ' + store.name" class="w-full h-full object-cover" (error)="logoBroken = true" />
+                    <ng-template #iconeLoja>
+                        <span class="material-icons text-primary text-4xl!" aria-hidden="true">storefront</span>
+                    </ng-template>
+                </div>
+            </div>
 
-            <div class="modal-action">
-                <button class="btn" (click)="closeModal()">Cancelar</button>
-                <button class="btn btn-primary" (click)="confirmRequest()">Confirmar</button>
+            <div class="mt-3 flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+                <h1 id="store-name" class="text-2xl md:text-3xl font-bold text-gray-800 text-balance">{{ store.name }}</h1>
+                <app-store-rating size="sm" [average]="store.averageRating" [count]="store.reviewCount" [clickable]="true"
+                    (openReviews)="reviewsOpen = true" class="mt-1 md:mt-2"></app-store-rating>
+            </div>
+
+            <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-gray-600">
+                <span data-testid="store-status" class="badge badge-sm badge-soft font-semibold"
+                    [ngClass]="store.open ? 'badge-success' : 'badge-neutral'">{{ store.open ? 'Aberta' : 'Fechada' }}</span>
+                <span *ngIf="store.openingTime && store.closingTime" data-testid="store-hours" class="flex items-center gap-1">
+                    <span class="material-icons text-base text-gray-400" aria-hidden="true">schedule</span>
+                    {{ store.openingTime }} – {{ store.closingTime }}<ng-container *ngIf="store.averageDeliveryTime"> · {{ store.averageDeliveryTime }} min</ng-container>
+                </span>
+                <span *ngIf="storeLocation" data-testid="store-location" class="flex items-center gap-1">
+                    <span class="material-icons text-base text-gray-400" aria-hidden="true">location_on</span>
+                    {{ storeLocation }}
+                </span>
+            </div>
+
+            <div *ngIf="store.description" class="mt-3 max-w-3xl">
+                <p id="store-description" data-testid="store-description" class="text-sm text-gray-600 leading-relaxed"
+                    [class.line-clamp-2]="hasLongDescription && !descriptionExpanded">{{ store.description }}</p>
+                <button *ngIf="hasLongDescription" type="button" data-testid="toggle-description"
+                    class="mt-1 text-sm font-semibold text-accent hover:underline min-h-11 sm:min-h-0"
+                    aria-controls="store-description" [attr.aria-expanded]="descriptionExpanded"
+                    (click)="descriptionExpanded = !descriptionExpanded">
+                    {{ descriptionExpanded ? 'Ver menos' : 'Ver mais' }}
+                </button>
             </div>
         </div>
-    </dialog>
+    </section>
 
-</body>
+    <!-- Busca -->
+    <div class="mb-6">
+        <div class="relative">
+            <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+            <input
+              class="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-full bg-white focus:ring-primary focus:border-primary"
+              placeholder="Filtre por marca do produto"
+              type="text"
+              [(ngModel)]="searchTerm"
+              (keyup.enter)="getProducts(idSupplier!)"
+            />
+        </div>
+    </div>
 
-</html>
+    <!-- Chips de categoria -->
+    <app-category-chip-bar
+        [categories]="categories"
+        [selected]="selectedCategory"
+        (categorySelected)="onCategorySelected($event)">
+    </app-category-chip-bar>
+
+    <!-- HU18: loja fechada mostra o catálogo, mas sem compra -->
+    <div *ngIf="closedNotice" data-testid="store-closed-notice" role="status"
+        class="alert alert-warning alert-soft mt-6 text-sm">
+        <span class="material-icons text-base" aria-hidden="true">schedule</span>
+        {{ closedNotice }}. Você pode ver os produtos, mas só dá para comprar com a loja aberta.
+    </div>
+
+    <div data-testid="product-grid" class="mt-6 space-y-8 transition-opacity duration-200"
+        [class.opacity-60]="loading" [@staggerList]="listVersion">
+        <section *ngFor="let section of productSections" data-testid="product-section">
+            <h2 *ngIf="!selectedCategory" data-testid="type-heading" class="text-lg font-bold text-base-content mb-3">{{ section.type }}</h2>
+            <div *ngFor="let category of section.categories" data-testid="category-section" class="mb-6 last:mb-0">
+                <h3 data-testid="category-heading" class="text-sm font-semibold text-neutral mb-2">{{ category.name }}</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <app-product-card
+                        *ngFor="let product of category.products"
+                        [product]="product"
+                        [blockedReason]="closedNotice"
+                        (addToCart)="addToCart($event)"
+                        (buyNow)="buyNow($event)">
+                    </app-product-card>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Paginação -->
+    <app-pagination
+    [currentPage]="currentPageProducts"
+    [totalPages]="totalPagesProducts"
+    (pageChange)="getProducts(idSupplier!, $event)">
+    </app-pagination>
+</div>
+
+<app-store-reviews-dialog *ngIf="reviewsOpen && store" [supplierId]="store.id" [storeName]="store.name"
+    [average]="store.averageRating" [count]="store.reviewCount" (closed)="reviewsOpen = false"></app-store-reviews-dialog>
+
+<app-cart-other-store-dialog *ngIf="pendingOtherStoreProduct"
+    (clearAndAdd)="confirmClearAndAdd()" (keepCart)="cancelOtherStoreDialog()"></app-cart-other-store-dialog>

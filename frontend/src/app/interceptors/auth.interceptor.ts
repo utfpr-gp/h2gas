@@ -8,7 +8,8 @@ import { throwError } from 'rxjs';
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const router = inject(Router);
-  const token = authService.getToken();
+  // HU13: token vencido não vai junto; a vitrine pública responde como para visitante
+  const token = authService.isTokenExpired() ? null : authService.getToken();
 
   const authReq = token ? req.clone({
             setHeaders: {
@@ -18,9 +19,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authReq).pipe(
     catchError(err => {
-      if (err.status === 401) {
+      // só é sessão caída se a requisição levou token; senha errada ou visitante (HU13) não derrubam nada
+      if (err.status === 401 && token) {
         authService.logout();
-        router.navigate(['/login']);
+        const returnUrl = router.url;
+        router.navigate(['/login'], returnUrl && !returnUrl.startsWith('/login') ? { queryParams: { returnUrl } } : {});
       }
       return throwError(() => err);
     })

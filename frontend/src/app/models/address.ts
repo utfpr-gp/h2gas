@@ -10,6 +10,7 @@ export class Address {
     cityName?: string;
     cityId?: number;
     user?: User;
+    userId?: string;
     addressName?: string;
 
     constructor(

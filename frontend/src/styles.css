@@ -1,11 +1,68 @@
 @import "tailwindcss";
 @plugin "daisyui" {
-    themes: light --default, dark --prefersdark, cupcake;
-  }
+  themes: h2gas --default;
+}
+
+@plugin "daisyui/theme" {
+  name: "h2gas";
+  default: true;
+  color-scheme: light;
+  --color-primary: #0e2068;
+  --color-primary-content: #ffffff;
+  --color-secondary: #0017bf;
+  --color-secondary-content: #ffffff;
+  /* F7 §5.21: ação principal do cliente (azul vivo; texto branco 4,83:1, AA) */
+  --color-accent: #2772ca;
+  --color-accent-content: #ffffff;
+  --color-base-100: #ffffff;
+  --color-base-200: #f7f8fc;
+  --color-base-300: #e6e9f2;
+  --color-base-content: #1c1c1e;
+  --color-neutral: #6b7280;
+  --color-neutral-content: #ffffff;
+  --color-info: #0ea5e9;
+  --color-info-content: #ffffff;
+  --color-success: #16a34a;
+  --color-success-content: #ffffff;
+  --color-warning: #f59e0b;
+  --color-warning-content: #1c1c1e;
+  --color-error: #dc2626;
+  --color-error-content: #ffffff;
+  --radius-selector: 0.5rem;
+  --radius-field: 0.75rem;
+  --radius-box: 1rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+/* F7 fatia 6: cores categóricas dos gráficos (ordem fixa, validada contra o fundo branco: faixa de
+   luminosidade, croma, separação para daltônicos ΔE ≥ 9 e visão normal ≥ 19). Três ficam abaixo de 3:1
+   no branco, então todo gráfico que as usa mostra rótulo ou legenda com o valor. */
+@theme {
+  --color-chart-1: #2a78d6;
+  --color-chart-2: #eb6834;
+  --color-chart-3: #1baf7a;
+  --color-chart-4: #eda100;
+  --color-chart-5: #e87ba4;
+}
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* a tab bar fixa (cliente no celular, entregador sempre) cobriria o fim do footer */
+@media (max-width: 767px) {
+  body:has(app-bottom-tab-bar nav) app-footer > footer {
+    padding-bottom: 5rem;
+  }
+}
+body:has(app-deliverer-tab-bar nav) app-footer > footer {
+  padding-bottom: 5rem;
+}
+
 .product-card {
   @apply bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 flex flex-col transition-all duration-300 ease-in-out;
 }
@@ -42,19 +99,46 @@
   @apply bg-red-100 text-red-800;
 }
 
+/* HU08: card do pedido cujo status acabou de mudar em tempo real (destaque curto) */
+.status-updated {
+  animation: statusUpdated 2s ease-out;
+}
+
+@keyframes statusUpdated {
+  0%,
+  30% {
+    box-shadow: 0 0 0 3px var(--color-secondary);
+    background-color: var(--color-base-200);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
 .status-falhou {
   @apply bg-gray-200 text-gray-800;
 }
 
 :root {
   --background-color: #f7f8fc;
-  --primary-color: #6c63ff;
+  --primary-color: #0e2068;
+  --action-color: #0017bf;
   --secondary-color: #f0f2f5;
   --text-color: #1c1c1e;
   --subtext-color: #6b7280;
   --white-color: #ffffff;
   --accent-color: #e0e7ff;
 }
+
+body {
+  font-family: 'Roboto', sans-serif;
+}
+
+.text-h1 { font-size: 48px; line-height: 60px; font-weight: 700; }
+.text-h2 { font-size: 34px; line-height: 50px; font-weight: 700; }
+.text-h3 { font-size: 28px; line-height: 38px; font-weight: 600; }
+.text-h4 { font-size: 18px; line-height: 22px; font-weight: 600; }
+.text-paragraph { font-size: 14px; line-height: 24px; font-weight: 400; }
 
 .card {
   @apply bg-[var(--white-color)] rounded-2xl shadow-sm transition-all duration-300 hover:shadow-lg;
@@ -98,12 +182,6 @@
 .order-card {
   @apply card mb-4;
 }
-.btn {
-  @apply font-bold py-2 px-4 rounded-lg transition-all duration-300 flex items-center justify-center gap-2;
-}
-.btn-primary {
-  @apply bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md;
-}
 .btn-danger {
   @apply bg-red-600 hover:bg-red-700 text-white shadow-sm hover:shadow-md;
 }
@@ -141,4 +219,125 @@
       opacity: 1;
     }
   }
+}
+
+/* F7 §5.10 — toasts: um por vez, topo central, card nos tokens (estrutura do toastr.css mantida) */
+#toast-container.toast-top-center {
+  top: 0.75rem;
+  width: 100%;
+  padding: 0 0.75rem;
+  pointer-events: none;
+}
+
+#toast-container > .ngx-toastr {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  width: min(92vw, 420px);
+  margin: 0 auto;
+  padding: 0.875rem 2.5rem 0.875rem 0.875rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-base-300);
+  border-left: 4px solid var(--toast-color);
+  background-color: var(--color-base-100);
+  background-image: none;
+  color: var(--color-base-content);
+  box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.15), 0 4px 10px -6px rgb(0 0 0 / 0.1);
+  opacity: 1;
+  pointer-events: auto;
+  animation: fadeIn 0.2s ease-out both;
+}
+
+#toast-container > .ngx-toastr:hover {
+  box-shadow: 0 12px 28px -6px rgb(0 0 0 / 0.2);
+  opacity: 1;
+}
+
+#toast-container > .ngx-toastr::before {
+  font-family: 'Material Icons';
+  font-size: 1.375rem;
+  line-height: 1;
+  color: var(--toast-color);
+  flex-shrink: 0;
+  -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
+}
+
+#toast-container > .toast-success { --toast-color: var(--color-success); }
+#toast-container > .toast-success::before { content: 'check_circle'; }
+#toast-container > .toast-error { --toast-color: var(--color-error); }
+#toast-container > .toast-error::before { content: 'error'; }
+#toast-container > .toast-warning { --toast-color: var(--color-warning); }
+#toast-container > .toast-warning::before { content: 'warning'; }
+#toast-container > .toast-info { --toast-color: var(--color-info); }
+#toast-container > .toast-info::before { content: 'info'; }
+
+#toast-container .toast-title {
+  font-weight: 600;
+  margin-bottom: 0.125rem;
+}
+
+#toast-container .toast-message {
+  font-size: 0.875rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+#toast-container .toast-close-button {
+  position: absolute;
+  top: 0.625rem;
+  right: 0.75rem;
+  color: var(--color-neutral);
+  text-shadow: none;
+  opacity: 0.7;
+  font-weight: 400;
+}
+
+#toast-container .toast-close-button:hover {
+  color: var(--color-base-content);
+  opacity: 1;
+}
+
+#toast-container .toast-progress {
+  background-color: var(--toast-color);
+  opacity: 0.6;
+  height: 3px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* acessibilidade: quem pede menos movimento não vê animações nem transições */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* HU16: o X nativo do Chrome em type="search" se somava ao botão de limpar das telas — fica só o da aplicação */
+input[type="search"]::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+/* HU15 §5.5: ícones do card de produto — Material Symbols arredondado, traço regular e sem preenchimento */
+.material-symbols-rounded {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  line-height: 1;
+}
+
+/* HU15 §5.5: a foto nítida do card de produto se dissolve nas bordas, sem emenda dura com o preenchimento desfocado */
+.product-photo-edge {
+  -webkit-mask-image: linear-gradient(to right, transparent, black 7%, black 93%, transparent),
+    linear-gradient(to bottom, transparent, black 7%, black 93%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to right, transparent, black 7%, black 93%, transparent),
+    linear-gradient(to bottom, transparent, black 7%, black 93%, transparent);
+  mask-composite: intersect;
 }

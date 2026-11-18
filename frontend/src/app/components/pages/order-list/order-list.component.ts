@@ -1,32 +1,57 @@
-import { Component, OnInit } from '@angular/core';
+import { WhatsappIconComponent } from '../../whatsapp-icon/whatsapp-icon.component';
+import { OrderFeeLinesComponent } from '../../order-fee-lines/order-fee-lines.component';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { OrderService } from '../../../services/order.service';
 import { UserService } from '../../../services/user.service';
 import { CommonModule } from '@angular/common';
 import { User } from '../../../models/user';
 import { ToastrService } from 'ngx-toastr';
-import { OrderResponse } from '../../../models/order.model';
+import { OrderResponse, OrderReview } from '../../../models/order.model';
+import { CartService } from '../../../services/cart.service';
+import { OrderStatusChange, OrderTrackingService } from '../../../services/order-tracking.service';
+import { PaginationComponent } from '../../pagination/pagination.component';
+import { OrderReviewDialogComponent } from '../../order-review-dialog/order-review-dialog.component';
+import { PushOptInComponent } from '../../push-opt-in/push-opt-in.component';
 import { Router } from '@angular/router';
+import { expandCollapse, staggerList } from '../../../animations/checkout.animations';
+import { backendMessage } from '../../../utils/backend-message';
+import { firstName, orderCode, whatsappLink } from '../../../utils/whatsapp-link';
 
 @Component({
   selector: 'app-order-list',
-  imports: [
+  imports: [WhatsappIconComponent, OrderFeeLinesComponent, 
     CommonModule,
+    PaginationComponent,
+    OrderReviewDialogComponent,
+    PushOptInComponent,
   ],
   templateUrl: './order-list.component.html',
-  styleUrl: './order-list.component.css'
+  animations: [staggerList, expandCollapse],
 })
-export class OrderListComponent implements OnInit {
+export class OrderListComponent implements OnInit, OnDestroy {
 
   constructor(
     private orderService: OrderService,
     private userService: UserService,
     private toastr: ToastrService,
     private router: Router,
+    private cartService: CartService,
+    private orderTracking: OrderTrackingService,
   ) {}
 
   userLogado?: User;
   orders?: OrderResponse[];
   expandedIndex: number | null = null;
+  reorderingId: string | null = null;
+  // HU24: pedido com o diálogo de avaliação aberto
+  reviewingOrder: OrderResponse | null = null;
+  readonly stars = [1, 2, 3, 4, 5];
+  // HU08: card que acabou de mudar de status (destaque curto, sem toast)
+  highlightedOrderId: string | null = null;
+  readonly highlightMs = 2000;
+  private statusSub?: Subscription;
+  private highlightTimer?: ReturnType<typeof setTimeout>;
 
   currentPage: number = 0;
   totalPages: number = 0;
@@ -38,6 +63,27 @@ export class OrderListComponent implements OnInit {
     this.userLogado = this.userService.getUserLocalStorage();
 
     this.getOrders();
+
+    // HU08: o status muda na tela sem refazer a busca; pedido fora da página atual é ignorado
+    this.statusSub = this.orderTracking.onStatusChange.subscribe((change) => this.applyStatusChange(change));
+    this.orderTracking.connect(this.userLogado!.id!);
+  }
+
+  ngOnDestroy(): void {
+    this.statusSub?.unsubscribe();
+    this.orderTracking.disconnect();
+    clearTimeout(this.highlightTimer);
+  }
+
+  private applyStatusChange({ orderId, status }: OrderStatusChange) {
+    const order = this.orders?.find((o) => o.id === orderId);
+    if (!order) {
+      return;
+    }
+    order.status = status as OrderResponse['status'];
+    this.highlightedOrderId = orderId;
+    clearTimeout(this.highlightTimer);
+    this.highlightTimer = setTimeout(() => (this.highlightedOrderId = null), this.highlightMs);
   }
 
   statuses = [
@@ -60,11 +106,10 @@ export class OrderListComponent implements OnInit {
         this.totalPages = response.totalPages;
         this.hasNext = response.hasNext;
         this.hasPrevious = response.hasPrevious;
-        this.toastr.success("Pedidos buscados com sucesso");
       },
       error: (err) => {
         console.error(err);
-        this.toastr.error(`Erro ao buscar os pedidos: ${err.error.message}`);
+        this.toastr.error(`Erro ao buscar os pedidos: ${backendMessage(err)}`);
       },
     });
   }
@@ -88,6 +133,72 @@ export class OrderListComponent implements OnInit {
 
   toggleAccordion(index: number) {
     this.expandedIndex = this.expandedIndex === index ? null : index;
+  }
+
+  // HU05: substitui o carrinho pelo pedido refeito (dados e preços atuais) e vai direto ao checkout
+  reorder(order: OrderResponse) {
+    if (this.reorderingId) {
+      return;
+    }
+    this.reorderingId = order.id;
+    this.orderService.getReorderPreview(order.id).subscribe({
+      next: (preview) => {
+        this.reorderingId = null;
+        const indisponiveis = preview.unavailableItems
+          .map((item) => item.productBrand ?? 'produto removido')
+          .join(', ');
+
+        if (!preview.availableItems.length) {
+          this.toastr.warning(`Nenhum item deste pedido está disponível agora: ${indisponiveis}`);
+          return;
+        }
+
+        const carrinhoSubstituido = this.cartService.getCart().length > 0;
+        // HU20: o carrinho guarda só ids e quantidades; o resumo busca o resto no backend
+        this.cartService.setCart(
+          preview.availableItems.map((item) => ({ productId: item.productId!, quantity: item.quantity })),
+          preview.availableItems[0]?.supplierId ?? null,
+        );
+
+        // F7 §5.10: uma ação, um toast — o aviso de itens indisponíveis já diz que o carrinho mudou
+        if (preview.unavailableItems.length) {
+          this.toastr.warning(`Carrinho atualizado com este pedido, sem os itens indisponíveis: ${indisponiveis}`);
+        } else if (carrinhoSubstituido) {
+          this.toastr.info('O carrinho foi substituído pelos itens deste pedido.');
+        }
+        this.router.navigate(['/resumo-pedido']);
+      },
+      error: (err) => {
+        this.reorderingId = null;
+        this.toastr.error(`Não foi possível refazer este pedido: ${backendMessage(err)}`);
+      },
+    });
+  }
+
+  // HU24: pedido entregue que o cliente ainda não avaliou
+  canReview(order: OrderResponse): boolean {
+    return order.status === ('Entregue' as OrderResponse['status']) && !order.review;
+  }
+
+  openReview(order: OrderResponse) {
+    this.reviewingOrder = order;
+  }
+
+  onReviewSaved(review: OrderReview) {
+    if (this.reviewingOrder) this.reviewingOrder.review = review;
+    this.reviewingOrder = null;
+  }
+
+  // HU25: atalhos de WhatsApp enquanto o pedido está em andamento
+  storeWhatsapp(order: OrderResponse): string | null {
+    if (['Entregue', 'Cancelado'].includes(order.status as string)) return null;
+    return whatsappLink(order.supplierPhone, `Olá, ${order.supplierName}! Sobre o meu pedido #${orderCode(order.id)} no H2Gás: `);
+  }
+
+  delivererWhatsapp(order: OrderResponse): string | null {
+    if ((order.status as string) !== 'Saiu para entrega') return null;
+    return whatsappLink(order.delivererPhone,
+      `Olá, ${firstName(order.delivererName)}! Sou o cliente do pedido #${orderCode(order.id)} da ${order.supplierName}.`);
   }
 
   navigate(route: string) {

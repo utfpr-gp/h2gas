@@ -1,23 +1,244 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { of, throwError } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 
 import { ConfigurationComponent } from './configuration.component';
+import { SupplierService } from '../../../services/supplier.service';
+import { SupplierSettings } from '../../../models/supplier-settings';
 
 describe('ConfigurationComponent', () => {
-  let component: ConfigurationComponent;
   let fixture: ComponentFixture<ConfigurationComponent>;
+  let supplierSpy: jasmine.SpyObj<SupplierService>;
+  let toastrSpy: jasmine.SpyObj<ToastrService>;
+
+  // HU17: a seção de funcionamento traz também a entrega
+  const entrega = { offersDelivery: true, offersPickup: true, deliveryRadiusKm: null, deliveryBaseFee: 0, deliveryFeePerKm: 0 };
+  const atual: SupplierSettings = { openingTime: '08:00', closingTime: '18:00', averageDeliveryTime: 30, lowStockThreshold: 8, ...entrega };
+
+  const byId = (id: string) => fixture.nativeElement.querySelector(`[data-testid="${id}"]`) as HTMLElement | null;
+  const input = (id: string) => byId(id) as HTMLInputElement;
+  const preencher = (id: string, valor: string) => {
+    const el = input(id);
+    el.value = valor;
+    el.dispatchEvent(new Event('input'));
+    el.dispatchEvent(new Event('blur'));
+    fixture.detectChanges();
+  };
+  // F9: cada seção salva sozinha
+  const salvarFuncionamento = () => byId('save-hours') as HTMLButtonElement;
+  const salvarEstoque = () => byId('save-stock') as HTMLButtonElement;
 
   beforeEach(async () => {
+    supplierSpy = jasmine.createSpyObj('SupplierService', ['getMySettings', 'updateMySettings']);
+    supplierSpy.getMySettings.and.returnValue(of({ ...atual }));
+    supplierSpy.updateMySettings.and.callFake((s) => of(s));
+    toastrSpy = jasmine.createSpyObj('ToastrService', ['success', 'error']);
+
     await TestBed.configureTestingModule({
-      imports: [ConfigurationComponent]
-    })
-    .compileComponents();
+      imports: [ConfigurationComponent],
+      providers: [
+        { provide: SupplierService, useValue: supplierSpy },
+        { provide: ToastrService, useValue: toastrSpy },
+      ],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(ConfigurationComponent);
-    component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
-  it('should create', () => {
-    expect(component).toBeTruthy();
+  it('deveCarregarConfiguracoesDoFornecedor', () => {
+    expect(supplierSpy.getMySettings).toHaveBeenCalled();
+    expect(input('opening-time').value).toBe('08:00');
+    expect(input('closing-time').value).toBe('18:00');
+    expect(input('delivery-time').value).toBe('30');
+    expect(input('low-stock').value).toBe('8');
+  });
+
+  it('deveDesabilitarSalvarSemAlteracao', () => {
+    expect(salvarFuncionamento().disabled).toBeTrue();
+    expect(salvarEstoque().disabled).toBeTrue();
+
+    preencher('delivery-time', '45');
+    expect(salvarFuncionamento().disabled).toBeFalse();
+    expect(salvarEstoque().disabled).toBeTrue();
+
+    preencher('delivery-time', '30');
+    expect(salvarFuncionamento().disabled).toBeTrue();
+  });
+
+  it('deveMostrarErroComFechamentoIgualAAbertura', () => {
+    preencher('closing-time', '08:00');
+
+    expect(byId('error-closing-time')?.textContent).toContain('O fechamento precisa ser diferente da abertura.');
+    expect(salvarFuncionamento().disabled).toBeTrue();
+
+    preencher('delivery-time', '0');
+    expect(byId('error-delivery-time')?.textContent).toContain('Entre 1 e 240 minutos.');
+  });
+
+  it('deveSalvarSoOFuncionamento', () => {
+    preencher('opening-time', '18:00');
+    preencher('closing-time', '02:00');
+
+    salvarFuncionamento().click();
+    fixture.detectChanges();
+
+    expect(supplierSpy.updateMySettings).toHaveBeenCalledOnceWith({
+      openingTime: '18:00', closingTime: '02:00', averageDeliveryTime: 30, lowStockThreshold: 8, ...entrega,
+    });
+    expect(toastrSpy.success).toHaveBeenCalledOnceWith('Horário e entrega salvos.');
+    expect(salvarFuncionamento().disabled).toBeTrue();
+  });
+
+  it('deveSalvarSoOEstoque', () => {
+    preencher('low-stock', '5');
+
+    salvarEstoque().click();
+    fixture.detectChanges();
+
+    expect(supplierSpy.updateMySettings).toHaveBeenCalledOnceWith({
+      openingTime: '08:00', closingTime: '18:00', averageDeliveryTime: 30, lowStockThreshold: 5, ...entrega,
+    });
+    expect(toastrSpy.success).toHaveBeenCalledOnceWith('Estoque mínimo salvo.');
+  });
+
+  it('deveManterAEdicaoPendenteDaOutraSecao', () => {
+    preencher('opening-time', '09:00');
+    preencher('low-stock', '5');
+
+    salvarEstoque().click();
+    fixture.detectChanges();
+
+    // o horário editado não vai junto e continua no campo, esperando o próprio salvar
+    expect(supplierSpy.updateMySettings.calls.mostRecent().args[0].openingTime).toBe('08:00');
+    expect(input('opening-time').value).toBe('09:00');
+    expect(salvarFuncionamento().disabled).toBeFalse();
+    expect(salvarEstoque().disabled).toBeTrue();
+  });
+
+  it('deveSalvarEstoqueMesmoComHorarioInvalidoPendente', () => {
+    preencher('closing-time', '08:00');
+    preencher('low-stock', '5');
+
+    expect(salvarEstoque().disabled).toBeFalse();
+  });
+
+  it('deveMostrarMensagemDoBackendNoErro', () => {
+    supplierSpy.updateMySettings.and.returnValue(throwError(() => ({
+      status: 400, error: { error: 'O horário de fechamento precisa ser diferente da abertura.' },
+    })));
+    preencher('low-stock', '5');
+
+    salvarEstoque().click();
+    fixture.detectChanges();
+
+    expect(toastrSpy.error).toHaveBeenCalledWith(jasmine.stringContaining('O horário de fechamento precisa ser diferente da abertura.'));
+    expect(toastrSpy.success).not.toHaveBeenCalled();
+    expect(salvarEstoque().disabled).toBeFalse();
+  });
+
+  it('deveTerAsAncorasDasSecoes', () => {
+    expect(fixture.nativeElement.querySelector('section#funcionamento')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('section#estoque')).not.toBeNull();
+  });
+
+  it('deveAvisarQuandoCarregou', () => {
+    const outro = TestBed.createComponent(ConfigurationComponent);
+    const avisos: boolean[] = [];
+    outro.componentInstance.loaded.subscribe(() => avisos.push(true));
+    outro.detectChanges();
+
+    expect(avisos.length).toBe(1);
+  });
+
+  it('naoDeveTerCabecalhoProprio', () => {
+    // F9: as seções vivem dentro da tela da loja, que tem o título
+    expect(fixture.nativeElement.querySelector('h1')).toBeNull();
+  });
+
+  it('deveMostrarPreviaDoHorario', () => {
+    expect(byId('settings-preview')?.textContent).toContain('Aberta das 08:00 às 18:00 · entrega em ~30 min');
+
+    preencher('opening-time', '18:00');
+    preencher('closing-time', '02:00');
+
+    expect(byId('settings-preview')?.textContent).toContain('Aberta das 18:00 às 02:00 do dia seguinte');
+  });
+
+  // ---- HU17: entrega na seção "Funcionamento e entrega" ----
+  const marcar = (id: string, valor: boolean) => {
+    const el = input(id);
+    if (el.checked !== valor) el.click();
+    fixture.detectChanges();
+  };
+
+  it('deveSalvarAEntregaNaSecaoDeFuncionamento', () => {
+    marcar('offers-pickup', false);
+    preencher('delivery-radius', '6.5');
+    preencher('delivery-base-fee', '5');
+    preencher('delivery-fee-per-km', '1.5');
+
+    salvarFuncionamento().click();
+    fixture.detectChanges();
+
+    expect(supplierSpy.updateMySettings).toHaveBeenCalledOnceWith({
+      openingTime: '08:00', closingTime: '18:00', averageDeliveryTime: 30, lowStockThreshold: 8,
+      offersDelivery: true, offersPickup: false, deliveryRadiusKm: 6.5, deliveryBaseFee: 5, deliveryFeePerKm: 1.5,
+    });
+  });
+
+  it('deveMandarRaioVazioComoSemLimite', () => {
+    preencher('delivery-radius', '3');
+    preencher('delivery-radius', '');
+    preencher('delivery-base-fee', '2');
+
+    salvarFuncionamento().click();
+
+    expect(supplierSpy.updateMySettings.calls.mostRecent().args[0].deliveryRadiusKm).toBeNull();
+  });
+
+  it('deveExigirAoMenosUmaModalidade', () => {
+    marcar('offers-delivery', false);
+    marcar('offers-pickup', false);
+
+    expect(byId('error-delivery-modes')?.textContent).toContain('A loja precisa oferecer entrega ou retirada.');
+    expect(salvarFuncionamento().disabled).toBeTrue();
+  });
+
+  it('deveEsconderATarifaSemEntrega', () => {
+    marcar('offers-delivery', false);
+
+    expect(byId('delivery-base-fee')).toBeNull();
+    expect(byId('delivery-radius')).toBeNull();
+  });
+
+  it('deveMostrarAPreviaDoFrete', () => {
+    preencher('delivery-base-fee', '5');
+    preencher('delivery-fee-per-km', '1.5');
+
+    // 5 + 1,5 × 3 km = 9,50
+    expect(byId('delivery-fee-preview')?.textContent).toMatch(/3 km[\s\S]*9,50/);
+    expect(byId('delivery-fee-preview')?.textContent).toContain('linha reta');
+  });
+
+  it('deveAvisarEntregaGratisSemTarifa', () => {
+    expect(byId('delivery-fee-preview')?.textContent).toContain('Entrega grátis');
+  });
+
+  // ---- F10: uma seção por vez ----
+  it('deveMostrarSoASecaoPedida', () => {
+    const secao = (id: string) => fixture.nativeElement.querySelector(`section#${id}`) as HTMLElement;
+    expect(secao('funcionamento').hidden).toBeFalse();
+    expect(secao('estoque').hidden).toBeFalse();
+
+    fixture.componentRef.setInput('visibleSection', 'estoque');
+    fixture.detectChanges();
+    expect(secao('funcionamento').hidden).toBeTrue();
+    expect(secao('estoque').hidden).toBeFalse();
+
+    fixture.componentRef.setInput('visibleSection', 'funcionamento');
+    fixture.detectChanges();
+    expect(secao('funcionamento').hidden).toBeFalse();
+    expect(secao('estoque').hidden).toBeTrue();
   });
 });

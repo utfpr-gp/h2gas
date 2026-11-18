@@ -22,19 +22,23 @@ export class AppComponent {
   hiddenMenuRoutes = [
     '/',
     '/login', 
-    '/register', 
-    '/register-supplier', 
-    '/unauthorized', 
+    '/login/senha',
+    '/cadastro', 
+    '/onde-voce-esta',
+    '/cadastro/fornecedor', 
+    '/acesso-negado', 
     '/aguardando-aprovacao',
-    '/distributor/new',
+    '/admin/fornecedores/novo',
     '/recuperar-senha',
     '/checagem-email',
     '/resetar-senha',
-    '/email-sent',
+    '/email-enviado',
     '/contato',
     '/sobre'
   ];
-
+  // Sobre e Contato: footer liga as páginas institucionais. A porta de entrada (/ e CEP) fica sem footer.
+  private institutionalRoutes = ['/sobre', '/contato'];
+  showFooter = true;
 
   constructor(private router: Router) {
     this.router.events
@@ -42,6 +46,13 @@ export class AppComponent {
     .subscribe((event: NavigationEnd) => {
       const cleanUrl = event.urlAfterRedirects.split('?')[0];
       this.showMenu = !this.hiddenMenuRoutes.includes(cleanUrl);
+      this.showFooter = this.isFooterVisible(cleanUrl);
     });
+  }
+
+  private isFooterVisible(url: string): boolean {
+    if (url === '/' || url === '/onde-voce-esta') return false;
+    if (url === '/entregas' || url.startsWith('/entregas/')) return false;
+    return this.institutionalRoutes.includes(url) || !this.hiddenMenuRoutes.includes(url);
   }
 }

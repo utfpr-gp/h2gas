@@ -1,114 +1,200 @@
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ConfigurationService } from '../../../services/configuration.service';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
 import { SupplierService } from '../../../services/supplier.service';
-import { UserService } from '../../../services/user.service';
-import { User } from '../../../models/user';
-import { Supplier } from '../../../models/supplier';
+import { SupplierSettings } from '../../../models/supplier-settings';
+import { backendMessage } from '../../../utils/backend-message';
 
+const TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+const sameTimeValidator = (group: AbstractControl): ValidationErrors | null => {
+  const { openingTime, closingTime } = group.value;
+  return openingTime && openingTime === closingTime ? { sameTime: true } : null;
+};
+
+// HU17: a loja precisa oferecer entrega ou retirada (o backend recusa as duas desmarcadas)
+const noModeValidator = (group: AbstractControl): ValidationErrors | null => {
+  const { offersDelivery, offersPickup } = group.value;
+  return !offersDelivery && !offersPickup ? { noMode: true } : null;
+};
+
+const BRL = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+const PREVIEW_KM = 3;
+
+type Section = 'hours' | 'stock';
+const SECTION_FIELDS: Record<Section, (keyof SupplierSettings)[]> = {
+  hours: ['openingTime', 'closingTime', 'averageDeliveryTime',
+    'offersDelivery', 'offersPickup', 'deliveryRadiusKm', 'deliveryBaseFee', 'deliveryFeePerKm'],
+  stock: ['lowStockThreshold'],
+};
+const SAVED_MESSAGE: Record<Section, string> = {
+  hours: 'Horário e entrega salvos.',
+  stock: 'Estoque mínimo salvo.',
+};
+
+// F7 fatia 6 + F9: seções "Funcionamento e entrega" e "Estoque" da tela da loja; cada uma salva sozinha
 @Component({
   selector: 'app-configuration',
-  imports: [
-    FormsModule,
-    CommonModule,
-    ReactiveFormsModule,
-  ],
+  standalone: true,
+  imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './configuration.component.html',
-  styleUrl: './configuration.component.css'
+  host: { class: 'block' },
 })
-export class ConfigurationComponent {
+export class ConfigurationComponent implements OnInit {
+  private readonly fb = inject(FormBuilder);
+  readonly form = this.fb.nonNullable.group({
+    openingTime: ['', [Validators.required, Validators.pattern(TIME)]],
+    closingTime: ['', [Validators.required, Validators.pattern(TIME)]],
+    averageDeliveryTime: [30, [Validators.required, Validators.min(1), Validators.max(240)]],
+    lowStockThreshold: [8, [Validators.required, Validators.min(1), Validators.max(9999)]],
+    offersDelivery: [true],
+    offersPickup: [true],
+    deliveryRadiusKm: this.fb.control<number | null>(null, [Validators.min(0.1), Validators.max(100)]),
+    deliveryBaseFee: [0, [Validators.required, Validators.min(0)]],
+    deliveryFeePerKm: [0, [Validators.required, Validators.min(0)]],
+  }, { validators: [sameTimeValidator, noModeValidator] });
+
+  @Output() loaded = new EventEmitter<void>();
+
+  // F10: a tela da loja mostra uma seção por vez; nulo = as duas (as seções seguem montadas, só escondidas)
+  @Input() visibleSection: string | null = null;
+
+  isHidden(id: 'funcionamento' | 'estoque'): boolean {
+    return this.visibleSection != null && this.visibleSection !== id;
+  }
+
+  loading = true;
+  loadFailed = false;
+  saving: Section | null = null;
+  private saved?: SupplierSettings;
+
   constructor(
-    private configurationService: ConfigurationService,
-    private fb: FormBuilder, 
-    private toastr: ToastrService,
     private supplierService: SupplierService,
-    private userService: UserService
-  ) {
-    this.formSettingsStock = this.fb.group({
-      estoqueMin: [this.settings.estoqueMin, [Validators.min(1)]],
-    })
-    this.formHours = this.fb.group({
-      openingTime:[''],
-      closingTime: [''],
-      averageDeliveryTime: [null, [Validators.min(1)]],
-    })
+    private toastr: ToastrService,
+  ) {}
+
+  ngOnInit(): void {
+    this.load();
   }
 
-  formSettingsStock!: FormGroup;
-  formHours!: FormGroup;
-
-  settings = {
-    estoqueMin: 0,
-  };
-
-  timeOpeningAndClose = {
-    openingTime: '',
-    closingTime: '',
-    averageDeliveryTime: 1
-  }
-
-  userLogado?: User;
-  // supplier?: Supplier;
-
-  ngOnInit() {
-    const saved = this.configurationService.getSettings();
-    if (saved) {
-      this.settings = saved;
-      this.formSettingsStock.patchValue(this.settings);
-    }
-
-    this.userLogado = this.userService.getUserLocalStorage();
-    this.getSupplierId();
-  }
-
-  getSupplierId() {
-    this.supplierService.findById(this.userLogado?.supplierId!).subscribe({
-      next: (response) => {
-        this.formHours.patchValue({
-          openingTime: response.openingTime,
-          closingTime: response.closingTime,
-          averageDeliveryTime: response.averageDeliveryTime
-        });
-        this.toastr.success('Distribuidor buscado com sucesso!');
+  load() {
+    this.loading = true;
+    this.loadFailed = false;
+    this.supplierService.getMySettings().subscribe({
+      next: (settings) => {
+        this.applySaved(settings);
+        this.loading = false;
+        this.loaded.emit();
       },
       error: (err) => {
-        console.error('Erro ao buscar:', err.error.message);
-        this.toastr.error(`Erro ao buscar: ${err.error.message}`)
-      }
-    })
+        this.loading = false;
+        this.loadFailed = true;
+        this.toastr.error(`Erro ao carregar as configurações: ${backendMessage(err)}`);
+      },
+    });
   }
 
-  salvar() {
-    if (this.formSettingsStock.valid) {
-      this.settings.estoqueMin = this.formSettingsStock.value.estoqueMin;
-      this.configurationService.saveSettings(this.settings);
-      console.log(this.settings);
-    } else {
-      this.toastr.warning("Digite um valor maior que 0")
-      console.error("Formulário inválido!");
+  changed(section: Section): boolean {
+    const v = this.value();
+    return !!this.saved && SECTION_FIELDS[section].some((k) => v[k] !== this.saved![k]);
+  }
+
+  private sectionValid(section: Section): boolean {
+    const fieldsOk = SECTION_FIELDS[section].every((k) => this.form.controls[k].valid);
+    return section === 'hours' ? fieldsOk && !this.sameTime && !this.noMode : fieldsOk;
+  }
+
+  canSave(section: Section): boolean {
+    return this.changed(section) && this.sectionValid(section) && this.saving === null;
+  }
+
+  // a loja que fecha antes de abrir funciona até a madrugada
+  get preview(): string {
+    const { openingTime, closingTime, averageDeliveryTime } = this.form.getRawValue();
+    if (!openingTime || !closingTime || this.form.hasError('sameTime')) return '';
+    const nextDay = closingTime < openingTime ? ' do dia seguinte' : '';
+    const delivery = this.form.controls.averageDeliveryTime.valid ? ` · entrega em ~${averageDeliveryTime} min` : '';
+    return `Aberta das ${openingTime} às ${closingTime}${nextDay}${delivery}`;
+  }
+
+  invalid(control: keyof typeof this.form.controls): boolean {
+    const c = this.form.controls[control];
+    return c.invalid && (c.touched || c.dirty);
+  }
+
+  get sameTime(): boolean {
+    return this.form.hasError('sameTime');
+  }
+
+  get noMode(): boolean {
+    return this.form.hasError('noMode');
+  }
+
+  // HU17: quanto o cliente paga de frete a 3 km, para o fornecedor conferir a tarifa (a conta real é no backend)
+  get feePreview(): string {
+    const { deliveryBaseFee, deliveryFeePerKm } = this.form.getRawValue();
+    if (!this.form.controls.deliveryBaseFee.valid || !this.form.controls.deliveryFeePerKm.valid) return '';
+    const base = Number(deliveryBaseFee);
+    const perKm = Number(deliveryFeePerKm);
+    if (base === 0 && perKm === 0) return 'Entrega grátis em qualquer distância do raio';
+    return `A ${PREVIEW_KM} km, o frete fica ${BRL.format(base + perKm * PREVIEW_KM)}`;
+  }
+
+  // envia os valores salvos das outras seções e só os campos desta (F9 Cenário 6)
+  save(section: Section) {
+    if (!this.canSave(section)) {
+      SECTION_FIELDS[section].forEach((k) => this.form.controls[k].markAsTouched());
+      return;
     }
-    
-    this.timeOpeningAndClose = {
-      openingTime: this.formHours.value.openingTime,
-      closingTime: this.formHours.value.closingTime,
-      averageDeliveryTime: this.formHours.value.averageDeliveryTime
+    const current = this.value();
+    const request: SupplierSettings = { ...this.saved! };
+    for (const k of SECTION_FIELDS[section]) (request as any)[k] = current[k];
+    this.saving = section;
+    this.supplierService.updateMySettings(request).subscribe({
+      next: (settings) => {
+        this.saving = null;
+        this.applySaved(settings, section);
+        this.toastr.success(SAVED_MESSAGE[section]);
+      },
+      error: (err) => {
+        this.saving = null;
+        this.toastr.error(`Não foi possível salvar: ${backendMessage(err)}`);
+      },
+    });
+  }
+
+  private value(): SupplierSettings {
+    const v = this.form.getRawValue();
+    return {
+      openingTime: v.openingTime,
+      closingTime: v.closingTime,
+      averageDeliveryTime: Number(v.averageDeliveryTime),
+      lowStockThreshold: Number(v.lowStockThreshold),
+      offersDelivery: !!v.offersDelivery,
+      offersPickup: !!v.offersPickup,
+      deliveryRadiusKm: v.deliveryRadiusKm == null || (v.deliveryRadiusKm as unknown) === '' ? null : Number(v.deliveryRadiusKm),
+      deliveryBaseFee: Number(v.deliveryBaseFee),
+      deliveryFeePerKm: Number(v.deliveryFeePerKm),
     };
+  }
 
-
-    this.supplierService.updateTimesOperation(this.timeOpeningAndClose, this.userLogado?.supplierId!).subscribe({
-      next: (response: any) => {
-        console.log('Atualizado com sucesso', response);
-        
-        this.toastr.success(response.message);
-      },
-      error: (err) => {
-        
-        console.error('Erro ao atualizar:', err.error.message);
-        this.toastr.error(`Erro ao atualizar: ${err.error.message}`)
-      },
-    })
-
+  // depois de salvar uma seção, só os campos dela voltam ao valor salvo; a edição pendente da outra fica
+  private applySaved(settings: SupplierSettings, section?: Section) {
+    this.saved = {
+      ...settings,
+      openingTime: settings.openingTime?.slice(0, 5),
+      closingTime: settings.closingTime?.slice(0, 5),
+      deliveryRadiusKm: settings.deliveryRadiusKm == null ? null : Number(settings.deliveryRadiusKm),
+      deliveryBaseFee: Number(settings.deliveryBaseFee ?? 0),
+      deliveryFeePerKm: Number(settings.deliveryFeePerKm ?? 0),
+    };
+    if (!section) {
+      this.form.reset(this.saved);
+      return;
+    }
+    for (const k of SECTION_FIELDS[section]) {
+      this.form.controls[k].reset(this.saved[k] as never);
+    }
   }
 }

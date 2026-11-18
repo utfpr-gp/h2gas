@@ -1,0 +1,13 @@
+<div *ngIf="open !== null" class="flex items-center gap-2 text-sm">
+  <span data-testid="store-status" class="badge gap-1 py-3"
+    [ngClass]="open ? 'badge-success text-success-content' : 'badge-ghost text-base-content'">
+    <span class="material-icons text-sm" aria-hidden="true">{{ open ? 'storefront' : 'schedule' }}</span>
+    <ng-container *ngIf="open; else fechada">
+      Aberta agora<ng-container *ngIf="closingTime"> · fecha às {{ closingTime }}</ng-container>
+    </ng-container>
+    <ng-template #fechada>
+      Fechada<ng-container *ngIf="openingTime"> · abre às {{ openingTime }}</ng-container>
+    </ng-template>
+  </span>
+  <a routerLink="/minha-loja/configuracoes" fragment="funcionamento" data-testid="store-hours-link" class="link link-primary text-xs">Ajustar horário</a>
+</div>

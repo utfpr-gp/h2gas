@@ -1,75 +1,69 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+<div class="min-h-screen bg-gray-50">
+  <header class="bg-primary text-white px-4 pt-10 pb-24 text-center">
+    <img src="../assets/logo-h2.png" alt="H2Gás" class="w-28 mx-auto drop-shadow-lg" />
+    <p class="text-sm text-white/90 max-w-xs mx-auto mt-3">
+      A energia e a hidratação que movem o seu dia, a um clique de distância.
+    </p>
+  </header>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login</title>
-</head>
+  <main class="px-4 -mt-16 pb-12">
+    <section class="bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-md mx-auto p-6">
+      <h1 class="text-xl font-bold text-gray-800">Bem-vindo de volta</h1>
+      <p *ngIf="checkoutLogin" data-testid="checkout-login-hint" role="status"
+        class="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-accent/10 text-accent text-sm font-semibold px-3 py-1.5">
+        <span class="material-icons text-base!" aria-hidden="true">shopping_cart</span>
+        Entre para finalizar sua compra
+      </p>
+      <p class="text-sm text-gray-500">Insira seus dados para acessar o sistema</p>
 
-<body class="bg-gradient-to-r from-[#0E2068] to-[#3B82F6] min-h-screen flex items-center justify-center px-4 py-10">
-  <section
-    class="flex flex-col md:flex-row items-center justify-center w-full max-w-6xl bg-transparent space-y-8 md:space-y-0 md:space-x-12">
-    <!-- LOGO -->
-    <div class="flex justify-center">
-      <img src="../assets/logo-h2.png" alt="logo" class="w-40 sm:w-52 md:w-64 lg:w-72 max-w-full drop-shadow-lg" />
-    </div>
+      <form [formGroup]="loginform" (ngSubmit)="login()" class="mt-5 space-y-4">
+        <label class="block">
+          <span class="text-sm font-medium text-gray-700">E-mail</span>
+          <span class="relative mt-1 block">
+            <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-gray-400 text-base">mail</span>
+            <input type="email" placeholder="seu@email.com" formControlName="email" autocomplete="email"
+              class="input w-full rounded-xl border border-gray-300 bg-white pl-10" />
+          </span>
+        </label>
 
-    <!-- CARD DE LOGIN -->
-    <div class="bg-white shadow-2xl rounded-2xl w-full max-w-sm sm:max-w-md p-8">
-      <h2 class="text-2xl font-semibold text-center text-gray-800 mb-6">
-        Faça seu login aqui!
-      </h2>
+        <label class="block">
+          <span class="flex items-center justify-between">
+            <span class="text-sm font-medium text-gray-700">Senha</span>
+            <button type="button" (click)="navigate('/recuperar-senha')" class="text-sm font-semibold text-primary hover:underline">
+              Esqueceu a senha?
+            </button>
+          </span>
+          <span class="relative mt-1 block">
+            <span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 z-10 pointer-events-none text-gray-400 text-base">lock</span>
+            <input type="password" placeholder="Digite sua senha" formControlName="password" autocomplete="current-password"
+              class="input w-full rounded-xl border border-gray-300 bg-white pl-10" />
+          </span>
+        </label>
 
-      <form [formGroup]="loginform" class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-          <input type="email" placeholder="email@exemplo.com" formControlName="email"
-            class="input input-bordered w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Senha</label>
-          <input type="password" placeholder="Digite sua senha" formControlName="password"
-            class="input input-bordered w-full rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        </div>
+        <button type="submit" data-testid="submit-login" [disabled]="loading" class="btn btn-primary w-full rounded-xl">
+          <span *ngIf="loading" class="loading loading-spinner loading-sm"></span>
+          {{ loading ? 'Entrando...' : 'Entrar' }}
+          <span *ngIf="!loading" class="material-icons text-base">arrow_forward</span>
+        </button>
       </form>
 
-      <!-- <button
-          class="btn btn-primary w-full mt-6 rounded-lg text-white font-medium tracking-wide transition-all duration-200 hover:bg-blue-600"
-          (click)="login()"
-        >
-          Login
-        </button> -->
-      <button
-        class="btn btn-primary w-full mt-6 rounded-lg text-white font-medium tracking-wide transition-all duration-200 hover:bg-blue-600 flex items-center justify-center"
-        [disabled]="loading" (click)="login()">
-        <ng-container *ngIf="!loading; else loadingTemplate">
-          Login
-        </ng-container>
-
-        <ng-template #loadingTemplate>
-          <svg class="animate-spin h-5 w-5 text-white mr-2" xmlns="http://www.w3.org/2000/svg" fill="none"
-            viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-          </svg>
-          Entrando...
-        </ng-template>
-      </button>
-
-      <div class="text-center mt-6 text-sm text-gray-600 space-x-2">
-        <button (click)="navigate('/recuperar-senha')" class="hover:underline">
-          Recuperar senha
+      <p class="text-center text-sm text-gray-600 mt-5">
+        Não tem uma conta?
+        <button type="button" (click)="navigate('/cadastro')" class="text-primary font-semibold hover:underline">
+          Cadastre-se
         </button>
-        <span>|</span>
-        <button (click)="navigate('/register')" class="hover:underline">
-          Criar conta
-        </button>
+      </p>
+
+      <div class="flex items-center gap-3 my-4">
+        <span class="h-px flex-1 bg-gray-200"></span>
+        <span class="text-xs text-gray-400">OU</span>
+        <span class="h-px flex-1 bg-gray-200"></span>
       </div>
-    </div>
-  </section>
-</body>
 
-</html>
+      <button type="button" data-testid="code-login" (click)="navigate('/login/token')"
+        class="w-full flex items-center justify-center gap-2 text-sm font-semibold text-gray-700 hover:underline">
+        <span class="material-icons text-base">mail</span> Entrar com código por e-mail
+      </button>
+    </section>
+  </main>
+</div>

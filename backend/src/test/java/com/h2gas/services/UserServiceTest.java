@@ -1,5 +1,6 @@
 package com.h2gas.services;
 
+import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.configuration.security.TokenService;
 import com.h2gas.model.dto.UserDto;
 import com.h2gas.model.entity.User;
@@ -91,5 +92,16 @@ class UserServiceTest {
         });
 
         verify(userRepository).findById(idErrado);
+    }
+
+    @Test
+    @DisplayName("F7: usuário inexistente avisa em português, sem o id")
+    void deveAvisarUsuarioNaoEncontradoEmPortugues() {
+        when(userRepository.findById("nao-existe")).thenReturn(java.util.Optional.empty());
+
+        ResourceNotFoundException erro = assertThrows(ResourceNotFoundException.class,
+                () -> userService.findByIdUser("nao-existe"));
+
+        assertEquals("Usuário não encontrado.", erro.getMessage());
     }
 }

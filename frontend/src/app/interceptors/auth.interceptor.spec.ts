@@ -1,17 +1,71 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Router } from '@angular/router';
 
 import { authInterceptor } from './auth.interceptor';
 
+// JWT de mentira só com o exp (o interceptor só lê a validade)
+const jwtCom = (expEmSegundos: number) =>
+  `${btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))}.${btoa(JSON.stringify({ sub: 'u', exp: expEmSegundos }))}.assinatura`;
+
 describe('authInterceptor', () => {
-  const interceptor: HttpInterceptorFn = (req, next) => 
-    TestBed.runInInjectionContext(() => authInterceptor(req, next));
+  let http: HttpClient;
+  let httpMock: HttpTestingController;
+  let routerSpy: jasmine.SpyObj<Router>;
+  const agora = () => Math.floor(Date.now() / 1000);
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    localStorage.clear();
+    routerSpy = jasmine.createSpyObj('Router', ['navigate'], { url: '/resumo-pedido?modo=compra-direta' });
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withInterceptors([authInterceptor])),
+        provideHttpClientTesting(),
+        { provide: Router, useValue: routerSpy },
+      ],
+    });
+    http = TestBed.inject(HttpClient);
+    httpMock = TestBed.inject(HttpTestingController);
   });
 
-  it('should be created', () => {
-    expect(interceptor).toBeTruthy();
+  afterEach(() => httpMock.verify());
+
+  it('deveEnviarTokenValido', () => {
+    localStorage.setItem('access_token', jwtCom(agora() + 3600));
+
+    http.get('/api/x').subscribe();
+
+    expect(httpMock.expectOne('/api/x').request.headers.get('Authorization')).toMatch(/^Bearer /);
+  });
+
+  // HU13 Cenário 12: token vencido não vai junto, e a vitrine responde como para visitante
+  it('naoDeveEnviarTokenVencido', () => {
+    localStorage.setItem('access_token', jwtCom(agora() - 60));
+
+    http.get('/api/suppliers/actives/open').subscribe();
+
+    expect(httpMock.expectOne('/api/suppliers/actives/open').request.headers.has('Authorization')).toBeFalse();
+  });
+
+  it('deveMandarParaOLoginComRetornoEm401', () => {
+    localStorage.setItem('access_token', jwtCom(agora() + 3600));
+
+    http.get('/api/orders/preview').subscribe({ error: () => {} });
+    httpMock.expectOne('/api/orders/preview').flush('Token inválido', { status: 401, statusText: 'Unauthorized' });
+
+    expect(localStorage.getItem('access_token')).toBeNull();
+    expect(routerSpy.navigate).toHaveBeenCalledWith(['/login'], { queryParams: { returnUrl: '/resumo-pedido?modo=compra-direta' } });
+  });
+
+  // HU13: senha errada (ou visitante) dá 401 sem token — não é sessão caída: nada de sair nem de perder o carrinho
+  it('naoDeveDerrubarASessaoEm401SemToken', () => {
+    localStorage.setItem('cart-product', JSON.stringify([{ id: 1, quantitySelect: 2 }]));
+
+    http.post('/api/auth/login', {}).subscribe({ error: () => {} });
+    httpMock.expectOne('/api/auth/login').flush({ message: 'E-mail ou senha inválidos.' }, { status: 401, statusText: 'Unauthorized' });
+
+    expect(routerSpy.navigate).not.toHaveBeenCalled();
+    expect(JSON.parse(localStorage.getItem('cart-product')!).length).toBe(1);
   });
 });

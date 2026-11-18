@@ -1,5 +1,6 @@
 package com.h2gas.model.entity;
 
+import com.h2gas.enums.DeliveryModeEnum;
 import com.h2gas.enums.OrderStatusEnum;
 import jakarta.persistence.*;
 import lombok.*;
@@ -30,24 +31,54 @@ public class Order {
     private Supplier supplier;
 
     @ManyToOne
-    @JoinColumn(name = "address_id", nullable = false)
+    @JoinColumn(name = "address_id")
     private Address deliveryAddress;
 
     private LocalDateTime orderDate;
 
     private BigDecimal totalPrice;
 
+    // HU17: frete cobrado (itens + frete = totalPrice) e distância usada; gravados no fechamento, não mudam depois
+    @Column(name = "delivery_fee", precision = 10, scale = 2, nullable = false)
+    private BigDecimal deliveryFee = BigDecimal.ZERO;
+
+    @Column(name = "delivery_distance_km", precision = 6, scale = 2)
+    private BigDecimal deliveryDistanceKm;
+
     private String paymentMethod;
 
     @Enumerated(EnumType.STRING)
     private OrderStatusEnum status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "delivery_mode", nullable = false, length = 20)
+    private DeliveryModeEnum deliveryMode = DeliveryModeEnum.DELIVERY;
+
+    @Column(name = "cancellation_reason", length = 500)
+    private String cancellationReason;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items;
+
+    // HU07: recusas de entrega, da mais recente para a mais antiga (só leitura)
+    @OneToMany(mappedBy = "order")
+    @OrderBy("createdAt DESC")
+    private List<DeliveryRefusal> refusals;
 
     private String note;
 
     private LocalDateTime deliveryDate;
+
+    @ManyToOne
+    @JoinColumn(name = "deliverer_id")
+    private Deliverer deliverer;
+
+    @Column(precision = 10, scale = 2)
+    private BigDecimal changeFor;
+
+    private LocalDateTime dispatchedAt;
+
+    private LocalDateTime deliveredAt;
 
     @CreationTimestamp
     private LocalDateTime createdAt;

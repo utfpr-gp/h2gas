@@ -1,0 +1,69 @@
+<div class="max-w-5xl w-full mx-auto px-4 md:px-8 pt-6 pb-24 md:pb-10">
+    <header class="mb-5">
+        <h1 class="text-2xl md:text-3xl font-bold text-base-content text-balance">{{ storeName || 'Minha loja' }}</h1>
+        <p class="text-sm text-neutral mt-1">O que precisa da sua atenção agora e o atalho para cada parte da loja.</p>
+    </header>
+
+    <!-- carregando: o número dá lugar a um esqueleto; falhou: "—" -->
+    <ng-template #numero let-value let-text="text">
+        <span *ngIf="value === undefined" class="skeleton h-8 w-16 rounded-md" aria-hidden="true"></span>
+        <span *ngIf="value !== undefined" data-testid="home-card-value"
+            class="text-2xl md:text-3xl font-bold tabular-nums leading-none">{{ value === null ? '—' : text }}</span>
+    </ng-template>
+
+    <!-- cabeçalho do card: ícone + título à esquerda, seta no fim da mesma linha -->
+    <ng-template #cabecalho let-icon let-title="title" let-iconClass="iconClass">
+        <span class="home-card-head">
+            <span class="material-icons" [ngClass]="iconClass" aria-hidden="true">{{ icon }}</span>
+            <span class="min-w-0">{{ title }}</span>
+            <span class="material-icons home-card-go" aria-hidden="true">arrow_forward</span>
+        </span>
+    </ng-template>
+
+    <nav aria-label="Áreas da loja" class="grid grid-cols-2 lg:grid-cols-3 gap-3">
+        <!-- Pedidos: a área que pede ação; ganha cor quando há pendentes -->
+        <a routerLink="/minha-loja/pedidos" data-testid="home-card-pedidos" class="home-card home-card-wide col-span-2 lg:col-span-1"
+            [ngClass]="pendingOrders ? 'bg-primary text-primary-content border-primary' : 'bg-base-100 text-base-content border-base-300'">
+            <ng-container *ngTemplateOutlet="cabecalho; context: { $implicit: 'inbox', title: 'Pedidos', iconClass: '' }"></ng-container>
+            <ng-container *ngTemplateOutlet="numero; context: { $implicit: pendingOrders, text: pendingOrders }"></ng-container>
+            <span class="text-sm" [ngClass]="pendingOrders ? 'text-primary-content/85' : 'text-neutral'">
+                {{ pendingOrders === 1 ? 'pendente' : 'pendentes' }}<ng-container *ngIf="outForDelivery"> · {{ outForDelivery }} em rota</ng-container>
+            </span>
+        </a>
+
+        <a routerLink="/minha-loja/painel" data-testid="home-card-painel" class="home-card bg-base-100 text-base-content border-base-300">
+            <ng-container *ngTemplateOutlet="cabecalho; context: { $implicit: 'insights', title: 'Painel', iconClass: 'text-accent' }"></ng-container>
+            <ng-container *ngTemplateOutlet="numero; context: { $implicit: monthRevenue, text: (monthRevenue | currency:'BRL':'symbol':'1.2-2') }"></ng-container>
+            <span class="text-sm text-neutral">recebido no mês</span>
+        </a>
+
+        <!-- Produtos: tom de alerta só quando há o que repor -->
+        <a routerLink="/minha-loja/produtos" data-testid="home-card-produtos" class="home-card text-base-content"
+            [ngClass]="stockAlerts ? 'bg-warning/10 border-warning/50' : 'bg-base-100 border-base-300'">
+            <ng-container *ngTemplateOutlet="cabecalho; context: { $implicit: 'inventory_2', title: 'Produtos', iconClass: stockAlerts ? 'text-warning' : 'text-accent' }"></ng-container>
+            <ng-container *ngTemplateOutlet="numero; context: { $implicit: stockAlerts, text: stockAlerts }"></ng-container>
+            <span class="text-sm text-neutral">com estoque baixo ou zerado</span>
+        </a>
+
+        <a routerLink="/minha-loja/entregadores" data-testid="home-card-entregadores" class="home-card bg-base-100 text-base-content border-base-300">
+            <ng-container *ngTemplateOutlet="cabecalho; context: { $implicit: 'two_wheeler', title: 'Entregadores', iconClass: 'text-accent' }"></ng-container>
+            <ng-container *ngTemplateOutlet="numero; context: { $implicit: deliverers, text: deliverers ? deliverers.free + ' de ' + deliverers.total : '' }"></ng-container>
+            <span class="text-sm text-neutral">{{ deliverers?.free === 1 ? 'livre agora' : 'livres agora' }}</span>
+        </a>
+
+        <!-- Configurações: mostra se a loja está aberta e leva à tela única da loja -->
+        <a routerLink="/minha-loja/configuracoes" data-testid="home-card-loja" class="home-card bg-base-100 text-base-content border-base-300">
+            <ng-container *ngTemplateOutlet="cabecalho; context: { $implicit: 'settings', title: 'Configurações', iconClass: open ? 'text-success' : 'text-neutral' }"></ng-container>
+            <ng-container *ngTemplateOutlet="numero; context: { $implicit: open, text: open ? 'Aberta' : 'Fechada' }"></ng-container>
+            <span class="text-sm text-neutral">{{ storeHint }}</span>
+            <span class="text-xs text-neutral">horário, dados, endereço e estoque</span>
+        </a>
+
+        <!-- Histórico: sem número; no celular ocupa a linha toda para não sobrar meio card -->
+        <a routerLink="/minha-loja/pedidos/historico" data-testid="home-card-historico"
+            class="home-card home-card-wide home-card-compact col-span-2 lg:col-span-1 bg-base-100 text-base-content border-base-300">
+            <ng-container *ngTemplateOutlet="cabecalho; context: { $implicit: 'history', title: 'Histórico', iconClass: 'text-accent' }"></ng-container>
+            <span class="text-sm text-neutral">Pedidos entregues e cancelados, com filtros</span>
+        </a>
+    </nav>
+</div>

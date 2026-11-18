@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Definir endereço</title>
+</head>
+
+<body class="bg-primary bg-gradient-to-r from-primary to-secondary min-h-screen flex items-center justify-center px-4 py-12">
+
+  <div class="flex flex-col md:flex-row items-center justify-center w-full max-w-5xl bg-transparent">
+
+    <div class="mb-10 md:mb-0 md:mr-10 flex justify-center">
+      <img src="../assets/logo-h2.png" alt="logo" class="w-40 md:w-56 lg:w-64">
+    </div>
+
+    <div class="w-full max-w-md bg-white shadow-xl p-8 rounded-2xl">
+      <h2 class="text-2xl font-semibold text-center text-gray-800 mb-2">Onde você está?</h2>
+      <p class="text-gray-500 text-center mb-6 text-sm">
+        Informe seu endereço para vermos os fornecedores que atendem sua região.
+      </p>
+
+      <app-address-form (saved)="onSaved($event)"></app-address-form>
+    </div>
+  </div>
+</body>
+
+</html>

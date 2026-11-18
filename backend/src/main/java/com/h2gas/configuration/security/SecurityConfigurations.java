@@ -41,10 +41,21 @@ public class SecurityConfigurations {
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/test").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/cities").permitAll()
+                        // HU13: vitrine pública, só leitura — checkout, pedidos e dados completos da loja seguem com login
+                        .requestMatchers(HttpMethod.GET, "/api/suppliers/actives/open", "/api/suppliers/*/storefront",
+                                "/api/suppliers/*/reviews", "/api/product-items/by-supplier/*",
+                                "/api/product-items/by-supplier-open", "/api/product-types", "/api/category-products").permitAll()
+                        // HU20: o carrinho do visitante consulta preço e disponibilidade sem login
+                        .requestMatchers(HttpMethod.POST, "/api/cart/preview").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login/token/request").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/login/channels").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/login/token/validate").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/reset-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/reset-password/confirm").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/v3/api-docs", "/v3/api-docs/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/swagger-ui/**", "/swagger-ui.html").permitAll()
 //                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)

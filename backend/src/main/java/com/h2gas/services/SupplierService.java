@@ -1,22 +1,46 @@
 package com.h2gas.services;
 
+import com.h2gas.model.Coordinates;
+import com.h2gas.model.DeliveryFeeCalculator;
+import com.h2gas.model.DeliveryQuote;
+import com.h2gas.model.DeliveryTerms;
+import com.h2gas.model.dto.StorefrontFilter;
+
+import com.h2gas.enums.StorefrontSortEnum;
+import com.h2gas.exceptions.BusinessRuleException;
 import com.h2gas.exceptions.ResourceNotFoundException;
 import com.h2gas.model.dto.SupplierCreateDTO;
 import com.h2gas.model.dto.SupplierDTO;
+import com.h2gas.model.dto.SupplierSettingsDTO;
+import com.h2gas.model.dto.SupplierProfileDTO;
+import com.h2gas.model.dto.SupplierProfileRequestDTO;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
+import java.io.IOException;
+import org.springframework.transaction.annotation.Transactional;
 import com.h2gas.model.dto.SupplierSummaryDTO;
 import com.h2gas.model.entity.*;
 import com.h2gas.model.mapper.*;
+import com.h2gas.model.dto.ProductTypeChipDTO;
+import com.h2gas.model.dto.StoreReviewDTO;
+import com.h2gas.model.dto.StorefrontDTO;
+import com.h2gas.model.repository.ProductItemRepository;
+import com.h2gas.model.repository.ReviewRepository;
 import com.h2gas.model.repository.SupplierRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
+import com.h2gas.model.OpeningHours;
+import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
@@ -24,6 +48,19 @@ public class SupplierService {
 
     @Autowired
     private SupplierRepository supplierRepository;
+
+    @Autowired
+    private ReviewRepository reviewRepository;
+
+    @Autowired
+    private ProductItemRepository productItemRepository;
+
+    // HU18: hora de Brasília para "aberta agora"
+    @Autowired
+    private Clock clock;
+
+    @Autowired
+    private CloudinaryService cloudinaryService;
 
     @Autowired
     private SupplierMapper supplierMapper;
@@ -36,6 +73,10 @@ public class SupplierService {
 
     @Autowired
     private CityMapper cityMapper;
+
+    // HU17: coordenadas do CEP de origem da vitrine (cliente ou visitante), com cache por CEP
+    @Autowired
+    private GeocodingService geocodingService;
 
     @Autowired
     private CityService cityService;
@@ -56,8 +97,9 @@ public class SupplierService {
 //                .collect(Collectors.toList());
 //    }
 
-    public Page<SupplierDTO> findAllSuppliers(Pageable pageable) {
-        return supplierRepository.findAll(pageable)
+    public Page<SupplierDTO> findAllSuppliers(Boolean active, String q, Pageable pageable) {
+        String term = q == null || q.isBlank() ? null : q.trim();
+        return supplierRepository.findForApproval(active, term, pageable)
                 .map(supplierMapper::toDto);
     }
 
@@ -66,9 +108,138 @@ public class SupplierService {
                 .map(supplierMapper::toDto);
     }
 
-    public Page<SupplierDTO> findAllSuppliersOpenAndActive(Pageable pageable) {
-        return supplierRepository.findByActiveAndOpen(true, true, pageable)
-                .map(supplierMapper::toDto);
+    public Page<SupplierDTO> findAllSuppliersOpenAndActive(Long cityId, Pageable pageable) {
+        return supplierRepository.findOpenForCatalog(cityId, null, null, now(), pageable).map(this::toDtoWithOpen);
+    }
+
+    // HU18: aberta agora pelo horário de funcionamento (Brasília); não existe mais interruptor manual
+    public boolean isOpenNow(String id) {
+        Supplier supplier = findEntityById(id);
+        return OpeningHours.isOpenAt(supplier.getOpeningTime(), supplier.getClosingTime(), now());
+    }
+
+    private LocalTime now() {
+        return LocalTime.now(clock);
+    }
+
+    private SupplierDTO toDtoWithOpen(Supplier supplier) {
+        SupplierDTO dto = supplierMapper.toDto(supplier);
+        dto.setOpen(OpeningHours.isOpenAt(supplier.getOpeningTime(), supplier.getClosingTime(), now()));
+        return dto;
+    }
+
+    // HU13: o catálogo devolve a vitrine pública das lojas (sem dados internos), com a nota
+    // HU15: productTypeId filtra pelo tipo vendido; cada loja leva os tipos que vende
+    // HU16: sort escolhe a ordem. HU18: as fechadas também aparecem, sempre depois das abertas
+    public Page<StorefrontDTO> findAllSuppliersOpenAndActive(Long cityId, String q, Long productTypeId,
+                                                             StorefrontSortEnum sort, Pageable pageable) {
+        return findAllSuppliersOpenAndActive(cityId, q, productTypeId, sort, StorefrontFilter.NONE, pageable);
+    }
+
+    // HU17: filter.zipCode diz de onde medir a distância e o frete; deliveryMode/freeDelivery filtram no banco
+    public Page<StorefrontDTO> findAllSuppliersOpenAndActive(Long cityId, String q, Long productTypeId,
+                                                             StorefrontSortEnum sort, StorefrontFilter filter,
+                                                             Pageable pageable) {
+        String term = q == null || q.isBlank() ? null : q.trim().toLowerCase(java.util.Locale.ROOT);
+        Coordinates origin = filter.zipCode() == null ? null : geocodingService.findByZipCode(filter.zipCode()).orElse(null);
+        Page<Supplier> suppliers = supplierRepository.findForCatalog(cityId, term, productTypeId, true, sort.param(), now(),
+                filter.deliveryMode(), Boolean.TRUE.equals(filter.freeDelivery()), origin != null,
+                origin == null ? 0 : Math.toRadians(origin.latitude()), origin == null ? 0 : Math.toRadians(origin.longitude()),
+                pageable);
+        Map<String, StoreDelivery> deliveryById = suppliers.getContent().stream()
+                .collect(Collectors.toMap(Supplier::getId, supplier -> StoreDelivery.of(supplier, origin, filter.zipCode() != null)));
+        Page<SupplierDTO> page = suppliers.map(this::toDtoWithOpen);
+        addRatings(page.getContent());
+        Map<String, List<ProductTypeChipDTO>> typesBySupplier = productTypesBySupplier(
+                page.getContent().stream().map(SupplierDTO::getId).toList());
+        return page.map(dto -> toStorefront(dto, typesBySupplier.getOrDefault(dto.getId(), List.of()), deliveryById.get(dto.getId())));
+    }
+
+    // HU17: o que o card mostra da entrega. Sem CEP de origem: só as modalidades e o "grátis" (sem distância nem frete).
+    // Com CEP mas sem coordenada (da loja ou da origem): entrega com a taxa fixa e sem distância (decisão do autor).
+    private record StoreDelivery(boolean offersDelivery, boolean offersPickup, boolean freeDelivery,
+                                 java.math.BigDecimal distanceKm, java.math.BigDecimal fee, Boolean deliversHere) {
+
+        static StoreDelivery of(Supplier supplier, Coordinates origin, boolean hasZipCode) {
+            DeliveryTerms terms = supplier.deliveryTerms();
+            if (!hasZipCode) {
+                return new StoreDelivery(supplier.isOffersDelivery(), supplier.isOffersPickup(), terms.freeDelivery(), null, null, null);
+            }
+            Coordinates store = supplier.getAddress() == null ? null : supplier.getAddress().coordinates();
+            DeliveryQuote quote = DeliveryFeeCalculator.quote(terms, store, origin);
+            return new StoreDelivery(supplier.isOffersDelivery(), supplier.isOffersPickup(), terms.freeDelivery(),
+                    quote.distanceKm(), quote.fee(), quote.available());
+        }
+    }
+
+    // HU13: página da loja na vitrine pública
+    public StorefrontDTO findStorefront(String id) {
+        SupplierDTO dto = findById(id);
+        StoreDelivery delivery = StoreDelivery.of(findEntityById(id), null, false);
+        return toStorefront(dto, productTypesBySupplier(List.of(id)).getOrDefault(id, List.of()), delivery);
+    }
+
+    // HU15: ordem alfabética dos selos em pt-BR (acento não muda o lugar: "Água" antes de "Gás")
+    private static final java.text.Collator ALFABETICA_PT_BR =
+            java.text.Collator.getInstance(java.util.Locale.forLanguageTag("pt-BR"));
+
+    // HU15: tipos de produto das lojas da página, lidos em uma consulta agrupada (como a nota em addRatings)
+    private Map<String, List<ProductTypeChipDTO>> productTypesBySupplier(List<String> supplierIds) {
+        if (supplierIds.isEmpty()) {
+            return Map.of();
+        }
+        return productItemRepository.findTypesBySupplierIds(supplierIds).stream()
+                .collect(Collectors.groupingBy(ProductItemRepository.SupplierProductTypeRow::getSupplierId,
+                        Collectors.mapping(row -> new ProductTypeChipDTO(row.getTypeId(), row.getTypeName(), row.getTypeIcon()),
+                                Collectors.collectingAndThen(Collectors.toList(), tipos -> tipos.stream()
+                                        .sorted((a, b) -> ALFABETICA_PT_BR.compare(a.name(), b.name()))
+                                        .toList()))));
+    }
+
+    private static StorefrontDTO toStorefront(SupplierDTO d, List<ProductTypeChipDTO> productTypes, StoreDelivery delivery) {
+        return new StorefrontDTO(d.getId(), d.getName(), d.getDescription(), d.getLogoUrl(), d.getBannerUrl(),
+                d.getOpeningTime(), d.getClosingTime(), d.getAverageDeliveryTime(), d.isOpen(), d.getCityId(), d.getCityName(),
+                d.getAddressNeighborhood(), d.getAverageRating(), d.getReviewCount(), productTypes,
+                delivery.offersDelivery(), delivery.offersPickup(), delivery.distanceKm(), delivery.fee(),
+                delivery.deliversHere(), delivery.freeDelivery());
+    }
+
+    // F7 §5.27: avaliações da loja com o primeiro nome do cliente; comentário em branco vira nulo
+    public Page<StoreReviewDTO> findReviews(String supplierId, Pageable pageable) {
+        if (!supplierRepository.existsById(supplierId)) {
+            throw new ResourceNotFoundException("Não encontrado nenhum Fornecedor com esse id: " + supplierId);
+        }
+        return reviewRepository.findStoreReviews(supplierId, pageable).map(row -> new StoreReviewDTO(
+                row.getId(),
+                firstName(row.getCustomerName()),
+                row.getRating(),
+                row.getComment() == null || row.getComment().isBlank() ? null : row.getComment().trim(),
+                row.getDeliveredAt()));
+    }
+
+    private static String firstName(String fullName) {
+        if (fullName == null || fullName.isBlank()) {
+            return "Cliente";
+        }
+        return fullName.trim().split("\\s+")[0];
+    }
+
+    // F7 §5.25: nota e contagem das lojas da página, lidas em uma consulta agrupada
+    private void addRatings(List<SupplierDTO> suppliers) {
+        if (suppliers.isEmpty()) {
+            return;
+        }
+        Map<String, ReviewRepository.SupplierRatingSummary> byId = reviewRepository
+                .summarizeBySupplierIds(suppliers.stream().map(SupplierDTO::getId).toList())
+                .stream()
+                .collect(Collectors.toMap(ReviewRepository.SupplierRatingSummary::getSupplierId, Function.identity()));
+        suppliers.forEach(dto -> {
+            ReviewRepository.SupplierRatingSummary summary = byId.get(dto.getId());
+            if (summary != null) {
+                dto.setAverageRating(Math.round(summary.getAverage() * 10) / 10.0);
+                dto.setReviewCount(summary.getTotal());
+            }
+        });
     }
 
     public List<SupplierSummaryDTO> findAllSuppliersSummary() {
@@ -80,8 +251,10 @@ public class SupplierService {
 
     public SupplierDTO findById(String id) {
         Optional<Supplier> supplierOptional = supplierRepository.findById(id);
-        return supplierOptional.map(supplierMapper::toDto).orElseThrow(()
+        SupplierDTO dto = supplierOptional.map(this::toDtoWithOpen).orElseThrow(()
                 -> new ResourceNotFoundException("Não encontrado nenhum Fornecedor com esse id: " + id));
+        addRatings(List.of(dto)); // F7 §5.26: cabeçalho da loja mostra a nota
+        return dto;
     }
 
     public Supplier findEntityById(String id) {
@@ -101,7 +274,7 @@ public class SupplierService {
         Address address = null;
 
         if (city == null) {
-            throw new ResourceNotFoundException("City not found");
+            throw new ResourceNotFoundException("Cidade não encontrada.");
         }
         if (supplierDTO.getAddressId() != null) {
              address = addressService.findByIdEntity(supplierDTO.getAddressId());
@@ -129,7 +302,7 @@ public class SupplierService {
 
     public Supplier createSupplier(Supplier supplier) {
 //        if (supplier.getCity() == null || supplier.getAddress() == null) {
-//            throw new BusinessRuleException("City e Address devem estar definidos antes de salvar.");
+//            throw new BusinessRuleException("Cidade e endereço devem estar definidos antes de salvar.");
 //        }
 
         supplier.setActive(false);
@@ -200,7 +373,7 @@ public class SupplierService {
                 long minutes = Long.parseLong(times.get("averageDeliveryTime"));
                 supplier.setAverageDeliveryTime(Duration.ofMinutes(minutes));
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Valor inválido para averageDeliveryTime: " + times.get("averageDeliveryTime"));
+                throw new BusinessRuleException("Tempo médio de entrega inválido: informe os minutos.");
             }
         }
         supplierRepository.save(supplier);
@@ -208,12 +381,122 @@ public class SupplierService {
 
 
 
-    public void updateStatusOpenClosed(String id, boolean openClose) {
-        Supplier supplier = supplierRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Fornecedor com " + id + " não encontrado"));
+    public static final String INVALID_LOGO_MESSAGE = "Envie uma imagem JPG, PNG ou WEBP de até 1 MB.";
+    private static final long MAX_LOGO_BYTES = 1_048_576;
+    private static final java.util.Set<String> LOGO_TYPES = java.util.Set.of("image/jpeg", "image/png", "image/webp");
+    public static final String INVALID_BANNER_MESSAGE = "Envie uma imagem JPG, PNG ou WEBP de até 2 MB.";
+    private static final long MAX_BANNER_BYTES = 2_097_152;
 
-        supplier.setOpen(openClose);
+    // F7 fatia 6: perfil e logo da loja; o id vem sempre do token (controller)
+    public SupplierProfileDTO findMyProfile(String supplierId) {
+        return toProfile(findSupplier(supplierId));
+    }
+
+    // horário, cidade e aprovação ficam de fora: são da configuração, do endereço e do admin
+    @Transactional
+    public SupplierProfileDTO updateMyProfile(String supplierId, SupplierProfileRequestDTO request) {
+        Supplier supplier = findSupplier(supplierId);
+        supplier.setName(request.name().trim());
+        supplier.setPhoneNumber(request.phone());
+        supplier.setDescription(request.description() == null ? null : request.description().trim());
+        return toProfile(supplierRepository.save(supplier));
+    }
+
+    @Transactional
+    public String updateMyLogo(String supplierId, MultipartFile file) {
+        Supplier supplier = findSupplier(supplierId);
+        supplier.setLogoUrl(uploadStoreImage(file, MAX_LOGO_BYTES, INVALID_LOGO_MESSAGE));
+        return supplierRepository.save(supplier).getLogoUrl();
+    }
+
+    // F7 §5.26: banner da loja — mesma validação e envio da logo, com limite de 2 MB
+    @Transactional
+    public String updateMyBanner(String supplierId, MultipartFile file) {
+        Supplier supplier = findSupplier(supplierId);
+        supplier.setBannerUrl(uploadStoreImage(file, MAX_BANNER_BYTES, INVALID_BANNER_MESSAGE));
+        return supplierRepository.save(supplier).getBannerUrl();
+    }
+
+    @Transactional
+    public void removeMyBanner(String supplierId) {
+        Supplier supplier = findSupplier(supplierId);
+        supplier.setBannerUrl(null);
         supplierRepository.save(supplier);
+    }
+
+    private String uploadStoreImage(MultipartFile file, long maxBytes, String invalidMessage) {
+        if (file == null || file.isEmpty() || file.getSize() > maxBytes || !LOGO_TYPES.contains(file.getContentType())) {
+            throw new BusinessRuleException(invalidMessage);
+        }
+        Map<?, ?> uploaded;
+        try {
+            uploaded = cloudinaryService.upload(file);
+        } catch (IOException | RuntimeException e) {
+            // o SDK do Cloudinary lança RuntimeException quando a API recusa (credencial, assinatura, rede)
+            throw new ResponseStatusException(HttpStatus.BAD_GATEWAY, "Não foi possível enviar a imagem. Tente novamente.", e);
+        }
+        return CloudinaryService.secureUrl(uploaded);
+    }
+
+    @Transactional
+    public void removeMyLogo(String supplierId) {
+        Supplier supplier = findSupplier(supplierId);
+        supplier.setLogoUrl(null);
+        supplierRepository.save(supplier);
+    }
+
+    private static SupplierProfileDTO toProfile(Supplier s) {
+        Address a = s.getAddress();
+        City city = a != null && a.getCity() != null ? a.getCity() : s.getCity();
+        return new SupplierProfileDTO(s.getName(), s.getEmail(), s.getPhoneNumber(), s.getDescription(), s.getCnpj(), s.getLogoUrl(), s.getBannerUrl(),
+                a == null ? null : a.getId(), a == null ? null : a.getStreetName(), a == null ? null : a.getNumber(),
+                a == null ? null : a.getNeighborhood(), city == null ? null : city.getName(), city == null ? null : city.getState());
+    }
+
+    // F7 fatia 6: configurações da loja; o id vem sempre do token (controller)
+    public SupplierSettingsDTO findMySettings(String supplierId) {
+        return toSettings(findSupplier(supplierId));
+    }
+
+    @Transactional
+    public SupplierSettingsDTO updateMySettings(String supplierId, SupplierSettingsDTO settings) {
+        LocalTime opening = LocalTime.parse(settings.openingTime());
+        LocalTime closing = LocalTime.parse(settings.closingTime());
+        if (opening.equals(closing)) {
+            throw new BusinessRuleException("O horário de fechamento precisa ser diferente da abertura.");
+        }
+        if (!settings.offersDelivery() && !settings.offersPickup()) {
+            throw new BusinessRuleException("A loja precisa oferecer entrega ou retirada.");
+        }
+        Supplier supplier = findSupplier(supplierId);
+        supplier.setOpeningTime(opening);
+        supplier.setClosingTime(closing);
+        supplier.setAverageDeliveryTime(Duration.ofMinutes(settings.averageDeliveryTime()));
+        supplier.setLowStockThreshold(settings.lowStockThreshold());
+        supplier.setOffersDelivery(settings.offersDelivery());
+        supplier.setOffersPickup(settings.offersPickup());
+        supplier.setDeliveryRadiusKm(settings.deliveryRadiusKm());
+        supplier.setDeliveryBaseFee(settings.deliveryBaseFee());
+        supplier.setDeliveryFeePerKm(settings.deliveryFeePerKm());
+        return toSettings(supplierRepository.save(supplier));
+    }
+
+    private Supplier findSupplier(String id) {
+        return supplierRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Fornecedor com " + id + " não encontrado"));
+    }
+
+    private static SupplierSettingsDTO toSettings(Supplier supplier) {
+        return new SupplierSettingsDTO(
+                supplier.getOpeningTime() == null ? null : supplier.getOpeningTime().toString(),
+                supplier.getClosingTime() == null ? null : supplier.getClosingTime().toString(),
+                supplier.getAverageDeliveryTime() == null ? null : (int) supplier.getAverageDeliveryTime().toMinutes(),
+                supplier.getLowStockThreshold(),
+                supplier.isOffersDelivery(),
+                supplier.isOffersPickup(),
+                supplier.getDeliveryRadiusKm(),
+                supplier.getDeliveryBaseFee(),
+                supplier.getDeliveryFeePerKm());
     }
 
 //    public SupplierDTO findByUserIdSupplier(String userId) {

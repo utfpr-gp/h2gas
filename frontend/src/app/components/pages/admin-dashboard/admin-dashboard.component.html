@@ -1,0 +1,81 @@
+<div class="max-w-7xl w-full mx-auto px-4 md:px-8 pt-6 pb-24 md:pb-10">
+    <header class="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-800">Painel</h1>
+            <p class="text-sm text-gray-500">Números da plataforma H2Gás.</p>
+        </div>
+        <a routerLink="/admin/usuarios" class="btn btn-primary rounded-xl">
+            <span class="material-icons text-base">group</span>
+            Gerenciar usuários
+        </a>
+    </header>
+
+    <div *ngIf="loading" class="grid grid-cols-2 lg:grid-cols-4 gap-3" aria-busy="true">
+        <div *ngFor="let n of [1,2,3,4,5,6,7,8]" class="skeleton h-24 rounded-xl"></div>
+    </div>
+
+    <ng-container *ngIf="dashboard">
+        <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-2">Pedidos</h2>
+        <section class="grid grid-cols-2 lg:grid-cols-4 gap-3" aria-label="Pedidos e faturamento">
+            <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
+                <p class="text-xs text-gray-500">Pedidos hoje</p>
+                <p data-testid="kpi-orders-today" class="text-xl font-bold text-gray-800 mt-1">{{ dashboard.ordersToday }}</p>
+            </div>
+            <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
+                <p class="text-xs text-gray-500">Pedidos no mês</p>
+                <p data-testid="kpi-orders-month" class="text-xl font-bold text-gray-800 mt-1">{{ dashboard.ordersThisMonth }}</p>
+            </div>
+            <div class="col-span-2 bg-white rounded-xl shadow-md border border-gray-200 p-4">
+                <p class="text-xs text-gray-500">Faturamento do mês <span class="text-gray-400">(sem cancelados)</span></p>
+                <p data-testid="kpi-revenue" class="text-xl font-bold text-primary mt-1">{{ dashboard.revenueThisMonth | currency:'BRL':'symbol':'1.2-2' }}</p>
+            </div>
+        </section>
+
+        <section class="bg-white rounded-xl shadow-md border border-gray-200 p-4 mt-3" aria-label="Pedidos por status">
+            <p class="text-sm font-semibold text-gray-700 mb-3">Pedidos por status <span class="font-normal text-gray-400">({{ totalOrders }} no total)</span></p>
+            <ul class="space-y-2">
+                <li *ngFor="let s of statuses" [attr.data-testid]="'status-' + s.key" class="flex items-center gap-3 text-sm">
+                    <span class="w-28 shrink-0 text-gray-600">{{ s.label }}</span>
+                    <span class="flex-1 h-2 rounded-full bg-base-200 overflow-hidden">
+                        <span class="block h-full rounded-full bg-primary" [style.width.%]="statusPercent(s.key)"></span>
+                    </span>
+                    <span class="w-12 text-right font-semibold text-gray-800">{{ dashboard.ordersByStatus[s.key] ?? 0 }}</span>
+                </li>
+            </ul>
+        </section>
+
+        <h2 class="text-sm font-semibold text-gray-600 uppercase tracking-wide mt-6 mb-2">Plataforma</h2>
+        <section class="grid grid-cols-2 lg:grid-cols-4 gap-3" aria-label="Usuários e fornecedores">
+            <a routerLink="/admin/fornecedores" data-testid="kpi-pending-suppliers"
+                class="rounded-xl shadow-md border p-4 transition hover:shadow-lg focus-visible:outline-2 focus-visible:outline-primary"
+                [ngClass]="dashboard.pendingSuppliers ? 'bg-warning/15 border-warning' : 'bg-white border-gray-200'">
+                <p class="text-xs text-gray-600 flex items-center gap-1">
+                    <span class="material-icons text-sm">hourglass_top</span>
+                    Aguardando aprovação
+                </p>
+                <p class="text-xl font-bold text-gray-800 mt-1">{{ dashboard.pendingSuppliers }}</p>
+                <p class="text-xs text-primary font-semibold mt-1">Revisar fornecedores →</p>
+            </a>
+            <div class="bg-white rounded-xl shadow-md border border-gray-200 p-4">
+                <p class="text-xs text-gray-500">Fornecedores aprovados</p>
+                <p data-testid="kpi-active-suppliers" class="text-xl font-bold text-gray-800 mt-1">{{ dashboard.activeSuppliers }}</p>
+            </div>
+            <a routerLink="/admin/cidades" class="bg-white rounded-xl shadow-md border border-gray-200 p-4 transition hover:shadow-lg">
+                <p class="text-xs text-gray-500">Cidades atendidas</p>
+                <p data-testid="kpi-cities" class="text-xl font-bold text-gray-800 mt-1">{{ dashboard.cities }}</p>
+            </a>
+        </section>
+
+        <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-3" aria-label="Usuários por perfil">
+            <a *ngFor="let c of userCards" routerLink="/admin/usuarios" [queryParams]="{ perfil: c.type }"
+                [attr.data-testid]="'kpi-users-' + c.type"
+                class="bg-white rounded-xl shadow-md border border-gray-200 p-4 transition hover:shadow-lg">
+                <p class="text-xs text-gray-500 flex items-center gap-1">
+                    <span class="material-icons text-sm">{{ c.icon }}</span>
+                    {{ c.label }}
+                </p>
+                <p class="text-xl font-bold text-gray-800 mt-1">{{ dashboard.usersByType[c.type] ?? 0 }}</p>
+            </a>
+        </section>
+    </ng-container>
+</div>

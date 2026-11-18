@@ -4,6 +4,7 @@ import { AuthService } from '../services/auth.service';
 import { UserService } from '../services/user.service';
 import { catchError, map, of, tap } from 'rxjs';
 import { SupplierService } from '../services/supplier.service';
+import { navigateKeepingReturnUrl } from '../utils/return-url';
 
 export const authGuard: CanActivateFn = (route, state) => {
   
@@ -16,16 +17,21 @@ export const authGuard: CanActivateFn = (route, state) => {
   const user = userService.getUserLocalStorage();
 
   if (!authService.isLogged()) {
-    router.navigate(['/login']);
+    // HU13: a vitrine (catálogo e página da loja) abre sem login
+    if (route.data?.['allowVisitor']) {
+      authService.dropExpiredSession();
+      return true;
+    }
+    navigateKeepingReturnUrl(router, '/login', state.url); // HU13: volta para a página pedida depois de entrar
     return false;
   }
 
   if (expectedRoles && !expectedRoles.includes(user?.userType)) {
-    router.navigate(['/unauthorized']);
+    router.navigate(['/acesso-negado']);
     return false;
   }
   
-  const skipSupplierCheckRoutes = ['/aguardando-aprovacao', '/login', '/register'];
+  const skipSupplierCheckRoutes = ['/aguardando-aprovacao', '/login', '/cadastro'];
 
   const currentUrl = state.url; // pega a rota que o usuário está tentando acessar
 

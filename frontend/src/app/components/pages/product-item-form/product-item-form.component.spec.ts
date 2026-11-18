@@ -1,23 +1,203 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
+import { of, throwError } from 'rxjs';
+import { ToastrService } from 'ngx-toastr';
 
 import { ProductItemFormComponent } from './product-item-form.component';
+import { ProductItemService } from '../../../services/product-item.service';
+import { ProductTypeService } from '../../../services/product-type.service';
+import { CategoryProductService } from '../../../services/category-product.service';
+import { UserService } from '../../../services/user.service';
 
 describe('ProductItemFormComponent', () => {
   let component: ProductItemFormComponent;
   let fixture: ComponentFixture<ProductItemFormComponent>;
+  let productItemServiceSpy: jasmine.SpyObj<ProductItemService>;
+  let toastrSpy: jasmine.SpyObj<ToastrService>;
+  let navigateSpy: jasmine.Spy;
 
-  beforeEach(async () => {
+  const el = () => fixture.nativeElement as HTMLElement;
+  const byId = (id: string) => el().querySelector(`[data-testid=${id}]`) as HTMLElement | null;
+  const arquivo = new File(['x'], 'botijao.jpg', { type: 'image/jpeg' });
+  let productEdicao: Record<string, unknown> = {};
+
+  const preencher = (over: Record<string, unknown> = {}) =>
+    component.formProductItem.patchValue({
+      brand: 'Ultragaz', categoryProductId: 3, description: 'Botijão 13kg',
+      price: 100, stockQuantity: 10, ...over,
+    });
+
+  let erroAoBuscar: unknown = null;
+  beforeEach(() => { productEdicao = {}; erroAoBuscar = null; });
+
+  const setup = async (id: string | null = null) => {
+    productItemServiceSpy = jasmine.createSpyObj('ProductItemService', ['createWithFile', 'update', 'findByCode']);
+    productItemServiceSpy.createWithFile.and.returnValue(of({} as any));
+    productItemServiceSpy.update.and.returnValue(of({} as any));
+    productItemServiceSpy.findByCode.and.returnValue(of({
+      id: 5, publicId: 'k3f9x2ab01', brand: 'Liquigás', categoryProductId: 3, description: 'Edição',
+      price: 80, stockQuantity: 4, imageUrl: 'http://img/x.jpg', ...productEdicao,
+    } as any));
+    if (erroAoBuscar) productItemServiceSpy.findByCode.and.returnValue(throwError(() => erroAoBuscar));
+    const categoryServiceSpy = jasmine.createSpyObj('CategoryProductService', ['findAll']);
+    categoryServiceSpy.findAll.and.returnValue(of([{ id: 3, name: 'Gás 13kg', type: 'Gás' }] as any));
+    const userServiceSpy = jasmine.createSpyObj('UserService', ['getUserLocalStorage']);
+    userServiceSpy.getUserLocalStorage.and.returnValue({ id: 'f1', supplierId: 'f1' });
+    toastrSpy = jasmine.createSpyObj('ToastrService', ['success', 'warning', 'error']);
+
     await TestBed.configureTestingModule({
-      imports: [ProductItemFormComponent]
-    })
-    .compileComponents();
+      imports: [ProductItemFormComponent],
+      providers: [
+        { provide: ProductItemService, useValue: productItemServiceSpy },
+        { provide: ProductTypeService, useValue: jasmine.createSpyObj('ProductTypeService', ['findAll']) },
+        { provide: CategoryProductService, useValue: categoryServiceSpy },
+        { provide: UserService, useValue: userServiceSpy },
+        { provide: ToastrService, useValue: toastrSpy },
+        provideRouter([]),
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap(id ? { code: id } : {}) } } },
+      ],
+    }).compileComponents();
 
+    navigateSpy = spyOn(TestBed.inject(Router), 'navigate').and.resolveTo(true);
     fixture = TestBed.createComponent(ProductItemFormComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
+  };
+
+  afterEach(() => fixture.destroy());
+
+  // F12 Cenário 1: produto de outra loja não abre; avisa e volta para a lista
+  it('deveVoltarParaAListaComProdutoDeOutraLoja', async () => {
+    erroAoBuscar = { status: 403, error: { message: 'Este produto não é da sua loja.' } };
+    await setup('outraloja1');
+
+    expect(toastrSpy.error).toHaveBeenCalledWith('Este produto não é da sua loja.');
+    expect(navigateSpy).toHaveBeenCalledWith(['/minha-loja/produtos']);
   });
 
-  it('should create', () => {
+  it('should create', async () => {
+    await setup();
     expect(component).toBeTruthy();
+  });
+
+  it('deveExigirPrecoParaSubmeter', async () => {
+    await setup();
+    component.file = arquivo;
+
+    preencher({ price: null });
+    expect(component.formProductItem.invalid).toBeTrue();
+    component.saveItemProduct();
+
+    expect(productItemServiceSpy.createWithFile).not.toHaveBeenCalled();
+    expect(toastrSpy.warning).toHaveBeenCalledTimes(1);
+    expect(component.isLoading).toBeFalse();
+  });
+
+  it('naoDeveAceitarValorNegativo', async () => {
+    await setup();
+
+    preencher({ price: -1 });
+    expect(component.formProductItem.get('price')!.hasError('min')).toBeTrue();
+  });
+
+  // ---- HU21: um preço só ----
+  it('deveTerUmUnicoCampoDePreco', async () => {
+    await setup();
+
+    expect(byId('price-input')).not.toBeNull();
+    expect(byId('shipping-fee-input')).toBeNull();
+    expect(byId('free-shipping-checkbox')).toBeNull();
+    expect(byId('price-preview')).toBeNull();
+    expect(component.formProductItem.get('shippingFee')).toBeNull();
+  });
+
+  it('deveEnviarSoOPreco', async () => {
+    await setup();
+    component.file = arquivo;
+    preencher();
+
+    component.saveItemProduct();
+
+    const enviado = productItemServiceSpy.createWithFile.calls.mostRecent().args[0] as any;
+    expect(enviado.price).toBe(100);
+    expect('shippingFee' in enviado).toBeFalse();
+    expect('priceDelivery' in enviado).toBeFalse();
+    expect('pricePickup' in enviado).toBeFalse();
+    expect(productItemServiceSpy.createWithFile.calls.mostRecent().args[1]).toBe(arquivo);
+    expect(navigateSpy).toHaveBeenCalledWith(['/minha-loja/produtos']);
+  });
+
+  it('deveExigirImagemNoCadastro', async () => {
+    await setup();
+    preencher();
+
+    component.saveItemProduct();
+
+    expect(productItemServiceSpy.createWithFile).not.toHaveBeenCalled();
+    expect(toastrSpy.warning).toHaveBeenCalledWith(jasmine.stringMatching('imagem'));
+    expect(component.isLoading).toBeFalse();
+  });
+
+  it('deveAceitarImagemSoltaNaAreaDeUpload', async () => {
+    await setup();
+    const area = byId('image-drop')!;
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(arquivo);
+
+    area.dispatchEvent(new DragEvent('drop', { dataTransfer, bubbles: true, cancelable: true }));
+
+    expect(component.file).toBe(arquivo);
+  });
+
+  it('deveIgnorarArquivoQueNaoEImagem', async () => {
+    await setup();
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(new File(['x'], 'nota.pdf', { type: 'application/pdf' }));
+
+    byId('image-drop')!.dispatchEvent(new DragEvent('drop', { dataTransfer, bubbles: true, cancelable: true }));
+
+    expect(component.file).toBeUndefined();
+    expect(toastrSpy.warning).toHaveBeenCalledWith(jasmine.stringMatching('imagem'));
+  });
+
+  it('deveVoltarParaListaAoCancelar', async () => {
+    await setup();
+
+    (byId('cancel-product') as HTMLButtonElement).click();
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/minha-loja/produtos']);
+  });
+
+  // F12 Cenário 1b: a URL traz o código; o PUT segue pelo id que vem do produto
+  it('deveCarregarPeloCodigoESalvarPeloId', async () => {
+    await setup('k3f9x2ab01');
+    expect(productItemServiceSpy.findByCode).toHaveBeenCalledWith('k3f9x2ab01');
+
+    preencher({ price: 90 });
+    component.updateProduct();
+
+    expect(productItemServiceSpy.update.calls.mostRecent().args[0]).toBe(5);
+  });
+
+  it('deveCarregarOPrecoNaEdicao', async () => {
+    await setup('k3f9x2ab01');
+
+    expect(component.formProductItem.value.price).toBe(80);
+    expect(component.formProductItem.value.categoryProductId).toBe(3);
+  });
+
+  it('deveSalvarAEdicaoSemExigirNovaImagem', async () => {
+    await setup('k3f9x2ab01');
+    preencher({ price: 90 });
+
+    component.updateProduct();
+
+    const enviado = productItemServiceSpy.update.calls.mostRecent().args[1] as any;
+    expect(productItemServiceSpy.update.calls.mostRecent().args[0]).toBe(5);
+    expect(enviado.price).toBe(90);
+    expect('shippingFee' in enviado).toBeFalse();
+    expect('priceDelivery' in enviado).toBeFalse();
+    expect('pricePickup' in enviado).toBeFalse();
+    expect(navigateSpy).toHaveBeenCalledWith(['/minha-loja/produtos']);
   });
 });

@@ -1,138 +1,149 @@
-<div class="bg-[#0017bf] relative">
+<div class="{{ t.bar }} relative">
     <div class="container mx-auto flex h-16 items-center justify-between px-4">
       <!-- LOGO + BOTÃO MOBILE -->
       <div class="flex items-center gap-2">
-        <!-- Botão do menu mobile -->
+        <!-- menu mobile só de fornecedor e admin: o cliente usa a bottom tab bar e o entregador as abas dele -->
         <button
+          *ngIf="hasMobileMenu"
+          type="button"
+          data-testid="mobile-menu-button"
           (click)="toggleMobileMenu()"
-          class="lg:hidden text-white hover:bg-white/10 p-2 rounded-md focus:outline-none"
+          aria-controls="mobile-menu"
+          [attr.aria-expanded]="mobileMenuOpen"
+          [attr.aria-label]="mobileMenuOpen ? 'Fechar menu' : 'Abrir menu'"
+          class="lg:hidden {{ t.text }} {{ t.hover }} p-2 rounded-md focus:outline-none focus-visible:ring-2 {{ t.ring }} flex items-center"
         >
-          <i class="fas fa-bars text-xl"></i>
+          <span class="material-icons" aria-hidden="true">{{ mobileMenuOpen ? 'close' : 'menu' }}</span>
         </button>
-  
+
         <!-- Logo -->
         <div class="flex items-center">
-            <a  href="/inicio" class="hover:bg-white/10 px-3 py-2 rounded-md">
-                <div class="h-9 w-9 rounded-full flex items-center justify-center mr-2">
-                    <img src="../assets/logo-sem-titulo.png" alt="logo" />
-                  </div>
-            </a>
-          <span
-            class="text-white text-xl font-bold tracking-tight hidden sm:inline-block"
-          >
-            H2Gás
-          </span>
+          <a [routerLink]="homeRoute" aria-label="Ir para a tela inicial" class="{{ t.hover }} px-3 py-2 rounded-md">
+            <div class="h-9 w-9 rounded-full flex items-center justify-center mr-2">
+              <img src="../assets/logo-sem-titulo.png" alt="logo" />
+            </div>
+          </a>
+          <span class="{{ t.brand }} text-xl font-bold tracking-tight hidden sm:inline-block">H2Gás</span>
         </div>
       </div>
-  
+
+      <!-- ENDEREÇO ATIVO -->
+      <button
+        *ngIf="isShopper && locationContext.current()"
+        (click)="editAddress()"
+        class="flex items-center gap-1 min-w-0 px-2 sm:px-3 py-2 text-sm {{ t.text }} {{ t.hover }} rounded-md transition-colors"
+      >
+        <span class="material-icons text-[18px] shrink-0" aria-hidden="true">location_on</span>
+        <span class="max-w-[100px] min-[420px]:max-w-[140px] sm:max-w-[220px] truncate">{{ locationContext.current()?.label }}</span>
+        <span class="material-icons text-[14px] opacity-70" aria-hidden="true">edit</span>
+      </button>
+
       <!-- MENU DESKTOP + CARRINHO (compartilhado) -->
-      <div class="flex items-center gap-2 relative z-40">
+      <div class="flex items-center gap-2 relative z-40 shrink-0">
         <!-- MENU DESKTOP -->
-        <nav class="hidden lg:flex items-center gap-2">
-          <a
-            href="/inicio"
-            class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
-          >
-            <i class="fas fa-home"></i><span class="ml-2">Início</span>
+        <nav *ngIf="!isDeliverer" aria-label="Navegação principal" class="hidden lg:flex items-center gap-1">
+          <a *ngIf="isShopper" routerLink="/inicio" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
+            <span class="material-icons" aria-hidden="true">home</span><span>Início</span>
           </a>
-  
-          <!-- Dropdown Produtos -->
-          <div
-            *ngIf="user?.userType === 'ADMIN' || user?.userType === 'SUPPLIER'"
-            class="relative"
-          >
-            <button
-              (click)="toggleProductsMenu()"
-              class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors focus:outline-none"
-            >
-              <i class="fa-solid fa-fire-flame-simple"></i>
-              <span class="ml-2">Produtos</span>
-              <i
-                [ngClass]="{'rotate-180': productsMenuOpen}"
-                class="fas fa-chevron-down ml-1 text-xs transition-transform"
-              ></i>
-            </button>
-  
-            <ul
-              *ngIf="productsMenuOpen"
-              class="absolute bg-white rounded-md shadow-md mt-2 min-w-[180px] z-50"
-            >
-              <li>
-                <a
-                  href="/product-items"
-                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >Item produtos</a
-                >
-              </li>
-              <li>
-                <a
-                  href="/category-products"
-                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >Categoria de produtos</a
-                >
-              </li>
-            </ul>
-          </div>
-  
-          <a
-            *ngIf="user?.userType === 'ADMIN' || user?.userType === 'CUSTOMER'"
-            href="/meus-pedidos"
-            class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
-          >
-            <i class="fas fa-clipboard-list"></i><span class="ml-2">Pedidos</span>
-          </a>
-  
-          <a
-            *ngIf="user?.userType === 'ADMIN'"
-            href="/register-city"
-            class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
-          >
-            <i class="fas fa-map-marked-alt"></i><span class="ml-2">Cidades</span>
-          </a>
-  
-          <a
-            *ngIf="user?.userType === 'ADMIN'"
-            href="/supplier-approval"
-            class="flex items-center px-3 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-md transition-colors"
-          >
-            <i class="fas fa-store"></i><span class="ml-2">Fornecedores</span>
+
+          <ng-container *ngIf="isAdmin">
+            <a routerLink="/admin" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
+              <span class="material-icons" aria-hidden="true">space_dashboard</span><span>Painel</span>
+            </a>
+            <a routerLink="/admin/usuarios" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
+              <span class="material-icons" aria-hidden="true">group</span><span>Usuários</span>
+            </a>
+            <a routerLink="/admin/fornecedores" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
+              <span class="material-icons" aria-hidden="true">storefront</span><span>Fornecedores</span>
+            </a>
+            <a routerLink="/admin/cidades" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
+              <span class="material-icons" aria-hidden="true">map</span><span>Cidades</span>
+            </a>
+            <a routerLink="/admin/tipos" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
+              <span class="material-icons" aria-hidden="true">category</span><span>Tipos</span>
+            </a>
+            <a routerLink="/admin/categorias" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
+              <span class="material-icons" aria-hidden="true">label</span><span>Categorias</span>
+            </a>
+            <a routerLink="/admin/configuracoes" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
+              <span class="material-icons" aria-hidden="true">settings</span><span>Configurações</span>
+            </a>
+          </ng-container>
+
+          <!-- F9: fornecedor — Início (hub), Pedidos e Produtos; o resto se abre pelos cards do hub -->
+          <ng-container *ngIf="isSupplier">
+            <a routerLink="/minha-loja" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
+              <span class="material-icons" aria-hidden="true">space_dashboard</span><span>Início</span>
+            </a>
+            <a routerLink="/minha-loja/pedidos" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
+              <span class="material-icons" aria-hidden="true">inbox</span><span>Pedidos</span>
+            </a>
+            <a routerLink="/minha-loja/produtos" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
+              <span class="material-icons" aria-hidden="true">local_fire_department</span><span>Produtos</span>
+            </a>
+            <!-- F10: Configurações com um atalho para cada parte da tela da loja -->
+            <div class="relative" data-settings-menu>
+              <button type="button" data-testid="settings-menu-button" (click)="settingsMenuOpen = !settingsMenuOpen"
+                [attr.aria-expanded]="settingsMenuOpen" aria-haspopup="true" aria-controls="settings-menu"
+                class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors focus:outline-none [&>.material-icons]:text-[20px]">
+                <span class="material-icons" aria-hidden="true">settings</span><span>Configurações</span>
+                <span class="material-icons text-[18px]! transition-transform" [class.rotate-180]="settingsMenuOpen" aria-hidden="true">expand_more</span>
+              </button>
+              <ul *ngIf="settingsMenuOpen" id="settings-menu" data-testid="settings-menu" @fadeIn
+                class="absolute right-0 mt-2 w-60 bg-white rounded-xl shadow-xl border border-gray-200 py-1 z-50 text-gray-800">
+                <li *ngFor="let sec of settingsSections">
+                  <a routerLink="/minha-loja/configuracoes" [fragment]="sec.id" (click)="settingsMenuOpen = false"
+                    class="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-100 min-h-11">
+                    <span class="material-icons text-[20px] text-primary" aria-hidden="true">{{ sec.icon }}</span>{{ sec.label }}
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </ng-container>
+
+          <a *ngIf="isCustomer" routerLink="/meus-pedidos" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-2 px-3 py-2 text-sm font-medium {{ t.text }} {{ t.hover }} rounded-md transition-colors [&>.material-icons]:text-[20px]">
+            <span class="material-icons" aria-hidden="true">receipt_long</span><span>Pedidos</span>
           </a>
         </nav>
-  
-        <!-- Drawer do carrinho (funciona em desktop e mobile) -->
-        <div class="drawer drawer-end">
-          <input id="cart-drawer" type="checkbox" class="drawer-toggle" />
+
+        <!-- Drawer do carrinho (desktop e mobile): só o cliente compra -->
+        <div *ngIf="isShopper" class="drawer drawer-end">
+          <input id="cart-drawer" type="checkbox" class="drawer-toggle" (change)="onCartToggle($any($event.target).checked)" />
   
           <!-- Botões que abrem o carrinho -->
           <div class="drawer-content flex items-center">
             <!-- Ícone desktop -->
             <label
               for="cart-drawer"
-              class="hidden lg:inline-block relative cursor-pointer p-2 rounded-md text-white hover:bg-white/10"
+              class="hidden lg:inline-block relative cursor-pointer p-2 rounded-md {{ t.text }} {{ t.hover }}"
             >
-              <i class="fas fa-shopping-cart text-lg"></i>
-              <div
-                class="absolute -top-1 -right-1 badge badge-info text-white badge-xs"
+              <span class="material-icons block" aria-hidden="true">shopping_cart</span>
+              <span
+                *ngIf="cartCount"
+                data-testid="cart-count"
+                class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-info text-info-content text-[11px] font-bold leading-none flex items-center justify-center ring-2 ring-primary"
               >
-                {{ cartProducts!!.length }}
-              </div>
+                {{ cartCount }}
+              </span>
             </label>
   
             <!-- Ícone mobile -->
             <label
               for="cart-drawer"
-              class="lg:hidden relative cursor-pointer p-2 rounded-md text-white hover:bg-white/10"
+              class="lg:hidden relative cursor-pointer p-2 rounded-md {{ t.text }} {{ t.hover }}"
             >
-              <i class="fas fa-shopping-cart text-lg"></i>
-              <div
-                class="absolute -top-1 -right-1 badge badge-info text-white badge-xs"
+              <span class="material-icons block" aria-hidden="true">shopping_cart</span>
+              <span
+                *ngIf="cartCount"
+                data-testid="cart-count"
+                class="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-info text-info-content text-[11px] font-bold leading-none flex items-center justify-center ring-2 ring-primary"
               >
-                {{ cartProducts!!.length }}
-              </div>
+                {{ cartCount }}
+              </span>
             </label>
           </div>
   
-          <!-- Sidebar do carrinho -->
+          <!-- Sidebar do carrinho — HU20: itens, preços e disponibilidade vêm do backend -->
           <div class="drawer-side z-50">
             <label for="cart-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
             <div
@@ -144,86 +155,124 @@
                 <div>
                   <h2 class="text-xl font-bold text-gray-800">Carrinho</h2>
                   <p class="text-sm text-gray-500">
-                    {{ cartProducts!!.length }} item(s)
+                    {{ cartCount }} item(s)
                   </p>
                 </div>
               </div>
   
               <div
-                *ngIf="!cartProducts || cartProducts.length === 0"
+                *ngIf="!cartLines.length"
                 class="p-6 text-center text-gray-500"
               >
                 Seu carrinho está vazio
               </div>
+
+              <div *ngIf="cartLines.length && !cartPreview && cartPreviewLoading" data-testid="cart-loading"
+                class="p-6 text-center text-gray-500" aria-live="polite">
+                Carregando o carrinho…
+              </div>
   
-              <div *ngIf="cartProducts && cartProducts.length" class="p-6 space-y-4">
+              <div *ngIf="cartLines.length && cartPreview" class="p-6 space-y-4" [class.opacity-60]="cartPreviewLoading">
                 <div
-                  *ngFor="let cartProduct of cartProducts"
-                  class="flex items-center justify-between p-4 bg-white rounded-lg border border-gray-200"
+                  *ngFor="let item of cartPreview.items; trackBy: trackByCartItem"
+                  data-testid="cart-item"
+                  class="flex items-center justify-between gap-3 p-4 bg-white rounded-lg border"
+                  [ngClass]="item.available ? 'border-gray-200' : 'border-error/40 bg-error/5'"
                 >
-                  <div class="flex items-center space-x-4">
+                  <div class="flex items-center gap-4 min-w-0">
                     <img
-                      alt="Produto"
-                      class="w-16 h-16 object-contain"
-                      [src]="cartProduct.imageUrl"
+                      *ngIf="item.imageUrl"
+                      alt=""
+                      class="w-16 h-16 object-contain shrink-0"
+                      [src]="item.imageUrl"
                     />
-                    <div>
+                    <div class="min-w-0">
                       <h3 class="font-semibold text-gray-800">
-                        {{ cartProduct.type }} {{ cartProduct.brand }}
-                        {{ cartProduct.category }}
+                        {{ item.brand ? (item.type + ' ' + item.brand + ' ' + item.category) : 'Produto indisponível' }}
                       </h3>
-                      <p class="text-sm text-gray-500">
-                        {{ cartProduct.price | currency:'BRL':'symbol':'1.2-2' }}
+                      <p *ngIf="item.available" class="text-sm text-gray-500">
+                        {{ item.unitPrice | currency:'BRL':'symbol':'1.2-2' }}
+                        <span class="text-xs">{{ deliveryMode === 'PICKUP' ? 'retirada' : 'entrega' }}</span>
+                      </p>
+                      <p *ngIf="!item.available" data-testid="cart-item-unavailable" class="text-sm font-semibold text-error">
+                        {{ unavailableLabel(item) }}
                       </p>
                     </div>
                   </div>
   
-                  <div class="flex items-center space-x-2">
-                    <button
-                      class="btn btn-square btn-sm"
-                      (click)="minusClickCart(cartProduct)"
-                      [disabled]="(cartProduct.quantitySelect ?? min) <= min"
-                    >
-                      –
-                    </button>
-  
-                    <input
-                      type="number"
-                      class="input input-bordered input-sm w-16 text-center"
-                      [(ngModel)]="cartProduct.quantitySelect"
-                      [min]="min"
-                      (input)="onQuantityInput(cartProduct)"
-                      readonly
-                    />
-  
-                    <button
-                      class="btn btn-square btn-sm"
-                      (click)="plusClickCart(cartProduct)"
-                      [disabled]="(cartProduct.quantitySelect ?? 0) >= (cartProduct.stockQuantity ?? 0)"
-                    >
-                      +
-                    </button>
+                  <div class="flex items-center gap-2 shrink-0">
+                    <ng-container *ngIf="item.available">
+                      <button
+                        type="button"
+                        class="btn btn-square btn-sm"
+                        aria-label="Diminuir quantidade"
+                        (click)="minusClickCart(item)"
+                        [disabled]="item.quantity <= min"
+                      >
+                        –
+                      </button>
+                      <span data-testid="cart-item-quantity" class="w-8 text-center font-semibold">{{ item.quantity }}</span>
+                      <button
+                        type="button"
+                        class="btn btn-square btn-sm"
+                        aria-label="Aumentar quantidade"
+                        (click)="plusClickCart(item)"
+                        [disabled]="item.quantity >= (item.stockQuantity ?? 0)"
+                      >
+                        +
+                      </button>
+                    </ng-container>
   
                     <button
-                      class="text-red-500 hover:text-red-700 cursor-pointer"
-                      (click)="deleteItemCart(cartProduct)"
+                      type="button"
+                      data-testid="cart-item-remove"
+                      class="text-red-500 hover:text-red-700 cursor-pointer flex items-center gap-1"
+                      aria-label="Remover do carrinho"
+                      (click)="deleteItemCart(item)"
                     >
-                      <i class="fas fa-trash"></i>
+                      <span class="material-icons text-[20px]" aria-hidden="true">delete</span>
+                      <span *ngIf="!item.available" class="text-sm font-semibold">Remover</span>
                     </button>
                   </div>
                 </div>
               </div>
   
-              <div *ngIf="cartProducts && cartProducts.length" class="p-6 border-t border-gray-200">
-                <div class="flex justify-between items-center mb-4">
-                  <span class="text-lg font-medium text-gray-800">Total:</span>
-                  <span class="text-xl font-bold text-gray-900">
-                    {{ totalPrice | currency:'BRL':'symbol':'1.2-2' }}
-                  </span>
-                </div>
+              <div *ngIf="cartLines.length" class="p-6 border-t border-gray-200">
+                <!-- HU17: subtotal, frete e total vêm do backend (RN01) -->
+                <dl class="space-y-1 mb-4 text-sm">
+                  <div class="flex justify-between" data-testid="cart-subtotal">
+                    <dt class="text-gray-500">Subtotal</dt>
+                    <dd class="tabular-nums">{{ cartPreview ? (cartPreview.subtotal | currency:'BRL':'symbol':'1.2-2') : '—' }}</dd>
+                  </div>
+                  <div class="flex justify-between gap-3" data-testid="cart-fee">
+                    <dt class="text-gray-500">Frete</dt>
+                    <dd class="text-right tabular-nums">
+                      <ng-container *ngIf="deliveryMode === 'PICKUP'">grátis (retirada)</ng-container>
+                      <ng-container *ngIf="deliveryMode === 'DELIVERY'">
+                        <ng-container *ngIf="cartPreview?.deliversHere === false">não entrega no seu endereço · só retirada</ng-container>
+                        <ng-container *ngIf="cartPreview?.deliversHere !== false && cartPreview?.deliveryFee != null">
+                          {{ cartPreview!.deliveryFee === 0 ? 'grátis' : (cartPreview!.deliveryFee | currency:'BRL':'symbol':'1.2-2') }}
+                        </ng-container>
+                        <ng-container *ngIf="cartPreview?.deliversHere !== false && cartPreview?.deliveryFee == null">calculado no checkout</ng-container>
+                      </ng-container>
+                    </dd>
+                  </div>
+                  <div class="flex justify-between items-center pt-1">
+                    <dt class="text-lg font-medium text-gray-800">Total</dt>
+                    <dd data-testid="cart-total" class="text-xl font-bold text-gray-900 tabular-nums">
+                      {{ cartPreview ? ((cartPreview.total ?? cartPreview.subtotal) | currency:'BRL':'symbol':'1.2-2') : '—' }}
+                    </dd>
+                  </div>
+                </dl>
+                <p *ngIf="cartHasUnavailable" data-testid="cart-blocked" class="text-sm text-error mb-3">
+                  Remova os itens indisponíveis para finalizar.
+                </p>
                 <button
-                  (click)="navigate('resumo-pedido')"
-                  class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg"
+                  type="button"
+                  (click)="checkout()"
+                  data-testid="checkout-button"
+                  [disabled]="cartHasUnavailable"
+                  class="btn btn-accent w-full rounded-lg min-h-11"
                 >
                   Finalizar Pedido
                 </button>
@@ -232,85 +281,108 @@
           </div>
         </div>
   
-        <!-- Dropdown Usuário -->
-        <div class="relative" (clickOutside)="closeUserMenu()">
-          <button
-            (click)="toggleUserMenu()"
-            class="text-white hover:bg-white/10 p-2 rounded-md flex items-center focus:outline-none"
-          >
-            <i class="fas fa-user text-lg"></i>
+        <!-- HU13: visitante entra e volta para a página em que estava -->
+        <button *ngIf="isVisitor" type="button" data-testid="visitor-login" (click)="visitorLogin()"
+          class="btn btn-sm btn-primary rounded-lg min-h-11 sm:min-h-8">
+          <span class="material-icons text-base!" aria-hidden="true">login</span>
+          Entrar
+        </button>
+
+        <!-- Dropdown Usuário (F7): avatar com iniciais, cabeçalho com nome e e-mail, itens por perfil -->
+        <div *ngIf="!isVisitor" class="relative" data-user-menu>
+          <button type="button" data-testid="user-menu-button" (click)="toggleUserMenu()"
+            aria-haspopup="menu" [attr.aria-expanded]="userMenuOpen" aria-label="Menu do usuário"
+            class="rounded-full p-0.5 {{ t.hover }} focus:outline-none focus-visible:ring-2 {{ t.ring }}">
+            <span data-testid="user-avatar"
+              class="w-9 h-9 rounded-full bg-secondary text-secondary-content flex items-center justify-center text-sm font-bold">{{ userInitials }}</span>
           </button>
-          <div
-            *ngIf="userMenuOpen"
-            class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-50"
-          >
-            <button
-              *ngIf="user?.userType === 'ADMIN' || user?.userType === 'SUPPLIER'"
-              (click)="navigate('/dashboard-fornecedor')"
-              class="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
-            >
-              Dashboard Fornecedor
-            </button>
-            <button
-              *ngIf="user?.userType === 'ADMIN' || user?.userType === 'CUSTOMER'"
-              (click)="navigate('/painel-cliente')"
-              class="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
-            >
-              Meus Dados
+
+          <div *ngIf="userMenuOpen" data-testid="user-menu" role="menu" aria-label="Opções do usuário" @fadeIn
+            class="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50 text-gray-800">
+            <div data-testid="user-menu-header" class="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
+              <span class="w-10 h-10 shrink-0 rounded-full bg-secondary text-secondary-content flex items-center justify-center font-bold">{{ userInitials }}</span>
+              <span class="min-w-0">
+                <span class="block font-semibold truncate">{{ user?.name }}</span>
+                <span class="block text-xs text-gray-500 truncate">{{ user?.email }}</span>
+              </span>
+            </div>
+
+            <button *ngFor="let item of userMenuItems; trackBy: trackByItemId" type="button" role="menuitem" [attr.data-testid]="'menu-item-' + item.id"
+              (click)="openUserMenuItem(item.route)"
+              class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none">
+              <span class="material-icons text-base text-gray-500" aria-hidden="true">{{ item.icon }}</span><span data-menu-label>{{ item.label }}</span>
             </button>
 
-            <button
-                *ngIf="user?.userType === 'ADMIN' || user?.userType === 'SUPPLIER'"
-              (click)="navigate('/configuracao')"
-              class="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
-            >
-              Configurações
-            </button>
-
-            <!-- <button *ngIf="user?.userType === 'ADMIN' || user?.userType === 'SUPPLIER'" (click)="navigate('/meus-pedidos')"
-                class="block cursor-pointer px-4 py-2 min-w-full text-sm text-gray-700 hover:bg-gray-100">
-                Meus Pedidos
-            </button> -->
-            <div class="border-t my-1"></div>
-            <button
-              (click)="logout()"
-              class="block w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 text-left"
-            >
-              Sair
+            <div class="border-t border-gray-100 my-1"></div>
+            <button type="button" role="menuitem" data-testid="menu-item-sair" (click)="logout()"
+              class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left text-red-600 hover:bg-red-50 focus:bg-red-50 focus:outline-none">
+              <span class="material-icons text-base" aria-hidden="true">logout</span><span data-menu-label>Sair</span>
             </button>
           </div>
         </div>
       </div>
     </div>
   
-    <!-- MENU MOBILE -->
-    <div
+    <!-- MENU MOBILE (fornecedor e admin) -->
+    <nav
       *ngIf="mobileMenuOpen"
-      class="absolute top-16 left-0 w-full bg-[#0017bf] text-white flex flex-col p-4 space-y-3 shadow-lg lg:hidden z-40"
+      id="mobile-menu"
+      @expandCollapse
+      aria-label="Navegação principal"
+      class="absolute top-16 left-0 w-full bg-primary text-white shadow-lg lg:hidden z-40"
     >
-      <a href="/inicio" class="hover:bg-white/10 px-3 py-2 rounded-md">Início</a>
-  
-      <ng-container *ngIf="user?.userType === 'ADMIN' || user?.userType === 'SUPPLIER'">
-        <button
-          (click)="toggleSubmenu()"
-          class="flex justify-between items-center px-3 py-2 hover:bg-white/10 rounded-md"
-        >
-          Produtos
-          <i
-            [ngClass]="{'rotate-180': submenuOpen}"
-            class="fas fa-chevron-down transition-transform"
-          ></i>
-        </button>
-  
-        <div *ngIf="submenuOpen" class="flex flex-col pl-4 space-y-2">
-          <a href="/product-items" class="hover:bg-white/10 px-3 py-1 rounded-md">Item produtos</a>
-          <a href="/category-products" class="hover:bg-white/10 px-3 py-1 rounded-md">Categoria de produtos</a>
-        </div>
-      </ng-container>
-  
-      <a *ngIf="user?.userType === 'ADMIN' || user?.userType === 'CUSTOMER'" href="/meus-pedidos" class="hover:bg-white/10 px-3 py-2 rounded-md">Pedidos</a>
-      <a *ngIf="user?.userType === 'ADMIN'" href="/register-city" class="hover:bg-white/10 px-3 py-2 rounded-md">Cidades</a>
-      <a *ngIf="user?.userType === 'ADMIN'" href="/supplier-approval" class="hover:bg-white/10 px-3 py-2 rounded-md">Fornecedores</a>
-    </div>
+      <div class="flex flex-col p-3 gap-1">
+        <ng-container *ngIf="isAdmin">
+          <a routerLink="/admin" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
+            <span class="material-icons" aria-hidden="true">space_dashboard</span>Painel
+          </a>
+          <a routerLink="/admin/usuarios" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
+            <span class="material-icons" aria-hidden="true">group</span>Usuários
+          </a>
+          <a routerLink="/admin/fornecedores" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
+            <span class="material-icons" aria-hidden="true">storefront</span>Fornecedores
+          </a>
+          <a routerLink="/admin/cidades" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
+            <span class="material-icons" aria-hidden="true">map</span>Cidades
+          </a>
+          <a routerLink="/admin/tipos" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
+            <span class="material-icons" aria-hidden="true">category</span>Tipos
+          </a>
+          <a routerLink="/admin/categorias" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
+            <span class="material-icons" aria-hidden="true">label</span>Categorias
+          </a>
+          <a routerLink="/admin/configuracoes" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
+            <span class="material-icons" aria-hidden="true">settings</span>Configurações
+          </a>
+        </ng-container>
+        <ng-container *ngIf="isSupplier">
+          <a routerLink="/minha-loja" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
+            <span class="material-icons" aria-hidden="true">space_dashboard</span>Início
+          </a>
+          <a routerLink="/minha-loja/pedidos" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
+            <span class="material-icons" aria-hidden="true">inbox</span>Pedidos
+          </a>
+          <a routerLink="/minha-loja/produtos" [routerLinkActive]="t.active" ariaCurrentWhenActive="page" class="flex items-center gap-3 px-3 py-2.5 rounded-md {{ t.hover }}">
+            <span class="material-icons" aria-hidden="true">local_fire_department</span>Produtos
+          </a>
+          <!-- F10: atalhos das configurações da loja, recolhidos para o menu não cobrir a tela -->
+          <button type="button" data-testid="mobile-settings-toggle" (click)="settingsMobileOpen = !settingsMobileOpen"
+            [attr.aria-expanded]="settingsMobileOpen" aria-controls="mobile-settings"
+            class="flex items-center justify-between gap-3 px-3 py-2.5 rounded-md text-left {{ t.hover }}">
+            <span class="flex items-center gap-3"><span class="material-icons" aria-hidden="true">settings</span>Configurações</span>
+            <span class="material-icons transition-transform" [class.rotate-180]="settingsMobileOpen" aria-hidden="true">expand_more</span>
+          </button>
+          <div *ngIf="settingsMobileOpen" id="mobile-settings" @expandCollapse class="flex flex-col">
+            <a *ngFor="let sec of settingsSections" routerLink="/minha-loja/configuracoes" [fragment]="sec.id" (click)="closeNavMenus()"
+              class="flex items-center gap-3 pl-12 pr-3 py-2 rounded-md text-sm {{ t.hover }}">
+              <span class="material-icons text-[18px]" aria-hidden="true">{{ sec.icon }}</span>{{ sec.label }}
+            </a>
+          </div>
+        </ng-container>
+
+      </div>
+    </nav>
   </div>
-  
+
+  <app-bottom-tab-bar *ngIf="isShopper" [visitor]="isVisitor"></app-bottom-tab-bar>
+  <app-deliverer-tab-bar *ngIf="isDeliverer"></app-deliverer-tab-bar>

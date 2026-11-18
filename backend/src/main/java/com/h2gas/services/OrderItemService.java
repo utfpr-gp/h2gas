@@ -50,9 +50,9 @@ public class OrderItemService {
         productItem.setStockQuantity(currentStock - quantityRequested);
         productItemService.save(productItem);
 
-        BigDecimal totalPrice = calculateTotalPrice(orderItem.getQuantity(), productItem.getPrice());
-        orderItem.setTotalPrice(totalPrice);
-        orderItem.setUnitPrice(productItem.getPrice());
+        BigDecimal unitPrice = unitPriceFor(productItem);
+        orderItem.setTotalPrice(calculateTotalPrice(orderItem.getQuantity(), unitPrice));
+        orderItem.setUnitPrice(unitPrice);
         orderItem.setProduct(productItem);
         orderItem.setOrder(order);
 
@@ -70,7 +70,12 @@ public class OrderItemService {
                 -> new ResourceNotFoundException("Order Item não encontrado com esse id: " + id));
     }
 
-    private BigDecimal calculateTotalPrice(int quantity, BigDecimal unitPrice) {
+    // HU21: o mesmo preço na entrega e na retirada; o frete por distância é somado à parte (HU17)
+    static BigDecimal unitPriceFor(ProductItem productItem) {
+        return productItem.getPrice();
+    }
+
+    static BigDecimal calculateTotalPrice(int quantity, BigDecimal unitPrice) {
         return unitPrice.multiply(new BigDecimal(quantity));
     }
 }
