@@ -5,19 +5,34 @@
     {
       "name": "app",
       "installMode": "prefetch",
-      "resources": { "files": ["/favicon.ico", "/index.html", "/manifest.webmanifest", "/*.css", "/*.js"] }
+      "resources": {
+        "files": [
+          "/favicon.ico",
+          "/index.html",
+          "/manifest.webmanifest",
+          "/*.css",
+          "/*.js"
+        ]
+      }
     },
     {
       "name": "assets",
       "installMode": "lazy",
       "updateMode": "prefetch",
-      "resources": { "files": ["/assets/**", "/icons/**"] }
+      "resources": {
+        "files": [
+          "/assets/**",
+          "/icons/**"
+        ]
+      }
     }
   ],
   "dataGroups": [
     {
       "name": "api-freshness",
-      "urls": ["/h2gas/api/**"],
+      "urls": [
+        "/h2gas/api/**"
+      ],
       "cacheConfig": {
         "strategy": "freshness",
         "maxSize": 0,
@@ -25,5 +40,15 @@
         "timeout": "5s"
       }
     }
+  ],
+  "navigationUrls": [
+    "/**",
+    "!/**/*.*",
+    "!/**/*__*",
+    "!/**/*__*/**",
+    "!/swagger",
+    "!/swagger/**",
+    "!/h2gas-api/**",
+    "!/h2gas/**"
   ]
 }

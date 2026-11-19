@@ -86,3 +86,19 @@ describe('F5 — index.html e dependência', () => {
     assert.ok(pkg.dependencies?.['@angular/service-worker']);
   });
 });
+
+describe('Swagger fora do service worker', () => {
+  it('nao deve tratar /swagger, /h2gas-api e /h2gas como telas do app', () => {
+    const config = readJson('ngsw-config.json');
+    const nav = config.navigationUrls || [];
+
+    // padrão do Angular mantido: tudo é tela, menos arquivos (com extensão) e __
+    for (const pattern of ['/**', '!/**/*.*', '!/**/*__*', '!/**/*__*/**']) {
+      assert.ok(nav.includes(pattern), `navigationUrls deve manter ${pattern}`);
+    }
+    // senão o service worker devolve o index.html do app no lugar do Swagger/API
+    for (const pattern of ['!/swagger', '!/swagger/**', '!/h2gas-api/**', '!/h2gas/**']) {
+      assert.ok(nav.includes(pattern), `navigationUrls deve excluir ${pattern}`);
+    }
+  });
+});
