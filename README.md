@@ -1,151 +1,60 @@
 # H2Gás
 
-O H2Gás é uma aplicação web para gestão de pedidos e entregas de gás e água. Consumidores podem consultar produtos, realizar pedidos e acompanhar entregas; distribuidores têm um painel para gerenciar produtos, regiões e entregas. Entregadores contam com navegação por mapa. O objetivo é modernizar e agilizar o processo de compra e entrega.
+### **Autor:** Igor Emanuel
+### **Orientador:** Roni Fabio Banaszewski · **Coorientador:** Pablo de Paula Correia
 
-## 📃 Equipe
+O H2Gás é uma aplicação web (PWA) de pedidos e entregas de gás de cozinha (GLP) e água mineral. O cliente encontra
+as lojas da sua cidade, compara preços e frete por distância, faz o pedido e acompanha a entrega em tempo real; a
+loja gerencia pedidos, catálogo, entregadores e indicadores de venda; o entregador recebe as rotas e confirma as
+entregas.
 
-Desenvolvido por: [Pablo de Paula Correia](https://github.com/PabloC5)
-Orientador: [Dr. Roni Fabio Banaszewski](https://ronifabio.github.io/)
+Trabalho de Conclusão de Curso de Tecnologia em Sistemas para Internet, UTFPR, Câmpus Guarapuava. A versão 2.0
+evolui o MVP desenvolvido por Pablo de Paula Correia.
 
-## 🔧 Stack do projeto
+## 🖼️ Telas
 
-- Backend: Java 17, Spring Boot 3, Spring Security, Hibernate/JPA, MySQL
-- Frontend: Angular 19, RxJS, Tailwind CSS + DaisyUI, Leaflet.js
-- Infra: Docker, Docker Compose, Nginx
-- Outros: Cloudinary (imagens), Twilio (envio/validação), JWT
+| Vitrine do cliente | Entrega (entregador) |
+|---|---|
+| <img src="./docs/images/vitrine.png" alt="Vitrine com as lojas da cidade, filtros e frete por distância" width="300"> | <img src="./docs/images/entrega.png" alt="Detalhe da entrega com mapa, cliente e confirmação" width="300"> |
 
-## 📦 Gerenciadores e entry points
+**Pedidos recebidos (loja):** pedidos em tempo real, filtro por status, destaque de pedido parado e frete no detalhe.
 
-- Backend (Maven):
-  - Build: mvn clean package
-  - Executar: mvn spring-boot:run
-  - Testes: mvn test
-  - Entry point: com.h2gas.BackendApplication (Spring Boot)
-  - Porta: 8080 (context-path /h2gas)
-- Frontend (npm + Angular CLI):
-  - Iniciar dev: npm start (ng serve)
-  - Build prod: npm run build (gera dist)
-  - Testes: npm test (Karma/Jasmine)
-  - Servido em produção por Nginx (porta 80)
-- Docker Compose: serviços db (MySQL 5.7), backend e frontend
+<img src="./docs/images/pedidos-recebidos.png" alt="Tela de pedidos recebidos da loja" width="800">
 
-## ✅ Requisitos
+**Painel da loja:** receita dos pedidos entregues, indicadores do mês e nota da loja.
 
-- Java 17 (JDK)
-- Maven 3.8+
-- Node.js 20.x e npm (Angular CLI 19)
-- Docker e Docker Compose (opcional, para orquestração)
-- MySQL (opcional, se não usar Docker)
+<img src="./docs/images/painel-da-loja.png" alt="Painel da loja com receita, pedidos e gráfico por dia" width="800">
 
-## 🔐 Variáveis de ambiente
+## 📚 Documentação do Projeto
 
-Arquivo de exemplo: .env.example na raiz.
+- [📄 Especificações (SDD)](./docs/sdd/) - Um script por funcionalidade (fundações F1–F12 e histórias HU01–HU29), com
+  critérios de aceitação BDD, contrato técnico, plano de testes e definição de pronto.
+- [🛠️ Processo de desenvolvimento](./CLAUDE.md) - Regras de SDD + TDD, convenções de código e da API.
+- 📘 Documentação da API (Swagger) - `/h2gas-api/swagger-ui.html` no site em produção.
 
-Principais variáveis utilizadas:
-- Banco de dados:
-  - MYSQL_HOST (ex.: localhost)
-  - MYSQL_PORT (ex.: 3306)
-  - MYSQL_DATABASE (ex.: h2gas_db)
-  - MYSQL_USER, MYSQL_PASSWORD
-  - MYSQL_ROOT_PASSWORD (para container do MySQL)
-  - SPRING_DATASOURCE_USERNAME, SPRING_DATASOURCE_PASSWORD (usadas pelo perfil dev)
-  - SPRING_DATASOURCE_URL (composta no docker-compose para rede interna: jdbc:mysql://db:3306/h2gas_db...)
-  - TODO: Unificar/confirmar o uso de MYSQL_USER vs MYSQL_USER_B no docker-compose.
-- JWT/Segurança:
-  - JWT_SECRET
-- E-mail (SMTP):
-  - USER_NAME, PASSWORD_EMAIL (credenciais SMTP)
-  - FRONTEND_URL_DEV (URL do frontend usada em templates de e-mail)
-- Twilio (verificação/envio):
-  - TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_VERIFY_SERVICE_SID
-- reCAPTCHA (se aplicável):
-  - google.recaptcha.site.key, google.recaptcha.secret.key
-- Outros:
-  - DATASOURCE_URL (existe no .env.example; verificar necessidade real no código) – TODO
+## 🌐 Site em Produção
 
-Observação: o backend importa variáveis de um arquivo .env local via spring.config.import=optional:file:.env[.properties].
+https://h2gas.187.127.22.98.sslip.io
 
-## 🚀 Como executar
+## 💻 Tecnologias e Dependências
 
-### Opção A) Local (IDE/CLI)
+- **Backend:** Java 17, Spring Boot 3.4, Spring Security (JWT), JPA/Hibernate, MySQL 9, Flyway, springdoc-openapi,
+  Server-Sent Events e Web Push (VAPID).
+- **Frontend:** Angular 19, Tailwind CSS 4 + DaisyUI 5, Leaflet e service worker (PWA).
+- **Serviços:** Cloudinary (imagens), SMTP (e-mails e código de login) e Twilio (WhatsApp/SMS, opcional).
+- **Infra:** Docker, GitHub Actions (testes em cada PR e imagens no GHCR a cada push na `main`) e Coolify.
 
-1) Banco de dados
-- Garanta um MySQL disponível (local ou container). Por padrão, o perfil dev lê MYSQL_HOST, MYSQL_PORT, MYSQL_DATABASE etc.
-- Crie o banco se necessário: CREATE DATABASE h2gas_db;
+## 🚀 Manual de execução
 
-2) Backend
-- Terminal na pasta backend:
-  - mvn spring-boot:run
-- A API ficará em http://localhost:8080/h2gas
-
-3) Frontend
-- Terminal na pasta frontend:
-  - npm install
-  - npm start
-- App web em http://localhost:4200
-- O frontend (dev) consome a API em http://localhost:8080/h2gas/api (ver frontend/src/environments/environment.ts)
-
-### Opção B) Docker Compose
-
-1) Configure o arquivo .env na raiz (ver .env.example).
-2) Suba os serviços:
-- docker compose build
-- docker compose up -d
-3) Endereços padrão:
-- Backend: http://localhost:8080/h2gas
-- Frontend: http://localhost/
-- MySQL: localhost:3307 (mapeado para 3306 do container)
-
-Parar e remover:
-- docker compose down
-
-## 📜 Scripts úteis
-
-- Backend (backend/):
-  - mvn clean package -DskipTests
-  - mvn spring-boot:run
-  - mvn test
-- Frontend (frontend/):
-  - npm start
-  - npm run build
-  - npm test
-  - npm run build-docker / npm run run-docker (imagens locais)
-
-## 🧪 Testes
-
-- Backend: mvn test (JUnit/Spring Test)
-- Frontend: npm test (Karma/Jasmine)
-
-## 🧭 Estrutura do projeto
-
-- backend/ — API Spring Boot (Java 17, Maven)
-  - src/main/java/com/h2gas/BackendApplication.java — entry point
-  - src/main/resources/application.properties — configurações gerais (context-path /h2gas, JWT, e-mail, Twilio, import .env)
-  - src/main/resources/application-dev.properties — datasource e JPA para dev
-  - Dockerfile — build multi-stage (Maven -> JAR -> OpenJDK 17)
-  - pom.xml — dependências e plugins
-- frontend/ — SPA Angular 19
-  - src/environments/environment.ts — configuração dev (apiUrl)
-  - src/environments/environment.prod.ts — configuração prod (apiUrl)
-  - Dockerfile — build com Node e serve com Nginx
-  - package.json — scripts npm
-- docker-compose.yml — ambiente de desenvolvimento com db, backend e frontend
-- docker-compose.prod.yml — exemplo de imagens pré-buildadas para produção
-- .env.example — exemplo de variáveis de ambiente
-- data/ — volume para dados do MySQL (mapeado)
-
-## 📚 Documentação da API
-
-[//]: # (- TODO: Adicionar/confirmar integração com Swagger/OpenAPI &#40;springdoc&#41;. No momento não há dependência explícita no pom.xml.)
-
-
-## 🔧 Ferramentas recomendadas
-
-- IDE: IntelliJ IDEA (backend), VS Code (frontend)
-- Banco: MySQL Workbench ou equivalente
-- Cliente de API: Postman/Insomnia
-
-## 🔎 Observações
-
-- O projeto pode rodar localmente ou via Docker. Em produção, revise CORS, variáveis sensíveis e HTTPS/SSL conforme infraestrutura.
-- O backend usa context-path /h2gas; o frontend aponta para /h2gas/api. Ajuste se mudar o proxy/host.
+- Clonar o repositório com `git clone` (a branch `main` tem a versão mais recente).
+- Copiar `.env.example` para `.env` na raiz e preencher as variáveis (banco, JWT, SMTP e Cloudinary; *push* e Twilio
+  são opcionais).
+- Subir o banco e o backend com Docker:
+  - Comando: `docker compose up -d --build`
+  - O Flyway cria o esquema; a API fica em `/h2gas/api` e o Swagger em `/h2gas/swagger-ui.html`.
+- Executar o frontend:
+  - Comando: `cd frontend && npm install && npm start`
+  - Abre em `http://localhost:4200` (a URL da API fica em `frontend/src/environments/environment.ts`).
+- Rodar os testes:
+  - Backend: `cd backend && mvn test`
+  - Frontend: `cd frontend && npx ng test --watch=false --browsers=ChromeHeadless`
