@@ -1,11 +1,11 @@
 name: Deploy no Coolify
 
-# A cada push na develop: gera as imagens do backend e do frontend,
+# A cada push na main (versão publicada): gera as imagens do backend e do frontend,
 # publica no GitHub Container Registry (ghcr.io) e pede ao Coolify um novo deploy.
 # Também pode ser disparado à mão em Actions -> "Deploy no Coolify" -> Run workflow.
 on:
   push:
-    branches: [develop]
+    branches: [main]
   workflow_dispatch:
 
 # um push novo cancela o deploy anterior que ainda estiver rodando
@@ -44,7 +44,7 @@ jobs:
           context: ./backend
           push: true
           tags: |
-            ${{ env.BACKEND_IMAGE }}:develop
+            ${{ env.BACKEND_IMAGE }}:main
             ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
           labels: ${{ env.SOURCE_LABEL }}
           cache-from: type=gha,scope=backend
@@ -61,7 +61,7 @@ jobs:
           context: ./frontend
           push: true
           tags: |
-            ${{ env.FRONTEND_IMAGE }}:develop
+            ${{ env.FRONTEND_IMAGE }}:main
             ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
           labels: ${{ env.SOURCE_LABEL }}
           cache-from: type=gha,scope=frontend
@@ -81,7 +81,9 @@ jobs:
             echo "::error::Cadastre os secrets COOLIFY_WEBHOOK e COOLIFY_TOKEN em Settings > Secrets and variables > Actions."
             exit 1
           fi
+          # o Coolify passou a aceitar o webhook de deploy só por POST
           curl --fail-with-body --silent --show-error \
+            -X POST \
             --max-time 60 \
             -H "Authorization: Bearer $COOLIFY_TOKEN" \
             "$COOLIFY_WEBHOOK"
