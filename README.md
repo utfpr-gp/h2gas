@@ -19,6 +19,10 @@ evolui o MVP desenvolvido por Pablo de Paula Correia.
 - [📘 Documentação da API (Swagger)](https://h2gas.187.127.22.98.sslip.io/h2gas-api/swagger-ui/index.html) - Endpoints da API no site em produção. No
   ambiente local, fica em `http://localhost:8080/h2gas/swagger-ui/index.html`.
 
+## 📽️ Link do Vídeo  
+
+- https://youtu.be/1AYbG5xOiCw
+
 ## 🎨 Design
 
 - [🎨 Design tokens e guia de estilo](./docs/sdd/f2-design-tokens.md) - Cores, tema do DaisyUI e tipografia da interface.
